@@ -102,7 +102,7 @@ public class BankAccount : Aggregate<AccountId>
             violations.Add(new FieldViolation(InputPointer.ForProperty(nameof(overdraftLimit)), "validation.range") { Detail = "Overdraft limit must be non-negative" });
 
         if (violations.Count > 0)
-            return Result.Fail<BankAccount>(new Error.UnprocessableContent(EquatableArray.Create(violations.ToArray())));
+            return Result.Fail<BankAccount>(new Error.InvalidInput(EquatableArray.Create(violations.ToArray())));
 
         var account = new BankAccount(
             AccountId.NewUniqueV4(),
@@ -129,7 +129,7 @@ public class BankAccount : Aggregate<AccountId>
             .Ensure(_ => Status == AccountStatus.Active,
                 new Error.Conflict(null, "account.not.active") { Detail = $"Cannot deposit to {Status} account" })
             .Ensure(_ => amount.Amount > 0,
-                Error.UnprocessableContent.ForField(nameof(amount), "validation.range", "Deposit amount must be positive"))
+                Error.InvalidInput.ForField(nameof(amount), "validation.range", "Deposit amount must be positive"))
             .Ensure(_ => amount.Amount <= 10000,
                 new Error.Conflict(null, "deposit.limit.exceeded") { Detail = "Single deposit cannot exceed $10,000" })
             .Bind(_ => Balance.Add(amount))
@@ -150,7 +150,7 @@ public class BankAccount : Aggregate<AccountId>
             .Ensure(_ => Status == AccountStatus.Active,
                 new Error.Conflict(null, "account.not.active") { Detail = $"Cannot withdraw from {Status} account" })
             .Ensure(_ => amount.Amount > 0,
-                Error.UnprocessableContent.ForField(nameof(amount), "validation.range", "Withdrawal amount must be positive"))
+                Error.InvalidInput.ForField(nameof(amount), "validation.range", "Withdrawal amount must be positive"))
             .Bind(_ => todayTotal.Add(amount))
             .Ensure(totalWithToday => !totalWithToday.IsGreaterThanOrEqual(DailyWithdrawalLimit),
                 new Error.Conflict(null, "withdrawal.daily.limit") { Detail = $"Daily withdrawal limit of {DailyWithdrawalLimit} would be exceeded" })
@@ -183,7 +183,7 @@ public class BankAccount : Aggregate<AccountId>
 
         if (interestAmount.Amount <= 0)
             return Result.Fail<BankAccount>(
-                Error.UnprocessableContent.ForField(nameof(interestAmount), "validation.range", "Interest amount must be positive"));
+                Error.InvalidInput.ForField(nameof(interestAmount), "validation.range", "Interest amount must be positive"));
 
         return Balance.Add(interestAmount)
             .Tap(newBalance =>
@@ -217,7 +217,7 @@ public class BankAccount : Aggregate<AccountId>
 
         if (!toAccount.Balance.Currency.Equals(amount.Currency))
             return Result.Fail<(BankAccount From, BankAccount To)>(
-                Error.UnprocessableContent.ForField(
+                Error.InvalidInput.ForField(
                     nameof(amount),
                     "validation.currency",
                     $"Cannot deposit {amount.Currency} into {toAccount.Balance.Currency} account"));
@@ -233,7 +233,7 @@ public class BankAccount : Aggregate<AccountId>
         if (string.IsNullOrWhiteSpace(reason))
         {
             return Result.Fail<BankAccount>(
-                Error.UnprocessableContent.ForField(nameof(reason), "validation.required", "Freeze reason is required"));
+                Error.InvalidInput.ForField(nameof(reason), "validation.required", "Freeze reason is required"));
         }
 
         return _lifecycle.FireResult(AccountTrigger.Freeze)

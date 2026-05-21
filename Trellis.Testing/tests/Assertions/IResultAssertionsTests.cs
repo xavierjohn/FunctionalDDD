@@ -91,7 +91,7 @@ public class IResultAssertionsTests
     [Fact]
     public void HaveErrorDetail_passes_when_detail_matches()
     {
-        IResult result = Result.Fail(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty)
+        IResult result = Result.Fail(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty)
         {
             Detail = "Invalid request"
         });
@@ -101,7 +101,7 @@ public class IResultAssertionsTests
     [Fact]
     public void HaveErrorDetailContaining_passes_when_detail_contains_substring()
     {
-        IResult result = Result.Fail(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty)
+        IResult result = Result.Fail(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty)
         {
             Detail = "User input is invalid"
         });

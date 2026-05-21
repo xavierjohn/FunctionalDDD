@@ -57,8 +57,8 @@ public class RequiredStringLengthTests
     {
         var result = ShortCode.TryCreate("12345678901"); // 11 characters
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        result.UnwrapError().Should().BeOfType<Error.InvalidInput>();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/shortCode");
         validation.Fields[0].Detail.Should().Be("Short Code must be 10 characters or fewer.");
     }
@@ -68,7 +68,7 @@ public class RequiredStringLengthTests
     {
         var result = ShortCode.TryCreate(null);
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Short Code cannot be empty.");
     }
 
@@ -77,7 +77,7 @@ public class RequiredStringLengthTests
     {
         var result = ShortCode.TryCreate("");
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Short Code cannot be empty.");
     }
 
@@ -86,7 +86,7 @@ public class RequiredStringLengthTests
     {
         var result = ShortCode.TryCreate("12345678901", "code");
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/code");
     }
 
@@ -122,8 +122,8 @@ public class RequiredStringLengthTests
     {
         var result = UserName.TryCreate("ab"); // 2 characters, min is 3
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        result.UnwrapError().Should().BeOfType<Error.InvalidInput>();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/userName");
         validation.Fields[0].Detail.Should().Be("User Name must be at least 3 characters.");
     }
@@ -133,8 +133,8 @@ public class RequiredStringLengthTests
     {
         var result = UserName.TryCreate(new string('x', 51)); // 51 characters, max is 50
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        result.UnwrapError().Should().BeOfType<Error.InvalidInput>();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("User Name must be 50 characters or fewer.");
     }
 
@@ -143,7 +143,7 @@ public class RequiredStringLengthTests
     {
         var result = UserName.TryCreate(null);
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("User Name cannot be empty.");
     }
 

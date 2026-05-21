@@ -5,7 +5,7 @@ using System.Diagnostics;
 /// <summary>
 /// Accumulating-error counterpart to <see cref="TraverseExtensions.Sequence{T}(IEnumerable{Result{T}})"/>.
 /// Runs through every item; folds failures via the existing <see cref="CombineErrorExtensions.Combine"/>
-/// extension so two <see cref="Error.UnprocessableContent"/> failures merge their fields/rules and
+/// extension so two <see cref="Error.InvalidInput"/> failures merge their fields/rules and
 /// heterogeneous failures flatten into <see cref="Error.Aggregate"/>.
 /// </summary>
 [DebuggerStepThrough]

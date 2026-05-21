@@ -23,7 +23,7 @@ using Trellis.Authorization;
 /// <see cref="System.Security.Claims.ClaimsIdentity"/>, or the configured
 /// <see cref="EntraActorOptions.IdClaimType"/> is missing (and the short <c>oid</c>
 /// fallback also misses) — and the mediator authorization pipeline maps that to
-/// <see cref="Error.Unauthorized"/> (HTTP 401). It throws
+/// <see cref="Error.AuthenticationRequired"/> (HTTP 401). It throws
 /// <see cref="InvalidOperationException"/> only for genuine configuration failures
 /// (no <c>HttpContext</c>, or a <c>Map*</c> delegate threw); those surface as HTTP 500.
 /// </para>

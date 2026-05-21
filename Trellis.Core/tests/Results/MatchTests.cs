@@ -56,7 +56,7 @@ public class MatchTests
     public void Match_WithFailure_ReturnsDefaultValue()
     {
         // Arrange
-        var result = Result.Fail<string>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid" });
+        var result = Result.Fail<string>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid" });
 
         // Act
         var output = result.Match(

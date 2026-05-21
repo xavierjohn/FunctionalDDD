@@ -27,8 +27,8 @@ using System.Globalization;
 /// var date = RetryAfterValue.FromDate(DateTimeOffset.UtcNow.AddMinutes(5));
 /// 
 /// // Use in error creation:
-/// new Error.TooManyRequests(delay) { Detail = "Too many requests." }
-/// new Error.ServiceUnavailable(date) { Detail = "Service is under maintenance." }
+/// new Error.RateLimited(delay) { Detail = "Too many requests." }
+/// new Error.Unavailable(date) { Detail = "Service is under maintenance." }
 /// </code>
 /// </example>
 public sealed class RetryAfterValue : IEquatable<RetryAfterValue>

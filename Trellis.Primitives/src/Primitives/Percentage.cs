@@ -46,10 +46,10 @@ using Trellis;
 /// // Returns: Success(Percentage(0))
 /// 
 /// var invalidHigh = Percentage.TryCreate(150m);
-/// // Returns: Failure(Error.UnprocessableContent with detail "Percentage must be between 0 and 100.")
+/// // Returns: Failure(Error.InvalidInput with detail "Percentage must be between 0 and 100.")
 /// 
 /// var invalidNegative = Percentage.TryCreate(-5m);
-/// // Returns: Failure(Error.UnprocessableContent with detail "Percentage must be between 0 and 100.")
+/// // Returns: Failure(Error.InvalidInput with detail "Percentage must be between 0 and 100.")
 /// </code>
 /// </example>
 /// <example>
@@ -89,7 +89,7 @@ public class Percentage : ScalarValueObject<Percentage, decimal>, IScalarValue<P
     /// <param name="value">The decimal value to validate (0-100).</param>
     /// <param name="fieldName">Optional field name to use in validation error messages.</param>
     /// <returns>
-    /// Success with the Percentage if the value is between 0 and 100; otherwise Failure with <see cref="Error.UnprocessableContent"/>.
+    /// Success with the Percentage if the value is between 0 and 100; otherwise Failure with <see cref="Error.InvalidInput"/>.
     /// </returns>
     public static Result<Percentage> TryCreate(decimal value, string? fieldName = null)
     {
@@ -98,7 +98,7 @@ public class Percentage : ScalarValueObject<Percentage, decimal>, IScalarValue<P
         var field = fieldName.NormalizeFieldName("percentage");
 
         if (value is < 0m or > 100m)
-            return Result.Fail<Percentage>(Error.UnprocessableContent.ForField(field, "validation.error", "Percentage must be between 0 and 100."));
+            return Result.Fail<Percentage>(Error.InvalidInput.ForField(field, "validation.error", "Percentage must be between 0 and 100."));
 
         return Result.Ok(new Percentage(value));
     }
@@ -109,7 +109,7 @@ public class Percentage : ScalarValueObject<Percentage, decimal>, IScalarValue<P
     /// <param name="value">The nullable decimal value to validate (0-100).</param>
     /// <param name="fieldName">Optional field name to use in validation error messages.</param>
     /// <returns>
-    /// Success with the Percentage if the value is between 0 and 100; otherwise Failure with <see cref="Error.UnprocessableContent"/>.
+    /// Success with the Percentage if the value is between 0 and 100; otherwise Failure with <see cref="Error.InvalidInput"/>.
     /// </returns>
     public static Result<Percentage> TryCreate(decimal? value, string? fieldName = null)
     {
@@ -118,10 +118,10 @@ public class Percentage : ScalarValueObject<Percentage, decimal>, IScalarValue<P
         var field = fieldName.NormalizeFieldName("percentage");
 
         if (value is null)
-            return Result.Fail<Percentage>(Error.UnprocessableContent.ForField(field, "validation.error", "Percentage is required."));
+            return Result.Fail<Percentage>(Error.InvalidInput.ForField(field, "validation.error", "Percentage is required."));
 
         if (value.Value is < 0m or > 100m)
-            return Result.Fail<Percentage>(Error.UnprocessableContent.ForField(field, "validation.error", "Percentage must be between 0 and 100."));
+            return Result.Fail<Percentage>(Error.InvalidInput.ForField(field, "validation.error", "Percentage must be between 0 and 100."));
 
         return Result.Ok(new Percentage(value.Value));
     }
@@ -132,19 +132,19 @@ public class Percentage : ScalarValueObject<Percentage, decimal>, IScalarValue<P
     /// </summary>
     /// <param name="value">The string value to parse (must be a valid decimal, optionally with a trailing %).</param>
     /// <param name="fieldName">Optional field name for validation error messages.</param>
-    /// <returns>Success with the Percentage if valid; Failure with <see cref="Error.UnprocessableContent"/> otherwise.</returns>
+    /// <returns>Success with the Percentage if valid; Failure with <see cref="Error.InvalidInput"/> otherwise.</returns>
     /// <remarks>The activity is opened by the leaf <c>TryCreate(decimal, ...)</c> overload to avoid double-nested telemetry spans.</remarks>
     public static Result<Percentage> TryCreate(string? value, string? fieldName = null)
     {
         var field = fieldName.NormalizeFieldName("percentage");
 
         if (string.IsNullOrWhiteSpace(value))
-            return Result.Fail<Percentage>(Error.UnprocessableContent.ForField(field, "validation.error", "Percentage is required."));
+            return Result.Fail<Percentage>(Error.InvalidInput.ForField(field, "validation.error", "Percentage is required."));
 
         var trimmed = value.TrimEnd('%', ' ');
 
         if (!decimal.TryParse(trimmed, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var parsed))
-            return Result.Fail<Percentage>(Error.UnprocessableContent.ForField(field, "validation.error", "Percentage must be a valid decimal."));
+            return Result.Fail<Percentage>(Error.InvalidInput.ForField(field, "validation.error", "Percentage must be a valid decimal."));
 
         return TryCreate(parsed, fieldName);
     }
@@ -156,19 +156,19 @@ public class Percentage : ScalarValueObject<Percentage, decimal>, IScalarValue<P
     /// <param name="value">The string value to parse (must be a valid decimal, optionally with a trailing %).</param>
     /// <param name="provider">The format provider for culture-sensitive parsing. Defaults to <see cref="System.Globalization.CultureInfo.InvariantCulture"/> when null.</param>
     /// <param name="fieldName">Optional field name for validation error messages.</param>
-    /// <returns>Success with the Percentage if valid; Failure with <see cref="Error.UnprocessableContent"/> otherwise.</returns>
+    /// <returns>Success with the Percentage if valid; Failure with <see cref="Error.InvalidInput"/> otherwise.</returns>
     /// <remarks>The activity is opened by the leaf <c>TryCreate(decimal, ...)</c> overload to avoid double-nested telemetry spans.</remarks>
     public static Result<Percentage> TryCreate(string? value, IFormatProvider? provider, string? fieldName = null)
     {
         var field = fieldName.NormalizeFieldName("percentage");
 
         if (string.IsNullOrWhiteSpace(value))
-            return Result.Fail<Percentage>(Error.UnprocessableContent.ForField(field, "validation.error", "Percentage is required."));
+            return Result.Fail<Percentage>(Error.InvalidInput.ForField(field, "validation.error", "Percentage is required."));
 
         var trimmed = value.TrimEnd('%', ' ');
 
         if (!decimal.TryParse(trimmed, System.Globalization.NumberStyles.Number, provider ?? System.Globalization.CultureInfo.InvariantCulture, out var parsed))
-            return Result.Fail<Percentage>(Error.UnprocessableContent.ForField(field, "validation.error", "Percentage must be a valid decimal."));
+            return Result.Fail<Percentage>(Error.InvalidInput.ForField(field, "validation.error", "Percentage must be a valid decimal."));
 
         return TryCreate(parsed, fieldName);
     }
@@ -179,7 +179,7 @@ public class Percentage : ScalarValueObject<Percentage, decimal>, IScalarValue<P
     /// <param name="fraction">The fraction value (0.0 to 1.0).</param>
     /// <param name="fieldName">Optional field name to use in validation error messages.</param>
     /// <returns>
-    /// Success with the Percentage; otherwise Failure with <see cref="Error.UnprocessableContent"/>.
+    /// Success with the Percentage; otherwise Failure with <see cref="Error.InvalidInput"/>.
     /// </returns>
     public static Result<Percentage> FromFraction(decimal fraction, string? fieldName = null)
     {
@@ -188,7 +188,7 @@ public class Percentage : ScalarValueObject<Percentage, decimal>, IScalarValue<P
         var field = fieldName.NormalizeFieldName("fraction");
 
         if (fraction is < 0m or > 1m)
-            return Result.Fail<Percentage>(Error.UnprocessableContent.ForField(field, "validation.error", "Fraction must be between 0 and 1."));
+            return Result.Fail<Percentage>(Error.InvalidInput.ForField(field, "validation.error", "Fraction must be between 0 and 1."));
 
         return TryCreate(fraction * 100m, fieldName);
     }

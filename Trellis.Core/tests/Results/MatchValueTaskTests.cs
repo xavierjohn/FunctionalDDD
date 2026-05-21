@@ -127,7 +127,7 @@ public class MatchValueTaskTests
     public async Task MatchAsync_ValueTask_Right_Failure_CorrectHandlerCalled()
     {
         // Arrange
-        var result = Result.Fail<string>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid" });
+        var result = Result.Fail<string>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid" });
         var successCalled = false;
         var failureCalled = false;
 
@@ -288,7 +288,7 @@ public class MatchValueTaskTests
     public async Task SwitchAsync_ValueTask_Both_Failure_OnlyFailureHandlerCalled()
     {
         // Arrange
-        var resultTask = ValueTask.FromResult(Result.Fail<string>(new Error.InternalServerError("test") { Detail = "Boom" }));
+        var resultTask = ValueTask.FromResult(Result.Fail<string>(new Error.Unexpected("test") { Detail = "Boom" }));
         var successCalled = false;
         var failureCalled = false;
 
@@ -351,7 +351,7 @@ public class MatchValueTaskTests
     public async Task MatchAsync_ValueTask_Both_ChainedAfterFailedPipeline()
     {
         // Arrange & Act
-        var output = await ValueTask.FromResult(Result.Fail<int>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid input" }))
+        var output = await ValueTask.FromResult(Result.Fail<int>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid input" }))
             .BindAsync(v => Result.Ok(v * 2))
             .MatchAsync(
                 onSuccess: v => ValueTask.FromResult($"Result: {v}"),

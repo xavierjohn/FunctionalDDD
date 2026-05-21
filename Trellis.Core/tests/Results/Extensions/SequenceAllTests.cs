@@ -41,7 +41,7 @@ public class SequenceAllTests : TestBase
     [Fact]
     public void SequenceAll_MultipleHeterogeneousFailures_ReturnsAggregate()
     {
-        var unprocessable = Error.UnprocessableContent.ForField("name", "validation.required", "Name is required");
+        var unprocessable = Error.InvalidInput.ForField("name", "validation.required", "Name is required");
         var conflict = new Error.Conflict(new ResourceRef("Resource", null), "duplicate");
         var results = new[]
         {
@@ -62,11 +62,11 @@ public class SequenceAllTests : TestBase
     [Fact]
     public void SequenceAll_MultipleUnprocessableContentFailures_MergesFieldsAndRules()
     {
-        var first = new Error.UnprocessableContent(
+        var first = new Error.InvalidInput(
             EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("name"), "validation.required") { Detail = "Name required" }),
             EquatableArray.Create(new RuleViolation("rule.one") { Detail = "Rule one" }));
 
-        var second = new Error.UnprocessableContent(
+        var second = new Error.InvalidInput(
             EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "validation.format") { Detail = "Invalid email" }),
             EquatableArray.Create(new RuleViolation("rule.two") { Detail = "Rule two" }));
 
@@ -80,7 +80,7 @@ public class SequenceAllTests : TestBase
         var result = results.SequenceAll();
 
         result.Should().BeFailure();
-        var merged = result.Error.Should().BeOfType<Error.UnprocessableContent>().Subject;
+        var merged = result.Error.Should().BeOfType<Error.InvalidInput>().Subject;
         merged.Fields.Items.Select(f => f.Field.Path).Should().Equal(["/name", "/email"]);
         merged.Rules.Items.Select(r => r.ReasonCode).Should().Equal(["rule.one", "rule.two"]);
     }

@@ -32,8 +32,8 @@ public class ToResultAsyncTests
     }
 
     [Theory]
-    [InlineData((int)HttpStatusCode.BadRequest, typeof(Error.BadRequest), null)]
-    [InlineData((int)HttpStatusCode.Unauthorized, typeof(Error.Unauthorized), null)]
+    [InlineData((int)HttpStatusCode.BadRequest, typeof(Error.InvalidInput), null)]
+    [InlineData((int)HttpStatusCode.Unauthorized, typeof(Error.AuthenticationRequired), null)]
     [InlineData((int)HttpStatusCode.Forbidden, typeof(Error.Forbidden), null)]
     [InlineData((int)HttpStatusCode.NotFound, typeof(Error.NotFound), null)]
     // 405 (Method Not Allowed) is omitted here: it requires the Allow header to be present
@@ -50,11 +50,11 @@ public class ToResultAsyncTests
     // present (per RFC 9110 §15.5.17) and falls through to InternalServerError when absent.
     // Header-aware behavior is covered by Default_416_preserves_Content_Range_* and
     // Default_416_with_no_Content_Range_header_falls_through_to_InternalServerError.
-    [InlineData((int)HttpStatusCode.UnprocessableEntity, typeof(Error.UnprocessableContent), null)]
+    [InlineData((int)HttpStatusCode.UnprocessableEntity, typeof(Error.InvalidInput), null)]
     [InlineData(428, typeof(Error.TransportFault), typeof(HttpError.PreconditionRequired))]
-    [InlineData(429, typeof(Error.TooManyRequests), null)]
-    [InlineData((int)HttpStatusCode.NotImplemented, typeof(Error.NotImplemented), null)]
-    [InlineData((int)HttpStatusCode.ServiceUnavailable, typeof(Error.ServiceUnavailable), null)]
+    [InlineData(429, typeof(Error.RateLimited), null)]
+    [InlineData((int)HttpStatusCode.NotImplemented, typeof(Error.Unexpected), null)]
+    [InlineData((int)HttpStatusCode.ServiceUnavailable, typeof(Error.Unavailable), null)]
     public async Task Default_null_status_map_returns_typed_failure_for_known_non_success_statuses(
         int statusCode,
         Type errorType,
@@ -90,7 +90,7 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        result.Should().BeFailureOfType<Error.InternalServerError>()
+        result.Should().BeFailureOfType<Error.Unexpected>()
             .Which.Detail.Should().Contain("599");
         tracker.Disposed.Should().BeTrue();
     }
@@ -113,11 +113,11 @@ public class ToResultAsyncTests
     {
         var tracker = new TrackingHttpResponseMessage(HttpStatusCode.ServiceUnavailable);
         var task = Task.FromResult<HttpResponseMessage>(tracker);
-        var error = new Error.InternalServerError("F1") { Detail = "503" };
+        var error = new Error.Unexpected("F1") { Detail = "503" };
 
         var result = await task.ToResultAsync(_ => error);
 
-        result.Should().BeFailureOfType<Error.InternalServerError>()
+        result.Should().BeFailureOfType<Error.Unexpected>()
             .Which.Should().HaveDetail("503");
         tracker.Disposed.Should().BeTrue();
     }
@@ -171,13 +171,13 @@ public class ToResultAsyncTests
     {
         var tracker = new TrackingHttpResponseMessage(HttpStatusCode.BadRequest);
         var task = Task.FromResult<HttpResponseMessage>(tracker);
-        var error = new Error.InternalServerError("F2") { Detail = "bad request body" };
+        var error = new Error.Unexpected("F2") { Detail = "bad request body" };
 
         var result = await task.ToResultAsync(
             (_, _) => Task.FromResult<Error?>(error),
             CancellationToken.None);
 
-        result.Should().BeFailureOfType<Error.InternalServerError>()
+        result.Should().BeFailureOfType<Error.Unexpected>()
             .Which.Should().HaveDetail("bad request body");
         tracker.Disposed.Should().BeTrue();
     }
@@ -354,7 +354,7 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        result.Should().BeFailureOfType<Error.TooManyRequests>();
+        result.Should().BeFailureOfType<Error.RateLimited>();
     }
 
     [Fact]
@@ -367,7 +367,7 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        result.Should().BeFailureOfType<Error.ServiceUnavailable>();
+        result.Should().BeFailureOfType<Error.Unavailable>();
     }
 
     [Fact]
@@ -384,7 +384,7 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        result.Should().BeFailureOfType<Error.InternalServerError>();
+        result.Should().BeFailureOfType<Error.Unexpected>();
     }
 
     [Fact]
@@ -395,7 +395,7 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        result.Should().BeFailureOfType<Error.TooManyRequests>();
+        result.Should().BeFailureOfType<Error.RateLimited>();
     }
 
     [Fact]
@@ -412,7 +412,7 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        result.Should().BeFailureOfType<Error.InternalServerError>();
+        result.Should().BeFailureOfType<Error.Unexpected>();
     }
 
     [Fact]
@@ -424,7 +424,7 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        result.Should().BeFailureOfType<Error.TooManyRequests>();
+        result.Should().BeFailureOfType<Error.RateLimited>();
     }
 
     [Fact]
@@ -436,7 +436,7 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        result.Should().BeFailureOfType<Error.TooManyRequests>();
+        result.Should().BeFailureOfType<Error.RateLimited>();
     }
 
     [Fact]
@@ -449,7 +449,7 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        result.Should().BeFailureOfType<Error.Unauthorized>();
+        result.Should().BeFailureOfType<Error.AuthenticationRequired>();
     }
 
     [Fact]
@@ -483,7 +483,7 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        result.Should().BeFailureOfType<Error.Unauthorized>();
+        result.Should().BeFailureOfType<Error.AuthenticationRequired>();
     }
 
     // -------- RFC-strict defensive cases (gaps in initial i-H2 coverage) --------
@@ -532,7 +532,7 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        result.Should().BeFailureOfType<Error.InternalServerError>();
+        result.Should().BeFailureOfType<Error.Unexpected>();
     }
 
     [Fact]
@@ -555,7 +555,7 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        result.Should().BeFailureOfType<Error.InternalServerError>();
+        result.Should().BeFailureOfType<Error.Unexpected>();
     }
 
     [Fact]
@@ -567,7 +567,7 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        result.Should().BeFailureOfType<Error.TooManyRequests>();
+        result.Should().BeFailureOfType<Error.RateLimited>();
     }
 
     #endregion

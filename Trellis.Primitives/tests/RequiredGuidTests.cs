@@ -18,8 +18,8 @@ public class RequiredGuidTests
     {
         var guidId1 = EmployeeId.TryCreate(default(Guid));
         guidId1.IsFailure.Should().BeTrue();
-        guidId1.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
-        var validation = (Error.UnprocessableContent)guidId1.UnwrapError();
+        guidId1.UnwrapError().Should().BeOfType<Error.InvalidInput>();
+        var validation = (Error.InvalidInput)guidId1.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/employeeId");
         validation.Fields[0].Detail.Should().Be("Employee Id cannot be Guid.Empty.");
         validation.Fields[0].ReasonCode.Should().Be("validation.error");
@@ -33,7 +33,7 @@ public class RequiredGuidTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/myField");
     }
 
@@ -158,8 +158,8 @@ public class RequiredGuidTests
 
         // Assert
         myGuidResult.IsFailure.Should().BeTrue();
-        myGuidResult.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
-        Error.UnprocessableContent ve = (Error.UnprocessableContent)myGuidResult.UnwrapError();
+        myGuidResult.UnwrapError().Should().BeOfType<Error.InvalidInput>();
+        Error.InvalidInput ve = (Error.InvalidInput)myGuidResult.UnwrapError();
         ve.Fields[0].Field.Path.Should().Be("/employeeId");
         ve.Fields[0].Detail.Should().Be("Guid should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)");
 
@@ -172,7 +172,7 @@ public class RequiredGuidTests
         var myGuidResult = EmployeeId.TryCreate((string?)null);
 
         myGuidResult.IsFailure.Should().BeTrue();
-        var ve = (Error.UnprocessableContent)myGuidResult.UnwrapError();
+        var ve = (Error.InvalidInput)myGuidResult.UnwrapError();
         ve.Fields[0].Field.Path.Should().Be("/employeeId");
         ve.Fields[0].Detail.Should().Be("Employee Id cannot be empty.");
     }
@@ -185,7 +185,7 @@ public class RequiredGuidTests
         var myGuidResult = EmployeeId.TryCreate("00000000-0000-0000-0000-000000000000");
 
         myGuidResult.IsFailure.Should().BeTrue();
-        var ve = (Error.UnprocessableContent)myGuidResult.UnwrapError();
+        var ve = (Error.InvalidInput)myGuidResult.UnwrapError();
         ve.Fields[0].Field.Path.Should().Be("/employeeId");
         ve.Fields[0].Detail.Should().Be("Employee Id cannot be Guid.Empty.");
     }

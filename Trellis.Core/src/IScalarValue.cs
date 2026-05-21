@@ -28,8 +28,8 @@
 ///     private EmailAddress(string value) : base(value) { }
 ///
 ///     public static Result<EmailAddress> TryCreate(string value, string? fieldName = null) =>
-///         value.ToResult(Error.UnprocessableContent.ForField(fieldName ?? "email", "invalid", "Email is required"))
-///             .Ensure(e => e.Contains("@"), Error.UnprocessableContent.ForField(fieldName ?? "email", "invalid", "Invalid email"))
+///         value.ToResult(Error.InvalidInput.ForField(fieldName ?? "email", "invalid", "Email is required"))
+///             .Ensure(e => e.Contains("@"), Error.InvalidInput.ForField(fieldName ?? "email", "invalid", "Invalid email"))
 ///             .Map(e => new EmailAddress(e));
 /// }
 /// ]]></code>

@@ -72,7 +72,7 @@ public sealed class ResourceAuthorizationBehavior<TMessage, TResource, TResponse
         //    IResourceLoader<TMessage, TResource> is arbitrary user code (e.g. it may open a
         //    DbContext or pre-fetch state during construction), so loader *resolution* itself
         //    counts as I/O for the ga-11 guarantee. "No authenticated actor" is client-error
-        //    state per RFC 9110 §15.5.2; route it to 401 via Error.Unauthorized rather than
+        //    state per RFC 9110 §15.5.2; route it to 401 via Error.AuthenticationRequired rather than
         //    letting it fall through to the resource-load path. Reported by GPT-5.5 review:
         //    the previous order (resolve loader → resolve actor) let an unauthenticated
         //    caller trigger loader-side effects via the DI factory before the actor check.

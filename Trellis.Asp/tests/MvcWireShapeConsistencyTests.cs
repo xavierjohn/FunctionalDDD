@@ -36,7 +36,7 @@ public sealed class MvcWireShapeConsistencyTests
     private const string SlashKey = "items/0/name";
     private const string ErrorMessage = "must be valid";
 
-    private static Error.UnprocessableContent NestedFieldError() =>
+    private static Error.InvalidInput NestedFieldError() =>
         new(EquatableArray.Create(
             new FieldViolation(new InputPointer(NestedPointer), "format") { Detail = ErrorMessage }));
 
@@ -109,7 +109,7 @@ public sealed class MvcWireShapeConsistencyTests
         private NestedFieldVO(string value) => Value = value;
 
         public static Result<NestedFieldVO> TryCreate(string? value, string? fieldName) =>
-            Result.Fail<NestedFieldVO>(new Error.UnprocessableContent(
+            Result.Fail<NestedFieldVO>(new Error.InvalidInput(
                 EquatableArray.Create(
                     new FieldViolation(new InputPointer(NestedPointer), "format") { Detail = ErrorMessage })));
     }

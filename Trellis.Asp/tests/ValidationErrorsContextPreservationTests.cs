@@ -10,8 +10,8 @@ using Xunit;
 /// <summary>
 /// Regression tests for m-8: ErrorCollector must preserve the full
 /// <see cref="FieldViolation"/> shape (ReasonCode, Args, Detail) and the
-/// top-level <see cref="Error.UnprocessableContent.Rules"/> entries when
-/// merging via <see cref="ValidationErrorsContext.AddError(Error.UnprocessableContent)"/>.
+/// top-level <see cref="Error.InvalidInput.Rules"/> entries when
+/// merging via <see cref="ValidationErrorsContext.AddError(Error.InvalidInput)"/>.
 /// Previously the collector flattened violations into (field, detail) strings,
 /// dropping ReasonCode/Args and discarding Rules entirely.
 /// </summary>
@@ -23,7 +23,7 @@ public class ValidationErrorsContextPreservationTests
         using (ValidationErrorsContext.BeginScope())
         {
             var args = ImmutableDictionary<string, string>.Empty.Add("min", "3").Add("max", "50");
-            var source = new Error.UnprocessableContent(EquatableArray.Create(
+            var source = new Error.InvalidInput(EquatableArray.Create(
                 new FieldViolation(InputPointer.ForProperty("name"), "length_out_of_range", args, "Name length out of range.")));
 
             ValidationErrorsContext.AddError(source);
@@ -45,7 +45,7 @@ public class ValidationErrorsContextPreservationTests
     {
         using (ValidationErrorsContext.BeginScope())
         {
-            var source = new Error.UnprocessableContent(
+            var source = new Error.InvalidInput(
                 EquatableArray<FieldViolation>.Empty,
                 EquatableArray.Create(
                     new RuleViolation("passwords_must_match", Detail: "Password and confirmation must match."),
@@ -67,7 +67,7 @@ public class ValidationErrorsContextPreservationTests
     {
         using (ValidationErrorsContext.BeginScope())
         {
-            var source = new Error.UnprocessableContent(EquatableArray.Create(
+            var source = new Error.InvalidInput(EquatableArray.Create(
                 new FieldViolation(InputPointer.ForProperty("email"), "invalid_format", Detail: "Email is invalid.")));
 
             ValidationErrorsContext.AddError(source);
@@ -83,9 +83,9 @@ public class ValidationErrorsContextPreservationTests
     {
         using (ValidationErrorsContext.BeginScope())
         {
-            ValidationErrorsContext.AddError(new Error.UnprocessableContent(EquatableArray.Create(
+            ValidationErrorsContext.AddError(new Error.InvalidInput(EquatableArray.Create(
                 new FieldViolation(InputPointer.ForProperty("password"), "too_short", Detail: "Password is too short."))));
-            ValidationErrorsContext.AddError(new Error.UnprocessableContent(EquatableArray.Create(
+            ValidationErrorsContext.AddError(new Error.InvalidInput(EquatableArray.Create(
                 new FieldViolation(InputPointer.ForProperty("password"), "missing_digit", Detail: "Password must contain a digit."))));
 
             var aggregated = ValidationErrorsContext.GetUnprocessableContent();

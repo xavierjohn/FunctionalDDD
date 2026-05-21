@@ -156,7 +156,7 @@ public class ResourceAuthorizationBehaviorTests
         // ga-11: the resource loader must not run when the caller is unauthenticated.
         // Loader I/O is expensive (DB) and can leak existence by timing — gate on actor first.
         // "No authenticated actor" is modelled as Maybe<Actor>.None on IActorProvider; the
-        // pipeline maps it to Error.Unauthorized (HTTP 401).
+        // pipeline maps it to Error.AuthenticationRequired (HTTP 401).
         var loader = new FakeResourceLoader<ResourceOwnerCommand>(new TestResource("res-1", "owner-1"));
         var services = new ServiceCollection();
         services.AddScoped<IResourceLoader<ResourceOwnerCommand, TestResource>>(_ => loader);
@@ -171,7 +171,7 @@ public class ResourceAuthorizationBehaviorTests
         var result = await behavior.Handle(command, next, CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.Unauthorized>();
+        result.UnwrapError().Should().BeOfType<Error.AuthenticationRequired>();
         loader.WasCalled.Should().BeFalse();
     }
 
@@ -231,7 +231,7 @@ public class ResourceAuthorizationBehaviorTests
         var result = await behavior.Handle(command, next, CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.Unauthorized>();
+        result.UnwrapError().Should().BeOfType<Error.AuthenticationRequired>();
     }
 
     #endregion

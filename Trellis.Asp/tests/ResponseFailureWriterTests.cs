@@ -86,7 +86,7 @@ public sealed class ResponseFailureWriterTests
     public async Task Unauthorized_without_auth_configured_emits_no_WwwAuthenticate_header()
     {
         var ctx = NewContext();
-        var r = Result.Fail<T>(new Error.Unauthorized());
+        var r = Result.Fail<T>(new Error.AuthenticationRequired());
 
         await r.ToHttpResponse(t => t).ExecuteAsync(ctx);
 
@@ -99,7 +99,7 @@ public sealed class ResponseFailureWriterTests
     public async Task Unauthorized_synthesizes_default_challenge_scheme_from_AuthenticationSchemeProvider()
     {
         var ctx = NewAuthContext(defaultChallengeScheme: "Bearer");
-        var r = Result.Fail<T>(new Error.Unauthorized());
+        var r = Result.Fail<T>(new Error.AuthenticationRequired());
 
         await r.ToHttpResponse(t => t).ExecuteAsync(ctx);
 
@@ -113,7 +113,7 @@ public sealed class ResponseFailureWriterTests
     public async Task Unauthorized_synthesizes_using_configured_challenge_scheme_name()
     {
         var ctx = NewAuthContext(defaultChallengeScheme: "ApiJwt");
-        var r = Result.Fail<T>(new Error.Unauthorized());
+        var r = Result.Fail<T>(new Error.AuthenticationRequired());
 
         await r.ToHttpResponse(t => t).ExecuteAsync(ctx);
 
@@ -125,7 +125,7 @@ public sealed class ResponseFailureWriterTests
     {
         var ctx = NewAuthContext(defaultChallengeScheme: "Bearer");
         ctx.Response.Headers["WWW-Authenticate"] = "Bearer realm=\"upstream\"";
-        var r = Result.Fail<T>(new Error.Unauthorized());
+        var r = Result.Fail<T>(new Error.AuthenticationRequired());
 
         await r.ToHttpResponse(t => t).ExecuteAsync(ctx);
 
@@ -138,9 +138,9 @@ public sealed class ResponseFailureWriterTests
     public async Task Unauthorized_with_non_401_mapped_status_does_not_synthesize()
     {
         var ctx = NewAuthContext(defaultChallengeScheme: "Bearer");
-        var r = Result.Fail<T>(new Error.Unauthorized());
+        var r = Result.Fail<T>(new Error.AuthenticationRequired());
 
-        await r.ToHttpResponse(t => t, o => o.WithErrorMapping<Error.Unauthorized>(500))
+        await r.ToHttpResponse(t => t, o => o.WithErrorMapping<Error.AuthenticationRequired>(500))
             .ExecuteAsync(ctx);
 
         ctx.Response.StatusCode.Should().Be(500);
@@ -167,7 +167,7 @@ public sealed class ResponseFailureWriterTests
         var fields = EquatableArray.Create(
             new FieldViolation(new InputPointer("/email"), "format", null, "must be email"),
             new FieldViolation(new InputPointer("/email"), "required", null, "required"));
-        var r = Result.Fail<T>(new Error.UnprocessableContent(fields));
+        var r = Result.Fail<T>(new Error.InvalidInput(fields));
 
         await r.ToHttpResponse(t => t).ExecuteAsync(ctx);
 
@@ -182,7 +182,7 @@ public sealed class ResponseFailureWriterTests
             new RuleViolation("must_have_items",
                 EquatableArray.Create(new InputPointer("/items")),
                 null, "Order must have items."));
-        var r = Result.Fail<T>(new Error.UnprocessableContent(default, rules));
+        var r = Result.Fail<T>(new Error.InvalidInput(default, rules));
 
         await r.ToHttpResponse(t => t).ExecuteAsync(ctx);
 
@@ -194,7 +194,7 @@ public sealed class ResponseFailureWriterTests
     {
         var ctx = NewContext();
         // No fields, no rules: skips ValidationProblem and writes plain Problem.
-        var r = Result.Fail<T>(new Error.UnprocessableContent(default));
+        var r = Result.Fail<T>(new Error.InvalidInput(default));
 
         await r.ToHttpResponse(t => t).ExecuteAsync(ctx);
 
@@ -205,7 +205,7 @@ public sealed class ResponseFailureWriterTests
     public async Task InternalServerError_writes_500_problem_response()
     {
         var ctx = NewContext();
-        var r = Result.Fail<T>(new Error.InternalServerError("FAULT-7") { Detail = "stack trace leak" });
+        var r = Result.Fail<T>(new Error.Unexpected("FAULT-7") { Detail = "stack trace leak" });
 
         await r.ToHttpResponse(t => t).ExecuteAsync(ctx);
 
@@ -216,7 +216,7 @@ public sealed class ResponseFailureWriterTests
     public async Task TooManyRequests_without_RetryAfter_does_not_emit_header()
     {
         var ctx = NewContext();
-        var r = Result.Fail<T>(new Error.TooManyRequests());
+        var r = Result.Fail<T>(new Error.RateLimited());
 
         await r.ToHttpResponse(t => t).ExecuteAsync(ctx);
 
@@ -233,13 +233,13 @@ public sealed class ResponseFailureWriterTests
         var ctx = NewContext();
         var fields = EquatableArray.Create(
             new FieldViolation(new InputPointer("/email"), "format", null, "must be email"));
-        var error = new Error.UnprocessableContent(fields)
+        var error = new Error.InvalidInput(fields)
         {
             Detail = "Sensitive internal context that must not leak.",
         };
         var r = Result.Fail<T>(error);
 
-        await r.ToHttpResponse(t => t, o => o.WithErrorMapping<Error.UnprocessableContent>(500))
+        await r.ToHttpResponse(t => t, o => o.WithErrorMapping<Error.InvalidInput>(500))
             .ExecuteAsync(ctx);
 
         ctx.Response.StatusCode.Should().Be(500);
@@ -255,7 +255,7 @@ public sealed class ResponseFailureWriterTests
         var ctx = NewContext();
         var fields = EquatableArray.Create(
             new FieldViolation(new InputPointer("/email"), "format", null, "must be email"));
-        var error = new Error.UnprocessableContent(fields)
+        var error = new Error.InvalidInput(fields)
         {
             Detail = "One or more validation errors occurred.",
         };
@@ -293,7 +293,7 @@ public sealed class ResponseFailureWriterTests
         var ctx = NewContext();
         var fields = EquatableArray.Create(
             new FieldViolation(new InputPointer(pointerPath), "format", null, "must be valid"));
-        var r = Result.Fail<T>(new Error.UnprocessableContent(fields));
+        var r = Result.Fail<T>(new Error.InvalidInput(fields));
 
         await r.ToHttpResponse(t => t).ExecuteAsync(ctx);
 
@@ -310,7 +310,7 @@ public sealed class ResponseFailureWriterTests
         var ctx = NewContext();
         var fields = EquatableArray.Create(
             new FieldViolation(new InputPointer("/items/0/name"), "format", null, "must be valid"));
-        var r = Result.Fail<T>(new Error.UnprocessableContent(fields));
+        var r = Result.Fail<T>(new Error.InvalidInput(fields));
 
         await r.ToHttpResponse(t => t).ExecuteAsync(ctx);
 
@@ -329,7 +329,7 @@ public sealed class ResponseFailureWriterTests
         var fields = EquatableArray.Create(
             new FieldViolation(new InputPointer("/items/0/name"), "required", null, "is required"),
             new FieldViolation(new InputPointer("/items/0/name"), "format", null, "must be valid"));
-        var r = Result.Fail<T>(new Error.UnprocessableContent(fields));
+        var r = Result.Fail<T>(new Error.InvalidInput(fields));
 
         await r.ToHttpResponse(t => t).ExecuteAsync(ctx);
 

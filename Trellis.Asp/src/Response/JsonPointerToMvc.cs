@@ -53,7 +53,7 @@ using System.Text;
 /// collides with structurally distinct multi-segment pointers under this
 /// translation. Raw JSON Pointer values are preserved per-rule on
 /// <c>extensions["rules"][n].fields[]</c> for any
-/// <see cref="Error.UnprocessableContent"/> that includes
+/// <see cref="Error.InvalidInput"/> that includes
 /// <see cref="RuleViolation"/> entries; <c>FieldViolation</c>-only payloads
 /// only carry the translated MVC key on the wire and have no escape hatch.
 /// Producers needing path fidelity for a flat field violation must therefore

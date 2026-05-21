@@ -4,7 +4,7 @@ using Trellis.Testing;
 
 /// <summary>
 /// Bug-fix tests covering wrapper-Detail / Rules surfacing in <see cref="Error.GetDisplayMessage"/>
-/// and Combine semantics for two <see cref="Error.UnprocessableContent"/> values.
+/// and Combine semantics for two <see cref="Error.InvalidInput"/> values.
 /// </summary>
 public class ErrorDisplayAndCombineTests
 {
@@ -15,7 +15,7 @@ public class ErrorDisplayAndCombineTests
     {
         var rule1 = new RuleViolation("order.must_have_items", Detail: "Order must contain at least one item");
         var rule2 = new RuleViolation("cancel_after_ship", Detail: "Cannot cancel after shipment");
-        var error = new Error.UnprocessableContent(
+        var error = new Error.InvalidInput(
             EquatableArray<FieldViolation>.Empty,
             EquatableArray.Create(rule1, rule2));
 
@@ -29,7 +29,7 @@ public class ErrorDisplayAndCombineTests
     public void GetDisplayMessage_UnprocessableContent_rule_without_Detail_falls_back_to_ReasonCode()
     {
         var rule = new RuleViolation("passwords_must_match");
-        var error = new Error.UnprocessableContent(
+        var error = new Error.InvalidInput(
             EquatableArray<FieldViolation>.Empty,
             EquatableArray.Create(rule));
 
@@ -41,7 +41,7 @@ public class ErrorDisplayAndCombineTests
     {
         var field = new FieldViolation(InputPointer.ForProperty("email"), "invalid") { Detail = "Bad email" };
         var rule = new RuleViolation("must_be_unique", Detail: "Email must be unique");
-        var error = new Error.UnprocessableContent(
+        var error = new Error.InvalidInput(
             EquatableArray.Create(field),
             EquatableArray.Create(rule));
 
@@ -56,20 +56,20 @@ public class ErrorDisplayAndCombineTests
     [Fact]
     public void Combine_two_UnprocessableContent_preserves_both_wrapper_Details()
     {
-        var a = new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "A failed" };
-        var b = new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "B failed" };
+        var a = new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "A failed" };
+        var b = new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "B failed" };
 
         var combined = ((Error?)a).Combine(b);
 
-        combined.Should().BeOfType<Error.UnprocessableContent>();
+        combined.Should().BeOfType<Error.InvalidInput>();
         combined.Detail.Should().Contain("A failed").And.Contain("B failed");
     }
 
     [Fact]
     public void Combine_two_UnprocessableContent_with_one_Detail_preserves_it()
     {
-        var a = new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Only A" };
-        var b = new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty);
+        var a = new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Only A" };
+        var b = new Error.InvalidInput(EquatableArray<FieldViolation>.Empty);
 
         var combined = ((Error?)a).Combine(b);
 
@@ -79,8 +79,8 @@ public class ErrorDisplayAndCombineTests
     [Fact]
     public void Combine_two_UnprocessableContent_with_identical_Detail_dedupes()
     {
-        var a = new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Same" };
-        var b = new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Same" };
+        var a = new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Same" };
+        var b = new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Same" };
 
         var combined = ((Error?)a).Combine(b);
 

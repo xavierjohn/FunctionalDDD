@@ -101,12 +101,12 @@ T> : JsonConverter<T>
         var result = Metadata.Invoke(values);
         if (!result.TryGetValue(out var value, out var error))
         {
-            // Surface the structured Error.UnprocessableContent on the thrown exception so
+            // Surface the structured Error.InvalidInput on the thrown exception so
             // downstream emitters (e.g. Trellis.Asp's ScalarValueValidationMiddleware) can
             // render one wire entry per FieldViolation under <parent>.<leaf> keys.
             throw new TrellisJsonValidationException(error.GetDisplayMessage())
             {
-                UnprocessableContent = error as Error.UnprocessableContent,
+                UnprocessableContent = error as Error.InvalidInput,
             };
         }
 

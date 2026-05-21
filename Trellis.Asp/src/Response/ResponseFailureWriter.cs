@@ -23,7 +23,7 @@ internal static class ResponseFailureWriter
 
         // The only async companion-header path: synthesize WWW-Authenticate when a 401 error
         // reaches the writer and the response doesn't already carry the header.
-        if (error is Error.Unauthorized
+        if (error is Error.AuthenticationRequired
             && statusCode == 401
             && !httpContext.Response.Headers.ContainsKey("WWW-Authenticate"))
         {
@@ -38,7 +38,7 @@ internal static class ResponseFailureWriter
         var instance = httpContext.Request.GetEncodedPathAndQuery();
 
         Microsoft.AspNetCore.Http.IResult inner;
-        if (error is Error.UnprocessableContent unprocessable
+        if (error is Error.InvalidInput unprocessable
             && (unprocessable.Fields.Items.Length > 0 || unprocessable.Rules.Items.Length > 0))
         {
             var errors = unprocessable.Fields.Items
@@ -56,7 +56,7 @@ internal static class ResponseFailureWriter
         else
         {
             var detail = statusCode >= 500 ? "An internal error occurred." : GetPublicDetail(error);
-            var rules = error is Error.UnprocessableContent uc ? uc.Rules : default;
+            var rules = error is Error.InvalidInput uc ? uc.Rules : default;
             inner = Microsoft.AspNetCore.Http.Results.Problem(
                 detail,
                 instance,
@@ -84,7 +84,7 @@ internal static class ResponseFailureWriter
     /// <summary>
     /// Synthesizes a scheme-only <c>WWW-Authenticate</c> challenge from the registered
     /// default-challenge scheme via <see cref="IAuthenticationSchemeProvider"/>. This is the
-    /// RFC 9110 §11.6.1 compliance path for mediator-emitted <see cref="Error.Unauthorized"/>
+    /// RFC 9110 §11.6.1 compliance path for mediator-emitted <see cref="Error.AuthenticationRequired"/>
     /// results on anonymous-tolerant routes where the ASP.NET Core auth handler is never
     /// invoked. If no auth scheme is configured (<see cref="IAuthenticationSchemeProvider"/>
     /// unavailable or no default challenge), emits nothing — synthesizing "Bearer" for a
@@ -117,7 +117,7 @@ internal static class ResponseFailureWriter
     {
         var (code, kind) = error is Error.TransportFault { Fault: HttpError httpError }
             ? (httpError.Code, httpError.Kind)
-            : (error.Code, error.Kind);
+            : (error.Code, ToWireKind(error));
 
         var ext = new Dictionary<string, object?>(StringComparer.Ordinal)
         {
@@ -125,7 +125,7 @@ internal static class ResponseFailureWriter
             ["kind"] = kind,
         };
 
-        if (error is Error.InternalServerError ise)
+        if (error is Error.Unexpected ise && ise.FaultId is not null)
             ext["faultId"] = ise.FaultId;
 
         if (rules.Items.Length > 0)
@@ -140,6 +140,18 @@ internal static class ResponseFailureWriter
 
         return ext;
     }
+
+    private static string ToWireKind(Error error) => error switch
+    {
+        Error.InvalidInput => "unprocessable-content",
+        Error.InvariantViolation => "unprocessable-content",
+        Error.AuthenticationRequired => "unauthorized",
+        Error.RateLimited => "too-many-requests",
+        Error.Unavailable => "service-unavailable",
+        Error.Unexpected u when u.ReasonCode == "not_implemented" => "not-implemented",
+        Error.Unexpected => "internal-server-error",
+        _ => error.Kind,
+    };
 }
 
 /// <summary>JSON shape used for rule violations in ProblemDetails extensions.</summary>

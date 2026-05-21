@@ -467,7 +467,7 @@ internal class StreetName : ScalarValueObject<StreetName, string>, IScalarValue<
 
     public static Result<StreetName> TryCreate(string? value, string? fieldName = null) =>
         string.IsNullOrWhiteSpace(value)
-            ? Result.Fail<StreetName>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(fieldName ?? "street"), "validation.error") { Detail = "Street is required" })))
+            ? Result.Fail<StreetName>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(fieldName ?? "street"), "validation.error") { Detail = "Street is required" })))
             : Result.Ok(new StreetName(value));
 }
 
@@ -477,6 +477,6 @@ internal class CityName : ScalarValueObject<CityName, string>, IScalarValue<City
 
     public static Result<CityName> TryCreate(string? value, string? fieldName = null) =>
         string.IsNullOrWhiteSpace(value)
-            ? Result.Fail<CityName>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(fieldName ?? "city"), "validation.error") { Detail = "City is required" })))
+            ? Result.Fail<CityName>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(fieldName ?? "city"), "validation.error") { Detail = "City is required" })))
             : Result.Ok(new CityName(value));
 }

@@ -9,7 +9,7 @@ using Trellis.Showcase.Domain.ValueObjects;
 /// Adapter to an external fraud-detection service. Boundary errors map onto Trellis Error cases:
 /// <list type="bullet">
 ///   <item><description>Suspicious transaction → <see cref="Error.Conflict"/> with reason code <c>fraud.detected</c>.</description></item>
-///   <item><description>Service unreachable → <see cref="Error.ServiceUnavailable"/>.</description></item>
+///   <item><description>Service unreachable → <see cref="Error.Unavailable"/>.</description></item>
 /// </list>
 /// </summary>
 public interface IFraudGateway

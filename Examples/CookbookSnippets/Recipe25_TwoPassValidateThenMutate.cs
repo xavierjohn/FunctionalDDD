@@ -61,7 +61,7 @@ public sealed class Product : Aggregate<ProductId>
     public Result<Trellis.Unit> CanReserve(int quantity) =>
         Result.Ensure(
             quantity > 0 && quantity <= Stock,
-            Error.UnprocessableContent.ForRule(
+            Error.InvalidInput.ForRule(
                 "stock.insufficient",
                 $"Cannot reserve {quantity} from stock of {Stock}."));
 
@@ -86,7 +86,7 @@ public sealed class Order : Aggregate<OrderId>
     public Result<Trellis.Unit> CanSubmit() =>
         Result.Ensure(
             LineItems.Count > 0,
-            Error.UnprocessableContent.ForRule(
+            Error.InvalidInput.ForRule(
                 "order.empty",
                 "Order must have at least one line item to submit."));
 

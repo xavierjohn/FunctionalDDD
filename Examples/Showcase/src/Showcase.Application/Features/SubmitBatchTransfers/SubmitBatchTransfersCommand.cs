@@ -25,7 +25,7 @@ using Trellis.Showcase.Domain.ValueObjects;
 /// <para>
 /// Both sources fire on the same request; the
 /// <see cref="ValidationBehavior{TMessage, TResponse}"/> aggregates every
-/// <see cref="Error.UnprocessableContent"/> failure into a single response with one combined
+/// <see cref="Error.InvalidInput"/> failure into a single response with one combined
 /// <see cref="FieldViolation"/> list. Nested and indexer property names from FluentValidation
 /// are translated to RFC&#8239;6901 JSON Pointers (<c>/Metadata/Reference</c>,
 /// <c>/Lines/0/Memo</c>) by the FluentValidation adapter.
@@ -62,7 +62,7 @@ public sealed record SubmitBatchTransfersCommand(
 
         return violations.Count == 0
             ? Result.Ok()
-            : Result.Fail(new Error.UnprocessableContent(EquatableArray.Create([.. violations])));
+            : Result.Fail(new Error.InvalidInput(EquatableArray.Create([.. violations])));
     }
 }
 

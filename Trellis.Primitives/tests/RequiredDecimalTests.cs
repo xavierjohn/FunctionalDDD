@@ -27,8 +27,8 @@ public class RequiredDecimalTests
 
         // Assert
         unitPrice.IsFailure.Should().BeTrue();
-        unitPrice.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
-        var validation = (Error.UnprocessableContent)unitPrice.UnwrapError();
+        unitPrice.UnwrapError().Should().BeOfType<Error.InvalidInput>();
+        var validation = (Error.InvalidInput)unitPrice.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/unitPrice");
         validation.Fields[0].Detail.Should().Be("Unit Price cannot be empty.");
     }
@@ -267,7 +267,7 @@ public class RequiredDecimalTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/myField");
     }
 }

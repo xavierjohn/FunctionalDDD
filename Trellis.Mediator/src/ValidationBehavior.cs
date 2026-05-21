@@ -9,7 +9,7 @@ using global::Mediator;
 /// Unified validation stage of the Trellis Mediator pipeline. Runs the compile-time
 /// <see cref="IValidate"/> contract (when the message implements it) and every
 /// <see cref="IMessageValidator{TMessage}"/> registered for <typeparamref name="TMessage"/>
-/// in DI, aggregates all <see cref="Error.UnprocessableContent"/> failures into a single
+/// in DI, aggregates all <see cref="Error.InvalidInput"/> failures into a single
 /// response failure, and short-circuits the pipeline before the handler is invoked.
 /// </summary>
 /// <remarks>
@@ -21,18 +21,18 @@ using global::Mediator;
 /// <para>
 /// Failure aggregation rules:
 /// <list type="bullet">
-///   <item><description>Multiple <see cref="Error.UnprocessableContent"/> failures (from
+///   <item><description>Multiple <see cref="Error.InvalidInput"/> failures (from
 ///   <see cref="IValidate"/> and any number of <see cref="IMessageValidator{TMessage}"/>
-///   instances) are merged into a single <see cref="Error.UnprocessableContent"/> whose
-///   <see cref="Error.UnprocessableContent.Fields"/> contains every reported
-///   <see cref="FieldViolation"/> and whose <see cref="Error.UnprocessableContent.Rules"/>
+///   instances) are merged into a single <see cref="Error.InvalidInput"/> whose
+///   <see cref="Error.InvalidInput.Fields"/> contains every reported
+///   <see cref="FieldViolation"/> and whose <see cref="Error.InvalidInput.Rules"/>
 ///   contains every reported <see cref="RuleViolation"/>.</description></item>
-///   <item><description>An <see cref="Error.UnprocessableContent"/> with empty
-///   <see cref="Error.UnprocessableContent.Fields"/> AND empty
-///   <see cref="Error.UnprocessableContent.Rules"/> still short-circuits the handler:
+///   <item><description>An <see cref="Error.InvalidInput"/> with empty
+///   <see cref="Error.InvalidInput.Fields"/> AND empty
+///   <see cref="Error.InvalidInput.Rules"/> still short-circuits the handler:
 ///   the original failure semantics from the validator are preserved, even when no
 ///   violations are reported.</description></item>
-///   <item><description>A non-<see cref="Error.UnprocessableContent"/> failure (e.g.,
+///   <item><description>A non-<see cref="Error.InvalidInput"/> failure (e.g.,
 ///   <see cref="Error.Conflict"/>, <see cref="Error.Forbidden"/>) returned by any validation
 ///   source short-circuits the stage immediately and that failure is propagated as-is, with
 ///   no further validators consulted.</description></item>
@@ -77,7 +77,7 @@ public sealed class ValidationBehavior<TMessage, TResponse>
             var validateResult = validatable.Validate();
             if (validateResult.TryGetError(out var error))
             {
-                if (error is Error.UnprocessableContent upc)
+                if (error is Error.InvalidInput upc)
                 {
                     sawUnprocessableContent = true;
                     if (upc.Fields.Items.Length > 0)
@@ -106,7 +106,7 @@ public sealed class ValidationBehavior<TMessage, TResponse>
             if (!externalResult.TryGetError(out var error))
                 continue;
 
-            if (error is Error.UnprocessableContent upc)
+            if (error is Error.InvalidInput upc)
             {
                 sawUnprocessableContent = true;
                 if (upc.Fields.Items.Length > 0)
@@ -135,7 +135,7 @@ public sealed class ValidationBehavior<TMessage, TResponse>
             var rulesArray = rules is { Count: > 0 }
                 ? EquatableArray.Create(rules.ToArray())
                 : EquatableArray<RuleViolation>.Empty;
-            return TResponse.CreateFailure(new Error.UnprocessableContent(fieldsArray, rulesArray));
+            return TResponse.CreateFailure(new Error.InvalidInput(fieldsArray, rulesArray));
         }
 
         return await next(message, cancellationToken).ConfigureAwait(false);

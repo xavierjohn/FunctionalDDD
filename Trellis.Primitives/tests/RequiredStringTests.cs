@@ -21,8 +21,8 @@ public class RequiredStringTests
     {
         var trackingId1 = TrackingId.TryCreate(input, null);
         trackingId1.IsFailure.Should().BeTrue();
-        trackingId1.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
-        var validation = (Error.UnprocessableContent)trackingId1.UnwrapError();
+        trackingId1.UnwrapError().Should().BeOfType<Error.InvalidInput>();
+        var validation = (Error.InvalidInput)trackingId1.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/trackingId");
         validation.Fields[0].Detail.Should().Be("Tracking Id cannot be empty.");
         validation.Fields[0].ReasonCode.Should().Be("validation.error");

@@ -199,7 +199,7 @@ public sealed class ScalarValueValidationFilter : IActionFilter, IOrderedFilter
         return names;
     }
 
-    private static void HandleJsonValidationErrors(ActionExecutingContext context, Error.UnprocessableContent validationError)
+    private static void HandleJsonValidationErrors(ActionExecutingContext context, Error.InvalidInput validationError)
     {
         // Create a fresh ModelStateDictionary to avoid key casing issues.
         // MVC's model validation adds errors with PascalCase C# property names (e.g., "State").

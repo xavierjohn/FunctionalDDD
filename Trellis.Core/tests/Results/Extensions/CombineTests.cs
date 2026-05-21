@@ -23,13 +23,13 @@ public class CombineTests
     {
         // Arrange
         var rHelloWorld = Result.Ok("Hello")
-            .Combine(Result.Fail(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("key"), "validation.error") { Detail = "Bad World" }))))
+            .Combine(Result.Fail(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("key"), "validation.error") { Detail = "Bad World" }))))
             .Bind((hello, _) => Result.Ok($"{hello}"));
 
         // Act
 
         // Assert
-        var validation = rHelloWorld.Should().BeFailureOfType<Error.UnprocessableContent>().Which;
+        var validation = rHelloWorld.Should().BeFailureOfType<Error.InvalidInput>().Which;
         validation.Fields.Items.Should().ContainSingle();
         validation.Fields.Items[0].Should().BeEquivalentTo(new FieldViolation(InputPointer.ForProperty("key"), "validation.error") { Detail = "Bad World" });
     }
@@ -53,13 +53,13 @@ public class CombineTests
     {
         // Arrange
         var rHelloWorld = Result.Ok("Hello")
-            .Combine(Result.Fail<string>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("key"), "validation.error") { Detail = "Bad World" }))))
+            .Combine(Result.Fail<string>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("key"), "validation.error") { Detail = "Bad World" }))))
             .Bind((hello, world) => Result.Ok($"{hello} {world}"));
 
         // Act
 
         // Assert
-        var validation = rHelloWorld.Should().BeFailureOfType<Error.UnprocessableContent>().Which;
+        var validation = rHelloWorld.Should().BeFailureOfType<Error.InvalidInput>().Which;
         validation.Fields.Items.Should().ContainSingle();
         validation.Fields.Items[0].Should().BeEquivalentTo(new FieldViolation(InputPointer.ForProperty("key"), "validation.error") { Detail = "Bad World" });
     }
@@ -68,14 +68,14 @@ public class CombineTests
     public void Combine_two_results_where_2nd_is_success()
     {
         // Arrange
-        var rHelloWorld = Result.Fail<string>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("key"), "validation.error") { Detail = "Bad World" })))
+        var rHelloWorld = Result.Fail<string>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("key"), "validation.error") { Detail = "Bad World" })))
             .Combine(Result.Ok("World"))
             .Bind((hello, world) => Result.Ok($"{hello} {world}"));
 
         // Act
 
         // Assert
-        var validation = rHelloWorld.Should().BeFailureOfType<Error.UnprocessableContent>().Which;
+        var validation = rHelloWorld.Should().BeFailureOfType<Error.InvalidInput>().Which;
         validation.Fields.Items.Should().ContainSingle();
         validation.Fields.Items[0].Should().BeEquivalentTo(new FieldViolation(InputPointer.ForProperty("key"), "validation.error") { Detail = "Bad World" });
     }
@@ -101,13 +101,13 @@ public class CombineTests
         // Arrange
         var rHelloWorld = Result.Ok("Hello")
             .Combine(Result.Ok("World"))
-            .Combine(Result.Fail(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("key"), "validation.error") { Detail = "Bad World" }))))
+            .Combine(Result.Fail(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("key"), "validation.error") { Detail = "Bad World" }))))
             .Bind((hello, world, _) => Result.Ok($"{hello} {world}"));
 
         // Act
 
         // Assert
-        var validation = rHelloWorld.Should().BeFailureOfType<Error.UnprocessableContent>().Which;
+        var validation = rHelloWorld.Should().BeFailureOfType<Error.InvalidInput>().Which;
         validation.Fields.Items.Should().ContainSingle();
         validation.Fields.Items[0].Should().BeEquivalentTo(new FieldViolation(InputPointer.ForProperty("key"), "validation.error") { Detail = "Bad World" });
     }
@@ -132,14 +132,14 @@ public class CombineTests
     {
         // Arrange
         var rHelloWorld = Result.Ok("Hello")
-            .Combine(Result.Fail<string>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("First"), "validation.error") { Detail = "Bad First" }))))
-            .Combine(Result.Fail<string>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("Last"), "validation.error") { Detail = "Bad Last" }))))
+            .Combine(Result.Fail<string>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("First"), "validation.error") { Detail = "Bad First" }))))
+            .Combine(Result.Fail<string>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("Last"), "validation.error") { Detail = "Bad Last" }))))
             .Bind((hello, first, last) => Result.Ok($"{hello} {first} {last}"));
 
         // Act
 
         // Assert
-        var validation = rHelloWorld.Should().BeFailureOfType<Error.UnprocessableContent>().Which;
+        var validation = rHelloWorld.Should().BeFailureOfType<Error.InvalidInput>().Which;
         validation.Fields.Items.Should().HaveCount(2);
         validation.Fields.Items[0].Should().BeEquivalentTo(new FieldViolation(InputPointer.ForProperty("First"), "validation.error") { Detail = "Bad First" });
         validation.Fields.Items[1].Should().BeEquivalentTo(new FieldViolation(InputPointer.ForProperty("Last"), "validation.error") { Detail = "Bad Last" });
@@ -178,13 +178,13 @@ public class CombineTests
             .Combine(Result.Ok("6"))
             .Combine(Result.Ok("7"))
             .Combine(Result.Ok("8"))
-            .Combine(Result.Fail<string>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Bad 9" }))
+            .Combine(Result.Fail<string>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Bad 9" }))
             .Bind((one, two, three, four, five, six, seven, eight, nine) => Result.Ok($"{one}{two}{three}{four}{five}{six}{seven}{eight}{nine}"));
 
         // Act
 
         // Assert
-        var validation = rHelloWorld.Should().BeFailureOfType<Error.UnprocessableContent>().Which;
+        var validation = rHelloWorld.Should().BeFailureOfType<Error.InvalidInput>().Which;
         validation.Fields.Items.Should().BeEmpty();
         validation.Detail.Should().Be("Bad 9");
     }
@@ -195,20 +195,20 @@ public class CombineTests
         // Arrange
         var rHelloWorld = Result.Ok("1")
             .Combine(Result.Ok("2"))
-            .Combine(Result.Fail<string>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Bad 3" }))
+            .Combine(Result.Fail<string>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Bad 3" }))
             .Combine(Result.Ok("4"))
             .Combine(Result.Ok("5"))
             .Combine(Result.Ok("6"))
             .Combine(Result.Ok("7"))
             .Combine(Result.Ok("8"))
-            .Combine(Result.Fail<string>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Bad 9" }))
+            .Combine(Result.Fail<string>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Bad 9" }))
             .Bind((one, two, three, four, five, six, seven, eight, nine) => Result.Ok($"{one}{two}{three}{four}{five}{six}{seven}{eight}{nine}"));
 
         // Act
 
         // Assert
         // V6 Combine of two UnprocessableContent merges Fields/Rules and concatenates wrapper Detail.
-        var validation = rHelloWorld.Should().BeFailureOfType<Error.UnprocessableContent>().Which;
+        var validation = rHelloWorld.Should().BeFailureOfType<Error.InvalidInput>().Which;
         validation.Fields.Items.Should().BeEmpty();
         validation.Rules.Items.Should().BeEmpty();
         validation.Detail.Should().Be("Bad 3; Bad 9");
@@ -222,16 +222,16 @@ public class CombineTests
 
         // Act
         var rHelloWorld = Result.Ok("Hello")
-            .Combine(Result.Fail<string>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("First"), "validation.error") { Detail = "Bad First" }))))
-            .Combine(Result.Fail<string>(new Error.InternalServerError("test") { Detail = "Server error" }))
+            .Combine(Result.Fail<string>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("First"), "validation.error") { Detail = "Bad First" }))))
+            .Combine(Result.Fail<string>(new Error.Unexpected("test") { Detail = "Server error" }))
             .Bind((hello, first, last) => Result.Ok($"{hello} {first} {last}"));
 
         // Assert
         called.Should().BeFalse();
         var ag = rHelloWorld.Should().BeFailureOfType<Error.Aggregate>().Which;
         ag.Errors.Items.Should().HaveCount(2);
-        ag.Errors.Items[0].Should().Be(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("First"), "validation.error") { Detail = "Bad First" })));
-        ag.Errors.Items[1].Should().Be(new Error.InternalServerError("test") { Detail = "Server error" });
+        ag.Errors.Items[0].Should().Be(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("First"), "validation.error") { Detail = "Bad First" })));
+        ag.Errors.Items[1].Should().Be(new Error.Unexpected("test") { Detail = "Server error" });
 
     }
 
@@ -244,7 +244,7 @@ public class CombineTests
         // Act
         var rHelloWorld = Result.Ok("Hello")
             .Combine(Result.Fail<string>(new Error.Forbidden("authorization.forbidden") { Detail = "You can't touch this." }))
-            .Combine(Result.Fail<string>(new Error.InternalServerError("test") { Detail = "Server error" }))
+            .Combine(Result.Fail<string>(new Error.Unexpected("test") { Detail = "Server error" }))
             .Bind((hello, first, last) =>
             {
                 called = true;
@@ -256,7 +256,7 @@ public class CombineTests
         var ag = rHelloWorld.Should().BeFailureOfType<Error.Aggregate>().Which;
         ag.Errors.Items.Should().HaveCount(2);
         ag.Errors.Items[0].Should().Be(new Error.Forbidden("authorization.forbidden") { Detail = "You can't touch this." });
-        ag.Errors.Items[1].Should().Be(new Error.InternalServerError("test") { Detail = "Server error" });
+        ag.Errors.Items[1].Should().Be(new Error.Unexpected("test") { Detail = "Server error" });
 
     }
 
@@ -284,15 +284,15 @@ public class CombineTests
         var expectedField3 = new FieldViolation(InputPointer.ForProperty("Field3"), "validation.error") { Detail = "Message E" };
         _ = (expectedField1, expectedField2, expectedField3); // retained for documentation
 
-        var error1 = new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("Field2"), "validation.error") { Detail = "Message B" }));
-        var error2 = new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("Field2"), "validation.error") { Detail = "Message A" }));
-        var error3 = new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("Field2"), "validation.error") { Detail = "Message A" })); // duplicate message
-        var error4 = new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("Field1"), "validation.error") { Detail = "Message C" }));
-        var error5 = new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("Field1"), "validation.error") { Detail = "Message D" }));
-        var error6 = new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("Field1"), "validation.error") { Detail = "Message C" })); // duplicate message
-        var error7 = new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("Field3"), "validation.error") { Detail = "Message E" }));
-        var error8 = new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("Field3"), "validation.error") { Detail = "Message F" }));
-        var error9 = new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("Field3"), "validation.error") { Detail = "Message E" })); // duplicate message
+        var error1 = new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("Field2"), "validation.error") { Detail = "Message B" }));
+        var error2 = new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("Field2"), "validation.error") { Detail = "Message A" }));
+        var error3 = new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("Field2"), "validation.error") { Detail = "Message A" })); // duplicate message
+        var error4 = new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("Field1"), "validation.error") { Detail = "Message C" }));
+        var error5 = new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("Field1"), "validation.error") { Detail = "Message D" }));
+        var error6 = new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("Field1"), "validation.error") { Detail = "Message C" })); // duplicate message
+        var error7 = new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("Field3"), "validation.error") { Detail = "Message E" }));
+        var error8 = new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("Field3"), "validation.error") { Detail = "Message F" }));
+        var error9 = new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("Field3"), "validation.error") { Detail = "Message E" })); // duplicate message
 
         var result1 = Result.Fail<string>(error1);
         var result2 = Result.Fail<string>(error2);
@@ -318,7 +318,7 @@ public class CombineTests
         // Assert
         // V6 Combine concatenates UnprocessableContent.Fields without deduplication;
         // dedup/merge is left to the boundary renderer.
-        var validation = merged.Should().BeFailureOfType<Error.UnprocessableContent>().Which;
+        var validation = merged.Should().BeFailureOfType<Error.InvalidInput>().Which;
         validation.Fields.Items.Should().HaveCount(9);
 
         validation.Fields.Items.Select(f => (f.Field.Path, f.Detail)).Should().BeEquivalentTo(
@@ -354,34 +354,34 @@ public class CombineTests
     [Fact]
     public void StaticCombine_2Tuple_FirstFails_ReturnsFailure()
     {
-        var r1 = Result.Fail<string>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("f1"), "validation.error") { Detail = "bad" })));
+        var r1 = Result.Fail<string>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("f1"), "validation.error") { Detail = "bad" })));
         var r2 = Result.Ok("World");
 
         var result = Result.Combine(r1, r2);
 
-        result.Should().BeFailureOfType<Error.UnprocessableContent>();
+        result.Should().BeFailureOfType<Error.InvalidInput>();
     }
 
     [Fact]
     public void StaticCombine_2Tuple_SecondFails_ReturnsFailure()
     {
         var r1 = Result.Ok("Hello");
-        var r2 = Result.Fail<string>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("f2"), "validation.error") { Detail = "bad" })));
+        var r2 = Result.Fail<string>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("f2"), "validation.error") { Detail = "bad" })));
 
         var result = Result.Combine(r1, r2);
 
-        result.Should().BeFailureOfType<Error.UnprocessableContent>();
+        result.Should().BeFailureOfType<Error.InvalidInput>();
     }
 
     [Fact]
     public void StaticCombine_2Tuple_BothFail_AggregatesErrors()
     {
-        var r1 = Result.Fail<string>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("f1"), "validation.error") { Detail = "e1" })));
-        var r2 = Result.Fail<string>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("f2"), "validation.error") { Detail = "e2" })));
+        var r1 = Result.Fail<string>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("f1"), "validation.error") { Detail = "e1" })));
+        var r2 = Result.Fail<string>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("f2"), "validation.error") { Detail = "e2" })));
 
         var result = Result.Combine(r1, r2);
 
-        var validation = result.Should().BeFailureOfType<Error.UnprocessableContent>().Which;
+        var validation = result.Should().BeFailureOfType<Error.InvalidInput>().Which;
         validation.Fields.Items.Should().HaveCount(2);
     }
 
@@ -424,7 +424,7 @@ public class CombineTests
     public void StaticCombine_3Tuple_OneFails_ReturnsFailure()
     {
         var r1 = Result.Ok("a");
-        var r2 = Result.Fail<string>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("f"), "validation.error") { Detail = "bad" })));
+        var r2 = Result.Fail<string>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("f"), "validation.error") { Detail = "bad" })));
         var r3 = Result.Ok("c");
 
         var result = Result.Combine(r1, r2, r3);
@@ -454,16 +454,16 @@ public class CombineTests
     {
         var result = Result.Combine(
             Result.Ok(1),
-            Result.Fail<int>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("f1"), "validation.error") { Detail = "e1" }))),
+            Result.Fail<int>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("f1"), "validation.error") { Detail = "e1" }))),
             Result.Ok(3),
             Result.Ok(4),
-            Result.Fail<int>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("f2"), "validation.error") { Detail = "e2" }))),
+            Result.Fail<int>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("f2"), "validation.error") { Detail = "e2" }))),
             Result.Ok(6),
             Result.Ok(7),
             Result.Ok(8),
-            Result.Fail<int>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("f3"), "validation.error") { Detail = "e3" }))));
+            Result.Fail<int>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("f3"), "validation.error") { Detail = "e3" }))));
 
-        var validation = result.Should().BeFailureOfType<Error.UnprocessableContent>().Which;
+        var validation = result.Should().BeFailureOfType<Error.InvalidInput>().Which;
         validation.Fields.Items.Should().HaveCount(3);
     }
 

@@ -36,11 +36,11 @@ public partial class Slug : ScalarValueObject<Slug, string>, IScalarValue<Slug, 
         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(Slug) + '.' + nameof(TryCreate));
         var field = fieldName.NormalizeFieldName("slug");
         if (string.IsNullOrWhiteSpace(value))
-            return Result.Fail<Slug>(Error.UnprocessableContent.ForField(field, "validation.error", "Slug is required."));
+            return Result.Fail<Slug>(Error.InvalidInput.ForField(field, "validation.error", "Slug is required."));
         var trimmed = value.Trim();
         // lower-case, numbers, hyphens, single hyphen separators
         if (!SlugRegex().IsMatch(trimmed))
-            return Result.Fail<Slug>(Error.UnprocessableContent.ForField(field, "validation.error", "Slug must contain lower-case letters, numbers, and hyphens, without leading/trailing hyphens."));
+            return Result.Fail<Slug>(Error.InvalidInput.ForField(field, "validation.error", "Slug must contain lower-case letters, numbers, and hyphens, without leading/trailing hyphens."));
         return Result.Ok(new Slug(trimmed));
     }
 

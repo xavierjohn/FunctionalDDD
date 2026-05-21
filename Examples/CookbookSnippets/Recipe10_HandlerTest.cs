@@ -37,9 +37,9 @@ public class PlaceOrderHandlerTests
             new PlaceOrderCommand(Guid.NewGuid(), 100m, "US", "alice"),
             CancellationToken.None);
 
-        var error = result.Should().BeFailureOfType<Error.UnprocessableContent>().Which;
+        var error = result.Should().BeFailureOfType<Error.InvalidInput>().Which;
         var unwrapped = result.UnwrapError();
-        unwrapped.Should().BeOfType<Error.UnprocessableContent>();
+        unwrapped.Should().BeOfType<Error.InvalidInput>();
         error.Should().HaveFieldError("currency");
     }
 #pragma warning restore CA1707
@@ -49,7 +49,7 @@ internal static class Recipe10TestingSurface
 {
     public static void ValidationAssertionSurface()
     {
-        var error = Error.UnprocessableContent.ForField(
+        var error = Error.InvalidInput.ForField(
             "currency",
             "invalid_length",
             "Currency must be 3 characters.");

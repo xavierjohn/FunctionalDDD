@@ -46,14 +46,14 @@ Accept: application/json
 ### Replace the placeholder below with the value of `next.cursor` from the
 ### body (or just GET the URL from the `Link: <…>; rel="next"` header).
 ### (Under automated replay the placeholder is still sent verbatim, which is
-### rejected as 400 from Error.BadRequest("invalid_cursor") — same code path
+### rejected as 422 from Error.InvalidInput.ForRule("invalid_cursor") — same code path
 ### as the dedicated malformed-cursor case below.)
-# @expect status: 400
+# @expect status: 422
 GET {{host}}/api/accounts?limit=5&cursor=REPLACE_WITH_NEXT_CURSOR
 Accept: application/json
 
-### List accounts — malformed cursor (400 from Error.BadRequest("invalid_cursor"))
-# @expect status: 400
+### List accounts — malformed cursor (422 from Error.InvalidInput.ForRule("invalid_cursor"))
+# @expect status: 422
 GET {{host}}/api/accounts?cursor=not-a-real-cursor
 Accept: application/json
 

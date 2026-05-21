@@ -217,12 +217,12 @@ public class ShowcaseApiTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
-    public async Task Malformed_cursor_returns_400_problem_details()
+    public async Task Malformed_cursor_returns_422_problem_details()
     {
         var client = _factory.CreateClient();
         var response = await client.GetAsync(new Uri("/api/accounts?cursor=not-a-real-cursor", UriKind.Relative), Ct);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }
 
     [Fact]

@@ -39,7 +39,7 @@ public partial class ShippingAddress : ValueObject
         AddIfBlank(violations, postalCode, fieldName, nameof(PostalCode));
         AddIfBlank(violations, country, fieldName, nameof(Country));
         return violations.Count > 0
-            ? Result.Fail<ShippingAddress>(new Error.UnprocessableContent(EquatableArray.Create(violations.ToArray())))
+            ? Result.Fail<ShippingAddress>(new Error.InvalidInput(EquatableArray.Create(violations.ToArray())))
             : Result.Ok(new ShippingAddress(street.Trim(), city.Trim(), state.Trim(), postalCode.Trim(), country.Trim()));
     }
 
@@ -82,9 +82,9 @@ public sealed partial class Customer : Aggregate<CustomerId>
     }
 
     public static Result<Customer> TryCreate(CustomerId? id, string? name, ShippingAddress? shipping) =>
-        id.ToResult(Error.UnprocessableContent.ForField("id", "validation.error", "Customer id is required."))
-            .Combine(name.EnsureNotNullOrWhiteSpace(Error.UnprocessableContent.ForField("name", "required", "Name is required.")))
-            .Combine(shipping.ToResult(Error.UnprocessableContent.ForField("shipping", "validation.error", "Shipping address is required.")))
+        id.ToResult(Error.InvalidInput.ForField("id", "validation.error", "Customer id is required."))
+            .Combine(name.EnsureNotNullOrWhiteSpace(Error.InvalidInput.ForField("name", "required", "Name is required.")))
+            .Combine(shipping.ToResult(Error.InvalidInput.ForField("shipping", "validation.error", "Shipping address is required.")))
             .Map((id, name, shipping) => new Customer(id, name, shipping));
 }
 
@@ -135,7 +135,7 @@ public partial class LineItem : ValueObject
 
     public static Result<LineItem> TryCreate(string sku, int quantity) =>
         string.IsNullOrWhiteSpace(sku) || quantity <= 0
-            ? Result.Fail<LineItem>(Error.UnprocessableContent.ForRule("line.item.invalid"))
+            ? Result.Fail<LineItem>(Error.InvalidInput.ForRule("line.item.invalid"))
             : Result.Ok(new LineItem(sku.Trim(), quantity));
 
     protected override IEnumerable<IComparable?> GetEqualityComponents()

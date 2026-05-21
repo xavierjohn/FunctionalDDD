@@ -22,7 +22,7 @@ public interface IActorProvider
     /// typically the request lacks credentials, the authentication middleware did not produce
     /// an authenticated identity, or the authenticated identity is missing the claim needed
     /// to identify the actor. The Trellis mediator authorization pipeline maps this to
-    /// <see cref="Error.Unauthorized"/> (HTTP 401) per RFC 9110 §15.5.2. "No authenticated
+    /// <see cref="Error.AuthenticationRequired"/> (HTTP 401) per RFC 9110 §15.5.2. "No authenticated
     /// actor" is client-error state, not an exception — model it via the return value, not by
     /// throwing.
     /// </para>
@@ -31,7 +31,7 @@ public interface IActorProvider
     /// Thrown only for genuine infrastructure or configuration failures — for example, the
     /// provider was invoked outside an HTTP request scope (missing <c>HttpContext</c>), a
     /// user-supplied mapping delegate threw, or an option is misconfigured. The mediator
-    /// pipeline does not catch this case; it surfaces as <see cref="Error.InternalServerError"/>
+    /// pipeline does not catch this case; it surfaces as <see cref="Error.Unexpected"/>
     /// (HTTP 500), which is correct because these are bugs rather than authentication state.
     /// Do not throw for "missing actor" — return <see cref="Maybe{T}.None"/> instead.
     /// </exception>

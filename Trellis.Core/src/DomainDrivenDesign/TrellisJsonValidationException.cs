@@ -48,7 +48,7 @@ public sealed class TrellisJsonValidationException : JsonException
     /// <summary>
     /// Optional structured payload describing per-field violations recovered during
     /// deserialization. Populated by <c>CompositeValueObjectJsonConverter</c> when a
-    /// composite VO's <c>TryCreate</c> returns an <see cref="Error.UnprocessableContent"/>.
+    /// composite VO's <c>TryCreate</c> returns an <see cref="Error.InvalidInput"/>.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -62,11 +62,11 @@ public sealed class TrellisJsonValidationException : JsonException
     /// <para>
     /// When <c>null</c> (the default), the inner-exception path has no structured payload —
     /// either a plain <see cref="JsonException"/> from <c>System.Text.Json</c> or a Trellis
-    /// converter throw without an associated <see cref="Error.UnprocessableContent"/> (e.g.,
+    /// converter throw without an associated <see cref="Error.InvalidInput"/> (e.g.,
     /// missing required property, unsupported primitive type). The middleware falls back to
     /// a single entry under the translated parent path with <see cref="Exception.Message"/>
     /// as the value.
     /// </para>
     /// </remarks>
-    public Error.UnprocessableContent? UnprocessableContent { get; init; }
+    public Error.InvalidInput? UnprocessableContent { get; init; }
 }

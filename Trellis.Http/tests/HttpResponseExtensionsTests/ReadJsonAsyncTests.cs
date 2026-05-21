@@ -61,7 +61,7 @@ public class ReadJsonAsyncTests
 
         var result = await task.ReadJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
 
-        result.Should().BeFailureOfType<Error.InternalServerError>();
+        result.Should().BeFailureOfType<Error.Unexpected>();
         tracker.Disposed.Should().BeTrue();
     }
 
@@ -80,7 +80,7 @@ public class ReadJsonAsyncTests
 
         var result = await task.ReadJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
 
-        var err = result.Should().BeFailureOfType<Error.InternalServerError>().Subject;
+        var err = result.Should().BeFailureOfType<Error.Unexpected>().Subject;
         err.Detail.Should().NotContain("Xavier", "user data from the response body must not appear in the failure detail");
         err.Detail.Should().NotContain("not-a-number-12345", "user data from the response body must not appear in the failure detail");
         err.Detail.Should().NotContain("$.", "JsonException.Path can contain user-controlled dictionary keys; do not surface it");
@@ -98,7 +98,7 @@ public class ReadJsonAsyncTests
 
         var result = await task.ReadJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
 
-        result.Should().BeFailureOfType<Error.InternalServerError>();
+        result.Should().BeFailureOfType<Error.Unexpected>();
         tracker.Disposed.Should().BeTrue();
     }
 
@@ -112,7 +112,7 @@ public class ReadJsonAsyncTests
 
         var result = await task.ReadJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
 
-        result.Should().BeFailureOfType<Error.InternalServerError>();
+        result.Should().BeFailureOfType<Error.Unexpected>();
         tracker.Disposed.Should().BeTrue();
     }
 
@@ -124,7 +124,7 @@ public class ReadJsonAsyncTests
 
         var result = await task.ReadJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
 
-        result.Should().BeFailureOfType<Error.InternalServerError>()
+        result.Should().BeFailureOfType<Error.Unexpected>()
             .Which.Detail.Should().Contain("BadGateway");
         tracker.Disposed.Should().BeTrue();
     }

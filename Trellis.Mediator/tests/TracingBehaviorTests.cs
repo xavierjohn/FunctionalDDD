@@ -65,7 +65,7 @@ public class TracingBehaviorTests : IDisposable
         var behavior = new TracingBehavior<TestCommand, Result<string>>();
         var command = new TestCommand("Alice");
         var next = NextDelegate.ReturningAsync<TestCommand, Result<string>>(
-            Result.Fail<string>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("field"), "validation.error") { Detail = "Bad input." }))));
+            Result.Fail<string>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("field"), "validation.error") { Detail = "Bad input." }))));
 
         var result = await behavior.Handle(command, next, CancellationToken.None);
 
@@ -77,8 +77,8 @@ public class TracingBehaviorTests : IDisposable
         // and type tags are emitted.
         activity.StatusDescription.Should().BeNullOrEmpty(
             "Error.Detail can carry user input or PII and must not leak into trace status descriptions by default");
-        activity.GetTagItem("error.type").Should().Be("Error.UnprocessableContent");
-        activity.GetTagItem("error.code").Should().Be("unprocessable-content");
+        activity.GetTagItem("error.type").Should().Be("Error.InvalidInput");
+        activity.GetTagItem("error.code").Should().Be("invalid-input");
     }
 
     [Fact]

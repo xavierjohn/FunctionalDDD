@@ -59,7 +59,7 @@ public class GptReviewRegressionTests
         var result = await behavior.Handle(command, next, CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.Unauthorized>();
+        result.UnwrapError().Should().BeOfType<Error.AuthenticationRequired>();
 
         factoryInvocations.Should().Be(0,
             "ga-11 requires that no I/O — including DI factory invocations — runs when the caller is unauthenticated. "
@@ -242,7 +242,7 @@ public class GptReviewRegressionTests
     /// <summary>
     /// Actor provider whose <see cref="GetCurrentActorAsync"/> returns
     /// <see cref="Maybe{T}.None"/> — represents an unauthenticated request. The authorization
-    /// pipeline must short-circuit with <see cref="Error.Unauthorized"/> before the resource
+    /// pipeline must short-circuit with <see cref="Error.AuthenticationRequired"/> before the resource
     /// loader runs. Used by the ga-11 regression test.
     /// </summary>
     private sealed class NoActorProvider : IActorProvider

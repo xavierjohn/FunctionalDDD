@@ -99,7 +99,7 @@ public class RequiredXxxBinderLenienceTests
         // this test stable regardless of value-provider short-circuit policy.
         var result = AspStrictString.TryCreate("");
         result.IsFailure.Should().BeTrue();
-        var ve = (Error.UnprocessableContent)result.UnwrapError();
+        var ve = (Error.InvalidInput)result.UnwrapError();
         ve.Fields[0].Detail.Should().Be("Asp Strict String cannot be empty.");
 
         // And via binder for a whitespace-only payload that [Trim] reduces to "":

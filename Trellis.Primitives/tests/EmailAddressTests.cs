@@ -18,7 +18,7 @@ public class EmailAddressTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().Be(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("school email"), "validation.error") { Detail = "Email address is not valid." })));
+        result.UnwrapError().Should().Be(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("school email"), "validation.error") { Detail = "Email address is not valid." })));
     }
 
     [Theory]
@@ -187,7 +187,7 @@ public class EmailAddressTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
+        result.UnwrapError().Should().BeOfType<Error.InvalidInput>();
     }
 
     [Fact]
@@ -198,7 +198,7 @@ public class EmailAddressTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/school email");
     }
 

@@ -87,13 +87,13 @@ public class ResultAssertionsTests
     public void BeFailureOfType_Should_Fail_When_Error_Type_Different()
     {
         // Arrange
-        var result = Result.Fail<int>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid" });
+        var result = Result.Fail<int>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid" });
 
         // Act & Assert
         var act = () => result.Should().BeFailureOfType<Error.NotFound>();
 
         act.Should().Throw<Exception>()
-            .WithMessage("*to be of type*Error.NotFound*found*Error.UnprocessableContent*");
+            .WithMessage("*to be of type*Error.NotFound*found*Error.InvalidInput*");
     }
 
     [Fact]

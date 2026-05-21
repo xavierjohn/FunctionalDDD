@@ -46,7 +46,7 @@ public class LoggingBehaviorTests
         var behavior = new LoggingBehavior<TestCommand, Result<string>>(logger);
         var command = new TestCommand("Alice");
         var next = NextDelegate.ReturningAsync<TestCommand, Result<string>>(
-            Result.Fail<string>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("field"), "validation.error") { Detail = "Something failed." }))));
+            Result.Fail<string>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("field"), "validation.error") { Detail = "Something failed." }))));
 
         var result = await behavior.Handle(command, next, CancellationToken.None);
 
@@ -60,7 +60,7 @@ public class LoggingBehaviorTests
         // ga-12: Detail is redacted by default (it can contain user input/PII). Only the
         // stable error Code is emitted unless TrellisMediatorTelemetryOptions.IncludeErrorDetail
         // is opted in.
-        logEntries[1].Message.Should().Contain("unprocessable-content");
+        logEntries[1].Message.Should().Contain("invalid-input");
         logEntries[1].Message.Should().NotContain("Something failed.");
     }
 

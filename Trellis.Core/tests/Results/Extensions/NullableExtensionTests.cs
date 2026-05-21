@@ -12,7 +12,7 @@ public class NullableExtensionTests
         DateTime? date = DateTime.Now;
 
         // Act
-        var result = date.ToResult(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Date not set." });
+        var result = date.ToResult(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Date not set." });
 
         // Assert
         result.Should().BeSuccess().Which.Should().Be(date.Value);
@@ -25,10 +25,10 @@ public class NullableExtensionTests
         DateTime? date = default;
 
         // Act
-        var result = date.ToResult(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Date not set." });
+        var result = date.ToResult(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Date not set." });
 
         // Assert
-        result.Should().BeFailure().Which.Should().Be(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Date not set." });
+        result.Should().BeFailure().Which.Should().Be(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Date not set." });
 
     }
 
@@ -39,7 +39,7 @@ public class NullableExtensionTests
         MyClass? myClass = new();
 
         // Act
-        var result = myClass.ToResult(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "MyClass is not set." });
+        var result = myClass.ToResult(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "MyClass is not set." });
 
         // Assert
         result.Should().BeSuccess().Which.Should().BeSameAs(myClass);
@@ -52,10 +52,10 @@ public class NullableExtensionTests
         MyClass? myClass = default;
 
         // Act
-        var result = myClass.ToResult(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "MyClass is not set." });
+        var result = myClass.ToResult(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "MyClass is not set." });
 
         // Assert
-        result.Should().BeFailure().Which.Should().Be(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "MyClass is not set." });
+        result.Should().BeFailure().Which.Should().Be(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "MyClass is not set." });
     }
 
     // async class
@@ -67,7 +67,7 @@ public class NullableExtensionTests
         var myClassTask = Task.FromResult((MyClass?)my);
 
         // Act
-        var result = await myClassTask.ToResultAsync(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "MyClass is not set." });
+        var result = await myClassTask.ToResultAsync(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "MyClass is not set." });
 
         // Assert
         result.Should().BeSuccess().Which.Should().BeSameAs(my);
@@ -81,10 +81,10 @@ public class NullableExtensionTests
         var myClassTask = Task.FromResult(my);
 
         // Act
-        var result = await myClassTask.ToResultAsync(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "MyClass is not set." });
+        var result = await myClassTask.ToResultAsync(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "MyClass is not set." });
 
         // Assert
-        result.Should().BeFailure().Which.Should().Be(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "MyClass is not set." });
+        result.Should().BeFailure().Which.Should().Be(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "MyClass is not set." });
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public class NullableExtensionTests
         var myClassTask = ValueTask.FromResult((MyClass?)my);
 
         // Act
-        var result = await myClassTask.ToResultAsync(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "MyClass is not set." });
+        var result = await myClassTask.ToResultAsync(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "MyClass is not set." });
 
         // Assert
         result.Should().BeSuccess().Which.Should().BeSameAs(my);
@@ -110,10 +110,10 @@ public class NullableExtensionTests
         var myClassTask = ValueTask.FromResult(my);
 
         // Act
-        var result = await myClassTask.ToResultAsync(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "MyClass is not set." });
+        var result = await myClassTask.ToResultAsync(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "MyClass is not set." });
 
         // Assert
-        result.Should().BeFailure().Which.Should().Be(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "MyClass is not set." });
+        result.Should().BeFailure().Which.Should().Be(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "MyClass is not set." });
     }
 
     // async struct
@@ -125,7 +125,7 @@ public class NullableExtensionTests
         var myClassTask = Task.FromResult(my);
 
         // Act
-        var result = await myClassTask.ToResultAsync(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Date is not set." });
+        var result = await myClassTask.ToResultAsync(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Date is not set." });
 
         // Assert
         result.Should().BeSuccess().Which.Should().Be(my);
@@ -139,10 +139,10 @@ public class NullableExtensionTests
         var myClassTask = Task.FromResult(my);
 
         // Act
-        var result = await myClassTask.ToResultAsync(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Date is not set." });
+        var result = await myClassTask.ToResultAsync(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Date is not set." });
 
         // Assert
-        result.Should().BeFailure().Which.Should().Be(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Date is not set." });
+        result.Should().BeFailure().Which.Should().Be(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Date is not set." });
     }
 
     [Fact]
@@ -154,7 +154,7 @@ public class NullableExtensionTests
         var myClassTask = ValueTask.FromResult(my);
 
         // Act
-        var result = await myClassTask.ToResultAsync(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Date is not set." });
+        var result = await myClassTask.ToResultAsync(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Date is not set." });
 
         // Assert
         result.Should().BeSuccess().Which.Should().Be(my);
@@ -168,10 +168,10 @@ public class NullableExtensionTests
         var myClassTask = ValueTask.FromResult(my);
 
         // Act
-        var result = await myClassTask.ToResultAsync(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Date is not set." });
+        var result = await myClassTask.ToResultAsync(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Date is not set." });
 
         // Assert
-        result.Should().BeFailure().Which.Should().Be(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Date is not set." });
+        result.Should().BeFailure().Which.Should().Be(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Date is not set." });
     }
 
     #region ToResult with Error Factory
@@ -187,7 +187,7 @@ public class NullableExtensionTests
         var result = date.ToResult(() =>
         {
             factoryInvoked = true;
-            return new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Date not set." };
+            return new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Date not set." };
         });
 
         // Assert
@@ -206,11 +206,11 @@ public class NullableExtensionTests
         var result = date.ToResult(() =>
         {
             factoryInvoked = true;
-            return new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Date not set." };
+            return new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Date not set." };
         });
 
         // Assert
-        result.Should().BeFailure().Which.Should().Be(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Date not set." });
+        result.Should().BeFailure().Which.Should().Be(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Date not set." });
         factoryInvoked.Should().BeTrue("error factory should be invoked for failure");
     }
 
@@ -268,7 +268,7 @@ public class NullableExtensionTests
         var result = await nullableTask.ToResultAsync(() =>
         {
             factoryInvoked = true;
-            return new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "MyClass is not set." };
+            return new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "MyClass is not set." };
         });
 
         // Assert
@@ -288,11 +288,11 @@ public class NullableExtensionTests
         var result = await nullableTask.ToResultAsync(() =>
         {
             factoryInvoked = true;
-            return new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Date is not set." };
+            return new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Date is not set." };
         });
 
         // Assert
-        result.Should().BeFailure().Which.Should().Be(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Date is not set." });
+        result.Should().BeFailure().Which.Should().Be(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Date is not set." });
         factoryInvoked.Should().BeTrue("error factory should be invoked for failure");
     }
 
@@ -308,7 +308,7 @@ public class NullableExtensionTests
         var result = await nullableTask.ToResultAsync(() =>
         {
             factoryInvoked = true;
-            return new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Date is not set." };
+            return new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Date is not set." };
         });
 
         // Assert

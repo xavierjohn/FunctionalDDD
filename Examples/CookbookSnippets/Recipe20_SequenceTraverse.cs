@@ -92,8 +92,8 @@ internal static class Recipe20Demonstrator
 
     public static Result<EmailAddress> EnsureAllPin(Result<EmailAddress> seed) =>
         seed.EnsureAll(
-            (email => email.Value.Length > 0, new Error.BadRequest("empty")),
-            (email => email.Value.Contains('@'), new Error.BadRequest("missing_at")));
+            (email => email.Value.Length > 0, Error.InvalidInput.ForRule("empty")),
+            (email => email.Value.Contains('@'), Error.InvalidInput.ForRule("missing_at")));
 }
 
 #if FALSE

@@ -19,25 +19,16 @@ public class TrellisAspOptionsTests
     public void GetStatusCode_ValidationError_returns_422()
     {
         var options = new TrellisAspOptions();
-        var error = new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("field"), "validation.error") { Detail = "Invalid" }));
+        var error = new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("field"), "validation.error") { Detail = "Invalid" }));
 
         options.GetStatusCode(error).Should().Be(StatusCodes.Status422UnprocessableEntity);
-    }
-
-    [Fact]
-    public void GetStatusCode_BadRequestError_returns_400()
-    {
-        var options = new TrellisAspOptions();
-        var error = new Error.BadRequest("bad.request") { Detail = "Bad" };
-
-        options.GetStatusCode(error).Should().Be(StatusCodes.Status400BadRequest);
     }
 
     [Fact]
     public void GetStatusCode_UnauthorizedError_returns_401()
     {
         var options = new TrellisAspOptions();
-        var error = new Error.Unauthorized() { Detail = "Nope" };
+        var error = new Error.AuthenticationRequired() { Detail = "Nope" };
 
         options.GetStatusCode(error).Should().Be(StatusCodes.Status401Unauthorized);
     }
@@ -100,7 +91,7 @@ public class TrellisAspOptionsTests
     public void GetStatusCode_RateLimitError_returns_429()
     {
         var options = new TrellisAspOptions();
-        var error = new Error.TooManyRequests() { Detail = "Too many" };
+        var error = new Error.RateLimited() { Detail = "Too many" };
 
         options.GetStatusCode(error).Should().Be(StatusCodes.Status429TooManyRequests);
     }
@@ -109,7 +100,7 @@ public class TrellisAspOptionsTests
     public void GetStatusCode_UnexpectedError_returns_500()
     {
         var options = new TrellisAspOptions();
-        var error = new Error.InternalServerError(Guid.NewGuid().ToString("N")) { Detail = "Oops" };
+        var error = new Error.Unexpected(Guid.NewGuid().ToString("N")) { Detail = "Oops" };
 
         options.GetStatusCode(error).Should().Be(StatusCodes.Status500InternalServerError);
     }
@@ -118,7 +109,7 @@ public class TrellisAspOptionsTests
     public void GetStatusCode_ServiceUnavailableError_returns_503()
     {
         var options = new TrellisAspOptions();
-        var error = new Error.ServiceUnavailable() { Detail = "Down" };
+        var error = new Error.Unavailable() { Detail = "Down" };
 
         options.GetStatusCode(error).Should().Be(StatusCodes.Status503ServiceUnavailable);
     }
@@ -127,7 +118,7 @@ public class TrellisAspOptionsTests
     public void GetStatusCode_UnknownErrorType_returns_500()
     {
         var options = new TrellisAspOptions();
-        Error error = new Error.InternalServerError("fault-1") { Detail = "Unknown problem" };
+        Error error = new Error.Unexpected("fault-1") { Detail = "Unknown problem" };
 
         options.GetStatusCode(error).Should().Be(StatusCodes.Status500InternalServerError);
     }
@@ -186,7 +177,7 @@ public class TrellisAspOptionsTests
         // V6 ADT note: every concrete Error subtype already has an explicit default mapping,
         // so the base-type catchall is reachable only if a default mapping is removed.
         // Here we use InternalServerError, which already maps to 500; the explicit type wins.
-        Error customError = new Error.InternalServerError("fault-1") { Detail = "custom" };
+        Error customError = new Error.Unexpected("fault-1") { Detail = "custom" };
         options.GetStatusCode(customError).Should().Be(StatusCodes.Status500InternalServerError);
     }
 
@@ -204,9 +195,9 @@ public class TrellisAspOptionsTests
     public void MapError_ValidationError_can_be_overridden()
     {
         var options = new TrellisAspOptions();
-        options.MapError<Error.UnprocessableContent>(StatusCodes.Status422UnprocessableEntity);
+        options.MapError<Error.InvalidInput>(StatusCodes.Status422UnprocessableEntity);
 
-        options.GetStatusCode(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("field"), "validation.error") { Detail = "Bad data" }))).Should().Be(StatusCodes.Status422UnprocessableEntity);
+        options.GetStatusCode(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("field"), "validation.error") { Detail = "Bad data" }))).Should().Be(StatusCodes.Status422UnprocessableEntity);
     }
 
     #endregion

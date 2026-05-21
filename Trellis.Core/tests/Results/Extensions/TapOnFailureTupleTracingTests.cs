@@ -21,7 +21,7 @@ public class TapOnFailureTupleTracingTests : TestBase
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
-        var result = Result.Fail<(int, string)>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Validation failed" });
+        var result = Result.Fail<(int, string)>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Validation failed" });
 
         // Act
         var actual = result.TapOnFailure(() => { /* Log error */ });
@@ -66,7 +66,7 @@ public class TapOnFailureTupleTracingTests : TestBase
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
-        var result = Result.Fail<(int, string)>(new Error.InternalServerError("test") { Detail = "Error" });
+        var result = Result.Fail<(int, string)>(new Error.Unexpected("test") { Detail = "Error" });
 
         // Act
         var actual = result
@@ -85,7 +85,7 @@ public class TapOnFailureTupleTracingTests : TestBase
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
-        var result = Result.Fail<(string, string)>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "validation.error") { Detail = "Invalid email" })));
+        var result = Result.Fail<(string, string)>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "validation.error") { Detail = "Invalid email" })));
 
         // Act
         var actual = result.TapOnFailure(error => { /* Log validation error */ });
@@ -129,7 +129,7 @@ public class TapOnFailureTupleTracingTests : TestBase
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
-        var result = Task.FromResult(Result.Fail<(int, string)>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Failed" }));
+        var result = Task.FromResult(Result.Fail<(int, string)>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Failed" }));
 
         // Act
         await result.TapOnFailureAsync(() => { });
@@ -143,7 +143,7 @@ public class TapOnFailureTupleTracingTests : TestBase
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
-        var result = Result.Fail<(int, string)>(new Error.InternalServerError("test") { Detail = "Error" });
+        var result = Result.Fail<(int, string)>(new Error.Unexpected("test") { Detail = "Error" });
 
         // Act
         await result.TapOnFailureAsync(() => Task.CompletedTask);
@@ -157,7 +157,7 @@ public class TapOnFailureTupleTracingTests : TestBase
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
-        var result = Result.Fail<(int, string)>(new Error.BadRequest("bad.request") { Detail = "Bad request" });
+        var result = Result.Fail<(int, string)>(Error.InvalidInput.ForRule("bad.request", "Bad request"));
 
         // Act
         await result.TapOnFailureAsync(error => Task.CompletedTask);
@@ -189,7 +189,7 @@ public class TapOnFailureTupleTracingTests : TestBase
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
-        var result = Result.Fail<(int, string, bool)>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Failed" });
+        var result = Result.Fail<(int, string, bool)>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Failed" });
 
         // Act
         result.TapOnFailure(() => { });
@@ -231,7 +231,7 @@ public class TapOnFailureTupleTracingTests : TestBase
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
-        var result = Result.Fail<(int, int, int, int, int, int, int, int, int)>(new Error.InternalServerError("test") { Detail = "Error" });
+        var result = Result.Fail<(int, int, int, int, int, int, int, int, int)>(new Error.Unexpected("test") { Detail = "Error" });
 
         // Act
         result.TapOnFailure(() => { });
@@ -251,7 +251,7 @@ public class TapOnFailureTupleTracingTests : TestBase
         using var activityTest = new ActivityTestHelper();
 
         // Act
-        var result = Result.Fail<string>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "validation.error") { Detail = "Invalid email" })))
+        var result = Result.Fail<string>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "validation.error") { Detail = "Invalid email" })))
             .Combine(Result.Ok("data"))
             .TapOnFailure(error => { /* Log error */ });
 
@@ -294,8 +294,8 @@ public class TapOnFailureTupleTracingTests : TestBase
         using var activityTest = new ActivityTestHelper();
 
         // Act
-        var result = Result.Fail<string>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "validation.error") { Detail = "Bad email" })))
-            .Combine(Result.Fail<string>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("phone"), "validation.error") { Detail = "Bad phone" }))))
+        var result = Result.Fail<string>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "validation.error") { Detail = "Bad email" })))
+            .Combine(Result.Fail<string>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("phone"), "validation.error") { Detail = "Bad phone" }))))
             .TapOnFailure(error => { /* Log validation errors */ });
 
         // Assert
@@ -314,7 +314,7 @@ public class TapOnFailureTupleTracingTests : TestBase
         using var activityTest = new ActivityTestHelper();
 
         // Act
-        var result = Result.Fail<string>(new Error.InternalServerError("test") { Detail = "Error" })
+        var result = Result.Fail<string>(new Error.Unexpected("test") { Detail = "Error" })
             .Combine(Result.Ok("data"))
             .TapOnFailure(error => { /* Log */ })
             .Bind((a, b) => Result.Ok("processed"));
@@ -336,7 +336,7 @@ public class TapOnFailureTupleTracingTests : TestBase
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
-        var result = Result.Fail<(int, string)>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Error" });
+        var result = Result.Fail<(int, string)>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Error" });
 
         // Act
         result.TapOnFailure(() => { });

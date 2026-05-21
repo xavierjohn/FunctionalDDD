@@ -35,7 +35,7 @@ public class ResultTracingIntegrationTests
         var functionCalled = false;
 
         // Act
-        var result = Result.Fail<int>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid value" })
+        var result = Result.Fail<int>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid value" })
             .Map(x =>
             {
                 functionCalled = true;
@@ -44,7 +44,7 @@ public class ResultTracingIntegrationTests
 
         // Assert
         functionCalled.Should().BeFalse();
-        result.Should().BeFailureOfType<Error.UnprocessableContent>();
+        result.Should().BeFailureOfType<Error.InvalidInput>();
         activityTest.AssertActivityCapturedWithStatus("Map", ActivityStatusCode.Error);
     }
 
@@ -71,7 +71,7 @@ public class ResultTracingIntegrationTests
         var functionCalled = false;
 
         // Act
-        var result = await Result.Fail<int>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid value" })
+        var result = await Result.Fail<int>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid value" })
             .MapAsync(x =>
             {
                 functionCalled = true;
@@ -80,7 +80,7 @@ public class ResultTracingIntegrationTests
 
         // Assert
         functionCalled.Should().BeFalse();
-        result.Should().BeFailureOfType<Error.UnprocessableContent>();
+        result.Should().BeFailureOfType<Error.InvalidInput>();
         activityTest.AssertActivityCapturedWithStatus("Map", ActivityStatusCode.Error);
     }
 
@@ -96,8 +96,8 @@ public class ResultTracingIntegrationTests
 
         // Act - Multiple validations followed by transformations
         var result = Result.Ok(50)
-            .Ensure(x => x > 0, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Must be positive" })
-            .Ensure(x => x < 100, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Must be < 100" })
+            .Ensure(x => x > 0, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Must be positive" })
+            .Ensure(x => x < 100, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Must be < 100" })
             .Bind(x => Result.Ok(x * 2))
             .Tap(x => Console.WriteLine($"Doubled: {x}"))
             .Bind(x => Result.Ok(x + 10));
@@ -128,14 +128,14 @@ public class ResultTracingIntegrationTests
 
         // Act - Bind fails in the middle of pipeline
         var result = Result.Ok(42)
-            .Ensure(x => x > 0, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Must be positive" })
-            .Bind(x => Result.Fail<int>(new Error.InternalServerError("test") { Detail = "Database error" }))
+            .Ensure(x => x > 0, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Must be positive" })
+            .Bind(x => Result.Fail<int>(new Error.Unexpected("test") { Detail = "Database error" }))
             .Tap(x => Console.WriteLine(x))
             .Bind(x => Result.Ok(x + 10));
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error!.Kind.Should().Be("internal-server-error");
+        result.Error!.Kind.Should().Be("unexpected");
 
         // Ensure should succeed
         activityTest.AssertActivityCapturedWithStatus("Ensure", ActivityStatusCode.Ok);
@@ -158,7 +158,7 @@ public class ResultTracingIntegrationTests
 
         // Act - Multiple recoveries, first one succeeds
         var result = Result.Ok(5)
-            .Ensure(x => x > 10, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Must be > 10" })
+            .Ensure(x => x > 10, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Must be > 10" })
             .RecoverOnFailure(() => Result.Ok(50))
             .RecoverOnFailure(() => Result.Ok(999)); // Should not execute
 
@@ -183,10 +183,10 @@ public class ResultTracingIntegrationTests
 
         // Act - Simulate a real-world validation and processing pipeline
         var result = ProcessOrder(orderId: 123)
-            .Ensure(order => order > 0, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Order ID must be positive" })
+            .Ensure(order => order > 0, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Order ID must be positive" })
             .Bind(ValidateInventory)
             .Bind(ApplyDiscount)
-            .Ensure(price => price >= 10, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Price must be at least $10" })
+            .Ensure(price => price >= 10, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Price must be at least $10" })
             .RecoverOnFailure(() => Result.Ok(10)) // Floor price at $10
             .Tap(price => Console.WriteLine($"Final price: ${price}"));
 
@@ -211,7 +211,7 @@ public class ResultTracingIntegrationTests
         var result = Result.Ok("user@example.com")
             .Bind(FetchUserFromDatabase)      // Fails
             .RecoverOnFailure(CreateGuestUser)
-            .Ensure(user => !string.IsNullOrEmpty(user), new Error.InternalServerError("test") { Detail = "User cannot be null" })
+            .Ensure(user => !string.IsNullOrEmpty(user), new Error.Unexpected("test") { Detail = "User cannot be null" })
             .Bind(user => Result.Ok(user.ToUpperInvariant()))
             .Tap(user => Console.WriteLine($"Processing: {user}"));
 
@@ -238,7 +238,7 @@ public class ResultTracingIntegrationTests
 
         // Act - Async pipeline
         var result = await Result.Ok(42)
-            .Ensure(x => x > 0, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Must be positive" })
+            .Ensure(x => x > 0, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Must be positive" })
             .BindAsync(x => Task.FromResult(Result.Ok(x * 2)))
             .TapAsync(x => Task.CompletedTask);
 
@@ -260,12 +260,12 @@ public class ResultTracingIntegrationTests
 
         // Act - Mix of sync and async operations
         var result = await Result.Ok(10)
-            .Ensure(x => x > 0, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Positive" })
+            .Ensure(x => x > 0, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Positive" })
             .BindAsync(x => Task.FromResult(Result.Ok(x * 2)))
             .BindAsync(async x =>
             {
                 var r = Result.Ok(x);
-                return await Task.FromResult(r.Ensure(y => y < 100, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "< 100" }));
+                return await Task.FromResult(r.Ensure(y => y < 100, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "< 100" }));
             })
             .TapAsync(async x => await Task.Delay(1))
             .BindAsync(x => Task.FromResult(Result.Ok(x + 5)));
@@ -294,13 +294,13 @@ public class ResultTracingIntegrationTests
         var result = Result.Ok(42)
             .Bind(x => Result.Ok(x * 2))          // Success track: 84
             .Tap(x => Console.WriteLine($"Before: {x}"))  // Success track
-            .Ensure(x => x < 50, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Must be < 50" }) // TRANSITION: Success ? Error
+            .Ensure(x => x < 50, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Must be < 50" }) // TRANSITION: Success ? Error
             .Bind(x => Result.Ok(x + 10))         // Error track (short-circuited)
             .Tap(x => Console.WriteLine($"After: {x}")); // Error track (short-circuited)
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error!.Code.Should().Be("unprocessable-content");
+        result.Error!.Code.Should().Be("invalid-input");
 
         // Get all activities by name
         var activities = activityTest.CapturedActivities;
@@ -328,7 +328,7 @@ public class ResultTracingIntegrationTests
 
         // Act - Error track changes to success track via Compensate
         var result = Result.Ok(5)
-            .Ensure(x => x > 10, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Must be > 10" }) // TRANSITION: Success ? Error
+            .Ensure(x => x > 10, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Must be > 10" }) // TRANSITION: Success ? Error
             .Bind(x => Result.Ok(x * 2))         // Error track (short-circuited)
             .RecoverOnFailure(() => Result.Ok(100))    // TRANSITION: Error ? Success
             .Bind(x => Result.Ok(x + 50))        // Success track: 150
@@ -362,11 +362,11 @@ public class ResultTracingIntegrationTests
 
         // Act - Multiple track transitions in one pipeline
         var result = Result.Ok(100)
-            .Ensure(x => x > 50, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Must be > 50" })  // OK: Success track
-            .Bind(x => Result.Fail<int>(new Error.InternalServerError("test") { Detail = "DB Error" })) // TRANSITION: Success ? Error
+            .Ensure(x => x > 50, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Must be > 50" })  // OK: Success track
+            .Bind(x => Result.Fail<int>(new Error.Unexpected("test") { Detail = "DB Error" })) // TRANSITION: Success ? Error
             .Tap(x => Console.WriteLine($"After error: {x}"))         // Error track
             .RecoverOnFailure(() => Result.Ok(200))                     // TRANSITION: Error ? Success
-            .Ensure(x => x < 150, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Must be < 150" })  // TRANSITION: Success ? Error (200 > 150)
+            .Ensure(x => x < 150, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Must be < 150" })  // TRANSITION: Success ? Error (200 > 150)
             .RecoverOnFailure(() => Result.Ok(50))                      // TRANSITION: Error ? Success
             .Bind(x => Result.Ok(x * 2));                         // Success track: 100
 
@@ -411,7 +411,7 @@ public class ResultTracingIntegrationTests
             .BindAsync(async x =>
             {
                 await Task.Delay(1);
-                return Result.Fail<int>(new Error.InternalServerError("test") { Detail = "Async error" });
+                return Result.Fail<int>(new Error.Unexpected("test") { Detail = "Async error" });
             }) // TRANSITION: Success ? Error
             .TapAsync(x => Task.CompletedTask)                      // Error track
             .RecoverOnFailureAsync(() => Task.FromResult(Result.Ok(200))) // TRANSITION: Error ? Success
@@ -443,14 +443,14 @@ public class ResultTracingIntegrationTests
 
         // Act - Recovery fails, stays on error track
         var result = Result.Ok(5)
-            .Ensure(x => x > 10, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Must be > 10" })     // TRANSITION: Success ? Error
-            .RecoverOnFailure(() => Result.Fail<int>(new Error.InternalServerError("test") { Detail = "Recovery failed" })) // Failed recovery
+            .Ensure(x => x > 10, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Must be > 10" })     // TRANSITION: Success ? Error
+            .RecoverOnFailure(() => Result.Fail<int>(new Error.Unexpected("test") { Detail = "Recovery failed" })) // Failed recovery
             .Bind(x => Result.Ok(x * 2))                           // Still on error track
             .Tap(x => Console.WriteLine($"Value: {x}"));                // Still on error track
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error!.Kind.Should().Be("internal-server-error");
+        result.Error!.Kind.Should().Be("unexpected");
         result.Error!.Detail.Should().Be("Recovery failed");
 
         // Verify transition and failed recovery

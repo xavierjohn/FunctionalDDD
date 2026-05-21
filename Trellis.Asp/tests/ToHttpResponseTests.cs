@@ -80,14 +80,14 @@ public sealed class ToHttpResponseTests
         // RFC 9457 §3 mandates application/problem+json for problem responses. The 422 path
         // must align with the rest of the framework's error surface (404, 403, 409, etc.),
         // which all emit problem+json. The instance assertion here specifically pins the
-        // ResponseFailureWriter ValidationProblem branch (Error.UnprocessableContent with
+        // ResponseFailureWriter ValidationProblem branch (Error.InvalidInput with
         // field violations), distinct from the Results.Problem(...) branch exercised by the
         // NotFound test below.
         var ctx = NewContext();
         ctx.Request.Path = "/api/customers";
         ctx.Request.QueryString = new QueryString("?api-version=2026-11-12");
         var r = Result.Fail<Todo>(
-            Error.UnprocessableContent.ForField("title", "required", "Title is required."));
+            Error.InvalidInput.ForField("title", "required", "Title is required."));
 
         await r.ToHttpResponse(TodoResponse.From).ExecuteAsync(ctx);
 
@@ -154,7 +154,7 @@ public sealed class ToHttpResponseTests
     public async Task TooManyRequests_without_retry_after_does_not_emit_RetryAfter_header()
     {
         var ctx = NewContext();
-        var r = Result.Fail<Todo>(new Error.TooManyRequests());
+        var r = Result.Fail<Todo>(new Error.RateLimited());
 
         await r.ToHttpResponse(TodoResponse.From).ExecuteAsync(ctx);
 

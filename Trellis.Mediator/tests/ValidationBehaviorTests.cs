@@ -40,7 +40,7 @@ public class ValidationBehaviorTests
         var result = await behavior.Handle(command, next, CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
-        var validation = result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>().Which;
+        var validation = result.UnwrapError().Should().BeOfType<Error.InvalidInput>().Which;
         validation.Fields.Items.Should().Contain(fv => fv.Field.Path.Contains("Name"));
         tracker.WasInvoked.Should().BeFalse("handler should not be invoked for invalid messages");
     }
@@ -89,7 +89,7 @@ public class ValidationBehaviorTests
         var result = await behavior.Handle(query, next, CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
-        var validation = result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>().Which;
+        var validation = result.UnwrapError().Should().BeOfType<Error.InvalidInput>().Which;
         validation.Fields.Items.Should().Contain(fv => fv.Field.Path.Contains("Id"));
         tracker.WasInvoked.Should().BeFalse();
     }
@@ -110,7 +110,7 @@ public class ValidationBehaviorTests
         var result = await behavior.Handle(new TestCommandNoValidation("anything"), next, CancellationToken.None);
 
         tracker.WasInvoked.Should().BeFalse();
-        var error = result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>().Which;
+        var error = result.UnwrapError().Should().BeOfType<Error.InvalidInput>().Which;
         error.Fields.Items.Should().ContainSingle()
             .Which.Detail.Should().Be("external rule");
     }
@@ -154,7 +154,7 @@ public class ValidationBehaviorTests
         var result = await behavior.Handle(new TestCommand("   "), next, CancellationToken.None);
 
         tracker.WasInvoked.Should().BeFalse();
-        var error = result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>().Which;
+        var error = result.UnwrapError().Should().BeOfType<Error.InvalidInput>().Which;
         error.Fields.Items.Should().HaveCount(2);
         error.Fields.Items.Should().Contain(fv => fv.Field.Path.Contains("Name"));
         error.Fields.Items.Should().Contain(fv => fv.Field.Path.Contains("Email"));
@@ -174,7 +174,7 @@ public class ValidationBehaviorTests
         var result = await behavior.Handle(new TestCommandNoValidation("x"), next, CancellationToken.None);
 
         tracker.WasInvoked.Should().BeFalse();
-        var error = result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>().Which;
+        var error = result.UnwrapError().Should().BeOfType<Error.InvalidInput>().Which;
         error.Fields.Items.Should().HaveCount(2);
         error.Fields.Items.Should().Contain(fv => fv.Field.Path == "/A");
         error.Fields.Items.Should().Contain(fv => fv.Field.Path == "/B");
@@ -220,10 +220,10 @@ public class ValidationBehaviorTests
     {
         var ruleA = new RuleViolation("rule.a") { Detail = "rule a failed" };
         var ruleB = new RuleViolation("rule.b") { Detail = "rule b failed" };
-        var ivalidateError = new Error.UnprocessableContent(
+        var ivalidateError = new Error.InvalidInput(
             EquatableArray<FieldViolation>.Empty,
             EquatableArray.Create(ruleA));
-        var externalError = new Error.UnprocessableContent(
+        var externalError = new Error.InvalidInput(
             EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("Email"), "validation.error") { Detail = "bad email" }),
             EquatableArray.Create(ruleB));
 
@@ -237,7 +237,7 @@ public class ValidationBehaviorTests
         var result = await bothBehavior.Handle(new TestCommandNoValidation("x"), next, CancellationToken.None);
 
         tracker.WasInvoked.Should().BeFalse();
-        var error = result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>().Which;
+        var error = result.UnwrapError().Should().BeOfType<Error.InvalidInput>().Which;
         error.Fields.Items.Should().HaveCount(1);
         error.Fields.Items.Should().Contain(fv => fv.Field.Path == "/Email");
         error.Rules.Items.Should().HaveCount(2);
@@ -249,7 +249,7 @@ public class ValidationBehaviorTests
     {
         var rule = new RuleViolation("rule.only") { Detail = "rule failure with no field" };
         var external = new StubMessageValidator<TestCommandNoValidation>(
-            Result.Fail(new Error.UnprocessableContent(
+            Result.Fail(new Error.InvalidInput(
                 EquatableArray<FieldViolation>.Empty,
                 EquatableArray.Create(rule))));
         var behavior = new ValidationBehavior<TestCommandNoValidation, Result<string>>([external]);
@@ -259,7 +259,7 @@ public class ValidationBehaviorTests
         var result = await behavior.Handle(new TestCommandNoValidation("x"), next, CancellationToken.None);
 
         tracker.WasInvoked.Should().BeFalse("rule-only UPC failures must still short-circuit");
-        var error = result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>().Which;
+        var error = result.UnwrapError().Should().BeOfType<Error.InvalidInput>().Which;
         error.Fields.Items.Should().BeEmpty();
         error.Rules.Items.Should().HaveCount(1);
         error.Rules.Items[0].ReasonCode.Should().Be("rule.only");
@@ -272,7 +272,7 @@ public class ValidationBehaviorTests
         // (TryGetError returns true). The behavior must propagate the failure rather than
         // silently fall through to the handler.
         var external = new StubMessageValidator<TestCommandNoValidation>(
-            Result.Fail(new Error.UnprocessableContent(
+            Result.Fail(new Error.InvalidInput(
                 EquatableArray<FieldViolation>.Empty,
                 EquatableArray<RuleViolation>.Empty)));
         var behavior = new ValidationBehavior<TestCommandNoValidation, Result<string>>([external]);
@@ -283,12 +283,12 @@ public class ValidationBehaviorTests
 
         tracker.WasInvoked.Should().BeFalse("empty UPC is still a failure and must short-circuit");
         result.IsFailure.Should().BeTrue();
-        var error = result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>().Which;
+        var error = result.UnwrapError().Should().BeOfType<Error.InvalidInput>().Which;
         error.Fields.Items.Should().BeEmpty();
         error.Rules.Items.Should().BeEmpty();
     }
 
-    private static Error.UnprocessableContent UpcWith(string field, string detail)
+    private static Error.InvalidInput UpcWith(string field, string detail)
         => new(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = detail }));
 
     private sealed class StubMessageValidator<TMessage>(IResult result, Action? onInvoked = null)

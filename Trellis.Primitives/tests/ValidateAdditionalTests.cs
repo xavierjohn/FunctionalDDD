@@ -90,8 +90,8 @@ public class ValidateAdditionalTests
     {
         var result = Sku.TryCreate("INVALID");
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        result.UnwrapError().Should().BeOfType<Error.InvalidInput>();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Sku must match pattern SKU-XXXXXX.");
     }
 
@@ -101,7 +101,7 @@ public class ValidateAdditionalTests
         // 11 chars — should fail StringLength before reaching ValidateAdditional
         var result = Sku.TryCreate("SKU-1234567");
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Sku must be 10 characters or fewer.");
     }
 
@@ -110,7 +110,7 @@ public class ValidateAdditionalTests
     {
         var result = Sku.TryCreate(null);
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Sku cannot be empty.");
     }
 
@@ -119,7 +119,7 @@ public class ValidateAdditionalTests
     {
         var result = Sku.TryCreate("BAD", "itemSku");
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/itemSku");
     }
 
@@ -161,7 +161,7 @@ public class ValidateAdditionalTests
     {
         var result = EvenPercentage.TryCreate(51);
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Even Percentage must be an even number.");
     }
 
@@ -170,7 +170,7 @@ public class ValidateAdditionalTests
     {
         var result = EvenPercentage.TryCreate(102);
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Even Percentage must be at most 100.");
     }
 
@@ -179,7 +179,7 @@ public class ValidateAdditionalTests
     {
         var result = EvenPercentage.TryCreate((int?)51);
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Even Percentage must be an even number.");
     }
 
@@ -196,7 +196,7 @@ public class ValidateAdditionalTests
     {
         var result = EvenPercentage.TryCreate("51");
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Even Percentage must be an even number.");
     }
 
@@ -216,7 +216,7 @@ public class ValidateAdditionalTests
     {
         var result = PositiveScore.TryCreate(-1);
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Positive Score must be positive.");
     }
 
@@ -234,7 +234,7 @@ public class ValidateAdditionalTests
     {
         var result = PositiveScore.TryCreate((int?)-3);
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Positive Score must be positive.");
     }
 
@@ -243,7 +243,7 @@ public class ValidateAdditionalTests
     {
         var result = PositiveScore.TryCreate("-5");
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Positive Score must be positive.");
     }
 
@@ -264,7 +264,7 @@ public class ValidateAdditionalTests
     {
         var result = PreciseAmount.TryCreate(10.999m);
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Precise Amount must have at most 2 decimal places.");
     }
 
@@ -289,7 +289,7 @@ public class ValidateAdditionalTests
     {
         var result = PreciseAmount.TryCreate((decimal?)5.555m);
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Precise Amount must have at most 2 decimal places.");
     }
 
@@ -305,7 +305,7 @@ public class ValidateAdditionalTests
     {
         var result = PreciseAmount.TryCreate("25.123");
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Precise Amount must have at most 2 decimal places.");
     }
 
@@ -380,7 +380,7 @@ public class ValidateAdditionalTests
     {
         var result = EvenPercentage.TryCreate(51, "discount");
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/discount");
     }
 
@@ -389,7 +389,7 @@ public class ValidateAdditionalTests
     {
         var result = PreciseAmount.TryCreate(1.999m, "price");
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/price");
     }
 

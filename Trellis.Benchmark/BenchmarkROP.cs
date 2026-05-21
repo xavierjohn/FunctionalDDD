@@ -110,7 +110,7 @@ public class BenchmarkROP
             .Combine(FirstName.TryCreate("Xavier"))
             .Combine(LastName.TryCreate(string.Empty))
             .Combine(EmailAddress.TryCreate("xavier @ somewhereelse.com"))
-            .Combine(Ensure(createdAt <= updatedAt, new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(nameof(updatedAt)), "validation.error") { Detail = "updateAt cannot be less than createdAt" }))))
+            .Combine(Ensure(createdAt <= updatedAt, new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(nameof(updatedAt)), "validation.error") { Detail = "updateAt cannot be less than createdAt" }))))
             .Bind((email, firstName, lastName, anotherEmail, _) => Result.Ok(string.Join(" ", firstName, lastName, email, anotherEmail)));
     }
 
@@ -123,7 +123,7 @@ public class BenchmarkROP
         var hrFname = FirstName.TryCreate("Xavier");
         var hrLname = LastName.TryCreate(string.Empty);
         var hrEmailSec = EmailAddress.TryCreate("xavier @ somewhereelse.com");
-        var hrDateCheck = Ensure(createdAt <= updatedAt, new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(nameof(updatedAt)), "validation.error") { Detail = "updateAt cannot be less than createdAt" })));
+        var hrDateCheck = Ensure(createdAt <= updatedAt, new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(nameof(updatedAt)), "validation.error") { Detail = "updateAt cannot be less than createdAt" })));
 
         Error? error = null;
         if (hrEmail.TryGetError(out var emErr))

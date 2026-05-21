@@ -66,7 +66,7 @@ public class MatchTupleTests
     public void Match_WithFailureTuple2_ValidationError_ReturnsErrorDetail()
     {
         // Arrange
-        var result = Result.Fail<(int, string)>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("field1"), "validation.error") { Detail = "Invalid input" })));
+        var result = Result.Fail<(int, string)>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("field1"), "validation.error") { Detail = "Invalid input" })));
 
         // Act
         var output = result.Match(
@@ -161,7 +161,7 @@ public class MatchTupleTests
     public void Switch_WithFailureTuple2_ExecutesFailureAction()
     {
         // Arrange
-        var result = Result.Fail<(int, int)>(new Error.InternalServerError("test") { Detail = "Server error" });
+        var result = Result.Fail<(int, int)>(new Error.Unexpected("test") { Detail = "Server error" });
         var errorLogged = false;
         var errorMessage = "";
 
@@ -272,7 +272,7 @@ public class MatchTupleTests
     public void Match_WithFailureTuple5_CallsOnFailure()
     {
         // Arrange
-        var result = Result.Fail<(int, int, int, int, int)>(new Error.BadRequest("bad.request") { Detail = "Bad request" });
+        var result = Result.Fail<(int, int, int, int, int)>(Error.InvalidInput.ForRule("bad.request", "Bad request"));
 
         // Act
         var output = result.Match(
@@ -305,7 +305,7 @@ public class MatchTupleTests
     public void Switch_WithFailureTuple3_CallsOnFailure()
     {
         // Arrange
-        var result = Result.Fail<(int, string, double)>(new Error.TooManyRequests() { Detail = "Too many requests" });
+        var result = Result.Fail<(int, string, double)>(new Error.RateLimited() { Detail = "Too many requests" });
         var output = "";
 
         // Act
@@ -416,7 +416,7 @@ public class MatchTupleTests
     public async Task MatchAsync_WithFailureTuple2_AsyncHandlers_CallsOnFailure()
     {
         // Arrange
-        var result = Result.Fail<(int, string)>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("field"), "validation.error") { Detail = "Invalid" })));
+        var result = Result.Fail<(int, string)>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("field"), "validation.error") { Detail = "Invalid" })));
 
         // Act
         var output = await result.MatchAsync(
@@ -464,7 +464,7 @@ public class MatchTupleTests
     public async Task MatchAsync_TaskResult_AsyncHandlers_Failure()
     {
         // Arrange
-        var resultTask = Task.FromResult(Result.Fail<(int, int)>(new Error.InternalServerError("test") { Detail = "Error" }));
+        var resultTask = Task.FromResult(Result.Fail<(int, int)>(new Error.Unexpected("test") { Detail = "Error" }));
 
         // Act
         var output = await resultTask.MatchAsync(
@@ -583,7 +583,7 @@ public class MatchTupleTests
     public void Match_CombinedValidation_Failure_ToErrorDto()
     {
         // Arrange
-        var emailResult = Result.Fail<string>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "validation.error") { Detail = "Invalid email" })));
+        var emailResult = Result.Fail<string>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "validation.error") { Detail = "Invalid email" })));
         var nameResult = Result.Ok("John Doe");
         var combined = emailResult.Combine(nameResult);
 

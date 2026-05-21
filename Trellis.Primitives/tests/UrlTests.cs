@@ -43,7 +43,7 @@ public class UrlTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
+        result.UnwrapError().Should().BeOfType<Error.InvalidInput>();
     }
 
     [Fact]
@@ -54,7 +54,7 @@ public class UrlTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("URL is required.");
     }
 
@@ -66,7 +66,7 @@ public class UrlTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         // Note: On some platforms, Uri.TryCreate treats "/path" as absolute with "file" scheme
         // So we check for either error message depending on platform behavior
         validation.Fields[0].Detail.Should().Match(e =>
@@ -82,7 +82,7 @@ public class UrlTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("URL must use HTTP or HTTPS scheme.");
     }
 
@@ -316,7 +316,7 @@ public class UrlTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/webhookUrl");
     }
 

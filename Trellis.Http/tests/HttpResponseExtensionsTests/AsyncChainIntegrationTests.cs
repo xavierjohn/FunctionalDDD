@@ -54,7 +54,7 @@ public class AsyncChainIntegrationTests
         // 401 surfaces via the statusMap; 409 would surface via HandleConflictAsync;
         // success deserializes through ReadJsonAsync.
         using var client = new HttpClient(new StubHandler(HttpStatusCode.Unauthorized));
-        var unauthorized = new Error.Unauthorized() { Detail = "expired" };
+        var unauthorized = new Error.AuthenticationRequired() { Detail = "expired" };
         var conflict = new Error.Conflict(new ResourceRef("Order", "1"), "duplicate_key");
 
         var result = await client.GetAsync("https://example/api/orders/1", CancellationToken.None)
@@ -63,7 +63,7 @@ public class AsyncChainIntegrationTests
             // Task<Result<HttpResponseMessage>> any conflict mapping must come from the statusMap.
             .ReadJsonAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
 
-        result.Should().BeFailureOfType<Error.Unauthorized>()
+        result.Should().BeFailureOfType<Error.AuthenticationRequired>()
             .Which.Should().HaveDetail("expired");
         _ = conflict;
     }

@@ -196,7 +196,7 @@ internal static class ScalarValueTypeHelper
         if (result is not IResult failure || !failure.TryGetError(out var failureError))
             return null;
 
-        if (failureError is Error.UnprocessableContent unprocessable && unprocessable.Fields.Items.Length > 0)
+        if (failureError is Error.InvalidInput unprocessable && unprocessable.Fields.Items.Length > 0)
         {
             return unprocessable.Fields
                 .Items

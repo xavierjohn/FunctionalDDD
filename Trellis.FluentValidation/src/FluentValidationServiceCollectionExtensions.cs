@@ -18,7 +18,7 @@ public static class FluentValidationServiceCollectionExtensions
     /// open-generic <see cref="IMessageValidator{TMessage}"/> implementation. Every
     /// <see cref="IValidator{T}"/> registered for the message in DI will then run inside the
     /// existing <see cref="ValidationBehavior{TMessage, TResponse}"/> and contribute its
-    /// failures to the aggregated <see cref="Error.UnprocessableContent"/> response.
+    /// failures to the aggregated <see cref="Error.InvalidInput"/> response.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <returns>The service collection for chaining.</returns>

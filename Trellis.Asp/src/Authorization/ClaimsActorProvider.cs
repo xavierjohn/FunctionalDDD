@@ -137,7 +137,7 @@ public class ClaimsActorOptions
 /// <see cref="Maybe{T}.None"/> when the request has no usable authenticated actor —
 /// no authenticated <see cref="System.Security.Claims.ClaimsIdentity"/>, or the configured
 /// <see cref="ClaimsActorOptions.ActorIdClaim"/> is missing from the authenticated identity —
-/// and the mediator authorization pipeline maps that to <see cref="Error.Unauthorized"/>
+/// and the mediator authorization pipeline maps that to <see cref="Error.AuthenticationRequired"/>
 /// (HTTP 401). It throws <see cref="InvalidOperationException"/> only when invoked outside
 /// an HTTP request scope (no <c>HttpContext</c>); that is a configuration bug, not
 /// authentication state, and surfaces as HTTP 500.

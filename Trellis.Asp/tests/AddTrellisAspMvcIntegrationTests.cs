@@ -181,7 +181,7 @@ public sealed class AddTrellisAspMvcIntegrationTests
         using var client = host.GetTestClient();
 
         // All three required string fields empty — composite TryCreate combines three
-        // FieldViolations into a single Error.UnprocessableContent.
+        // FieldViolations into a single Error.InvalidInput.
         var json = """{"address":{"street":"","city":"","state":""}}""";
         using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
 
@@ -307,7 +307,7 @@ public sealed class TestAddress : ValueObject
             violations.Add(new FieldViolation(InputPointer.ForProperty("state"), "validation.error") { Detail = "State is required." });
 
         return violations.Count > 0
-            ? Result.Fail<TestAddress>(new Error.UnprocessableContent(EquatableArray.Create(violations.ToArray())))
+            ? Result.Fail<TestAddress>(new Error.InvalidInput(EquatableArray.Create(violations.ToArray())))
             : Result.Ok(new TestAddress(street, city, state));
     }
 
@@ -350,7 +350,7 @@ public sealed class TestPhone : ScalarValueObject<TestPhone, string>, IScalarVal
     {
         var field = fieldName ?? "phone";
         return string.IsNullOrWhiteSpace(value)
-            ? Result.Fail<TestPhone>(new Error.UnprocessableContent(EquatableArray.Create(
+            ? Result.Fail<TestPhone>(new Error.InvalidInput(EquatableArray.Create(
                 new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Phone required." })))
             : Result.Ok(new TestPhone(value));
     }
@@ -364,10 +364,10 @@ public sealed class TestEmail2 : ScalarValueObject<TestEmail2, string>, IScalarV
     {
         var field = fieldName ?? "email";
         if (string.IsNullOrWhiteSpace(value))
-            return Result.Fail<TestEmail2>(new Error.UnprocessableContent(EquatableArray.Create(
+            return Result.Fail<TestEmail2>(new Error.InvalidInput(EquatableArray.Create(
                 new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Email required." })));
         if (!value.Contains('@'))
-            return Result.Fail<TestEmail2>(new Error.UnprocessableContent(EquatableArray.Create(
+            return Result.Fail<TestEmail2>(new Error.InvalidInput(EquatableArray.Create(
                 new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Email must contain @." })));
         return Result.Ok(new TestEmail2(value));
     }

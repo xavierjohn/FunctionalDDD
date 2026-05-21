@@ -21,7 +21,7 @@ public class Check_Tests
     [Fact]
     public void Check_Success_CheckFails_ReturnsCheckFailure()
     {
-        var error = new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "check failed" };
+        var error = new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "check failed" };
 
         var result = Result.Ok("hello")
             .Check(v => Result.Fail<int>(error));
@@ -32,7 +32,7 @@ public class Check_Tests
     [Fact]
     public void Check_Failure_CheckNotInvoked_ReturnsOriginalFailure()
     {
-        var error = new Error.InternalServerError("test") { Detail = "original error" };
+        var error = new Error.Unexpected("test") { Detail = "original error" };
         var funcInvoked = false;
 
         var result = Result.Fail<string>(error)
@@ -58,7 +58,7 @@ public class Check_Tests
     [Fact]
     public void Check_Unit_Success_CheckFails_ReturnsCheckFailure()
     {
-        var error = new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "unit check failed" };
+        var error = new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "unit check failed" };
 
         var result = Result.Ok("hello")
             .Check(v => Result.Fail(error));
@@ -69,7 +69,7 @@ public class Check_Tests
     [Fact]
     public void Check_Unit_Failure_CheckNotInvoked()
     {
-        var error = new Error.InternalServerError("test") { Detail = "original error" };
+        var error = new Error.Unexpected("test") { Detail = "original error" };
         var funcInvoked = false;
 
         var result = Result.Fail<string>(error)

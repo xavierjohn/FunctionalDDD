@@ -15,7 +15,7 @@ public class AsyncUsageExamples : IClassFixture<TraceFixture>
         using var activity = TraceFixture.ActivitySource.StartActivity();
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(new Error.NotFound(new ResourceRef("Resource", null)) { Detail = "Customer with such Id is not found: " + id })
-            .EnsureAsync(customer => customer.CanBePromoted, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "The customer has the highest status possible" })
+            .EnsureAsync(customer => customer.CanBePromoted, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "The customer has the highest status possible" })
             .TapAsync(customer => customer.Promote())
             .BindAsync(customer => EmailGateway.SendPromotionNotification(customer.Email))
             .MatchAsync(_ => "Okay", error => "Failed");
@@ -34,7 +34,7 @@ public class AsyncUsageExamples : IClassFixture<TraceFixture>
 
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(new Error.NotFound(new ResourceRef("Resource", null)) { Detail = "Customer with such Id is not found: " + id })
-            .EnsureAsync(static customer => customer.CanBePromoted, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "The customer has the highest status possible" })
+            .EnsureAsync(static customer => customer.CanBePromoted, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "The customer has the highest status possible" })
             .TapAsync(static customer => customer.PromoteAsync())
             .BindAsync(static customer => EmailGateway.SendPromotionNotificationAsync(customer.Email))
             .MatchAsync(static (Unit _) => "Okay", static error => error.Detail);
@@ -51,7 +51,7 @@ public class AsyncUsageExamples : IClassFixture<TraceFixture>
 
         var result = await GetCustomerByIdAsync(id)
             .ToResultAsync(new Error.NotFound(new ResourceRef("Resource", null)) { Detail = "Customer with such Id is not found: " + id })
-            .EnsureAsync(customer => customer.CanBePromoted, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Need to ask manager" })
+            .EnsureAsync(customer => customer.CanBePromoted, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Need to ask manager" })
             .TapOnFailureAsync(Log)
             .RecoverOnFailureAsync(() => AskManagerAsync(id))
             .TapAsync(static customer => Log("Manager approved promotion"))

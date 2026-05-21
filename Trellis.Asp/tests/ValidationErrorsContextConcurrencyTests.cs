@@ -92,12 +92,12 @@ public class ValidationErrorsContextConcurrencyTests
 
         using (ValidationErrorsContext.BeginScope())
         {
-            // Act - Add Error.UnprocessableContent objects from multiple tasks
+            // Act - Add Error.InvalidInput objects from multiple tasks
             var tasks = Enumerable.Range(0, taskCount)
                 .Select(taskId => Task.Run(() =>
                 {
-                    var validationError = new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty($"Field{taskId}"), "validation.error") { Detail = $"Error from task {taskId}" }));
-                    ValidationErrorsContext.AddError((Error.UnprocessableContent)validationError);
+                    var validationError = new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty($"Field{taskId}"), "validation.error") { Detail = $"Error from task {taskId}" }));
+                    ValidationErrorsContext.AddError((Error.InvalidInput)validationError);
                 }, TestContext.Current.CancellationToken))
                 .ToArray();
 
@@ -258,16 +258,16 @@ public class ValidationErrorsContextConcurrencyTests
 
         using (ValidationErrorsContext.BeginScope())
         {
-            // Act - Add complex Error.UnprocessableContent objects concurrently
+            // Act - Add complex Error.InvalidInput objects concurrently
             var tasks = Enumerable.Range(0, taskCount)
                 .Select(taskId => Task.Run(() =>
                 {
-                    // Create a Error.UnprocessableContent with multiple field errors
-                    var error1 = new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty($"Field1_{taskId}"), "validation.error") { Detail = $"Error 1 from task {taskId}" }));
-                    var error2 = new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty($"Field2_{taskId}"), "validation.error") { Detail = $"Error 2 from task {taskId}" }));
+                    // Create a Error.InvalidInput with multiple field errors
+                    var error1 = new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty($"Field1_{taskId}"), "validation.error") { Detail = $"Error 1 from task {taskId}" }));
+                    var error2 = new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty($"Field2_{taskId}"), "validation.error") { Detail = $"Error 2 from task {taskId}" }));
 
-                    ValidationErrorsContext.AddError((Error.UnprocessableContent)error1);
-                    ValidationErrorsContext.AddError((Error.UnprocessableContent)error2);
+                    ValidationErrorsContext.AddError((Error.InvalidInput)error1);
+                    ValidationErrorsContext.AddError((Error.InvalidInput)error2);
                 }, TestContext.Current.CancellationToken))
                 .ToArray();
 

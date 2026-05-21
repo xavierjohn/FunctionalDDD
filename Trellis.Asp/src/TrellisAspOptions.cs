@@ -15,17 +15,17 @@ using Trellis;
 ///         <term>Error Type</term>
 ///         <description>Default HTTP Status</description>
 ///     </listheader>
-///     <item><term><see cref="Error.UnprocessableContent"/></term><description>422 Unprocessable Entity</description></item>
-///     <item><term><see cref="Error.BadRequest"/></term><description>400 Bad Request</description></item>
-///     <item><term><see cref="Error.Unauthorized"/></term><description>401 Unauthorized</description></item>
+///     <item><term><see cref="Error.InvalidInput"/></term><description>422 Unprocessable Entity</description></item>
+///     <item><term><see cref="Error.InvariantViolation"/></term><description>422 Unprocessable Entity</description></item>
+///     <item><term><see cref="Error.AuthenticationRequired"/></term><description>401 Unauthorized</description></item>
 ///     <item><term><see cref="Error.Forbidden"/></term><description>403 Forbidden</description></item>
 ///     <item><term><see cref="Error.NotFound"/></term><description>404 Not Found</description></item>
 ///     <item><term><see cref="Error.Conflict"/></term><description>409 Conflict</description></item>
+///     <item><term><see cref="Error.Gone"/></term><description>410 Gone</description></item>
 ///     <item><term><see cref="Error.TransportFault"/></term><description>Wrapped <see cref="HttpError"/> cases map by inner HTTP fault (405/406/412/413/415/416/428).</description></item>
-///     <item><term><see cref="Error.TooManyRequests"/></term><description>429 Too Many Requests</description></item>
-///     <item><term><see cref="Error.InternalServerError"/></term><description>500 Internal Server Error</description></item>
+///     <item><term><see cref="Error.RateLimited"/></term><description>429 Too Many Requests</description></item>
 ///     <item><term><see cref="Error.Unexpected"/></term><description>500 Internal Server Error</description></item>
-///     <item><term><see cref="Error.ServiceUnavailable"/></term><description>503 Service Unavailable</description></item>
+///     <item><term><see cref="Error.Unavailable"/></term><description>503 Service Unavailable</description></item>
 /// </list>
 /// </para>
 /// <para>
@@ -79,18 +79,16 @@ public sealed class TrellisAspOptions
 
     private readonly Dictionary<Type, int> _errorMappings = new()
     {
-        [typeof(Error.UnprocessableContent)] = StatusCodes.Status422UnprocessableEntity,
-        [typeof(Error.BadRequest)] = StatusCodes.Status400BadRequest,
-        [typeof(Error.Unauthorized)] = StatusCodes.Status401Unauthorized,
+        [typeof(Error.InvalidInput)] = StatusCodes.Status422UnprocessableEntity,
+        [typeof(Error.InvariantViolation)] = StatusCodes.Status422UnprocessableEntity,
+        [typeof(Error.AuthenticationRequired)] = StatusCodes.Status401Unauthorized,
         [typeof(Error.Forbidden)] = StatusCodes.Status403Forbidden,
         [typeof(Error.NotFound)] = StatusCodes.Status404NotFound,
         [typeof(Error.Conflict)] = StatusCodes.Status409Conflict,
         [typeof(Error.Gone)] = StatusCodes.Status410Gone,
-        [typeof(Error.TooManyRequests)] = StatusCodes.Status429TooManyRequests,
-        [typeof(Error.InternalServerError)] = StatusCodes.Status500InternalServerError,
+        [typeof(Error.RateLimited)] = StatusCodes.Status429TooManyRequests,
         [typeof(Error.Unexpected)] = StatusCodes.Status500InternalServerError,
-        [typeof(Error.NotImplemented)] = StatusCodes.Status501NotImplemented,
-        [typeof(Error.ServiceUnavailable)] = StatusCodes.Status503ServiceUnavailable,
+        [typeof(Error.Unavailable)] = StatusCodes.Status503ServiceUnavailable,
     };
 
     /// <summary>
@@ -102,7 +100,7 @@ public sealed class TrellisAspOptions
     /// <example>
     /// <code>
     /// options.MapError&lt;Error.Conflict&gt;(StatusCodes.Status400BadRequest)
-    ///        .MapError&lt;Error.UnprocessableContent&gt;(StatusCodes.Status422UnprocessableEntity);
+    ///        .MapError&lt;Error.InvalidInput&gt;(StatusCodes.Status422UnprocessableEntity);
     /// </code>
     /// </example>
     public TrellisAspOptions MapError<TError>(int statusCode) where TError : Error

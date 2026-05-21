@@ -36,8 +36,8 @@ public class PercentageTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        result.UnwrapError().Should().BeOfType<Error.InvalidInput>();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Percentage must be between 0 and 100.");
     }
 
@@ -49,7 +49,7 @@ public class PercentageTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Percentage is required.");
     }
 
@@ -165,7 +165,7 @@ public class PercentageTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>().Subject;
+        var validation = result.UnwrapError().Should().BeOfType<Error.InvalidInput>().Subject;
         validation.Fields[0].Field.Path.Should().Be("/discountRate");
         validation.Fields[0].Detail.Should().Be("Fraction must be between 0 and 1.");
     }
@@ -386,7 +386,7 @@ public class PercentageTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/discountRate");
     }
 
@@ -437,7 +437,7 @@ public class PercentageTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
+        result.UnwrapError().Should().BeOfType<Error.InvalidInput>();
     }
 
     [Fact]
@@ -448,7 +448,7 @@ public class PercentageTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
+        result.UnwrapError().Should().BeOfType<Error.InvalidInput>();
     }
 
     [Fact]
@@ -459,7 +459,7 @@ public class PercentageTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
+        result.UnwrapError().Should().BeOfType<Error.InvalidInput>();
     }
 
     [Theory]
@@ -472,7 +472,7 @@ public class PercentageTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
+        result.UnwrapError().Should().BeOfType<Error.InvalidInput>();
     }
 
     [Fact]
@@ -483,7 +483,7 @@ public class PercentageTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/discountRate");
     }
 
@@ -495,7 +495,7 @@ public class PercentageTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Percentage must be between 0 and 100.");
     }
 

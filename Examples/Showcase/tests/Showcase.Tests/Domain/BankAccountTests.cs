@@ -37,8 +37,8 @@ public class BankAccountTests
             Money.Create(0m, "USD"));
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<Error.UnprocessableContent>();
-        var fields = ((Error.UnprocessableContent)result.Error!).Fields;
+        result.Error.Should().BeOfType<Error.InvalidInput>();
+        var fields = ((Error.InvalidInput)result.Error!).Fields;
         fields.Length.Should().Be(1);
     }
 
@@ -98,7 +98,7 @@ public class BankAccountTests
         var result = account.Unfreeze();
 
         result.IsFailure.Should().BeTrue();
-        var unproc = result.Error.Should().BeOfType<Error.UnprocessableContent>().Subject;
+        var unproc = result.Error.Should().BeOfType<Error.InvalidInput>().Subject;
         unproc.Rules.Items.Should().ContainSingle().Which.ReasonCode.Should().Be("state.machine.invalid.transition");
     }
 
@@ -150,7 +150,7 @@ public class BankAccountTests
         var result = account.Freeze("audit");
 
         result.IsFailure.Should().BeTrue();
-        var unproc = result.Error.Should().BeOfType<Error.UnprocessableContent>().Subject;
+        var unproc = result.Error.Should().BeOfType<Error.InvalidInput>().Subject;
         unproc.Rules.Items.Should().ContainSingle().Which.ReasonCode.Should().Be("state.machine.invalid.transition");
         account.UncommittedEvents().Should().BeEmpty();
     }
@@ -165,7 +165,7 @@ public class BankAccountTests
         var result = account.Unfreeze();
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<Error.UnprocessableContent>();
+        result.Error.Should().BeOfType<Error.InvalidInput>();
         account.UncommittedEvents().Should().BeEmpty();
     }
 
@@ -179,7 +179,7 @@ public class BankAccountTests
         var result = account.Close();
 
         result.IsFailure.Should().BeTrue();
-        result.Error.Should().BeOfType<Error.UnprocessableContent>();
+        result.Error.Should().BeOfType<Error.InvalidInput>();
         account.UncommittedEvents().Should().BeEmpty();
     }
 

@@ -40,8 +40,8 @@ public class RangedIntTests
     {
         var result = TestQuantity.TryCreate(-10);
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        result.UnwrapError().Should().BeOfType<Error.InvalidInput>();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/testQuantity");
         validation.Fields[0].Detail.Should().Be("Test Quantity must be at least 1.");
     }
@@ -51,8 +51,8 @@ public class RangedIntTests
     {
         var result = TestQuantity.TryCreate(5000);
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        result.UnwrapError().Should().BeOfType<Error.InvalidInput>();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/testQuantity");
         validation.Fields[0].Detail.Should().Be("Test Quantity must be at most 999.");
     }
@@ -112,8 +112,8 @@ public class RangedIntTests
     {
         var result = TestQuantity.TryCreate("1000");
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        result.UnwrapError().Should().BeOfType<Error.InvalidInput>();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Test Quantity must be at most 999.");
     }
 
@@ -145,7 +145,7 @@ public class RangedIntTests
     {
         var result = TestQuantity.TryCreate(0, "myField");
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/myField");
     }
 

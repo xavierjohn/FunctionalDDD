@@ -214,7 +214,7 @@ public sealed class ScalarValueValidationMiddleware
         var key = JsonPathToMvcKey(rawPath);
 
         // Structured shape: when the inner exception is a TrellisJsonValidationException
-        // carrying a structured Error.UnprocessableContent with at least one FieldViolation,
+        // carrying a structured Error.InvalidInput with at least one FieldViolation,
         // emit ONE wire entry per FieldViolation. The parent path (`key`) becomes the prefix;
         // each violation's leaf path is appended in MVC dot+bracket convention via
         // JsonPointerToMvc.Translate.
@@ -254,7 +254,7 @@ public sealed class ScalarValueValidationMiddleware
 
         // Unstructured shape: used when the inner exception has no structured payload
         // (plain JsonException from System.Text.Json's built-in failures, or a Trellis
-        // converter throw without an associated Error.UnprocessableContent — e.g., missing
+        // converter throw without an associated Error.InvalidInput — e.g., missing
         // required property, unsupported primitive type). Surface the curated message for
         // TrellisJsonValidationException; emit a generic message for plain JsonException
         // because System.Text.Json's built-in errors can include internal type names.

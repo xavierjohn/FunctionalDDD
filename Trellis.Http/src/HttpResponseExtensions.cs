@@ -166,8 +166,8 @@ public static class HttpResponseExtensions
 
         Error error = statusCode switch
         {
-            HttpStatusCode.BadRequest => new Error.BadRequest("http.bad_request"),
-            HttpStatusCode.Unauthorized => new Error.Unauthorized(),
+            HttpStatusCode.BadRequest => Error.InvalidInput.ForRule("http.bad_request"),
+            HttpStatusCode.Unauthorized => new Error.AuthenticationRequired(),
             HttpStatusCode.Forbidden => new Error.Forbidden("http.forbidden"),
             HttpStatusCode.NotFound => new Error.NotFound(resource),
             // RFC 9110 §15.5.6 says a 405 response MUST include the Allow header. When the
@@ -193,12 +193,12 @@ public static class HttpResponseExtensions
             HttpStatusCode.RequestedRangeNotSatisfiable
                 when response.Content?.Headers.ContentRange is { Length: { } length } cr
                 => new Error.TransportFault(new HttpError.RangeNotSatisfiable(length, cr.Unit ?? "bytes")),
-            HttpStatusCode.UnprocessableEntity => Error.UnprocessableContent.ForRule("http.unprocessable_content"),
+            HttpStatusCode.UnprocessableEntity => Error.InvalidInput.ForRule("http.unprocessable_content"),
             (HttpStatusCode)428 => new Error.TransportFault(new HttpError.PreconditionRequired(PreconditionKind.IfMatch)),
-            (HttpStatusCode)429 => new Error.TooManyRequests(),
-            HttpStatusCode.NotImplemented => new Error.NotImplemented("http.not_implemented"),
-            HttpStatusCode.ServiceUnavailable => new Error.ServiceUnavailable(),
-            _ => new Error.InternalServerError(Guid.NewGuid().ToString("N")),
+            (HttpStatusCode)429 => new Error.RateLimited(),
+            HttpStatusCode.NotImplemented => new Error.Unexpected("http.not_implemented"),
+            HttpStatusCode.ServiceUnavailable => new Error.Unavailable(),
+            _ => new Error.Unexpected(Guid.NewGuid().ToString("N")),
         };
 
         return error with { Detail = detail };
@@ -359,7 +359,7 @@ public static class HttpResponseExtensions
     /// status code passes through as <see cref="Result.Ok{T}(T)"/>.
     /// </summary>
     /// <param name="response">The pending HTTP response.</param>
-    /// <param name="error">The <see cref="Error.Unauthorized"/> to surface on a 401 match.</param>
+    /// <param name="error">The <see cref="Error.AuthenticationRequired"/> to surface on a 401 match.</param>
     /// <returns>A <see cref="Task{T}"/> producing the mapped <see cref="Result{T}"/>.</returns>
     /// <remarks>
     /// On a matched 401 the underlying <see cref="HttpResponseMessage"/> is disposed
@@ -367,7 +367,7 @@ public static class HttpResponseExtensions
     /// </remarks>
     public static async Task<Result<HttpResponseMessage>> HandleUnauthorizedAsync(
         this Task<HttpResponseMessage> response,
-        Error.Unauthorized error)
+        Error.AuthenticationRequired error)
     {
         ArgumentNullException.ThrowIfNull(response);
 
@@ -401,7 +401,7 @@ public static class HttpResponseExtensions
     /// On success status with a deserializable body: <see cref="Result.Ok{T}(T)"/>.
     /// On non-success status, empty/null body, <see cref="HttpStatusCode.NoContent"/>,
     /// <see cref="HttpStatusCode.ResetContent"/>, or invalid JSON (<see cref="JsonException"/>):
-    /// <see cref="Result.Fail{T}(Error)"/> wrapping <see cref="Error.InternalServerError"/>.
+    /// <see cref="Result.Fail{T}(Error)"/> wrapping <see cref="Error.Unexpected"/>.
     /// </returns>
     /// <remarks>
     /// Whenever a response is read (success or failure), it is disposed before returning.
@@ -428,26 +428,26 @@ public static class HttpResponseExtensions
             ct.ThrowIfCancellationRequested();
 
             if (!message.IsSuccessStatusCode)
-                return Result.Fail<T>(new Error.InternalServerError(Guid.NewGuid().ToString("N"))
+                return Result.Fail<T>(new Error.Unexpected(Guid.NewGuid().ToString("N"))
                 {
                     Detail = $"HTTP response is in a failed state for value {typeof(T).Name}. Status code: {message.StatusCode}.",
                 });
 
             if (message.StatusCode is HttpStatusCode.NoContent or HttpStatusCode.ResetContent)
-                return Result.Fail<T>(new Error.InternalServerError(Guid.NewGuid().ToString("N"))
+                return Result.Fail<T>(new Error.Unexpected(Guid.NewGuid().ToString("N"))
                 {
                     Detail = $"HTTP response had no body for value {typeof(T).Name}.",
                 });
 
             if (message.Content is null)
-                return Result.Fail<T>(new Error.InternalServerError(Guid.NewGuid().ToString("N"))
+                return Result.Fail<T>(new Error.Unexpected(Guid.NewGuid().ToString("N"))
                 {
                     Detail = $"HTTP response body was null for value {typeof(T).Name}.",
                 });
 
             var bytes = await message.Content.ReadAsByteArrayAsync(ct).ConfigureAwait(false);
             if (bytes.Length == 0)
-                return Result.Fail<T>(new Error.InternalServerError(Guid.NewGuid().ToString("N"))
+                return Result.Fail<T>(new Error.Unexpected(Guid.NewGuid().ToString("N"))
                 {
                     Detail = $"HTTP response body was empty for value {typeof(T).Name}.",
                 });
@@ -468,14 +468,14 @@ public static class HttpResponseExtensions
                     ? $" at line {ex.LineNumber}, byte {ex.BytePositionInLine ?? 0}"
                     : string.Empty;
 
-                return Result.Fail<T>(new Error.InternalServerError(Guid.NewGuid().ToString("N"))
+                return Result.Fail<T>(new Error.Unexpected(Guid.NewGuid().ToString("N"))
                 {
                     Detail = $"Failed to deserialize HTTP response to {typeof(T).Name}{location}.",
                 });
             }
 
             return value is null
-                ? Result.Fail<T>(new Error.InternalServerError(Guid.NewGuid().ToString("N"))
+                ? Result.Fail<T>(new Error.Unexpected(Guid.NewGuid().ToString("N"))
                 {
                     Detail = $"HTTP response deserialized to null for value {typeof(T).Name}.",
                 })
@@ -500,7 +500,7 @@ public static class HttpResponseExtensions
     /// <returns>
     /// On already-failed input: short-circuits with the upstream error (no response to dispose).
     /// On non-success status: <see cref="Result.Fail{T}(Error)"/> with
-    /// <see cref="Error.InternalServerError"/>. On success status with a parseable
+    /// <see cref="Error.Unexpected"/>. On success status with a parseable
     /// payload: <see cref="Result.Ok{T}(T)"/> wrapping
     /// <see cref="Maybe.From{T}(T)"/> or <see cref="Maybe{T}.None"/>.
     /// </returns>
@@ -531,7 +531,7 @@ public static class HttpResponseExtensions
             ct.ThrowIfCancellationRequested();
 
             if (!message.IsSuccessStatusCode)
-                return Result.Fail<Maybe<T>>(new Error.InternalServerError(Guid.NewGuid().ToString("N"))
+                return Result.Fail<Maybe<T>>(new Error.Unexpected(Guid.NewGuid().ToString("N"))
                 {
                     Detail = $"HTTP response is in a failed state for value {typeof(T).Name}. Status code: {message.StatusCode}.",
                 });

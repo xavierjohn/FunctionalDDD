@@ -68,7 +68,7 @@ public class ResultAssertionsAsyncTests
         var resultTask = Task.FromResult(Result.Fail<int>(new Error.NotFound(new ResourceRef("Resource", null)) { Detail = "Not found" }));
 
         // Act
-        var act = async () => await resultTask.BeFailureOfTypeAsync<int, Error.UnprocessableContent>();
+        var act = async () => await resultTask.BeFailureOfTypeAsync<int, Error.InvalidInput>();
 
         // Assert
         await act.Should().ThrowAsync<Exception>();

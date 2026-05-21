@@ -15,7 +15,7 @@ using Trellis;
 /// This class bridges FluentValidation's imperative validation model with Trellis'
 /// Railway Oriented Programming approach. Key benefits:
 /// <list type="bullet">
-/// <item>Automatic conversion of validation errors to <see cref="Error.UnprocessableContent"/></item>
+/// <item>Automatic conversion of validation errors to <see cref="Error.InvalidInput"/></item>
 /// <item>Field-level error grouping for structured error responses</item>
 /// <item>Integration with Result type for consistent error handling</item>
 /// <item>Support for both sync and async validation scenarios</item>
@@ -77,7 +77,7 @@ using Trellis;
 /// 
 /// // Usage in application code
 /// var result = User.TryCreate(firstName, lastName, email, password);
-/// // Returns: Success(user) or Failure(Error.UnprocessableContent with field violations)
+/// // Returns: Success(user) or Failure(Error.InvalidInput with field violations)
 /// </code>
 /// </example>
 /// <example>
@@ -162,7 +162,7 @@ public static class FluentValidationResultExtensions
     /// multiple <see cref="FieldViolation"/> entries — no information is lost.
     /// </para>
     /// <para>
-    /// The resulting <see cref="Error.UnprocessableContent"/> can be automatically converted to:
+    /// The resulting <see cref="Error.InvalidInput"/> can be automatically converted to:
     /// <list type="bullet">
     /// <item>HTTP 422 Unprocessable Content with validation problem details (via ToHttpResponse)</item>
     /// <item>Structured error responses with field-level error messages</item>
@@ -179,7 +179,7 @@ public static class FluentValidationResultExtensions
     ///
     /// if (result.IsFailure)
     /// {
-    ///     var error = (Error.UnprocessableContent)result.Error;
+    ///     var error = (Error.InvalidInput)result.Error;
     ///     foreach (var fv in error.Fields)
     ///     {
     ///         Console.WriteLine($"{fv.Field.Path}: {fv.Detail} ({fv.ReasonCode})");
@@ -214,7 +214,7 @@ public static class FluentValidationResultExtensions
             })
             .ToArray();
 
-        return Result.Fail<T>(new Error.UnprocessableContent(EquatableArray.Create(violations)));
+        return Result.Fail<T>(new Error.InvalidInput(EquatableArray.Create(violations)));
     }
 
     /// <summary>
@@ -405,7 +405,7 @@ public static class FluentValidationResultExtensions
     /// 
     /// return result.Match(
     ///     onSuccess: user =&gt; Ok(new UserDto(user)),
-    ///     onFailure: error =&gt; error is Error.UnprocessableContent uc
+    ///     onFailure: error =&gt; error is Error.InvalidInput uc
     ///         ? BadRequest(uc.Fields)
     ///         : StatusCode(500, error.Detail)
     /// );
@@ -418,7 +418,7 @@ public static class FluentValidationResultExtensions
     ///
     /// return result.Match(
     ///     onSuccess: user =&gt; Ok(new UserDto(user)),
-    ///     onFailure: error =&gt; error is Error.UnprocessableContent uc
+    ///     onFailure: error =&gt; error is Error.InvalidInput uc
     ///         ? BadRequest(uc.Fields)
     ///         : StatusCode(500, error.Detail)
     /// );

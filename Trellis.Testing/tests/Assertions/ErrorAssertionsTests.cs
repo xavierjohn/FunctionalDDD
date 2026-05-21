@@ -29,7 +29,7 @@ public class ErrorAssertionsTests
     public void HaveDetail_Should_Pass_When_Detail_Matches()
     {
         // Arrange
-        var error = new Error.BadRequest("bad.request") { Detail = "Invalid input" };
+        Error error = Error.InvalidInput.ForRule("bad.request", "Invalid input");
 
         // Act & Assert
         error.Should().HaveDetail("Invalid input");
@@ -39,7 +39,7 @@ public class ErrorAssertionsTests
     public void HaveDetail_Should_Fail_When_Detail_Does_Not_Match()
     {
         // Arrange
-        var error = new Error.BadRequest("bad.request") { Detail = "Invalid input" };
+        Error error = Error.InvalidInput.ForRule("bad.request", "Invalid input");
 
         // Act
         var act = () => error.Should().HaveDetail("Wrong detail");
@@ -88,10 +88,10 @@ public class ErrorAssertionsTests
     public void HaveCode_Should_Support_Because_Reason()
     {
         // Arrange
-        var error = new Error.Unauthorized() { Detail = "Not authenticated" };
+        var error = new Error.AuthenticationRequired() { Detail = "Not authenticated" };
 
         // Act & Assert
-        error.Should().HaveCode("unauthorized", "because authentication is required");
+        error.Should().HaveCode("authentication-required", "because authentication is required");
     }
 
     [Fact]
@@ -137,7 +137,7 @@ public class ErrorAssertionsTests
         var error = new Error.NotFound(new ResourceRef("Resource", null)) { Detail = "Not found" };
 
         // Act
-        var act = () => error.Should().BeOfType<Error.UnprocessableContent>();
+        var act = () => error.Should().BeOfType<Error.InvalidInput>();
 
         // Assert
         act.Should().Throw<Exception>();
@@ -147,11 +147,11 @@ public class ErrorAssertionsTests
     public void BeOfType_Should_Return_Typed_Error_For_Chaining()
     {
         // Arrange
-        var error = new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "validation.error") { Detail = "Invalid email" }));
+        var error = new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "validation.error") { Detail = "Invalid email" }));
 
         // Act & Assert
         error.Should()
-            .BeOfType<Error.UnprocessableContent>()
+            .BeOfType<Error.InvalidInput>()
             .Which.Should()
             .HaveFieldError("email");
     }
@@ -176,7 +176,7 @@ public class ErrorAssertionsTests
     {
         // Arrange
         var error1 = new Error.NotFound(new ResourceRef("Resource", null)) { Detail = "Not found" };
-        var error2 = new Error.BadRequest("bad.request") { Detail = "Bad request" };
+        var error2 = Error.InvalidInput.ForRule("bad.request", "Bad request");
 
         // Act
         var act = () => error1.Should().Be(error2);

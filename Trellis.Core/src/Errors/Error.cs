@@ -16,10 +16,10 @@ using System.Diagnostics;
 /// <c>switch</c> over an <see cref="Error"/> reference is exhaustive at the language level.
 /// </para>
 /// <para>
-/// <b>Identity.</b> <see cref="Kind"/> is a stable, IANA-aligned slug (e.g. <c>"not-found"</c>)
-/// that survives CLR renames. <see cref="Code"/> defaults to <see cref="Kind"/> and is overridden
-/// by cases whose payload carries a per-instance reason code (for example <see cref="Conflict"/>
-/// returns its <c>ReasonCode</c>).
+/// <b>Identity.</b> <see cref="Kind"/> is a stable domain slug suitable for telemetry and wire
+/// serialization (e.g. <c>"not-found"</c>). <see cref="Code"/> defaults to <see cref="Kind"/> and
+/// is overridden by cases whose payload carries a per-instance reason code (for example
+/// <see cref="Conflict"/> returns its <c>ReasonCode</c>).
 /// </para>
 /// <para>
 /// <b>Detail.</b> Every case inherits an optional <c>Detail</c> property from the base. Callers
@@ -40,7 +40,7 @@ using System.Diagnostics;
 /// </para>
 /// </remarks>
 [DebuggerDisplay("{Kind,nq}: {Detail ?? Code,nq}")]
-#pragma warning disable CA1716 // Identifiers should not match keywords — "Error" is the framework's domain term.
+#pragma warning disable CA1716
 public abstract record Error
 #pragma warning restore CA1716
 {
@@ -49,8 +49,8 @@ public abstract record Error
     private Error() { }
 
     /// <summary>
-    /// Gets the stable, IANA-aligned identifier for this case (e.g. <c>"not-found"</c>,
-    /// <c>"unprocessable-content"</c>). Suitable for telemetry, problem-details
+    /// Gets the stable domain slug for this case (e.g. <c>"not-found"</c>,
+    /// <c>"invalid-input"</c>). Suitable for telemetry, problem-details
     /// <c>type</c> URI synthesis, and wire serialization.
     /// </summary>
     public abstract string Kind { get; }
@@ -99,7 +99,7 @@ public abstract record Error
     /// <summary>
     /// Returns a human-readable message suitable for logging, tracing, and diagnostic
     /// surfaces. Prefers the explicit <see cref="Detail"/> when set; otherwise flattens
-    /// any per-field violation messages (for <see cref="UnprocessableContent"/>) before
+    /// any per-field violation messages (for <see cref="InvalidInput"/>) before
     /// falling back to <see cref="Code"/>.
     /// </summary>
     public virtual string GetDisplayMessage()
@@ -109,12 +109,11 @@ public abstract record Error
             return Detail;
         }
 
-        if (this is UnprocessableContent uc)
+        if (this is InvalidInput ic)
         {
-            var fieldItems = uc.Fields.Items;
-            var ruleItems = uc.Rules.Items;
+            var fieldItems = ic.Fields.Items;
+            var ruleItems = ic.Rules.Items;
 
-            // Single-field, no-rule shortcut: return just the detail / path with no prefix.
             if (fieldItems.Length == 1 && ruleItems.Length == 0)
             {
                 var only = fieldItems[0];
@@ -158,7 +157,7 @@ public abstract record Error
     /// <para>
     /// <b>How per-derived payload comparison works:</b> this override deliberately checks
     /// only <c>EqualityContract</c> and <see cref="Detail"/>. Each derived <c>sealed record</c>
-    /// (e.g., <see cref="NotFound"/>, <see cref="BadRequest"/>) gets a compiler-generated
+    /// (e.g., <see cref="NotFound"/>, <see cref="InvalidInput"/>) gets a compiler-generated
     /// <c>Equals(Derived?)</c> of the form
     /// <c>base.Equals(other) &amp;&amp; Field1 == other.Field1 &amp;&amp; ...</c>.
     /// The <c>base.Equals(other)</c> call dispatches virtually to this override, contributing
@@ -185,41 +184,81 @@ public abstract record Error
     public override int GetHashCode() => HashCode.Combine(EqualityContract, Detail);
 
     // ───────────────────────────────────────────────────────────────────────────
-    // 4xx Client Errors (RFC 9110, RFC 6585)
+    // Validation and invariants
     // ───────────────────────────────────────────────────────────────────────────
 
-    /// <summary>HTTP 400 — the request is syntactically or semantically malformed.</summary>
-    /// <param name="ReasonCode">Machine-readable code identifying why the request was rejected.</param>
-    /// <param name="At">Optional pointer locating the offending input.</param>
-    public sealed record BadRequest(string ReasonCode, InputPointer? At = null) : Error
+    /// <summary>
+    /// Inbound request payload failed semantic validation: one or more fields or rules
+    /// rejected the input.
+    /// </summary>
+    /// <param name="Fields">Per-field validation failures.</param>
+    /// <param name="Rules">Global or multi-field business-rule failures detected against the inbound shape.</param>
+    public sealed record InvalidInput(
+        EquatableArray<FieldViolation> Fields,
+        EquatableArray<RuleViolation> Rules = default) : Error
     {
         /// <inheritdoc />
-        public override string Kind => "bad-request";
+        public override string Kind => "invalid-input";
+
+        /// <summary>
+        /// Convenience factory that produces an <see cref="InvalidInput"/> carrying a
+        /// single <see cref="FieldViolation"/> built from a property name. The property name is
+        /// converted to a JSON Pointer via <see cref="InputPointer.ForProperty(string)"/>; pass
+        /// an empty or <see langword="null"/> string to target the document root.
+        /// </summary>
+        /// <param name="propertyName">Simple property name or full JSON Pointer.</param>
+        /// <param name="reasonCode">Stable machine-readable code identifying the rule that was violated.</param>
+        /// <param name="detail">Optional human-readable detail; when supplied the boundary renderer prefers it over the default template for <paramref name="reasonCode"/>.</param>
+        /// <returns>An <see cref="InvalidInput"/> wrapping the single field violation.</returns>
+        public static InvalidInput ForField(string propertyName, string reasonCode, string? detail = null) =>
+            ForField(InputPointer.ForProperty(propertyName), reasonCode, detail);
+
+        /// <summary>
+        /// Convenience factory that produces an <see cref="InvalidInput"/> carrying a
+        /// single <see cref="FieldViolation"/> at the supplied <see cref="InputPointer"/>.
+        /// </summary>
+        /// <param name="field">JSON Pointer locating the offending field.</param>
+        /// <param name="reasonCode">Stable machine-readable code identifying the rule that was violated.</param>
+        /// <param name="detail">Optional human-readable detail; when supplied the boundary renderer prefers it over the default template for <paramref name="reasonCode"/>.</param>
+        /// <returns>An <see cref="InvalidInput"/> wrapping the single field violation.</returns>
+        public static InvalidInput ForField(InputPointer field, string reasonCode, string? detail = null) =>
+            new(EquatableArray.Create(new FieldViolation(field, reasonCode, Detail: detail)));
+
+        /// <summary>
+        /// Convenience factory that produces an <see cref="InvalidInput"/> carrying a
+        /// single <see cref="RuleViolation"/> — the global / multi-field counterpart to
+        /// <see cref="ForField(string, string, string?)"/>. Use for invariants that are not bound
+        /// to a single field (e.g. <c>"order_must_have_items"</c>, <c>"passwords_must_match"</c>).
+        /// </summary>
+        /// <param name="reasonCode">Stable machine-readable code identifying the rule.</param>
+        /// <param name="detail">Optional human-readable detail; when supplied the boundary renderer prefers it over the default template for <paramref name="reasonCode"/>.</param>
+        /// <returns>An <see cref="InvalidInput"/> wrapping the single rule violation.</returns>
+        public static InvalidInput ForRule(string reasonCode, string? detail = null) =>
+            new(EquatableArray<FieldViolation>.Empty,
+                EquatableArray.Create(new RuleViolation(reasonCode, Detail: detail)))
+            { Detail = detail };
+    }
+
+    /// <summary>
+    /// Global or multi-field business invariant was violated (e.g. cross-field rule,
+    /// computed constraint) outside the inbound-validation pipeline.
+    /// </summary>
+    /// <param name="ReasonCode">Stable machine-readable code identifying the violated invariant.</param>
+    /// <param name="Resource">Optional resource the invariant was evaluated against.</param>
+    public sealed record InvariantViolation(string ReasonCode, ResourceRef? Resource = null) : Error
+    {
+        /// <inheritdoc />
+        public override string Kind => "invariant-violation";
 
         /// <inheritdoc />
         public override string Code => ReasonCode;
     }
 
-    /// <summary>HTTP 401 — authentication is required or has failed.</summary>
-    public sealed record Unauthorized : Error
-    {
-        /// <inheritdoc />
-        public override string Kind => "unauthorized";
-    }
+    // ───────────────────────────────────────────────────────────────────────────
+    // Resource lifecycle
+    // ───────────────────────────────────────────────────────────────────────────
 
-    /// <summary>HTTP 403 — authorization policy refused the request.</summary>
-    /// <param name="PolicyId">Identifier of the policy that denied access.</param>
-    /// <param name="Resource">Optional resource the policy was evaluated against.</param>
-    public sealed record Forbidden(string PolicyId, ResourceRef? Resource = null) : Error
-    {
-        /// <inheritdoc />
-        public override string Kind => "forbidden";
-
-        /// <inheritdoc />
-        public override string Code => PolicyId;
-    }
-
-    /// <summary>HTTP 404 — the requested resource does not exist.</summary>
+    /// <summary>The requested resource does not exist.</summary>
     /// <param name="Resource">The resource that was looked up.</param>
     public sealed record NotFound(ResourceRef Resource) : Error
     {
@@ -227,12 +266,19 @@ public abstract record Error
         public override string Kind => "not-found";
     }
 
-    /// <summary>HTTP 409 — the request conflicts with the current state of the resource.</summary>
+    /// <summary>The resource was previously known but has been permanently removed (tombstone).</summary>
+    /// <param name="Resource">The resource that has been removed.</param>
+    public sealed record Gone(ResourceRef Resource) : Error
+    {
+        /// <inheritdoc />
+        public override string Kind => "gone";
+    }
+
+    /// <summary>The request conflicts with the current state of the resource.</summary>
     /// <param name="Resource">
     /// The conflicting resource, when one is identifiable. May be <see langword="null"/> for
     /// stateless conflicts (e.g. workflow / state-machine guards, library code with no aggregate
-    /// context). RFC 9110 § 15.5.10 implies the target resource via the request URI; the response
-    /// body is not required to identify it.
+    /// context).
     /// </param>
     /// <param name="ReasonCode">Machine-readable code describing the kind of conflict (e.g. <c>"duplicate_key"</c>, <c>"invalid_state"</c>).</param>
     public sealed record Conflict(ResourceRef? Resource, string ReasonCode) : Error
@@ -244,124 +290,74 @@ public abstract record Error
         public override string Code => ReasonCode;
     }
 
-    /// <summary>HTTP 410 — the resource is permanently gone.</summary>
-    /// <param name="Resource">The resource that has been removed.</param>
-    public sealed record Gone(ResourceRef Resource) : Error
+    // ───────────────────────────────────────────────────────────────────────────
+    // Identity and access
+    // ───────────────────────────────────────────────────────────────────────────
+
+    /// <summary>The operation requires authentication that was not supplied or could not be validated.</summary>
+    /// <param name="Scheme">Optional authentication scheme name (e.g. <c>"Bearer"</c>) when the producer knows which scheme is expected.</param>
+    public sealed record AuthenticationRequired(string? Scheme = null) : Error
     {
         /// <inheritdoc />
-        public override string Kind => "gone";
+        public override string Kind => "authentication-required";
     }
 
-    /// <summary>HTTP 422 — the request was well-formed but the content failed semantic validation.</summary>
-    /// <param name="Fields">Per-field validation failures.</param>
-    /// <param name="Rules">Global or multi-field business-rule failures.</param>
-    public sealed record UnprocessableContent(
-        EquatableArray<FieldViolation> Fields,
-        EquatableArray<RuleViolation> Rules = default) : Error
+    /// <summary>Authorization policy refused the request.</summary>
+    /// <param name="PolicyId">Identifier of the policy that denied access.</param>
+    /// <param name="Resource">Optional resource the policy was evaluated against.</param>
+    public sealed record Forbidden(string PolicyId, ResourceRef? Resource = null) : Error
     {
         /// <inheritdoc />
-        public override string Kind => "unprocessable-content";
+        public override string Kind => "forbidden";
 
-        /// <summary>
-        /// Convenience factory that produces an <see cref="UnprocessableContent"/> carrying a
-        /// single <see cref="FieldViolation"/> built from a property name. The property name is
-        /// converted to a JSON Pointer via <see cref="InputPointer.ForProperty(string)"/>; pass
-        /// an empty or <see langword="null"/> string to target the document root.
-        /// </summary>
-        /// <param name="propertyName">Simple property name or full JSON Pointer.</param>
-        /// <param name="reasonCode">Stable machine-readable code identifying the rule that was violated.</param>
-        /// <param name="detail">Optional human-readable detail; when supplied the boundary renderer prefers it over the default template for <paramref name="reasonCode"/>.</param>
-        /// <returns>A 422 error wrapping the single field violation.</returns>
-        public static UnprocessableContent ForField(string propertyName, string reasonCode, string? detail = null) =>
-            ForField(InputPointer.ForProperty(propertyName), reasonCode, detail);
-
-        /// <summary>
-        /// Convenience factory that produces an <see cref="UnprocessableContent"/> carrying a
-        /// single <see cref="FieldViolation"/> at the supplied <see cref="InputPointer"/>. Use this
-        /// overload when the pointer was already computed (e.g. nested or array-element pointers,
-        /// or <see cref="InputPointer.Root"/> for object-level violations).
-        /// </summary>
-        /// <param name="field">JSON Pointer locating the offending field.</param>
-        /// <param name="reasonCode">Stable machine-readable code identifying the rule that was violated.</param>
-        /// <param name="detail">Optional human-readable detail; when supplied the boundary renderer prefers it over the default template for <paramref name="reasonCode"/>.</param>
-        /// <returns>A 422 error wrapping the single field violation.</returns>
-        public static UnprocessableContent ForField(InputPointer field, string reasonCode, string? detail = null) =>
-            new(EquatableArray.Create(new FieldViolation(field, reasonCode, Detail: detail)));
-
-        /// <summary>
-        /// Convenience factory that produces an <see cref="UnprocessableContent"/> carrying a
-        /// single <see cref="RuleViolation"/> — the global / multi-field counterpart to
-        /// <see cref="ForField(string, string, string?)"/>. Use for invariants that are not bound
-        /// to a single field (e.g. <c>"order_must_have_items"</c>, <c>"passwords_must_match"</c>).
-        /// </summary>
-        /// <param name="reasonCode">Stable machine-readable code identifying the rule.</param>
-        /// <param name="detail">Optional human-readable detail; when supplied the boundary renderer prefers it over the default template for <paramref name="reasonCode"/>.</param>
-        /// <returns>A 422 error wrapping the single rule violation.</returns>
-        public static UnprocessableContent ForRule(string reasonCode, string? detail = null) =>
-            new(EquatableArray<FieldViolation>.Empty,
-                EquatableArray.Create(new RuleViolation(reasonCode, Detail: detail)));
-    }
-
-    /// <summary>HTTP 429 — the client has exceeded a rate limit.</summary>
-    public sealed record TooManyRequests : Error
-    {
         /// <inheritdoc />
-        public override string Kind => "too-many-requests";
+        public override string Code => PolicyId;
     }
 
     // ───────────────────────────────────────────────────────────────────────────
-    // 5xx Server Errors
+    // Capacity and availability
     // ───────────────────────────────────────────────────────────────────────────
 
-    /// <summary>HTTP 500 — an unhandled server-side fault occurred.</summary>
-    /// <param name="FaultId">An opaque identifier correlating to richer diagnostics in the logging/telemetry layer.</param>
-    public sealed record InternalServerError(string FaultId) : Error
+    /// <summary>The caller has exceeded a usage quota; retry per <paramref name="Retry"/>.</summary>
+    /// <param name="Retry">Optional retry hint describing when the caller may try again.</param>
+    public sealed record RateLimited(RetryAdvice? Retry = null) : Error
     {
         /// <inheritdoc />
-        public override string Kind => "internal-server-error";
-
-        /// <inheritdoc />
-        public override string Code => FaultId;
+        public override string Kind => "rate-limited";
     }
 
     /// <summary>
-    /// HTTP 500 — a "shouldn't happen" condition. Used for default-initialized <see cref="Result"/>/<see cref="Result{TValue}"/>,
-    /// exhausted match arms, or other internal invariant violations whose root cause
-    /// is a programming error rather than a documented server-side fault.
+    /// The system is temporarily unable to complete the operation; the caller should retry
+    /// per <paramref name="Retry"/>.
     /// </summary>
-    /// <param name="ReasonCode">A stable, machine-readable identifier of the invariant that was violated
-    /// (e.g. <c>"default_initialized"</c>, <c>"invariant_violation"</c>). Distinct per logical cause; not a per-incident id.</param>
-    /// <remarks>
-    /// Distinct from <see cref="InternalServerError"/>: that case carries an opaque per-incident <c>FaultId</c>
-    /// for correlating with telemetry. <see cref="Unexpected"/> identifies the *kind* of unexpected condition.
-    /// Both map to HTTP 500 at the ASP boundary, but only <see cref="InternalServerError"/> attaches a
-    /// <c>faultId</c> extension to the problem-details payload.
-    /// </remarks>
-    public sealed record Unexpected(string ReasonCode) : Error
+    /// <param name="ReasonCode">Optional machine-readable code identifying the kind of unavailability.</param>
+    /// <param name="Retry">Optional retry hint describing when the caller may try again.</param>
+    public sealed record Unavailable(string? ReasonCode = null, RetryAdvice? Retry = null) : Error
+    {
+        /// <inheritdoc />
+        public override string Kind => "unavailable";
+
+        /// <inheritdoc />
+        public override string Code => ReasonCode ?? Kind;
+    }
+
+    // ───────────────────────────────────────────────────────────────────────────
+    // Internal failures
+    // ───────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// An unhandled internal failure occurred. <paramref name="ReasonCode"/> identifies the
+    /// kind of failure; <paramref name="FaultId"/> optionally correlates to deeper diagnostics.
+    /// </summary>
+    /// <param name="ReasonCode">Stable machine-readable code identifying the kind of unexpected condition (e.g. <c>"unhandled_exception"</c>, <c>"default_initialized"</c>, <c>"not_implemented"</c>).</param>
+    /// <param name="FaultId">Optional opaque per-incident identifier correlating to richer diagnostics in the logging/telemetry layer.</param>
+    public sealed record Unexpected(string ReasonCode, string? FaultId = null) : Error
     {
         /// <inheritdoc />
         public override string Kind => "unexpected";
 
         /// <inheritdoc />
         public override string Code => ReasonCode;
-    }
-
-    /// <summary>HTTP 501 — the requested feature is not implemented.</summary>
-    /// <param name="Feature">Identifier of the feature that is not implemented.</param>
-    public sealed record NotImplemented(string Feature) : Error
-    {
-        /// <inheritdoc />
-        public override string Kind => "not-implemented";
-
-        /// <inheritdoc />
-        public override string Code => Feature;
-    }
-
-    /// <summary>HTTP 503 — the server is temporarily unable to handle the request.</summary>
-    public sealed record ServiceUnavailable : Error
-    {
-        /// <inheritdoc />
-        public override string Kind => "service-unavailable";
     }
 
     /// <summary>

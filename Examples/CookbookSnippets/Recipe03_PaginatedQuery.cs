@@ -28,7 +28,7 @@ public sealed class ListOrdersHandler(AppDbContext db)
         {
             if (!System.Guid.TryParseExact(query.Cursor, "N", out var cursorId))
                 return Result.Fail<Page<OrderListItem>>(
-                    Error.UnprocessableContent.ForField(nameof(query.Cursor), "Cursor is not a valid pagination token."));
+                    Error.InvalidInput.ForField(nameof(query.Cursor), "Cursor is not a valid pagination token."));
 
             orders = orders.Where(o => o.Id.Value > cursorId).OrderBy(o => o.Id);
         }

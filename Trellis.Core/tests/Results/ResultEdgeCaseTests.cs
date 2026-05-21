@@ -57,7 +57,7 @@ public class ResultEdgeCaseTests
     public void TryGetError_OnFailure_ShouldReturnTrueWithError()
     {
         // Arrange
-        var expectedError = new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid input" };
+        var expectedError = new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid input" };
         var result = Result.Fail<int>(expectedError);
 
         // Act
@@ -256,7 +256,7 @@ public class ResultEdgeCaseTests
     public void GetHashCode_FailureResults_ShouldBeConsistent()
     {
         // Arrange
-        var error = new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid" };
+        var error = new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid" };
         var result1 = Result.Fail<int>(error);
         var result2 = Result.Fail<int>(error);
 
@@ -332,7 +332,7 @@ public class ResultEdgeCaseTests
     public void ImplicitConversion_FromError_ShouldCreateFailureResult()
     {
         // Arrange
-        Error error = new Error.InternalServerError("test") { Detail = "Something went wrong" };
+        Error error = new Error.Unexpected("test") { Detail = "Something went wrong" };
 
         // Act
         Result<int> result = Result.Fail<int>(error);
@@ -405,7 +405,7 @@ public class ResultEdgeCaseTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error!.Should().BeOfType<Error.InternalServerError>();
+        result.Error!.Should().BeOfType<Error.Unexpected>();
         result.Error!.Detail.Should().Be("Test exception");
     }
 
@@ -413,14 +413,14 @@ public class ResultEdgeCaseTests
     public void Try_WithCustomExceptionMapper_ShouldUseCustomMapping()
     {
         // Arrange
-        Error CustomMapper(Exception ex) => new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = $"Custom: {ex.Message}" };
+        Error CustomMapper(Exception ex) => new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = $"Custom: {ex.Message}" };
 
         // Act
         var result = Result.Try<int>(() => throw new InvalidOperationException("Test"), CustomMapper);
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error!.Should().BeOfType<Error.UnprocessableContent>();
+        result.Error!.Should().BeOfType<Error.InvalidInput>();
         result.Error!.Detail.Should().Be("Custom: Test");
     }
 
@@ -439,7 +439,7 @@ public class ResultEdgeCaseTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.Error!.Should().BeOfType<Error.InternalServerError>();
+        result.Error!.Should().BeOfType<Error.Unexpected>();
         result.Error!.Detail.Should().Be("Async test exception");
     }
 
@@ -467,7 +467,7 @@ public class ResultEdgeCaseTests
     [Fact]
     public void Ensure_Bool_True_ReturnsSuccess()
     {
-        var result = Result.Ensure(true, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Should not appear" });
+        var result = Result.Ensure(true, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Should not appear" });
 
         result.IsSuccess.Should().BeTrue();
     }
@@ -475,7 +475,7 @@ public class ResultEdgeCaseTests
     [Fact]
     public void Ensure_Bool_False_ReturnsFailureWithError()
     {
-        var error = new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("field"), "validation.error") { Detail = "Condition failed" }));
+        var error = new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("field"), "validation.error") { Detail = "Condition failed" }));
 
         var result = Result.Ensure(false, error);
 
@@ -488,7 +488,7 @@ public class ResultEdgeCaseTests
     {
         var invoked = false;
 
-        var result = Result.Ensure(() => { invoked = true; return true; }, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "fail" });
+        var result = Result.Ensure(() => { invoked = true; return true; }, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "fail" });
 
         result.IsSuccess.Should().BeTrue();
         invoked.Should().BeTrue("predicate should be invoked");
@@ -508,7 +508,7 @@ public class ResultEdgeCaseTests
     [Fact]
     public void Ensure_FuncBool_NullPredicate_ThrowsArgumentNullException()
     {
-        var act = () => Result.Ensure((Func<bool>)null!, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "fail" });
+        var act = () => Result.Ensure((Func<bool>)null!, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "fail" });
 
         act.Should().Throw<ArgumentNullException>();
     }
@@ -518,7 +518,7 @@ public class ResultEdgeCaseTests
     {
         var result = await Result.EnsureAsync(
             async () => { await Task.Yield(); return true; },
-            new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "fail" });
+            new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "fail" });
 
         result.IsSuccess.Should().BeTrue();
     }
@@ -539,7 +539,7 @@ public class ResultEdgeCaseTests
     [Fact]
     public async Task EnsureAsync_NullPredicate_ThrowsArgumentNullException()
     {
-        var act = () => Result.EnsureAsync((Func<Task<bool>>)null!, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "fail" });
+        var act = () => Result.EnsureAsync((Func<Task<bool>>)null!, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "fail" });
 
         await act.Should().ThrowAsync<ArgumentNullException>();
     }
@@ -551,7 +551,7 @@ public class ResultEdgeCaseTests
 
         var result = await Result.EnsureAsync(
             async () => { await Task.Yield(); invoked = true; return true; },
-            new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "fail" });
+            new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "fail" });
 
         result.IsSuccess.Should().BeTrue();
         invoked.Should().BeTrue("async predicate should be invoked");
@@ -612,7 +612,7 @@ public class ResultEdgeCaseTests
     public void Failure_Unit_ShouldCreateFailureResultWithError()
     {
         // Arrange
-        var error = new Error.BadRequest("bad.request") { Detail = "Bad request" };
+        var error = Error.InvalidInput.ForRule("bad.request", "Bad request");
 
         // Act
         var result = Result.Fail(error);

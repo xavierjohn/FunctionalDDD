@@ -211,7 +211,7 @@ public sealed class StatusCodeAddress : ValueObject
             violations.Add(new FieldViolation(InputPointer.ForProperty("state"), "validation.error") { Detail = "State is required." });
 
         return violations.Count > 0
-            ? Result.Fail<StatusCodeAddress>(new Error.UnprocessableContent(EquatableArray.Create(violations.ToArray())))
+            ? Result.Fail<StatusCodeAddress>(new Error.InvalidInput(EquatableArray.Create(violations.ToArray())))
             : Result.Ok(new StatusCodeAddress(street, city, state));
     }
 
@@ -237,7 +237,7 @@ public sealed class StatusCodeScalar : ScalarValueObject<StatusCodeScalar, strin
         var field = fieldName ?? "value";
         if (string.IsNullOrWhiteSpace(value))
         {
-            return Result.Fail<StatusCodeScalar>(new Error.UnprocessableContent(EquatableArray.Create(
+            return Result.Fail<StatusCodeScalar>(new Error.InvalidInput(EquatableArray.Create(
                 new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = $"{field} is required." })));
         }
 
@@ -246,7 +246,7 @@ public sealed class StatusCodeScalar : ScalarValueObject<StatusCodeScalar, strin
         // as None instead of triggering validation).
         if (value == "bad")
         {
-            return Result.Fail<StatusCodeScalar>(new Error.UnprocessableContent(EquatableArray.Create(
+            return Result.Fail<StatusCodeScalar>(new Error.InvalidInput(EquatableArray.Create(
                 new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = $"{field} cannot be 'bad'." })));
         }
 
