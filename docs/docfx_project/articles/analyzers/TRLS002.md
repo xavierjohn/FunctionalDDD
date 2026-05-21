@@ -1,4 +1,4 @@
-# TRLS002 — Use Bind instead of Map when lambda returns Result
+﻿# TRLS002 — Use Bind instead of Map when lambda returns Result
 
 - **Severity:** Info
 - **Category:** Trellis

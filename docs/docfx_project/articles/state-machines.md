@@ -84,7 +84,7 @@ Result<OrderState> invalid = machine.FireResult(OrderTrigger.Submit);  // Fail (
 | Outcome | Result |
 |---|---|
 | `CanFire(trigger)` is `true` | Calls `Fire(trigger)`, returns `Result.Ok(stateMachine.State)`. |
-| `CanFire(trigger)` is `false`, default unhandled-trigger handler throws | Returns `Error.UnprocessableContent` (HTTP 422) carrying a `RuleViolation` with reason code `state.machine.invalid.transition`. |
+| `CanFire(trigger)` is `false`, default unhandled-trigger handler throws | Returns `Error.InvalidInput` (HTTP 422) carrying a `RuleViolation` with reason code `state.machine.invalid.transition`. |
 | `CanFire(trigger)` is `false`, custom `OnUnhandledTrigger` swallows the trigger | Returns `Result.Ok(stateMachine.State)` — state read AFTER the callback runs (normally unchanged unless the callback itself mutates or reroutes state). |
 | User entry/exit/transition/guard/accessor/mutator code throws | Exception propagates untouched. |
 
@@ -98,7 +98,7 @@ Invalid-transition detection uses `CanFire` (which honors `PermitIf` / `IgnoreIf
 
 ## Guards
 
-Guards are plain Stateless `PermitIf` / `IgnoreIf` predicates. `FireResult` honors them through `CanFire`, so a guard that returns `false` produces the same `Error.UnprocessableContent` as a missing transition.
+Guards are plain Stateless `PermitIf` / `IgnoreIf` predicates. `FireResult` honors them through `CanFire`, so a guard that returns `false` produces the same `Error.InvalidInput` as a missing transition.
 
 ```csharp
 using Stateless;
@@ -227,7 +227,7 @@ Keep business mutations **after** `FireResult` succeeds. Do not place domain sid
 
 - **Use `FireResult`, not `Fire`.** The whole reason to take this dependency is to keep invalid transitions inside the result pipeline.
 - **Distinguish state-machine 422s.** All `FireResult` failures share the reason code `state.machine.invalid.transition` — match on it when callers need to react specifically to workflow rejections.
-- **422, not 409.** Invalid transitions are semantic rule violations, not concurrent-modification conflicts; retrying will not help. That is why the failure is `Error.UnprocessableContent`.
+- **422, not 409.** Invalid transitions are semantic rule violations, not concurrent-modification conflicts; retrying will not help. That is why the failure is `Error.InvalidInput`.
 - **One state machine per aggregate instance.** They are not thread-safe; do not share across requests or threads.
 - **Keep guards pure.** They run via `CanFire` and again via `Fire`, so any side effect would execute twice on the success path.
 - **Use `LazyStateMachine` for ORM-materialized aggregates.** It removes the manual `_machine ??= Configure()` boilerplate and ensures the accessor reads the populated value.
@@ -236,6 +236,6 @@ Keep business mutations **after** `FireResult` succeeds. Do not place domain sid
 ## Cross-references
 
 - API surface: [`trellis-api-statemachine.md`](../api_reference/trellis-api-statemachine.md)
-- `Result<T>`, `Error.UnprocessableContent`, `RuleViolation`: [`trellis-api-core.md`](../api_reference/trellis-api-core.md)
+- `Result<T>`, `Error.InvalidInput`, `RuleViolation`: [`trellis-api-core.md`](../api_reference/trellis-api-core.md)
 - Cookbook recipe (CanFire + Fire pattern with `FireResult`): [`trellis-api-cookbook.md`](../api_reference/trellis-api-cookbook.md#recipe-9--state-machine-canfire--fire-pattern-with-fireresult)
 - Upstream library: [Stateless on GitHub](https://github.com/dotnet-state-machine/stateless)

@@ -142,7 +142,7 @@ The generator emits five entry points; all of them resolve through the base-type
 
 | API | Returns | Failure mode |
 |---|---|---|
-| `TryCreate(string value)` | `Result<TSelf>` | `Fail` with `Error.UnprocessableContent` for null, empty, whitespace, or unknown name. |
+| `TryCreate(string value)` | `Result<TSelf>` | `Fail` with `Error.InvalidInput` for null, empty, whitespace, or unknown name. |
 | `TryCreate(string? value, string? fieldName = null)` | `Result<TSelf>` | Same; `fieldName` is included in the field violation. |
 | `TryFromName(string? name, string? fieldName = null)` | `Result<TSelf>` | Base-type lookup that all generated factories delegate to. |
 | `Create(string value)` | `TSelf` | Throws on failure. Use only for trusted, internally-known names. |
@@ -197,7 +197,7 @@ bool notDone = paid.IsNot(OrderStatus.Cancelled);
 
 | Input or condition | Outcome |
 |---|---|
-| `null` or whitespace name passed to `TryCreate` / `TryFromName` | `Fail` with `Error.UnprocessableContent.ForField(field, "validation.error", "{Type} cannot be empty.")` |
+| `null` or whitespace name passed to `TryCreate` / `TryFromName` | `Fail` with `Error.InvalidInput.ForField(field, "validation.error", "{Type} cannot be empty.")` |
 | Unknown name | `Fail` with message `'{name}' is not a valid {Type}. Valid values: {alphabetised list}` |
 | Two members declared with the same `Value` (case-insensitive) | `InvalidOperationException` thrown by the base class on first cache build, naming the duplicate symbol |
 | `[EnumValue]` on a non-`TSelf` field, an instance member, or a non-`readonly` field | Silently ignored — only `public static readonly TSelf` init-only fields are discovered |

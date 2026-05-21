@@ -245,7 +245,7 @@ Use `Ensure` when the value is structurally valid, but you still need a domain r
 ```csharp
 var result = CustomerEmail.TryCreate("jane@example.com", fieldName: "email")
     .Ensure(email => !email.Value.EndsWith("@blocked.example", StringComparison.OrdinalIgnoreCase),
-        new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "validation.error") { Detail = "Blocked email domains are not allowed." })));
+        new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "validation.error") { Detail = "Blocked email domains are not allowed." })));
 ```
 
 A good mental model is:
@@ -275,9 +275,9 @@ public sealed record CheckoutRequest(string CouponCode, decimal Subtotal, string
 
 var result = Result.Ok(new CheckoutRequest("SPRING25", 125m, "USD"))
     .EnsureAll(
-        (request => request.Subtotal > 0m, new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("subtotal"), "validation.error") { Detail = "Subtotal must be greater than zero." }))),
-        (request => request.Currency.Length == 3, new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("currency"), "validation.error") { Detail = "Currency must be a 3-letter code." }))),
-        (request => request.CouponCode.Length <= 20, new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("couponCode"), "validation.error") { Detail = "Coupon code is too long." }))));
+        (request => request.Subtotal > 0m, new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("subtotal"), "validation.error") { Detail = "Subtotal must be greater than zero." }))),
+        (request => request.Currency.Length == 3, new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("currency"), "validation.error") { Detail = "Currency must be a 3-letter code." }))),
+        (request => request.CouponCode.Length <= 20, new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("couponCode"), "validation.error") { Detail = "Coupon code is too long." }))));
 ```
 
 ### `RecoverOnFailure`: provide a fallback path
@@ -382,7 +382,7 @@ public static Task<Result<Unit>> SendPromotionNotificationAsync(string email) =>
 
 string message = await GetCustomerByIdAsync(1)
     .ToResultAsync(new Error.NotFound(ResourceRef.For("Customer", 1)) { Detail = "Customer not found." })
-    .EnsureAsync(customer => customer.CanBePromoted, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Customer cannot be promoted." })
+    .EnsureAsync(customer => customer.CanBePromoted, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Customer cannot be promoted." })
     .TapAsync(customer => customer.PromoteAsync())
     .BindAsync(customer => SendPromotionNotificationAsync(customer.Email))
     .MatchAsync(
@@ -456,7 +456,7 @@ IResult httpResult = result.Match(
     onSuccess: value => Results.Ok(value),
     onFailure: error => error switch
     {
-        Error.UnprocessableContent uc => Results.UnprocessableEntity(uc.Fields.Items),
+        Error.InvalidInput uc => Results.UnprocessableEntity(uc.Fields.Items),
         Error.NotFound nf             => Results.NotFound(nf.Detail),
         Error.Conflict c              => Results.Conflict(c.Detail),
         _                              => Results.StatusCode(StatusCodes.Status500InternalServerError)
@@ -468,7 +468,7 @@ IResult httpResult = result.Match(
 Use `TapOnFailure`.
 
 ```csharp
-Result<string> result = new Error.InternalServerError("fault-id") { Detail = "Email service offline." }
+Result<string> result = new Error.Unexpected("unexpected_fault", "fault-id") { Detail = "Email service offline." }
     .TapOnFailure(error => Console.WriteLine($"Failure: {error.Code}"));
 ```
 

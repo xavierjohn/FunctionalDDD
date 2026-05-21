@@ -291,8 +291,8 @@ For diagnostic / fault-demo endpoints that produce an `Error` without a `Result`
 
 ```csharp
 app.MapGet("/diagnostics/throttle",
-    () => new Error.TooManyRequests("rate-limit-policy") { Detail = "10 req/min" }
-        .ToHttpResponse(opts => opts.WithErrorMapping<Error.TooManyRequests>(StatusCodes.Status429TooManyRequests)));
+    () => new Error.RateLimited("rate-limit-policy") { Detail = "10 req/min" }
+        .ToHttpResponse(opts => opts.WithErrorMapping<Error.RateLimited>(StatusCodes.Status429TooManyRequests)));
 ```
 
 The non-generic `HttpResponseOptionsBuilder` exposes `Vary`, `HonorPrefer`, `WithCacheControl(value)`, and the two `WithErrorMapping` overloads only.

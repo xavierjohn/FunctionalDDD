@@ -15,9 +15,9 @@ audience: [developer]
 | Goal | Use | See |
 |---|---|---|
 | Return a typed failure from a function | `Result.Fail<T>(new Error.X(payload) { Detail = "..." })` | [Creating errors](#creating-errors) |
-| Build a single-violation 422 from a property name | `Error.UnprocessableContent.ForField("email", "required", "...")` | [Validation failures](#validation-failures) |
-| Build a single-violation 422 from an object-level rule | `Error.UnprocessableContent.ForRule("passwords_must_match", "...")` | [Validation failures](#validation-failures) |
-| Aggregate per-field and cross-field violations | `new Error.UnprocessableContent(Fields: ..., Rules: ...)` | [Validation failures](#validation-failures) |
+| Build a single-violation 422 from a property name | `Error.InvalidInput.ForField("email", "required", "...")` | [Validation failures](#validation-failures) |
+| Build a single-violation 422 from an object-level rule | `Error.InvalidInput.ForRule("passwords_must_match", "...")` | [Validation failures](#validation-failures) |
+| Aggregate per-field and cross-field violations | `new Error.InvalidInput(Fields: ..., Rules: ...)` | [Validation failures](#validation-failures) |
 | Branch on the closed catalog at a boundary | `result.Match(value => ..., error => error switch { Error.NotFound nf => ..., ... })` | [Pattern matching](#pattern-matching) |
 | Log without changing the result | `result.TapOnFailure(error => logger.LogWarning(...))` | [Propagating errors](#propagating-errors) |
 | Translate one failure case into another | `result.MapOnFailure(error => error switch { ... })` | [Propagating errors](#propagating-errors) |
@@ -34,18 +34,22 @@ audience: [developer]
 
 ## Surface at a glance
 
-`Error` is an `abstract record` with **20 nested `sealed record` cases**. The base type has a `private` constructor, so the catalog is closed and `switch` over an `Error` reference is exhaustive at the language level.
+`Error` is an `abstract record` with **12 nested `sealed record` cases**. The base type has a `private` constructor, so the catalog is closed and `switch` over an `Error` reference is exhaustive at the language level.
 
-| Category | Cases | Wire status |
-|---|---|---|
-| 4xx client | `BadRequest`, `Unauthorized`, `Forbidden`, `NotFound`, `MethodNotAllowed`, `NotAcceptable`, `Conflict`, `Gone`, `PreconditionFailed`, `ContentTooLarge`, `UnsupportedMediaType`, `RangeNotSatisfiable`, `UnprocessableContent`, `PreconditionRequired`, `TooManyRequests` | `400` – `429` |
-| 5xx server | `InternalServerError`, `Unexpected`, `NotImplemented`, `ServiceUnavailable` | `500` – `503` |
-| Composition | `Aggregate` | `207` / `extensions.errors` |
+| Category | Cases |
+|---|---|
+| Input validation | `InvalidInput`, `InvariantViolation` |
+| Resource access | `NotFound`, `Gone`, `Forbidden`, `AuthenticationRequired` |
+| State | `Conflict` |
+| Availability | `Unavailable`, `RateLimited` |
+| Unexpected | `Unexpected` |
+| Transport envelope | `TransportFault` |
+| Composition | `Aggregate` |
 
-Every case carries a strongly-typed payload, an init-only `Detail` property, and a structured (never `Exception`) `Cause` chain. Full per-case constructor signatures, payload notes, and the supporting types (`ResourceRef`, `InputPointer`, `FieldViolation`, `RuleViolation`, `AuthChallenge`, `RetryAfterValue`, `PreconditionKind`, `EquatableArray<T>`) live in [`trellis-api-core.md` → `Error`](../api_reference/trellis-api-core.md#public-abstract-record-error).
+Every case carries a strongly-typed payload, an init-only `Detail` property, and a structured (never `Exception`) `Cause` chain. Full per-case constructor signatures, payload notes, and the supporting types (`ResourceRef`, `InputPointer`, `FieldViolation`, `RuleViolation`, `RetryAdvice`, `ITransportFault`, `EquatableArray<T>`) live in [`trellis-api-core.md` → `Error`](../api_reference/trellis-api-core.md#public-abstract-record-error).
 
 > [!NOTE]
-> `Error.Unexpected` and `Error.InternalServerError` both map to HTTP 500 but are distinct cases. `InternalServerError(faultId)` carries an opaque per-incident id correlating with telemetry; `Unexpected(reasonCode)` identifies the *kind* of "shouldn't happen" condition (default-initialized `Result`, exhausted match arms, internal invariant violations) and does not attach a `faultId` extension at the ASP boundary.
+> `Unexpected(reasonCode, faultId?)` covers both unhandled faults (set `FaultId` to correlate with telemetry) and internal invariant violations ("shouldn't happen"). The optional `FaultId` surfaces as a `faultId` problem-details extension at the ASP boundary when set. Use the `ReasonCode == "not_implemented"` convention if you need the boundary to map to HTTP 501; the default maps to 500.
 
 ## Installation
 
@@ -88,52 +92,52 @@ There are no static factory methods on the base `Error` type. Every call site na
 new Error.NotFound(ResourceRef.For<Order>("42")) { Detail = "Order 42 not found" }
 ```
 
-`Detail` is an init-only property on the base record; set it via object-initializer when you want to override the boundary renderer's default human-readable text. `Kind` (the stable IANA-aligned slug) and `Code` (the per-instance machine code, defaulting to `Kind`) are read-only.
+`Detail` is an init-only property on the base record; set it via object-initializer when you want to override the boundary renderer's default human-readable text. `Kind` is the stable domain slug and `Code` is the per-instance machine identifier exposed by that case.
 
 | Pattern | Example |
 |---|---|
 | Resource not found | `new Error.NotFound(ResourceRef.For<Order>(id)) { Detail = $"Order {id} not found" }` |
 | State conflict | `new Error.Conflict(ResourceRef.For<User>(userId), "duplicate.key") { Detail = "Email is already in use" }` |
 | Domain rule conflict (no resource) | `new Error.Conflict(null, "cancel_after_ship") { Detail = "Cannot cancel after shipment" }` |
-| Authentication missing | `new Error.Unauthorized() { Detail = "Authentication token is missing" }` |
+| Authentication missing | `new Error.AuthenticationRequired()` |
 | Authenticated but not allowed | `new Error.Forbidden("orders.write") { Detail = "Administrator role required" }` |
 | Soft-deleted resource | `new Error.Gone(ResourceRef.For<Document>(id))` |
-| Wrong content type | `new Error.UnsupportedMediaType(EquatableArray.Create("application/json"))` |
-| Body too large | `new Error.ContentTooLarge(MaxBytes: 10 * 1024 * 1024)` |
-| Method not supported | `new Error.MethodNotAllowed(EquatableArray.Create("GET", "POST"))` |
-| Rate limited | `new Error.TooManyRequests(RetryAfterValue.FromSeconds(30))` |
-| Dependency unavailable | `new Error.ServiceUnavailable(RetryAfterValue.FromSeconds(120)) { Detail = "Payment gateway offline" }` |
-| Unhandled fault (correlates to logs) | `new Error.InternalServerError(faultId) { Detail = ex.Message }` |
-| Internal invariant violated | `new Error.Unexpected("default_initialized")` |
+| Wrong content type | `new Error.TransportFault(new HttpError.UnsupportedMediaType(EquatableArray.Create("application/json")))` |
+| Body too large | `new Error.TransportFault(new HttpError.ContentTooLarge(10 * 1024 * 1024))` |
+| Method not supported | `new Error.TransportFault(new HttpError.MethodNotAllowed(EquatableArray.Create("GET", "POST")))` |
+| Rate limited | `new Error.RateLimited(new RetryAdvice(After: TimeSpan.FromSeconds(30)))` |
+| Dependency unavailable | `new Error.Unavailable("payment_gateway_offline", new RetryAdvice(After: TimeSpan.FromSeconds(120)))` |
+| Unhandled fault | `new Error.Unexpected("crm.timeout", faultId)` |
+| Aggregate invariant | `new Error.InvariantViolation("cross_aggregate_rule", ResourceRef.For<Order>(orderId))` |
 
 > [!TIP]
-> Reach for `new Error.Conflict(resource) { ReasonCode = "domain.violation" }` when the input is structurally valid but a business rule blocks it. `Error.UnprocessableContent` is for input the caller can fix.
+> Reach for `new Error.Conflict(resource, "domain.violation")` when state blocks an otherwise-valid request. `Error.InvalidInput` is for input the caller can fix. `Error.InvariantViolation` is for domain rules that aren't bound to a specific request field (e.g. a cross-aggregate rule, an internal precondition).
 
 ### Validation failures
 
-`Error.UnprocessableContent` carries `EquatableArray<FieldViolation> Fields` and `EquatableArray<RuleViolation> Rules`. For single-violation cases prefer the static factories on the case itself; the boundary renderer surfaces a single field-violation's `Detail` as the response detail directly.
+`Error.InvalidInput` carries `EquatableArray<FieldViolation> Fields` and `EquatableArray<RuleViolation> Rules`. For single-violation cases prefer the static factories on the case itself; the boundary renderer surfaces a single field-violation's `Detail` as the response detail directly.
 
 | Factory | Use when |
 |---|---|
-| `Error.UnprocessableContent.ForField(propertyName, reasonCode, detail?)` | Single property failure named by simple property (escaped via `InputPointer.ForProperty`). |
-| `Error.UnprocessableContent.ForField(InputPointer field, reasonCode, detail?)` | Single field failure where you already have a pointer (nested / array / `InputPointer.Root`). |
-| `Error.UnprocessableContent.ForRule(reasonCode, detail?)` | Single object-level invariant with no field pointer. |
-| `new Error.UnprocessableContent(EquatableArray<FieldViolation> Fields, EquatableArray<RuleViolation> Rules = default)` | Aggregate multiple per-field and/or cross-field violations. |
+| `Error.InvalidInput.ForField(propertyName, reasonCode, detail?)` | Single property failure named by simple property (escaped via `InputPointer.ForProperty`). |
+| `Error.InvalidInput.ForField(InputPointer field, reasonCode, detail?)` | Single field failure where you already have a pointer (nested / array / `InputPointer.Root`). |
+| `Error.InvalidInput.ForRule(reasonCode, detail?)` | Single object-level invariant with no field pointer. |
+| `new Error.InvalidInput(EquatableArray<FieldViolation> Fields, EquatableArray<RuleViolation> Rules = default)` | Aggregate multiple per-field and/or cross-field violations. |
 
 ```csharp
 using System.Collections.Immutable;
 using Trellis;
 
-var single = Error.UnprocessableContent.ForField("email", "required", "Email is required");
+var single = Error.InvalidInput.ForField("email", "required", "Email is required");
 
-var multiField = new Error.UnprocessableContent(EquatableArray.Create(
+var multiField = new Error.InvalidInput(EquatableArray.Create(
     new FieldViolation(InputPointer.ForProperty("email"),    "required") { Detail = "Email is required" },
     new FieldViolation(InputPointer.ForProperty("password"), "min_length",
         ImmutableDictionary<string, string>.Empty.Add("min", "8")) { Detail = "Password must be at least 8 characters" },
     new FieldViolation(InputPointer.ForProperty("age"),      "min",
         ImmutableDictionary<string, string>.Empty.Add("min", "18")) { Detail = "Must be 18 or older" }));
 
-var crossField = new Error.UnprocessableContent(
+var crossField = new Error.InvalidInput(
     Fields: EquatableArray<FieldViolation>.Empty,
     Rules:  EquatableArray.Create(new RuleViolation(
         "passwords_must_match",
@@ -152,7 +156,7 @@ var message = LoadUser("42").Match(
     onSuccess: user  => $"Found {user.Email}",
     onFailure: error => error switch
     {
-        Error.UnprocessableContent uc => $"Bad input: {uc.GetDisplayMessage()}",
+        Error.InvalidInput uc => $"Bad input: {uc.GetDisplayMessage()}",
         Error.NotFound nf             => $"Missing {nf.Resource.Type} {nf.Resource.Id}",
         Error.Forbidden f             => $"Not allowed by {f.PolicyId}",
         _                             => $"Fallback: {error.Kind}",
@@ -163,10 +167,10 @@ var message = LoadUser("42").Match(
 
 ### `Kind` vs `Code`
 
-- `Kind` is the **stable, low-cardinality slug** used for the OTel `error.type` attribute (e.g. `"not-found"`, `"unprocessable-content"`, `"conflict"`). Cases override this; payload is irrelevant.
-- `Code` defaults to `Kind` and is overridden when the payload carries a per-instance reason — `Conflict`/`Forbidden`/`BadRequest` return their `ReasonCode`/`PolicyId`/`ReasonCode`, `InternalServerError` returns its `FaultId`, `Unexpected` returns its `ReasonCode`, `NotImplemented` returns its `Feature`, and `PreconditionRequired` returns its `Condition`.
+- `Kind` is the **stable, low-cardinality domain slug** used for telemetry (e.g. `"invalid-input"`, `"invariant-violation"`, `"not-found"`). It is unaffected by payload values.
+- `Code` defaults to `Kind` and is overridden when the payload carries a per-instance identifier — `Conflict`, `Forbidden`, and `InvariantViolation` return their `ReasonCode`/`PolicyId`/`ReasonCode`; `Unexpected` returns its `ReasonCode` (and surfaces `FaultId` separately as a problem-details extension when set).
 
-Boundary renderers read `Kind` for the Problem Details `type` URI and `Code` for the per-instance machine identifier.
+At the ASP boundary, the wire `kind` can differ from the domain `Kind` for backward compatibility — most notably `Error.InvalidInput` / `Error.InvariantViolation` map to on-wire `kind = "unprocessable-content"`.
 
 ## Propagating errors
 
@@ -181,7 +185,7 @@ var result = LoadFromCrm(id)
     .TapOnFailure(error => logger.LogWarning("CRM call failed: {Kind} {Code}", error.Kind, error.Code))
     .MapOnFailure(error => error switch
     {
-        Error.InternalServerError => new Error.ServiceUnavailable(RetryAfterValue.FromSeconds(60))
+        Error.Unexpected => new Error.Unavailable("crm_offline", new RetryAdvice(After: TimeSpan.FromSeconds(60)))
             { Detail = "Customer service is temporarily unavailable" },
         _ => error,
     });
@@ -196,7 +200,7 @@ All three operators have `Async` variants on `Task<Result<T>>` and `ValueTask<Re
 
 ## Capturing exceptions
 
-Expected failures should be regular `Error` values. For code that genuinely throws, `Result.Try` and `Result.TryAsync` bridge the gap. Without a custom map, the default mapping wraps the exception as `Error.InternalServerError` with a generated `FaultId`.
+Expected failures should be regular `Error` values. For code that genuinely throws, `Result.Try` and `Result.TryAsync` bridge the gap. Without a custom map, the default mapping wraps the exception as `Error.Unexpected("unhandled_exception", faultId)` with a generated `FaultId`.
 
 ```csharp
 using System.IO;
@@ -215,7 +219,7 @@ static Result<string> LoadConfig(string path) =>
         {
             FileNotFoundException       => new Error.NotFound(ResourceRef.For<FileInfo>(path)) { Detail = $"{path} was not found" },
             UnauthorizedAccessException => new Error.Forbidden("file.read") { Detail = "Access denied" },
-            _                           => new Error.InternalServerError(Guid.NewGuid().ToString("N")) { Detail = exception.Message },
+            _                           => new Error.Unexpected("unhandled_exception", Guid.NewGuid().ToString("N")) { Detail = exception.Message },
         });
 ```
 
@@ -227,16 +231,16 @@ static Result<string> LoadConfig(string path) =>
 
 | Input failures | Result |
 |---|---|
-| All `Error.UnprocessableContent` | One merged `Error.UnprocessableContent` with concatenated `Fields` and `Rules`. |
+| All `Error.InvalidInput` | One merged `Error.InvalidInput` with concatenated `Fields` and `Rules`. |
 | Heterogeneous (mixed cases) | One `Error.Aggregate` wrapping the children. Nested aggregates are flattened at construction. |
 
 ```csharp
-var emailErr    = Result.Fail(Error.UnprocessableContent.ForField("email",    "required"));
-var passwordErr = Result.Fail(Error.UnprocessableContent.ForField("password", "required"));
-var ageErr      = Result.Fail(Error.UnprocessableContent.ForField("age",      "required"));
+var emailErr    = Result.Fail(Error.InvalidInput.ForField("email",    "required"));
+var passwordErr = Result.Fail(Error.InvalidInput.ForField("password", "required"));
+var ageErr      = Result.Fail(Error.InvalidInput.ForField("age",      "required"));
 
 var combined = Result.Combine(emailErr, passwordErr, ageErr);
-// combined.Error is one Error.UnprocessableContent with three Fields entries.
+// combined.Error is one Error.InvalidInput with three Fields entries.
 ```
 
 `Error.Combine(left, right)` (extension on `Error?`) does the same merging at the error level; passing a `null` left returns `right`.
@@ -252,7 +256,7 @@ acc = acc.Combine(new Error.Forbidden("orders.write"));
 
 ## Boundary mapping
 
-Map an `Error` to an HTTP / Problem Details response with `result.ToHttpResponse(...)` from `Trellis.Asp`. The boundary uses `Kind` for the Problem Details `type` URI, `Code` for the per-instance code, and renders the typed payload (e.g. `Allow`, `Retry-After`, `WWW-Authenticate`, `Content-Range`) as the appropriate header or `extensions` field. For `Result<Unit>` the success branch emits `204 No Content`.
+Map an `Error` to an HTTP / Problem Details response with `result.ToHttpResponse(...)` from `Trellis.Asp`. The boundary decides HTTP status, companion headers, and the problem-details `type` / `kind`. That wire `kind` can differ from the domain `Kind` for backward compatibility — `Error.InvalidInput.Kind` is `invalid-input`, but the on-wire `kind` is `unprocessable-content`. For `Result<Unit>` the success branch emits `204 No Content`.
 
 ```csharp
 using Trellis;
@@ -269,19 +273,38 @@ Full mapping rules and per-case behaviour live in:
 
 ## Practical guidance
 
-- **Pick the case the caller can act on.** `UnprocessableContent` when the request data can be fixed; `Conflict` when state or a business rule blocks an otherwise-valid request; `NotFound` when the resource does not exist; `PreconditionFailed` for optimistic-concurrency mismatches; `Gone` for soft-deleted resources.
-- **`InternalServerError(faultId)` is for true surprises.** Never use it for business logic — use `Unexpected(reasonCode)` for "shouldn't happen" invariant violations and a typed 4xx case for everything else.
+- **Pick the case the caller can act on.** `InvalidInput` when the request data can be fixed; `Conflict` when state or a business rule blocks an otherwise-valid request; `InvariantViolation` when the rule is real but not bound to a request field; `NotFound` when the resource does not exist; `Gone` for soft-deleted resources.
+- **Use `Unexpected(reasonCode, faultId?)` for true surprises.** Set `FaultId` when you need telemetry correlation; use `ReasonCode == "not_implemented"` only when you intentionally want HTTP 501 at the boundary.
 - **Set `Detail` only when it adds information.** Boundary renderers compute a usable default from `Kind`/`Code` and the typed payload; override `Detail` only when you have something more specific to say.
 - **Prefer `Match` (or a property pattern on `result.Error`) at boundaries.** Inside pipelines, prefer `Bind`/`Map`/`Ensure` over inspecting `Error` directly.
 - **Use `TapOnFailure` for logging and metrics.** It does not mutate the result.
-- **Use `MapOnFailure` when crossing layers.** Translating a low-level `InternalServerError` from a dependency into a domain-meaningful `ServiceUnavailable` is a typical use.
+- **Use `MapOnFailure` when crossing layers.** Translating a low-level `Unexpected` from a dependency into a domain-meaningful `Unavailable` is a typical use.
 - **Use `Combine` to preserve every failure.** This is the difference between "first error wins" and "tell the caller everything that's wrong."
 - **Equality.** Two errors compare equal when `Kind`, payload, and `Detail` match. `Cause` is excluded from equality so the same surface failure raised from different code paths still compares equal.
+
+### InvalidInput vs InvariantViolation
+
+`InvalidInput` carries field/rule violations bound to inbound request fields (per-field validation). `InvariantViolation` carries `(ReasonCode, ResourceRef?)` for domain rules that aren't tied to a request field — for example a cross-aggregate invariant or an internal precondition. Both map to HTTP 422 at the ASP boundary, but the wire `code` differs so consumers can tell domain-rule failures apart from field-validation failures.
+
+## Migration from v2.x
+
+| Removed | Use instead |
+|---|---|
+| `Error.BadRequest` | `Error.InvalidInput.ForRule(...)` (or `.ForField(...)` if anchored to a request field) |
+| `Error.UnprocessableContent` | `Error.InvalidInput` |
+| `Error.Unauthorized` | `Error.AuthenticationRequired` |
+| `Error.TooManyRequests` | `Error.RateLimited` |
+| `Error.ServiceUnavailable` | `Error.Unavailable` |
+| `Error.InternalServerError` | `Error.Unexpected` |
+| `Error.NotImplemented` | `Error.Unexpected` with `ReasonCode == "not_implemented"` |
+| `Error.MethodNotAllowed` / `NotAcceptable` / `UnsupportedMediaType` / `RangeNotSatisfiable` / `ContentTooLarge` / `PreconditionFailed` / `PreconditionRequired` | `Error.TransportFault(new HttpError.X(...))` |
+
+For the full upgrade narrative, including telemetry-slug changes and `AuthChallenge` removal, see the project CHANGELOG.
 
 ## Cross-references
 
 - API surface (full per-case table, supporting types, `Result.Try`/`TryAsync`, Combine family, Match/Tap/Map/Recover families): [`trellis-api-core.md`](../api_reference/trellis-api-core.md)
 - HTTP response mapping for `Result<T>` and standalone `Error`: [`trellis-api-asp.md`](../api_reference/trellis-api-asp.md), [`asp-tohttpresponse.md`](asp-tohttpresponse.md)
-- FluentValidation → `Error.UnprocessableContent` adapter: [`integration-fluentvalidation.md`](integration-fluentvalidation.md)
+- FluentValidation → `Error.InvalidInput` adapter: [`integration-fluentvalidation.md`](integration-fluentvalidation.md)
 - HTTP client failure mapping (turning upstream statuses into typed `Error` cases): [`integration-http.md`](integration-http.md)
 - Mediator pipeline behaviours that operate on `Result`/`Error`: [`integration-mediator.md`](integration-mediator.md)

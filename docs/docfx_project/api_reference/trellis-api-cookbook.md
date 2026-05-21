@@ -157,13 +157,13 @@ public sealed class Order : Aggregate<OrderId>
     private Order(OrderId id) : base(id) { }   // EF Core ctor
 
     // Idiomatic ROP factory: nullable parameters lift to Result<T> via T?.ToResult(error);
-    // Combine aggregates per-field errors into a single Error.UnprocessableContent; Map's
+    // Combine aggregates per-field errors into a single Error.InvalidInput; Map's
     // tuple-deconstructing overload lets the lambda bind the validated non-null values
     // directly as id/total/ownerId.
     public static Result<Order> TryCreate(OrderId? id, Money? total, ActorId? ownerId) =>
-        id.ToResult(Error.UnprocessableContent.ForField("id", "validation.error", "Order id is required."))
-            .Combine(total.ToResult(Error.UnprocessableContent.ForField("total", "validation.error", "Total is required.")))
-            .Combine(ownerId.ToResult(Error.UnprocessableContent.ForField("ownerId", "validation.error", "Owner id is required.")))
+        id.ToResult(Error.InvalidInput.ForField("id", "validation.error", "Order id is required."))
+            .Combine(total.ToResult(Error.InvalidInput.ForField("total", "validation.error", "Total is required.")))
+            .Combine(ownerId.ToResult(Error.InvalidInput.ForField("ownerId", "validation.error", "Owner id is required.")))
             .Map((id, total, ownerId) => new Order(id) { Total = total, Status = OrderStatus.Draft, OwnerId = ownerId });
 }
 
@@ -335,7 +335,7 @@ public sealed class ListOrdersHandler(AppDbContext db)
         Guid afterId = Guid.Empty;
         if (q.Cursor is not null && !Guid.TryParseExact(q.Cursor, "N", out afterId))
             return Result.Fail<Page<OrderListItem>>(
-                Error.UnprocessableContent.ForField("cursor", "cursor.malformed", "Cursor is not a valid opaque token."));
+                Error.InvalidInput.ForField("cursor", "cursor.malformed", "Cursor is not a valid opaque token."));
 
         var query = db.Orders.AsNoTracking().OrderBy(o => o.Id);
         if (q.Cursor is not null)
@@ -359,7 +359,7 @@ public sealed class ListOrdersHandler(AppDbContext db)
 
 **What it shows.** `Page<T>` is a `readonly record struct`; instances always carry positive limits and a non-null `Items`. `WasCapped` becomes `true` automatically when the server clamped the limit. Use `Page.Empty<T>(req, app)` for the empty case rather than `default(Page<T>)`.
 
-> **Cursor parsing must be ROP, not throwing.** `Guid.Parse(q.Cursor)` would throw on malformed input and escape the handler as a 500. Use `Guid.TryParseExact(..., "N", out var)` and return `Result.Fail<T>(Error.UnprocessableContent.ForField("cursor", ...))` so a bad cursor surfaces as a clean 422, not a stack trace. Apply the same shape (TryParse -> `Result` failure) for any opaque-token format you adopt.
+> **Cursor parsing must be ROP, not throwing.** `Guid.Parse(q.Cursor)` would throw on malformed input and escape the handler as a 500. Use `Guid.TryParseExact(..., "N", out var)` and return `Result.Fail<T>(Error.InvalidInput.ForField("cursor", ...))` so a bad cursor surfaces as a clean 422, not a stack trace. Apply the same shape (TryParse -> `Result` failure) for any opaque-token format you adopt.
 
 ---
 
@@ -395,7 +395,7 @@ app.MapGet("/orders/{id:guid}", async (Guid id, IMediator mediator, Cancellation
 app.Run();
 ```
 
-**What it shows.** `ToHttpResponse` returns `Microsoft.AspNetCore.Http.IResult` and is the **only** supported response verb. The fluent `HttpResponseOptionsBuilder<TDomain>` configures protocol semantics (`WithETag`, `WithLastModified`, `Vary`, `EvaluatePreconditions`) without leaking HTTP into the handler. Failures (`Error.NotFound`, `Error.UnprocessableContent`, …) round-trip through Problem Details using the `TrellisAspOptions` mapping registered by `AddTrellisAsp`.
+**What it shows.** `ToHttpResponse` returns `Microsoft.AspNetCore.Http.IResult` and is the **only** supported response verb. The fluent `HttpResponseOptionsBuilder<TDomain>` configures protocol semantics (`WithETag`, `WithLastModified`, `Vary`, `EvaluatePreconditions`) without leaking HTTP into the handler. Failures (`Error.NotFound`, `Error.InvalidInput`, …) round-trip through Problem Details using the `TrellisAspOptions` mapping registered by `AddTrellisAsp`.
 
 ---
 
@@ -684,7 +684,7 @@ public sealed class DocumentService
                .Permit(DocumentTrigger.Reject,  DocumentState.Draft);
 
         // FireResult pre-checks CanFire and converts invalid transitions to an
-        // Error.UnprocessableContent (HTTP 422) carrying a single RuleViolation with
+        // Error.InvalidInput (HTTP 422) carrying a single RuleViolation with
         // ReasonCode "state.machine.invalid.transition" — invalid transitions are
         // semantic rule violations, not concurrent-modification conflicts.
         Result<DocumentState> result = machine.FireResult(DocumentTrigger.Submit);
@@ -697,11 +697,11 @@ public sealed class DocumentService
 
 **Side-effect placement.** Keep Stateless configuration declarative: states, triggers, permitted transitions, and pure/idempotent guards. Put business mutation, domain events, outbox writes, and other side effects after `FireResult` succeeds, usually in `.Tap(...)` as shown above. `FireResult` intentionally invokes `Fire(...)` even when `CanFire(...)` is false so any configured `OnUnhandledTrigger` callback can run. A custom unhandled-trigger callback may swallow the trigger, in which case `FireResult` returns `Result.Ok(stateMachine.State)` — the state read AFTER the callback runs (normally unchanged, but a callback that mutates or reroutes state will surface the resulting state). If side effects live in `OnEntry`, `OnExit`, transition callbacks, or `OnUnhandledTrigger`, they can run outside the visible ROP success/failure path and make handler behavior diverge from tests.
 
-> **HTTP semantics.** Invalid state-machine transitions surface as `Error.UnprocessableContent` (HTTP 422), not `Error.Conflict` (HTTP 409). The reasoning: `Error.Conflict` semantically means "your request is valid but collides with concurrent state — retry may succeed"; a state-machine rejection ("you asked for `Submit` on a `Cancelled` order") is not retriable and is not about concurrent modification — it's a semantic rule violation. Callers that need to distinguish state-machine rejections from other 422s can match on the `RuleViolation.ReasonCode` value `state.machine.invalid.transition`.
+> **HTTP semantics.** Invalid state-machine transitions surface as `Error.InvalidInput` (HTTP 422), not `Error.Conflict` (HTTP 409). The reasoning: `Error.Conflict` semantically means "your request is valid but collides with concurrent state — retry may succeed"; a state-machine rejection ("you asked for `Submit` on a `Cancelled` order") is not retriable and is not about concurrent modification — it's a semantic rule violation. Callers that need to distinguish state-machine rejections from other 422s can match on the `RuleViolation.ReasonCode` value `state.machine.invalid.transition`.
 
 ```csharp
 // Asserting on a state-machine rejection in tests:
-var unproc = result.Error.Should().BeOfType<Error.UnprocessableContent>().Subject;
+var unproc = result.Error.Should().BeOfType<Error.InvalidInput>().Subject;
 unproc.Rules.Should().ContainSingle().Which.ReasonCode.Should().Be("state.machine.invalid.transition");
 ```
 
@@ -744,13 +744,13 @@ public class PlaceOrderHandlerTests
 
         var result = PlaceOrderCommand.TryCreate(request);
 
-        result.Should().BeFailureOfType<Error.UnprocessableContent>()
+        result.Should().BeFailureOfType<Error.InvalidInput>()
             .Which.Should().HaveFieldError("currency");
     }
 }
 ```
 
-**What it shows.** `ResultAssertions<TValue>.HaveValue(...)` does structural comparison; `UnwrapError()` is the safe accessor that *only* returns the error and is intended for use after `Should().BeFailure...`. Calling `.Should()` on an `Error.UnprocessableContent` returns the specialized `ValidationErrorAssertions` (with `HaveFieldError`, `HaveFieldErrorWithDetail`, `HaveFieldCount`). Async assertions have two valid shapes: await the pipeline first and assert the resulting `Result<T>`, or call `BeSuccessAsync` / `BeFailureAsync` directly on `Task<Result<T>>` or `ValueTask<Result<T>>`. The unsupported shape is `await result.Should().BeSuccessAsync()` because `.Should()` returns synchronous `ResultAssertions<TValue>`.
+**What it shows.** `ResultAssertions<TValue>.HaveValue(...)` does structural comparison; `UnwrapError()` is the safe accessor that *only* returns the error and is intended for use after `Should().BeFailure...`. Calling `.Should()` on an `Error.InvalidInput` returns the specialized `ValidationErrorAssertions` (with `HaveFieldError`, `HaveFieldErrorWithDetail`, `HaveFieldCount`). Async assertions have two valid shapes: await the pipeline first and assert the resulting `Result<T>`, or call `BeSuccessAsync` / `BeFailureAsync` directly on `Task<Result<T>>` or `ValueTask<Result<T>>`. The unsupported shape is `await result.Should().BeSuccessAsync()` because `.Should()` returns synchronous `ResultAssertions<TValue>`.
 
 ---
 
@@ -855,7 +855,7 @@ public partial class ShippingAddress : ValueObject
         AddIfBlank(violations, postalCode, fieldName, nameof(PostalCode));
         AddIfBlank(violations, country,    fieldName, nameof(Country));
         return violations.Count > 0
-            ? Result.Fail<ShippingAddress>(new Error.UnprocessableContent(EquatableArray.Create(violations.ToArray())))
+            ? Result.Fail<ShippingAddress>(new Error.InvalidInput(EquatableArray.Create(violations.ToArray())))
             : Result.Ok(new ShippingAddress(street.Trim(), city.Trim(), state.Trim(), postalCode.Trim(), country.Trim()));
     }
 
@@ -889,9 +889,9 @@ public sealed partial class Customer : Aggregate<CustomerId>
     }
 
     public static Result<Customer> TryCreate(CustomerId? id, string? name, ShippingAddress? shipping) =>
-        id.ToResult(Error.UnprocessableContent.ForField("id", "validation.error", "Customer id is required."))
-            .Combine(name.EnsureNotNullOrWhiteSpace(Error.UnprocessableContent.ForField("name", "required", "Name is required.")))
-            .Combine(shipping.ToResult(Error.UnprocessableContent.ForField("shipping", "validation.error", "Shipping address is required.")))
+        id.ToResult(Error.InvalidInput.ForField("id", "validation.error", "Customer id is required."))
+            .Combine(name.EnsureNotNullOrWhiteSpace(Error.InvalidInput.ForField("name", "required", "Name is required.")))
+            .Combine(shipping.ToResult(Error.InvalidInput.ForField("shipping", "validation.error", "Shipping address is required.")))
             .Map((id, name, shipping) => new Customer(id, name, shipping));
 }
 
@@ -924,7 +924,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 **What it shows.**
 
 - `[OwnedEntity]` + `partial` + `ValueObject` + private ctor is the contract. The three diagnostics (`TRLS036`/`037`/`038`) catch each violation at compile time.
-- `CompositeValueObjectJsonConverter<T>` makes JSON deserialization round-trip through `TryCreate`, so an API request body with a missing `state` produces the same `Error.UnprocessableContent` shape the domain emits.
+- `CompositeValueObjectJsonConverter<T>` makes JSON deserialization round-trip through `TryCreate`, so an API request body with a missing `state` produces the same `Error.InvalidInput` shape the domain emits.
 - `ApplyTrellisConventions` removes the boilerplate `OwnsOne` call. You only need `OwnsOne` when you want to **override** the convention (custom column names, table splitting, indexes on inner properties).
 
 **Storage shape.**
@@ -940,7 +940,7 @@ The `[JsonConverter(typeof(CompositeValueObjectJsonConverter<T>))]` attribute on
 
 | C# property | JSON request/response shape |
 |---|---|
-| `ShippingAddress ShippingAddress { get; private set; }` (required composite VO) | `"shippingAddress": { "street": "1 Main St", "city": "Redmond", "state": "WA", "postalCode": "98052", "country": "US" }` — every field present; missing inner field → `Error.UnprocessableContent` with field path `/shippingAddress/<field>`. |
+| `ShippingAddress ShippingAddress { get; private set; }` (required composite VO) | `"shippingAddress": { "street": "1 Main St", "city": "Redmond", "state": "WA", "postalCode": "98052", "country": "US" }` — every field present; missing inner field → `Error.InvalidInput` with field path `/shippingAddress/<field>`. |
 | `partial Maybe<ShippingAddress> BillingAddress { get; set; }` (optional composite VO on a domain model — **not** used directly on a request DTO; see Recipe 14) | Domain model only. On the wire, request DTOs use a **nullable transport** (`ShippingAddress?`) and the controller adapts via `Maybe.From(...)`. Response DTOs project to `ShippingAddress?` for the same reason. |
 | `Money Total { get; private set; }` (required composite VO with scalar inner properties — `decimal Amount`, `Currency Currency`) | `"total": { "amount": 49.99, "currency": "USD" }` — the property casing comes from System.Text.Json's `PropertyNamingPolicy.CamelCase` (set by `AddTrellisAsp()`). Inner scalar VOs (e.g., `Currency : RequiredString<Currency>`) serialize as their underlying primitive (`"USD"`, not `{"value":"USD"}`). |
 | Scalar VO (`OrderId : RequiredGuid<OrderId>`, `EmailAddress : RequiredString<EmailAddress>`) | Always serializes as the underlying primitive (`"550e8400-..."`, `"a@b.com"`). Never wrapped in `{ "value": ... }`. This is automatic via the source-generated `IScalarValue<T,P>` JSON converter. |
@@ -1318,7 +1318,7 @@ public sealed record OrderShipped(OrderId OrderId, TrackingNumber Tracking, Date
 public Result<Order> Submit(TimeProvider clock)
 {
     return this.ToResult()
-        .Ensure(_ => Status == OrderStatus.Draft, Error.UnprocessableContent.ForRule("order.already-submitted", "Already submitted"))
+        .Ensure(_ => Status == OrderStatus.Draft, Error.InvalidInput.ForRule("order.already-submitted", "Already submitted"))
         .Tap(_ =>
         {
             Status = OrderStatus.Submitted;
@@ -1400,7 +1400,7 @@ public sealed class CustomersController(ISender sender) : ControllerBase
 
 - Keep DTOs transport-shaped and commands/domain methods value-object-shaped.
 - Pass field names into `TryCreate` so failures point at the request field (`/Email`, `/CustomerName` after pointer normalization at the ASP boundary).
-- Use `Result.Combine(...)` to aggregate per-field `Error.UnprocessableContent` failures into one validation response.
+- Use `Result.Combine(...)` to aggregate per-field `Error.InvalidInput` failures into one validation response.
 - Stay on the ROP track: invalid input short-circuits before `sender.Send(...)`; valid input creates the command and continues.
 
 **Anti-pattern -> fix.**
@@ -1481,8 +1481,8 @@ public Result<IReadOnlyList<EmailAddress>> ValidateAddresses(IEnumerable<CreateC
     rows.TraverseAll(row => EmailAddress.TryCreate(row.Email));
 //        ↑ TraverseAll runs the selector for every row.
 //          - All succeed   → Ok(list)
-//          - One bad email → that single Error.UnprocessableContent (no Aggregate wrap)
-//          - Many bad      → one merged Error.UnprocessableContent whose
+//          - One bad email → that single Error.InvalidInput (no Aggregate wrap)
+//          - Many bad      → one merged Error.InvalidInput whose
 //                            Fields/Rules concatenate every per-item violation
 //          - Mixed kinds   → flat Error.Aggregate of every distinct error
 
@@ -1520,7 +1520,7 @@ return rows.TraverseAll(row => EmailAddress.TryCreate(row.Email));
 
 **Problem.** A handler needs two (or more) loads that are *genuinely* independent — a customer record from one upstream service, a product record from another; an HTTP call to authn plus a DB read for profile; or two reads against two distinct EF Core `DbContext` instances. Written sequentially, each `await` blocks the next, so latency = sum of fetches. Written naively in parallel with `Task.WhenAll`, error handling falls back to throwing, you lose the `Result<T>` track, and the lab evidence shows that authors (human and AI) reach for the sequential form by default because it "looks correct" and the tests pass.
 
-`Result.ParallelAsync(...)` is the framework's opinionated entry point: factory-takes-no-args, eagerly invokes each factory so both tasks actually run concurrently, returns a tuple of `Task<Result<T>>` that the matching `.WhenAllAsync()` extension awaits with `Task.WhenAll` and folds via `Result.Combine` into a single `Result<(T1, T2, …)>`. Failures combine through `Error.Combine`, so two `Error.UnprocessableContent` failures merge their fields, heterogeneous failures become an `Error.Aggregate`.
+`Result.ParallelAsync(...)` is the framework's opinionated entry point: factory-takes-no-args, eagerly invokes each factory so both tasks actually run concurrently, returns a tuple of `Task<Result<T>>` that the matching `.WhenAllAsync()` extension awaits with `Task.WhenAll` and folds via `Result.Combine` into a single `Result<(T1, T2, …)>`. Failures combine through `Error.Combine`, so two `Error.InvalidInput` failures merge their fields, heterogeneous failures become an `Error.Aggregate`.
 
 > 🛑 **Danger — `Result.ParallelAsync` against repositories that share a `DbContext` instance will race and throw.** The hard rule, independent of DI: **never start a second operation on a `DbContext` before the first one has completed.** EF Core's `DbContext` is documented as not thread-safe; the second concurrent operation throws `InvalidOperationException: A second operation was started on this context instance before a previous operation completed.` The typical Trellis EF wiring triggers this case by construction: `services.AddDbContext<TContext>(...)` registers the context with its default scoped lifetime (this is the default of the parameterless overload — `AddDbContext<TContext>(..., ServiceLifetime)` can override it), and `services.AddTrellisUnitOfWork<TContext>()` registers `IUnitOfWork` as scoped and consumes the scoped `TContext`. So **every repository resolved from the same request scope shares one `DbContext` instance**, and parallelising two repository reads parallelises two operations on that one context. Keep them sequential — see "When NOT to use it" below. `Result.ParallelAsync` is for genuinely cross-resource concurrency (HTTP + DB, two distinct upstream services, factory-created independent contexts), not for two repository reads against the same store.
 
@@ -1547,7 +1547,7 @@ public sealed class CheckoutHandler(
                 () => pricing.GetQuoteAsync(command.Sku, cancellationToken))
             .WhenAllAsync()
             //  ↑ awaits Task.WhenAll, folds the two Result<T> into Result<(User, Quote)>
-            //    via Result.Combine. Two Error.UnprocessableContent failures merge their
+            //    via Result.Combine. Two Error.InvalidInput failures merge their
             //    Fields/Rules; heterogeneous errors flatten into Error.Aggregate.
             .BindAsync(t => CheckoutQuote.Create(t.Item1, t.Item2, command.Sku)));
 }
@@ -1825,11 +1825,11 @@ app.MapPut("/orders/{id:guid}", (OrderId id, ReplaceOrderRequest request, OrderD
 - **Construct errors via the closed ADT.** `new Error.NotFound(ResourceRef.For<Order>(id))` — never `new Error("not_found", "...")`, which won't compile against the abstract base record.
 - **Use `Result.Combine` (or `EnsureAll`) for accumulating validation.** Manual `IsSuccess` checks across multiple results trigger `TRLS008`.
 - **Aggregate per-item Results with `Traverse` / `Sequence` (fail-fast) or `TraverseAll` / `SequenceAll` (accumulating).** When you have a collection and a per-item function returning `Result<T>`, use `items.Traverse(item => Compute(item))` to lift it into `Result<IReadOnlyList<T>>`. When you already have an `IEnumerable<Result<T>>` (e.g., from a `Select`), call `.Sequence()` instead. Both short-circuit on the first failure. When you need to surface every failure (form-style validation), use `TraverseAll` / `SequenceAll`: they run through every item and fold failures via `Error.Combine` — two `UnprocessableContent` errors merge their fields/rules, heterogeneous errors flatten into `Error.Aggregate`. See [Recipe 20](#recipe-20--fail-fast-vs-accumulating-sequencetraverse-vs-sequencealltraverseall) for when to choose which.
-- **Use `Error.UnprocessableContent.ForField` / `.ForRule` for single-violation 422s.** The most common shape (every primitive `TryCreate`, every value-object invariant, every `RequiredEnum`/`RequiredString` failure) is a single `FieldViolation` or a single `RuleViolation`. Use the factories instead of the verbose constructor: `Error.UnprocessableContent.ForField("email", "invalid_format", "must contain @")` over `new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "invalid_format") { Detail = "must contain @" }))`. There is also `ForField(InputPointer field, …)` for nested/array pointers (e.g. `new InputPointer("/items/0/quantity")`) or `InputPointer.Root` for whole-body violations, and `ForRule(reasonCode, detail)` for global rules. For aggregating multiple per-field violations into one error (e.g. composite VO `TryCreate`), keep the manual constructor with an `EquatableArray<FieldViolation>` or use the `Validate` builder.
+- **Use `Error.InvalidInput.ForField` / `.ForRule` for single-violation 422s.** The most common shape (every primitive `TryCreate`, every value-object invariant, every `RequiredEnum`/`RequiredString` failure) is a single `FieldViolation` or a single `RuleViolation`. Use the factories instead of the verbose constructor: `Error.InvalidInput.ForField("email", "invalid_format", "must contain @")` over `new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "invalid_format") { Detail = "must contain @" }))`. There is also `ForField(InputPointer field, …)` for nested/array pointers (e.g. `new InputPointer("/items/0/quantity")`) or `InputPointer.Root` for whole-body violations, and `ForRule(reasonCode, detail)` for global rules. For aggregating multiple per-field violations into one error (e.g. composite VO `TryCreate`), keep the manual constructor with an `EquatableArray<FieldViolation>` or use the `Validate` builder.
 - **`InputPointer.Root` for whole-body violations.** Use `InputPointer.ForProperty(name)` for field-level violations and `InputPointer.Root` when the rule is object-level.
 - **Only the `Trellis` namespace is auto-imported.** The template's implicit usings include `Trellis` (which exposes `Result`, `Result<T>`, `Error`, `Maybe<T>`, `RequiredString<T>`, `RequiredGuid<T>`, `RequiredInt<T>`, `RequiredDecimal<T>`, `RequiredDateTime<T>`, etc.). Every other Trellis namespace requires an explicit `using` per file — e.g. `using Trellis.Primitives;` for `Money` / `EmailAddress` / `PhoneNumber` / `MonetaryAmount` / `CurrencyCode` / `CountryCode` / etc., `using Stateless;` for the upstream `StateMachine<TState, TTrigger>` type plus `using Trellis.StateMachine;` for the Trellis `FireResult` extension and `LazyStateMachine<TState, TTrigger>`, `using Trellis.Authorization;` for permission types. This is intentional: implicit usings cannot be added at the template level without breaking services that don't reference the package.
 - **Accessing `Maybe<T>.Value` inside `Expression<Func<...>>` lambdas (EF Core `Where`/`Select`, FluentValidation `RuleFor`, Specifications):** TRLS003 still applies inside expression trees, but it now recognises the multi-clause guard — `e => e.Status == X && e.Y.HasValue && e.Y.Value == y` is analyzer-clean, and `MaybeQueryInterceptor` translates each clause faithfully to SQL when `AddTrellisInterceptors()` is wired. Hoist into a guarded variable for projections that the interceptor doesn't cover. Do not suppress with `#pragma warning disable TRLS003`. See [Recipe 8](#recipe-8--ef-core-maybepropertymapping-for-nullable-value-objects) for the full Specification walkthrough.
-- **`EquatableArray<T>` does not implement `IEnumerable<T>` — project through `.Items` for LINQ / FluentAssertions / `string.Join`.** The sequence-equality wrapper exposes a duck-typed `GetEnumerator()` for allocation-free `foreach` but deliberately does not implement `IEnumerable<T>`. LINQ extension methods (`Select`, `Where`, `Any`, `ToList`) and FluentAssertions extensions (`Should().ContainSingle()`, `Should().HaveCount(...)`, `Should().BeEquivalentTo(...)`) bind on `IEnumerable<T>` and will not compile against the raw wrapper. Call `.Items` first — it returns the wrapped `ImmutableArray<T>`, which IS `IEnumerable<T>`. This shows up most often in test assertions on `Error.UnprocessableContent.Fields` / `.Rules` and in error-rendering helpers. See [`EquatableArray<T>`](trellis-api-core.md#public-readonly-struct-equatablearrayt--iequatableequatablearrayt) in the Core reference for the worked example.
+- **`EquatableArray<T>` does not implement `IEnumerable<T>` — project through `.Items` for LINQ / FluentAssertions / `string.Join`.** The sequence-equality wrapper exposes a duck-typed `GetEnumerator()` for allocation-free `foreach` but deliberately does not implement `IEnumerable<T>`. LINQ extension methods (`Select`, `Where`, `Any`, `ToList`) and FluentAssertions extensions (`Should().ContainSingle()`, `Should().HaveCount(...)`, `Should().BeEquivalentTo(...)`) bind on `IEnumerable<T>` and will not compile against the raw wrapper. Call `.Items` first — it returns the wrapped `ImmutableArray<T>`, which IS `IEnumerable<T>`. This shows up most often in test assertions on `Error.InvalidInput.Fields` / `.Rules` and in error-rendering helpers. See [`EquatableArray<T>`](trellis-api-core.md#public-readonly-struct-equatablearrayt--iequatableequatablearrayt) in the Core reference for the worked example.
 
 ---
 
@@ -2026,7 +2026,7 @@ public sealed class Product : Aggregate<ProductId>
     public Result<Trellis.Unit> CanReserve(int quantity) =>
         Result.Ensure(
             quantity > 0 && quantity <= Stock,
-            Error.UnprocessableContent.ForRule(
+            Error.InvalidInput.ForRule(
                 "stock.insufficient",
                 $"Cannot reserve {quantity} from stock of {Stock}."));
 
@@ -2046,7 +2046,7 @@ public sealed class Order : Aggregate<OrderId>
     public Result<Trellis.Unit> CanSubmit() =>
         Result.Ensure(
             LineItems.Count > 0,
-            Error.UnprocessableContent.ForRule(
+            Error.InvalidInput.ForRule(
                 "order.empty",
                 "Order must have at least one line item to submit."));
 
@@ -2182,7 +2182,7 @@ public async Task Submit_with_one_unsatisfiable_line_does_not_reserve_any_stock(
 
     var r = await _sender.Send(new SubmitOrderCommand(order.Id), cancellationToken);
 
-    r.Should().BeFailureOfType<Error.UnprocessableContent>();
+    r.Should().BeFailureOfType<Error.InvalidInput>();
     productA.Stock.Should().Be(aStockBefore);   // NOT partially reserved
     productB.Stock.Should().Be(bStockBefore);
     order.IsSubmitted.Should().BeFalse();        // primary aggregate not transitioned

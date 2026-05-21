@@ -87,7 +87,7 @@ public sealed class DatabaseActorProvider(
             ?? throw new InvalidOperationException("No HttpContext is available.");
 
         // Unauthenticated request → no usable actor → Maybe.None → mediator pipeline
-        // emits Error.Unauthorized (HTTP 401).
+        // emits Error.AuthenticationRequired (HTTP 401).
         if (principal.Identity?.IsAuthenticated != true)
             return Maybe<Actor>.None;
 
@@ -233,7 +233,7 @@ The provider in [Quick start](#quick-start) is the canonical shape. It does thre
 | Extract `oid` (then fall back to `sub`) | Matches the `EntraActorProvider` precedence; both Entra v1.0 and v2.0 tokens resolve. |
 | Call the repository, then `Actor.Create(...)` | `Actor.Create` snapshots permissions into a `FrozenSet<string>` for O(1) lookups. |
 
-Returning `Maybe<Actor>.None` for unauthenticated requests and throwing `InvalidOperationException` only for missing-`HttpContext` configuration bugs follows the contract documented for `IActorProvider.GetCurrentActorAsync` ([`trellis-api-authorization.md`](../api_reference/trellis-api-authorization.md#iactorprovider)). The mediator authorization pipeline maps `Maybe.None` to `Error.Unauthorized` (HTTP 401, RFC 9110 §15.5.2); the throw surfaces as `Error.InternalServerError` (HTTP 500), which is correct because it is a bug rather than authentication state.
+Returning `Maybe<Actor>.None` for unauthenticated requests and throwing `InvalidOperationException` only for missing-`HttpContext` configuration bugs follows the contract documented for `IActorProvider.GetCurrentActorAsync` ([`trellis-api-authorization.md`](../api_reference/trellis-api-authorization.md#iactorprovider)). The mediator authorization pipeline maps `Maybe.None` to `Error.AuthenticationRequired` (HTTP 401, RFC 9110 §15.5.2); the throw surfaces as `Error.Unexpected` (HTTP 500), which is correct because it is a bug rather than authentication state.
 
 ## Carrying ABAC attributes
 

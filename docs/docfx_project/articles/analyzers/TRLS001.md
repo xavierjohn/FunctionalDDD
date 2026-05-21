@@ -1,4 +1,4 @@
-# TRLS001 — Result return value is not handled
+﻿# TRLS001 — Result return value is not handled
 
 - **Severity:** Warning
 - **Category:** Trellis

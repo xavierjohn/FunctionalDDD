@@ -20,13 +20,12 @@ See also: [trellis-api-core.md](trellis-api-core.md), [trellis-api-http.md](trel
 - You need typed header / validator helpers such as `EntityTagValue`, `RetryAfterValue`, or `PreconditionKind`.
 - You need response metadata or write-outcome shapes (`RepresentationMetadata`, `WriteOutcome<T>`).
 - You are applying aggregate ETag preconditions from application code.
+- Consumers should `using Trellis.Http.Abstractions;` to bring `HttpError` into scope (the type lives in the `Trellis` namespace; the package reference is what makes it visible).
 
 ## Package role
 
-Phase 1 splits the transport-specific surface out of `Trellis.Core`:
-
-- `Trellis.Core` keeps the transport-agnostic envelope: `ITransportFault` and `Error.TransportFault`.
-- `Trellis.Http.Abstractions` supplies the built-in HTTP payload union (`HttpError`) plus the HTTP value objects and response-shape helpers that previously lived in Core.
+- `Trellis.Core` keeps the transport-neutral envelope: `ITransportFault`, `RetryAdvice`, and `Error.TransportFault`.
+- `Trellis.Http.Abstractions` supplies the built-in HTTP payload union (`HttpError`) plus the HTTP value objects and response-shape helpers that would otherwise drag HTTP-specific concerns into Core.
 - The CLR namespace stays `Trellis`, so most consumer code changes are package-reference updates rather than `using` changes.
 
 ## `HttpError`
@@ -57,7 +56,7 @@ Construct it only in HTTP-aware boundaries and wrap it in `new Error.TransportFa
 
 | Type | Shape | Notes |
 | --- | --- | --- |
-| `AuthChallenge` | `sealed record (string Scheme, ImmutableDictionary<string,string>? Params = null)` | Standalone `WWW-Authenticate` challenge model. Phase 1 no longer stores it on `Error.Unauthorized`, but it remains available for HTTP-aware callers. |
+| `AuthChallenge` | `sealed record (string Scheme, ImmutableDictionary<string,string>? Params = null)` | Standalone `WWW-Authenticate` challenge model. It is not stored on `Error.AuthenticationRequired`; HTTP-aware callers can still use it to construct headers directly. |
 | `EntityTagValue` | `sealed record` | Strong / weak / wildcard ETag value with `Strong`, `Weak`, `Wildcard`, `TryParse`, `StrongEquals`, `WeakEquals`, and `ToHeaderValue()`. |
 | `RetryAfterValue` | `sealed class` | `Retry-After` as either delay seconds or an absolute date via `FromSeconds`, `FromDate`, and `ToHeaderValue()`. |
 | `PreconditionKind` | `enum { IfMatch, IfNoneMatch, IfModifiedSince, IfUnmodifiedSince }` | Typed vocabulary for conditional headers. |
@@ -77,7 +76,6 @@ The public signatures stay the same (`OptionalETag*` / `RequireETag*` over `Resu
 - missing `If-Match` on `RequireETag*` → `Error.TransportFault(new HttpError.PreconditionRequired(PreconditionKind.IfMatch))`
 - empty / weak-only / non-matching ETag sets → `Error.TransportFault(new HttpError.PreconditionFailed(ResourceRef.For<T>(), PreconditionKind.IfMatch))`
 
-## Phase 1 behavior boundary
+## Domain ↔ transport boundary
 
-`Error.Unauthorized`, `Error.TooManyRequests`, and `Error.ServiceUnavailable` remain in `Trellis.Core` as transport-agnostic cases in Phase 1.
-The HTTP package therefore carries the 405/406/412/413/415/416/428 payloads, while 401/429/503 still use the core error cases.
+`Error.AuthenticationRequired`, `Error.RateLimited`, and `Error.Unavailable` live in `Trellis.Core` as transport-neutral cases. They carry transport-neutral payloads (`Scheme`, `RetryAdvice`) that the ASP boundary translates to HTTP headers (`WWW-Authenticate`, `Retry-After`). This package supplies the 405/406/412/413/415/416/428 payloads via `HttpError`.

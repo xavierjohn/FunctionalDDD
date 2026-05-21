@@ -8,7 +8,7 @@ audience: [developer]
 ---
 # FluentValidation Integration
 
-`Trellis.FluentValidation` plugs FluentValidation validators into the Trellis Mediator validation stage and converts standalone `ValidationResult` runs into `Result<T>` failures backed by `Error.UnprocessableContent`.
+`Trellis.FluentValidation` plugs FluentValidation validators into the Trellis Mediator validation stage and converts standalone `ValidationResult` runs into `Result<T>` failures backed by `Error.InvalidInput`.
 
 ## Patterns Index
 
@@ -24,7 +24,7 @@ audience: [developer]
 
 ## Use this guide when
 
-- You already use FluentValidation and want failures to surface as `Error.UnprocessableContent` instead of exceptions or hand-rolled translations.
+- You already use FluentValidation and want failures to surface as `Error.InvalidInput` instead of exceptions or hand-rolled translations.
 - You send messages through `Trellis.Mediator` and want validators to run automatically inside `ValidationBehavior<TMessage,TResponse>` without per-handler boilerplate.
 - You need RFC 6901 JSON Pointer paths (`/Lines/0/Memo`) on validation failures so the ASP boundary renders them under the right field.
 
@@ -36,7 +36,7 @@ audience: [developer]
 |---|---|---|---|
 | `AddTrellisFluentValidation()` | `IServiceCollection` | `IServiceCollection` | Registers the open-generic adapter as `IMessageValidator<>`. AOT/trim-safe, idempotent. |
 | `AddTrellisFluentValidation(params Assembly[])` | `IServiceCollection` | `IServiceCollection` | Same as above, then scans assemblies for concrete `IValidator<T>` types and registers each scoped. **Not AOT/trim-safe** (`[RequiresUnreferencedCode]` / `[RequiresDynamicCode]`). |
-| `FluentValidationMessageValidatorAdapter<TMessage>` | — (DI-resolved) | `IMessageValidator<TMessage>` | Runs every injected `IValidator<TMessage>` sequentially, aggregates failures into one `Error.UnprocessableContent`. Forwards the ambient `CancellationToken`. |
+| `FluentValidationMessageValidatorAdapter<TMessage>` | — (DI-resolved) | `IMessageValidator<TMessage>` | Runs every injected `IValidator<TMessage>` sequentially, aggregates failures into one `Error.InvalidInput`. Forwards the ambient `CancellationToken`. |
 | `ValidateToResult<T>(value, paramName?, message?)` | `IValidator<T>` | `Result<T>` | Synchronous validate-and-convert. Short-circuits `null` input without invoking FluentValidation. |
 | `ValidateToResultAsync<T>(value, paramName?, message?, ct)` | `IValidator<T>` | `Task<Result<T>>` | Asynchronous validate-and-convert. Forwards `CancellationToken` to `ValidateAsync`. |
 | `ToResult<T>(value, paramName?)` | `ValidationResult` | `Result<T>` | Converts a pre-computed `ValidationResult` to `Result<T>`; preserves the validated value on success. |
@@ -77,7 +77,7 @@ var request = new CreateUserRequest("sam@example.com", "Sam", "Taylor");
 Result<CreateUserRequest> result = validator.ValidateToResult(request);
 ```
 
-On success: `Result.Ok(request)`. On failure: `Result.Fail<CreateUserRequest>(new Error.UnprocessableContent(EquatableArray.Create(violations)))` with one `FieldViolation` per FluentValidation failure.
+On success: `Result.Ok(request)`. On failure: `Result.Fail<CreateUserRequest>(new Error.InvalidInput(EquatableArray.Create(violations)))` with one `FieldViolation` per FluentValidation failure.
 
 ## Standalone validation
 
@@ -241,7 +241,7 @@ builder.Services.AddTrellisFluentValidation(typeof(SubmitBatchTransfersValidator
 |---|---|
 | No `IValidator<TMessage>` registered | `Result.Ok()` — no allocations |
 | All registered validators pass | `Result.Ok()` |
-| One or more validators report failures | `Result.Fail(new Error.UnprocessableContent(EquatableArray.Create(violations)))` aggregating every failure |
+| One or more validators report failures | `Result.Fail(new Error.InvalidInput(EquatableArray.Create(violations)))` aggregating every failure |
 | FluentValidation `PropertyName` is null/whitespace | Pointer derived from `typeof(TMessage).Name` |
 | FluentValidation `ErrorCode` is null/whitespace | `FieldViolation.ReasonCode` defaults to `"validation.error"` |
 | `CancellationToken` cancelled mid-run | Forwarded to `validator.ValidateAsync`; cancellation propagates |
@@ -250,7 +250,7 @@ Validators run **sequentially** and every failure is collected — the adapter d
 
 ### Composing with `IValidate`
 
-A message can implement `Trellis.Mediator.IValidate` for cross-cutting business invariants and also have one or more `IValidator<TMessage>` implementations registered for property-shaped rules. `ValidationBehavior<TMessage,TResponse>` runs every source and merges all `Error.UnprocessableContent` failures into a single response.
+A message can implement `Trellis.Mediator.IValidate` for cross-cutting business invariants and also have one or more `IValidator<TMessage>` implementations registered for property-shaped rules. `ValidationBehavior<TMessage,TResponse>` runs every source and merges all `Error.InvalidInput` failures into a single response.
 
 ```csharp
 using System.Collections.Generic;
@@ -278,7 +278,7 @@ public sealed record SubmitBatchTransfersCommand(
 
         return violations.Count == 0
             ? Result.Ok()
-            : Result.Fail(new Error.UnprocessableContent(EquatableArray.Create(violations.ToArray())));
+            : Result.Fail(new Error.InvalidInput(EquatableArray.Create(violations.ToArray())));
     }
 }
 
@@ -355,7 +355,7 @@ public sealed class UserService(
 ## Cross-references
 
 - API surface: [trellis-api-fluentvalidation.md](../api_reference/trellis-api-fluentvalidation.md)
-- `Result<T>`, `Error.UnprocessableContent`, `FieldViolation`, `InputPointer`: [trellis-api-core.md](../api_reference/trellis-api-core.md)
+- `Result<T>`, `Error.InvalidInput`, `FieldViolation`, `InputPointer`: [trellis-api-core.md](../api_reference/trellis-api-core.md)
 - Mediator validation behavior: [trellis-api-mediator.md](../api_reference/trellis-api-mediator.md)
 - ASP.NET 422 rendering: [trellis-api-asp.md](../api_reference/trellis-api-asp.md)
 - Cookbook recipes: [trellis-api-cookbook.md](../api_reference/trellis-api-cookbook.md)

@@ -28,7 +28,7 @@ See also: [trellis-api-cookbook.md](trellis-api-cookbook.md) — recipes using t
 |---|---|---|
 | Fire a Stateless trigger and get a Trellis result | `stateMachine.FireResult(trigger)` | [`StateMachineExtensions`](#statemachineextensions) |
 | Store a state machine inside an aggregate | `LazyStateMachine<TState,TTrigger>` with state accessor/mutator delegates | [`LazyStateMachine<TState, TTrigger>`](#lazystatemachinetstate-ttrigger) |
-| Treat invalid transitions as validation failures | Let `FireResult` map default unhandled-trigger `InvalidOperationException` to `Error.UnprocessableContent` | [Behavioral notes](#behavioral-notes) |
+| Treat invalid transitions as validation failures | Let `FireResult` map default unhandled-trigger `InvalidOperationException` to `Error.InvalidInput` | [Behavioral notes](#behavioral-notes) |
 | Apply business mutations after successful transition | Call `.FireResult(...)`, then mutate/domain-event in a `.Tap(...)` or explicit success branch | [Code examples](#code-examples), [Cookbook Recipe 9](trellis-api-cookbook.md#recipe-9--state-machine-canfire--fire-pattern-with-fireresult) |
 
 ## Common traps
@@ -61,7 +61,7 @@ public static class StateMachineExtensions
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public static Result<TState> FireResult<TState, TTrigger>(this StateMachine<TState, TTrigger> stateMachine, TTrigger trigger) where TState : notnull where TTrigger : notnull` | `Result<TState>` | Pre-checks with `stateMachine.CanFire(trigger)` (which honors `PermitIf`/`IgnoreIf` guards). When permitted, calls `stateMachine.Fire(trigger)` and returns `Result.Ok(stateMachine.State)`. When not permitted, still invokes `Fire(trigger)` so any user-configured `OnUnhandledTrigger` callback runs: an `InvalidOperationException` from that path is translated to `Error.UnprocessableContent.ForRule("state.machine.invalid.transition", $"Trigger '{trigger}' is not permitted from state '{stateMachine.State}'.")` (HTTP 422 — invalid transitions are semantic rule violations, not concurrent-modification conflicts). If a custom unhandled-trigger handler swallows the trigger, returns `Result.Ok(stateMachine.State)` — the state read AFTER the callback runs (normally unchanged unless the callback itself mutates or reroutes state). Other exception types from user entry/exit/transition actions propagate untouched. Independent of Stateless's exception message format. |
+| `public static Result<TState> FireResult<TState, TTrigger>(this StateMachine<TState, TTrigger> stateMachine, TTrigger trigger) where TState : notnull where TTrigger : notnull` | `Result<TState>` | Pre-checks with `stateMachine.CanFire(trigger)` (which honors `PermitIf`/`IgnoreIf` guards). When permitted, calls `stateMachine.Fire(trigger)` and returns `Result.Ok(stateMachine.State)`. When not permitted, still invokes `Fire(trigger)` so any user-configured `OnUnhandledTrigger` callback runs: an `InvalidOperationException` from that path is translated to `Error.InvalidInput.ForRule("state.machine.invalid.transition", $"Trigger '{trigger}' is not permitted from state '{stateMachine.State}'.")` (HTTP 422 — invalid transitions are semantic rule violations, not concurrent-modification conflicts). If a custom unhandled-trigger handler swallows the trigger, returns `Result.Ok(stateMachine.State)` — the state read AFTER the callback runs (normally unchanged unless the callback itself mutates or reroutes state). Other exception types from user entry/exit/transition actions propagate untouched. Independent of Stateless's exception message format. |
 
 ### `LazyStateMachine<TState, TTrigger>`
 
@@ -108,7 +108,7 @@ public static Result<TState> FireResult<TState, TTrigger>(
 - `StateMachineExtensions.FireResult` does not null-check `stateMachine`; a `null` receiver will fail before any Trellis error conversion occurs.
 - `LazyStateMachine<TState, TTrigger>` is also **not** thread-safe. Its lazy initialization uses `_machine ??= CreateMachine()` with no locking.
 - Invalid-transition detection uses `StateMachine.CanFire(trigger)` (which honors `PermitIf`/`IgnoreIf` guards) — no message-string parsing, so it is resilient to Stateless library upgrades.
-- When `CanFire` returns `false`, `Fire` is still invoked so any user-configured `OnUnhandledTrigger` callback runs. If the default unhandled-trigger handler throws `InvalidOperationException`, that path is translated to `Error.UnprocessableContent.ForRule("state.machine.invalid.transition", $"Trigger '{trigger}' is not permitted from state '{stateMachine.State}'.")` (HTTP 422). A custom handler that swallows the trigger results in `Result.Ok(stateMachine.State)` — the state is read AFTER the callback runs (normally unchanged unless the callback itself mutates or reroutes state).
+- When `CanFire` returns `false`, `Fire` is still invoked so any user-configured `OnUnhandledTrigger` callback runs. If the default unhandled-trigger handler throws `InvalidOperationException`, that path is translated to `Error.InvalidInput.ForRule("state.machine.invalid.transition", $"Trigger '{trigger}' is not permitted from state '{stateMachine.State}'.")` (HTTP 422). A custom handler that swallows the trigger results in `Result.Ok(stateMachine.State)` — the state is read AFTER the callback runs (normally unchanged unless the callback itself mutates or reroutes state).
 - Exceptions thrown by user entry, exit, transition, guard, accessor, mutator, or configuration code are not swallowed.
 - `LazyStateMachine<TState, TTrigger>` exists to defer state-machine construction until after entity state is available, which is useful when ORMs materialize an object before populating its state properties.
 
@@ -166,9 +166,9 @@ StateMachine<DocumentState, DocumentTrigger> machine = lazyMachine.Machine;
 
 ## Cross-references
 
-- [trellis-api-core.md](trellis-api-core.md) — `Result<T>`, `Error.UnprocessableContent`, `RuleViolation`.
+- [trellis-api-core.md](trellis-api-core.md) — `Result<T>`, `Error.InvalidInput`, `RuleViolation`.
 - [trellis-api-cookbook.md](trellis-api-cookbook.md) — Recipe 9: state-machine `CanFire` + `Fire` pattern with `FireResult`.
-- [trellis-api-asp.md](trellis-api-asp.md) — how `Error.UnprocessableContent` renders as HTTP 422 (top-level `detail` reads `Error.Detail`; per-rule context reads `RuleViolation.Detail`).
+- [trellis-api-asp.md](trellis-api-asp.md) — how `Error.InvalidInput` renders as HTTP 422 (top-level `detail` reads `Error.Detail`; per-rule context reads `RuleViolation.Detail`).
 
 ## Breaking changes from v1
 

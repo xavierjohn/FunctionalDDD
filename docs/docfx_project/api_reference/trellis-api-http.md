@@ -54,31 +54,40 @@ public static class HttpResponseExtensions
 | `ToResultAsync(this Task<HttpResponseMessage> response, Func<HttpResponseMessage, CancellationToken, Task<Error?>> mapper, CancellationToken ct = default)` | `Task<Result<HttpResponseMessage>>` | Body-aware bridge. The mapper is invoked **only** when `IsSuccessStatusCode == false`. `null` return -> `Ok(response)`; non-null -> `Fail` (response disposed). |
 | `HandleNotFoundAsync(this Task<HttpResponseMessage> response, Error.NotFound error)` | `Task<Result<HttpResponseMessage>>` | Maps `404` to `Fail(error)` (response disposed); any other status passes through as `Ok(response)`. Throws `ArgumentNullException` when `error` is null. |
 | `HandleConflictAsync(this Task<HttpResponseMessage> response, Error.Conflict error)` | `Task<Result<HttpResponseMessage>>` | Maps `409` to `Fail(error)` (response disposed); pass through otherwise. Throws `ArgumentNullException` when `error` is null. |
-| `HandleUnauthorizedAsync(this Task<HttpResponseMessage> response, Error.Unauthorized error)` | `Task<Result<HttpResponseMessage>>` | Maps `401` to `Fail(error)` (response disposed); pass through otherwise. Throws `ArgumentNullException` when `error` is null. |
-| `ReadJsonAsync<T>(this Task<Result<HttpResponseMessage>> response, JsonTypeInfo<T> jsonTypeInfo, CancellationToken ct = default) where T : notnull` | `Task<Result<T>>` | Already-failed input short-circuits with the upstream error. Otherwise reads the body and deserializes; non-success status, `204`, `205`, empty body, null payload, or `JsonException` (caught) all map to `Fail<InternalServerError>`. JSON-parse failures use only `JsonException.LineNumber` / `BytePositionInLine` — never `Message`, never `Path` (which can include user-controlled dictionary keys), never the response body — so user data echoed by the upstream cannot leak into the failure detail. **Always disposes** the response after reading, including on the null-`jsonTypeInfo` path. |
-| `ReadJsonMaybeAsync<T>(this Task<Result<HttpResponseMessage>> response, JsonTypeInfo<T> jsonTypeInfo, CancellationToken ct = default) where T : notnull` | `Task<Result<Maybe<T>>>` | Already-failed input short-circuits. Non-success status -> `Fail<InternalServerError>`. `204`, `205`, empty body, JSON `null` -> `Ok(Maybe.None)`. Invalid JSON throws `JsonException` (intentional). **Always disposes** the response, including on the null-`jsonTypeInfo` path. |
+| `HandleUnauthorizedAsync(this Task<HttpResponseMessage> response, Error.AuthenticationRequired error)` | `Task<Result<HttpResponseMessage>>` | Maps `401` to `Fail(error)` (response disposed); pass through otherwise. Throws `ArgumentNullException` when `error` is null. |
+| `ReadJsonAsync<T>(this Task<Result<HttpResponseMessage>> response, JsonTypeInfo<T> jsonTypeInfo, CancellationToken ct = default) where T : notnull` | `Task<Result<T>>` | Already-failed input short-circuits with the upstream error. Otherwise reads the body and deserializes; non-success status, `204`, `205`, empty body, null payload, or `JsonException` (caught) all map to `Fail<Unexpected>`. JSON-parse failures use only `JsonException.LineNumber` / `BytePositionInLine` — never `Message`, never `Path` (which can include user-controlled dictionary keys), never the response body — so user data echoed by the upstream cannot leak into the failure detail. **Always disposes** the response after reading, including on the null-`jsonTypeInfo` path. |
+| `ReadJsonMaybeAsync<T>(this Task<Result<HttpResponseMessage>> response, JsonTypeInfo<T> jsonTypeInfo, CancellationToken ct = default) where T : notnull` | `Task<Result<Maybe<T>>>` | Already-failed input short-circuits. Non-success status -> `Fail<Unexpected>`. `204`, `205`, empty body, JSON `null` -> `Ok(Maybe.None)`. Invalid JSON throws `JsonException` (intentional). **Always disposes** the response, including on the null-`jsonTypeInfo` path. |
 | `ReadJsonOrNoneOn404Async<T>(this Task<HttpResponseMessage> response, JsonTypeInfo<T> jsonTypeInfo, CancellationToken ct = default) where T : notnull` | `Task<Result<Maybe<T>>>` | Terminal optional-resource helper. `404` -> `Ok(Maybe.None)`; other non-2xx statuses use strict status mapping; `204`, `205`, empty body, and JSON `null` keep `ReadJsonMaybeAsync` semantics. **Always disposes** the response. |
 
 > **Business API default.** Bare `ToResultAsync()` is now the safe default for domain-facing HTTP clients. Use `HandleNotFoundAsync`, `HandleConflictAsync`, `HandleUnauthorizedAsync`, or an explicit `statusMap` only when the endpoint needs domain-specific error payloads.
 
-## Strict default with transport faults
+## Strict default with header context
 
-When `statusMap` is omitted, the default mapper inspects the `HttpResponseMessage` and returns the transport-agnostic core errors where possible, wrapping only the HTTP-specific payload cases in `Error.TransportFault(new HttpError.*(...))`.
+When `statusMap` is omitted, the default mapper in `Trellis.Http/src/HttpResponseExtensions.cs` translates known upstream statuses to typed Trellis errors. The 405/406/412/413/415/416/428 shapes stay wrapped in `Error.TransportFault(new HttpError.*(...))`; the remaining statuses use the transport-neutral core cases.
 
-| HTTP status | Header consulted | Surfaces as |
-|---|---|---|
-| `401 Unauthorized` | none preserved in Phase 1 | `Error.Unauthorized` |
-| `405 Method Not Allowed` | `Allow` (response content header). When the upstream omits `Allow`, falls through to `Error.InternalServerError` per RFC 9110 §15.5.6. | `Error.TransportFault(new HttpError.MethodNotAllowed(...))` |
-| `406 Not Acceptable` | none | `Error.TransportFault(new HttpError.NotAcceptable(EquatableArray<string>.Empty))` |
-| `412 Precondition Failed` | none | `Error.TransportFault(new HttpError.PreconditionFailed(ResourceRef.For("HttpResponse"), PreconditionKind.IfMatch))` |
-| `413 Content Too Large` | none | `Error.TransportFault(new HttpError.ContentTooLarge())` |
-| `415 Unsupported Media Type` | none | `Error.TransportFault(new HttpError.UnsupportedMediaType(EquatableArray<string>.Empty))` |
-| `416 Range Not Satisfiable` | `Content-Range` header presence with a known length (RFC 9110 §15.5.17). When the upstream omits `Content-Range` entirely **or** sends a length-unspecified form like `bytes 0-99/*`, falls through to `Error.InternalServerError`. | `Error.TransportFault(new HttpError.RangeNotSatisfiable(length, unit))` |
-| `428 Precondition Required` | none | `Error.TransportFault(new HttpError.PreconditionRequired(PreconditionKind.IfMatch))` |
-| `429 Too Many Requests` | none preserved in Phase 1 | `Error.TooManyRequests` |
-| `503 Service Unavailable` | none preserved in Phase 1 | `Error.ServiceUnavailable` |
+| Status | Becomes |
+|---|---|
+| `400` | `Error.InvalidInput.ForRule("http.bad_request")` |
+| `401` | `new Error.AuthenticationRequired()` |
+| `403` | `new Error.Forbidden("http.forbidden")` |
+| `404` | `new Error.NotFound(resource)` |
+| `405` (with `Allow`) | `new Error.TransportFault(new HttpError.MethodNotAllowed(allow))` |
+| `405` (no `Allow`) | `new Error.Unexpected(Guid.NewGuid().ToString("N"))` |
+| `406` | `new Error.TransportFault(new HttpError.NotAcceptable(EquatableArray<string>.Empty))` |
+| `409` | `new Error.Conflict(null, "http.conflict")` |
+| `410` | `new Error.Gone(resource)` |
+| `412` | `new Error.TransportFault(new HttpError.PreconditionFailed(resource, PreconditionKind.IfMatch))` |
+| `413` | `new Error.TransportFault(new HttpError.ContentTooLarge())` |
+| `415` | `new Error.TransportFault(new HttpError.UnsupportedMediaType(EquatableArray<string>.Empty))` |
+| `416` (with Content-Range length) | `new Error.TransportFault(new HttpError.RangeNotSatisfiable(length, unit))` |
+| `422` | `Error.InvalidInput.ForRule("http.unprocessable_content")` |
+| `428` | `new Error.TransportFault(new HttpError.PreconditionRequired(PreconditionKind.IfMatch))` |
+| `429` | `new Error.RateLimited()` |
+| `501` | `new Error.Unexpected("http.not_implemented")` |
+| `503` | `new Error.Unavailable()` |
+| other / `5xx` default | `new Error.Unexpected(Guid.NewGuid().ToString("N"))` |
 
-Phase 1 intentionally does **not** preserve parsed `WWW-Authenticate` or `Retry-After` values on the core 401 / 429 / 503 errors. The strict mapper still preserves the RFC-required header payloads for 405 (`Allow`) and 416 (`Content-Range`) because those values are needed to round-trip compliant responses through ASP without fabricating wire data.
+A `416` without a known `Content-Range` length, or a `405` without `Allow`, also falls through to `new Error.Unexpected(Guid.NewGuid().ToString("N"))`. `WWW-Authenticate` and `Retry-After` are not parsed into the core 401 / 429 / 503 cases — the strict default preserves only the payloads that need a dedicated transport-fault envelope (`Allow` and `Content-Range`). Use a custom status map or the body-aware overload when an endpoint-specific contract needs richer detail.
 
 ## Exception propagation
 
@@ -86,13 +95,13 @@ The Trellis.Http extensions deliberately do **not** swallow non-Result-shaped ex
 
 - **`HttpRequestException`** — propagates from any extension when the underlying `Task<HttpResponseMessage>` faults (DNS failure, connection refused, TLS handshake error, etc.).
 - **`OperationCanceledException` / `TaskCanceledException`** — propagates when the `CancellationToken` is signaled or the upstream `HttpClient` times out.
-- **`JsonException`** — caught and mapped to `Fail<InternalServerError>` only by `ReadJsonAsync<T>`. Both `ReadJsonMaybeAsync<T>` and `ReadJsonOrNoneOn404Async<T>` (which delegates to `ReadJsonMaybeAsync<T>` after the 404 check) let it propagate (intentional — see method docs).
+- **`JsonException`** — caught and mapped to `Fail<Unexpected>` only by `ReadJsonAsync<T>`. Both `ReadJsonMaybeAsync<T>` and `ReadJsonOrNoneOn404Async<T>` (which delegates to `ReadJsonMaybeAsync<T>` after the 404 check) let it propagate (intentional — see method docs).
 
 Any of these cases that surface inside a `try` block where a response has already been awaited still trigger the disposal contract described below before the exception escapes.
 
 ## 3xx redirects under strict default
 
-`HttpClient` follows redirects automatically by default. Callers who set `HttpClientHandler.AllowAutoRedirect = false` (e.g. SSO landing-page detection) must use `ToResultAsync(statusMap)` or the body-aware overload to handle 3xx — the strict default folds them into `Error.InternalServerError` along with all other unmapped statuses, which is intentional fail-fast behavior for the "domain-facing client" use case.
+`HttpClient` follows redirects automatically by default. Callers who set `HttpClientHandler.AllowAutoRedirect = false` (e.g. SSO landing-page detection) must use `ToResultAsync(statusMap)` or the body-aware overload to handle 3xx — the strict default folds them into `Error.Unexpected` along with all other unmapped statuses, which is intentional fail-fast behavior for the "domain-facing client" use case.
 
 ## Disposal contract
 
@@ -134,7 +143,7 @@ public Task<Result<TodoDto>> GetTodoStrictAsync(HttpClient client, Guid id, Canc
         {
             HttpStatusCode.NotFound => new Error.NotFound(ResourceRef.For<TodoDto>(id)),
             HttpStatusCode.Forbidden => new Error.Forbidden("todo.read"),
-            _ when (int)status >= 500 => new Error.InternalServerError(Guid.NewGuid().ToString("N")) { Detail = $"upstream {status}" },
+            _ when (int)status >= 500 => new Error.Unexpected(Guid.NewGuid().ToString("N")) { Detail = $"upstream {status}" },
             _ => null,
         })
         .ReadJsonAsync(AppJsonContext.Default.TodoDto, ct);
@@ -152,7 +161,7 @@ public Task<Result<TodoDto>> GetTodoWithProblemDetailsAsync(HttpClient client, G
                 .ReadFromJsonAsync<ProblemDetails>(cancellationToken: token);
             return problem is null
                 ? null
-                : new Error.InternalServerError(Guid.NewGuid().ToString("N")) { Detail = problem.Detail ?? "upstream error" };
+                : new Error.Unexpected(Guid.NewGuid().ToString("N")) { Detail = problem.Detail ?? "upstream error" };
         }, ct)
         .ReadJsonAsync(AppJsonContext.Default.TodoDto, ct);
 ```
@@ -173,7 +182,7 @@ The v1 surface (60+ overloads across two static classes) has been collapsed into
 | --- | --- |
 | `HandleNotFound`, `HandleNotFoundAsync` (sync, `Result<HRM>`, `Task<Result<HRM>>` overloads) | `HandleNotFoundAsync(this Task<HttpResponseMessage>, Error.NotFound)` |
 | `HandleConflict*` | `HandleConflictAsync(this Task<HttpResponseMessage>, Error.Conflict)` |
-| `HandleUnauthorized*` | `HandleUnauthorizedAsync(this Task<HttpResponseMessage>, Error.Unauthorized)` |
+| `HandleUnauthorized*` | `HandleUnauthorizedAsync(this Task<HttpResponseMessage>, Error.AuthenticationRequired)` |
 | `HandleForbidden*` | **Deleted.** Use `ToResultAsync(status => status == HttpStatusCode.Forbidden ? new Error.Forbidden(...) : null)`. |
 | `HandleClientError*` (4xx range), `HandleServerError*` (5xx range) | **Deleted.** Use `ToResultAsync(statusMap)` with a `switch` over `HttpStatusCode`. |
 | `EnsureSuccess`, `EnsureSuccessAsync` (all shapes) | **Deleted.** Use `ToResultAsync(status => (int)status >= 400 ? error : null)` or the body-aware `ToResultAsync(mapper, ct)`. |

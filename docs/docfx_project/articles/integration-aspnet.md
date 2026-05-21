@@ -34,7 +34,7 @@ audience: [developer]
 - Your application returns `Result<T>` and you need predictable HTTP status, Problem Details, and conditional-request behavior at the boundary.
 - You are wiring Minimal API endpoints or MVC controllers and want one verb (`ToHttpResponse`) instead of a `switch`-per-endpoint.
 - You need ETag, `If-Match` / `If-None-Match`, `Prefer`, or `Range` semantics that match RFC 9110 / 7240 / 8288 without hand-rolling header parsing.
-- You bind scalar value objects (`IScalarValue<TSelf, TPrimitive>`) from routes, queries, or JSON bodies and want validation collected as `Error.UnprocessableContent`.
+- You bind scalar value objects (`IScalarValue<TSelf, TPrimitive>`) from routes, queries, or JSON bodies and want validation collected as `Error.InvalidInput`.
 - You hydrate the current `Actor` from JWT/OIDC claims for downstream authorization checks.
 
 ## Surface at a glance
@@ -47,7 +47,7 @@ audience: [developer]
 | `ActionResultAdapterExtensions` | `AsActionResult<T>` / `AsActionResultAsync<T>` to wrap an `IResult` for MVC. |
 | `TrellisAspOptions` | DI-registered error-type → status-code map; configure via `AddTrellisAsp(opts => opts.MapError<TError>(status))`. |
 | `ETagHelper` | `ParseIfMatch` / `ParseIfNoneMatch` returning `EntityTagValue[]?`; `IfMatchSatisfied` / `IfNoneMatchMatches` comparison helpers. |
-| `IfNoneMatchExtensions` | `EnforceIfNoneMatchPrecondition(EntityTagValue[]?)` — converts a successful result into `Error.PreconditionFailed` when `If-None-Match: *` is sent and the resource exists. |
+| `IfNoneMatchExtensions` | `EnforceIfNoneMatchPrecondition(EntityTagValue[]?)` — converts a successful result into `Error.TransportFault(new HttpError.PreconditionFailed(...))` when `If-None-Match: *` is sent and the resource exists. |
 | `PreferHeader` | `Parse(HttpRequest)` → `ReturnRepresentation`, `ReturnMinimal`, `RespondAsync`, `Wait`, `HandlingStrict`, `HandlingLenient`, `HasPreferences`. |
 | `RangeRequestEvaluator` / `RangeOutcome` | RFC 9110 §14 `Range` evaluation (`bytes` only) returning `FullRepresentation` / `PartialContent` / `NotSatisfiable`. |
 | `PartialContentHttpResult` / `PartialContentResult` | `IResult` and MVC `ObjectResult` companions that emit `206 Partial Content`. |
@@ -104,7 +104,7 @@ Behavior:
 
 - Success → `200 OK` with the projected `UserResponse` body.
 - `Error.NotFound` → `404 Not Found` Problem Details.
-- `Error.UnprocessableContent` → `422 Unprocessable Content` validation Problem Details.
+- `Error.InvalidInput` → `422 Unprocessable Content` validation Problem Details.
 - Any other failure → status from `TrellisAspOptions` (default `500`).
 
 ## `Result<Unit>` → 204 No Content
@@ -197,28 +197,26 @@ There is **no** `WithBody(...)` builder method. Pass the projector as the second
 
 ## Error mapping
 
-Defaults are sourced from `TrellisAspOptions`:
+Trellis.Core.Error is transport-neutral. The ASP boundary translates domain failures to HTTP per the table below.
 
-| `Error` type | Default status |
-|---|---|
-| `Error.BadRequest` | `400` |
-| `Error.Unauthorized` | `401` |
-| `Error.Forbidden` | `403` |
-| `Error.NotFound` | `404` |
-| `Error.MethodNotAllowed` | `405` |
-| `Error.NotAcceptable` | `406` |
-| `Error.Conflict` | `409` |
-| `Error.Gone` | `410` |
-| `Error.PreconditionFailed` | `412` |
-| `Error.ContentTooLarge` | `413` |
-| `Error.UnsupportedMediaType` | `415` |
-| `Error.RangeNotSatisfiable` | `416` |
-| `Error.UnprocessableContent` | `422` |
-| `Error.PreconditionRequired` | `428` |
-| `Error.TooManyRequests` | `429` |
-| `Error.InternalServerError` / `Error.Unexpected` | `500` |
-| `Error.NotImplemented` | `501` |
-| `Error.ServiceUnavailable` | `503` |
+| Domain case | HTTP status | wire `kind` | Headers |
+|---|---|---|---|
+| `Error.InvalidInput` | `422` | `unprocessable-content` | — |
+| `Error.InvariantViolation` | `422` | `unprocessable-content` | — |
+| `Error.NotFound` | `404` | `not-found` | — |
+| `Error.Forbidden` | `403` | `forbidden` | — |
+| `Error.Conflict` + `ReasonCode == "concurrent_modification"` and request had `If-Match` | `412` | `precondition-failed` | — |
+| `Error.Conflict` | `409` | `conflict` | — |
+| `Error.Gone` | `410` | `gone` | — |
+| `Error.AuthenticationRequired` | `401` | `unauthorized` | `WWW-Authenticate` |
+| `Error.Unavailable` | `503` | `service-unavailable` | `Retry-After` |
+| `Error.RateLimited` | `429` | `too-many-requests` | `Retry-After` |
+| `Error.Unexpected` (`ReasonCode == "not_implemented"`) | `501` | `not-implemented` | — |
+| `Error.Unexpected` | `500` | `internal-server-error` | `faultId` when set |
+| `Error.Aggregate` | worst child | `multi` | per-child |
+| `Error.TransportFault` wrapping `HttpError.*` | `405/406/412/413/415/416/428` | inner wire kind | `Allow` / `Content-Range` / inner-specific |
+
+Domain `Kind` and wire `kind` are intentionally distinct for `Error.InvalidInput` and `Error.InvariantViolation`: the domain slugs remain `invalid-input` / `invariant-violation`, while the on-wire `kind` stays `unprocessable-content` for backward compatibility.
 
 Override globally:
 
@@ -243,17 +241,11 @@ Resolution order: `WithErrorMapping(Func<Error,int>)` → `WithErrorMapping<TErr
 
 ## Problem Details output
 
-Failures are emitted as `application/problem+json`. Companion headers are added automatically:
+Failures are emitted as `application/problem+json`. `Error.InvalidInput` with field violations uses `Results.ValidationProblem(...)`; everything else uses `Results.Problem(...)`. Companion headers are synthesized automatically from the error payload: `Allow` for `HttpError.MethodNotAllowed`, `Content-Range` for `HttpError.RangeNotSatisfiable`, `Retry-After` from `RetryAdvice` on `Error.RateLimited` / `Error.Unavailable`, and `WWW-Authenticate` from `Error.AuthenticationRequired.Scheme` or the registered `IAuthenticationSchemeProvider` fallback.
 
-| Error | Companion header |
-|---|---|
-| `Error.MethodNotAllowed` | `Allow` |
-| `Error.TooManyRequests` / `Error.ServiceUnavailable` | `Retry-After` (when configured) |
-| `Error.RangeNotSatisfiable` | `Content-Range: {Unit} */{CompleteLength}` |
+`Error.Aggregate` renders as one outer Problem Details object with the worst child status and an RFC 9457 `errors[]` extension containing one child object per inner error (`type`, `status`, `code`, `kind`, `detail`). `Error.TransportFault` projects the wrapped `HttpError` payload into `extensions` and uses the inner `code` / `kind`, not the outer `transport-fault` envelope. Every response also carries `instance`; `5xx` responses replace the public detail with `"An internal error occurred."`.
 
-Extensions always carry `code` and `kind`. `Error.InternalServerError` adds `faultId`. Rule violations land under `rules`. Every response also carries `instance` (RFC 9457 §3.1) populated from the server-relative request path+query so clients can correlate the problem with the originating request without consulting access logs. **For any `5xx`, `Detail` is replaced with `"An internal error occurred."`** so internal diagnostics never leak.
-
-`Error.UnprocessableContent` is routed to `Results.ValidationProblem(...)`:
+`Error.InvalidInput` is routed to `Results.ValidationProblem(...)`:
 
 ```http
 HTTP/1.1 422 Unprocessable Content
@@ -263,7 +255,7 @@ Content-Type: application/problem+json
   "title": "One or more validation errors occurred.",
   "status": 422,
   "instance": "/api/customers?api-version=2026-11-12",
-  "code": "unprocessable-content",
+  "code": "invalid-input",
   "kind": "unprocessable-content",
   "errors": {
     "email": ["Email is required"]
@@ -403,7 +395,7 @@ var guarded = result.EnforceIfNoneMatchPrecondition(
     ETagHelper.ParseIfNoneMatch(httpContext.Request));
 ```
 
-When the header contains `*` and the result is currently a success, it is replaced with `Error.PreconditionFailed` (`PreconditionKind.IfNoneMatch`). No-op otherwise.
+When the header contains `*` and the result is currently a success, it is replaced with `Error.TransportFault(new HttpError.PreconditionFailed(...))` using `PreconditionKind.IfNoneMatch`. No-op otherwise.
 
 ## Prefer header
 
@@ -476,7 +468,7 @@ For byte ranges with full RFC 9110 semantics, evaluate `Range` yourself with `Ra
 
 ## Scalar value validation
 
-`Trellis.Asp` validates value objects implementing `IScalarValue<TSelf, TPrimitive>` at every binding site (route, query, JSON body) and surfaces the result as `Error.UnprocessableContent`.
+`Trellis.Asp` validates value objects implementing `IScalarValue<TSelf, TPrimitive>` at every binding site (route, query, JSON body) and surfaces the result as `Error.InvalidInput`.
 
 | Host | Required wiring |
 |---|---|

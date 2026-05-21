@@ -83,23 +83,37 @@ Handle status codes **before** reading the body. This keeps transport failures s
 
 ### Strict default with HTTP-header context
 
-Bare `ToResultAsync()` (no `statusMap`) maps non-success status codes to typed Trellis errors. As of v3.x, the strict default also **inspects the upstream response headers** and copies the relevant context into the typed error so downstream rendering (e.g. ASP's `Allow` / `Retry-After` header emission) sees the upstream's intent rather than an empty placeholder.
+Bare `ToResultAsync()` uses the built-in mapper from `Trellis.Http/src/HttpResponseExtensions.cs`. Known upstream statuses become typed Trellis failures; the 405/406/412/413/415/416/428 cases stay wrapped in `Error.TransportFault(new HttpError.*(...))`.
 
-| HTTP status | Header consulted | Surfaces on |
-|---|---|---|
-| `401 Unauthorized` | `WWW-Authenticate` (scheme + best-effort parameter parse). **Token68 form** (e.g. `Negotiate <base64-token>`) degrades to scheme-only — `AuthChallenge` has no slot for the bare token; if token68 round-trip matters, either pass a `statusMap` that returns `null` for 401 (the raw `HttpResponseMessage` then flows through as `Result.Ok` and you read the headers directly) or use the body-aware `ToResultAsync(mapper, ct)` overload. | `Error.Unauthorized.Challenges` |
-| `405 Method Not Allowed` | `Allow` (response content header). When upstream omits it, falls through to `Error.InternalServerError`. | `Error.MethodNotAllowed.Allow` |
-| `416 Range Not Satisfiable` | `Content-Range` header presence with a known length (preserves unit and length, including the legitimate `bytes */0` empty-resource case). When upstream omits the header entirely or sends a Length-unspecified form like `bytes 0-99/*`, falls through to `Error.InternalServerError`. | `Error.RangeNotSatisfiable.CompleteLength` + `Error.RangeNotSatisfiable.Unit` |
-| `429 Too Many Requests` | `Retry-After` (delay seconds **or** HTTP date; negative deltas treated as absent) | `Error.TooManyRequests.RetryAfter` |
-| `503 Service Unavailable` | `Retry-After` | `Error.ServiceUnavailable.RetryAfter` |
+| HTTP status | Produced error |
+|---|---|
+| `400` | `Error.InvalidInput.ForRule("http.bad_request")` |
+| `401` | `new Error.AuthenticationRequired()` |
+| `403` | `new Error.Forbidden("http.forbidden")` |
+| `404` | `new Error.NotFound(ResourceRef.For("HttpResponse"))` |
+| `405` with `Allow` | `new Error.TransportFault(new HttpError.MethodNotAllowed(allow))` |
+| `405` without `Allow` | `new Error.Unexpected(Guid.NewGuid().ToString("N"))` |
+| `406` | `new Error.TransportFault(new HttpError.NotAcceptable(EquatableArray<string>.Empty))` |
+| `409` | `new Error.Conflict(null, "http.conflict")` |
+| `410` | `new Error.Gone(ResourceRef.For("HttpResponse"))` |
+| `412` | `new Error.TransportFault(new HttpError.PreconditionFailed(ResourceRef.For("HttpResponse"), PreconditionKind.IfMatch))` |
+| `413` | `new Error.TransportFault(new HttpError.ContentTooLarge())` |
+| `415` | `new Error.TransportFault(new HttpError.UnsupportedMediaType(EquatableArray<string>.Empty))` |
+| `416` with known `Content-Range` length | `new Error.TransportFault(new HttpError.RangeNotSatisfiable(length, unit))` |
+| `422` | `Error.InvalidInput.ForRule("http.unprocessable_content")` |
+| `428` | `new Error.TransportFault(new HttpError.PreconditionRequired(PreconditionKind.IfMatch))` |
+| `429` | `new Error.RateLimited()` |
+| `501` | `new Error.Unexpected("http.not_implemented")` |
+| `503` | `new Error.Unavailable()` |
+| other / default | `new Error.Unexpected(Guid.NewGuid().ToString("N"))` |
 
-Headers that aren't present produce empty arrays / null `RetryAfter` / empty `Challenges` — the mapper never invents values. **Two exceptions:** `405` without `Allow` and `416` without `Content-Range` fall through to `Error.InternalServerError` (per the rows above) rather than producing typed errors with default empty/zero values; rendering those defaults through ASP would fabricate misleading wire headers. `406 Not Acceptable`, `415 Unsupported Media Type`, and other statuses without a single canonical response header still produce typed errors with default empty/zero context.
+A `405` without `Allow`, a `416` without a known `Content-Range` length, and all unmapped 3xx/5xx statuses fall through to `Error.Unexpected(Guid.NewGuid().ToString("N"))`. The strict default does **not** parse `WWW-Authenticate` or `Retry-After` into `Error.AuthenticationRequired`, `Error.RateLimited`, or `Error.Unavailable`; those core cases stay transport-neutral. Use a custom status map or the body-aware overload when an endpoint-specific contract needs richer header detail.
 
 > [!IMPORTANT]
-> **3xx redirects under the strict default fold into `Error.InternalServerError`.** `HttpClient` follows redirects automatically by default, so this is rarely seen — but callers who set `HttpClientHandler.AllowAutoRedirect = false` (e.g. SSO landing-page detection) must use `ToResultAsync(statusMap)` or the body-aware overload to handle 3xx explicitly.
+> **3xx redirects under the strict default fold into `Error.Unexpected`.** `HttpClient` follows redirects automatically by default, so this is mostly relevant only when `AllowAutoRedirect = false` (for example, SSO landing-page detection).
 
 > [!NOTE]
-> **Exception propagation.** `Trellis.Http` does not swallow non-Result-shaped exceptions. `HttpRequestException` (network failure, DNS, TLS), `OperationCanceledException` / `TaskCanceledException` (cancellation, timeout), and `JsonException` from **both** `ReadJsonMaybeAsync<T>` and `ReadJsonOrNoneOn404Async<T>` (which delegates to `ReadJsonMaybeAsync<T>` for non-404 statuses) propagate through the chain. Only `ReadJsonAsync<T>` catches `JsonException` and maps it to `Fail<InternalServerError>` with structured position info (line / byte) only — never `JsonException.Message`, never `JsonException.Path` (which can include user-controlled dictionary keys), never the response body content — so user data the upstream may have echoed cannot leak into the failure detail.
+> **Exception propagation.** `Trellis.Http` does not swallow non-Result-shaped exceptions. `HttpRequestException` and `OperationCanceledException` / `TaskCanceledException` propagate. `ReadJsonAsync<T>` is the only JSON helper that catches `JsonException`; it converts it to `Error.Unexpected(Guid.NewGuid().ToString("N"))` with sanitized line/byte detail only. `ReadJsonMaybeAsync<T>` and `ReadJsonOrNoneOn404Async<T>` let `JsonException` propagate after disposing the response.
 
 ### Single-status handlers
 
@@ -108,7 +122,7 @@ Use these when one specific failure status is part of the contract.
 | Handler | HTTP status | Produces |
 |---|---|---|
 | `HandleNotFoundAsync` | `404` | `Error.NotFound` |
-| `HandleUnauthorizedAsync` | `401` | `Error.Unauthorized` |
+| `HandleUnauthorizedAsync` | `401` | `Error.AuthenticationRequired` |
 | `HandleConflictAsync` | `409` | `Error.Conflict` |
 
 Each operates on `Task<HttpResponseMessage>` (the entry point of the chain). The next operator is `ReadJsonAsync` / `ReadJsonMaybeAsync`.
@@ -133,7 +147,7 @@ public sealed class OrdersClient(HttpClient httpClient)
 {
     public Task<Result<OrderDto>> CreateAsync(CreateOrderRequest request, CancellationToken ct) =>
         httpClient.PostAsJsonAsync("orders", request, OrdersJsonContext.Default.CreateOrderRequest, ct)
-            .HandleUnauthorizedAsync(new Error.Unauthorized() { Detail = "Sign in before creating orders." })
+            .HandleUnauthorizedAsync(new Error.AuthenticationRequired() { Detail = "Sign in before creating orders." })
             .ReadJsonAsync(OrdersJsonContext.Default.OrderDto, ct);
 }
 ```
@@ -165,8 +179,8 @@ public sealed class ProductsClient(HttpClient httpClient)
             {
                 HttpStatusCode.NotFound  => new Error.NotFound(ResourceRef.For<ProductDto>(productId)),
                 HttpStatusCode.Forbidden => new Error.Forbidden("products.read"),
-                _ when (int)status >= 500 => new Error.InternalServerError(Guid.NewGuid().ToString("N")) { Detail = $"upstream {status}" },
-                _ when (int)status >= 400 => new Error.InternalServerError(Guid.NewGuid().ToString("N")) { Detail = $"client error {status}" },
+                _ when (int)status >= 500 => new Error.Unexpected("unexpected_fault", Guid.NewGuid().ToString("N")) { Detail = $"upstream {status}" },
+                _ when (int)status >= 400 => new Error.Unexpected("unexpected_fault", Guid.NewGuid().ToString("N")) { Detail = $"client error {status}" },
                 _ => null,
             })
             .ReadJsonAsync(ProductsJsonContext.Default.ProductDto, ct);
@@ -204,8 +218,8 @@ public sealed class InvoicesClient(HttpClient httpClient)
                 return response.StatusCode switch
                 {
                     HttpStatusCode.Conflict   => new Error.Conflict(null, "conflict") { Detail = body },
-                    HttpStatusCode.BadRequest => new Error.BadRequest("bad-req") { Detail = body },
-                    _ => new Error.InternalServerError("upstream") { Detail = $"Invoice request failed with {(int)response.StatusCode}: {body}" },
+                    HttpStatusCode.BadRequest => Error.InvalidInput.ForRule("bad-req") { Detail = body },
+                    _ => new Error.Unexpected("unexpected_fault", "upstream") { Detail = $"Invoice request failed with {(int)response.StatusCode}: {body}" },
                 };
             }, ct)
             .ReadJsonAsync(InvoicesJsonContext.Default.InvoiceDto, ct);
@@ -287,7 +301,7 @@ public sealed class CheckoutClient(HttpClient httpClient)
             .ReadJsonAsync(CheckoutJsonContext.Default.InventoryCheckDto, ct)
             .EnsureAsync(
                 inventory => inventory.InStock,
-                new Error.UnprocessableContent(EquatableArray.Create(
+                new Error.InvalidInput(EquatableArray.Create(
                     new FieldViolation(InputPointer.ForProperty(nameof(productId)), "validation.error") { Detail = "Out of stock." })))
             .BindAsync(
                 (_, token) => httpClient.PostAsync($"payments/{productId}", null, token)

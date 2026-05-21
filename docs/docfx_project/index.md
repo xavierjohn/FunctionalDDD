@@ -10,7 +10,7 @@ The big win is simple: **your happy path stays readable even when the real world
 
 - **Validate once, trust everywhere** with value objects such as `FirstName`, `OrderId`, and `CustomerEmail`
 - **Compose workflows safely** with `Combine`, `Bind`, `Ensure`, `Tap`, and `Match`
-- **Return structured errors** with concrete types like `Error.UnprocessableContent`, `Error.NotFound`, and `Error.Conflict`
+- **Return structured errors** with concrete types like `Error.InvalidInput`, `Error.NotFound`, and `Error.Conflict`
 - **Keep domain code expressive** with aggregates, entities, specifications, and domain events
 - **Integrate with ASP.NET Core** using `ToHttpResponse()` and `AsActionResult<T>()` when you are ready to expose APIs
 
