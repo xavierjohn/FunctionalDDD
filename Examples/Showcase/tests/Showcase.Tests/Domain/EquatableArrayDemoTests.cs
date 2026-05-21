@@ -10,7 +10,7 @@ using Trellis.Primitives;
 public class EquatableArrayDemoTests
 {
     [Fact]
-    public void Two_UnprocessableContent_with_same_field_violations_are_equal()
+    public void Two_InvalidInput_with_same_field_violations_are_equal()
     {
         var a = new Error.InvalidInput(EquatableArray.Create(
             new FieldViolation(InputPointer.ForProperty("email"), "validation.required") { Detail = "Email is required" }));

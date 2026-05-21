@@ -114,7 +114,7 @@ Content-Type: application/json
 ### Unfreeze account
 POST {{host}}/api/accounts/{{aliceChecking}}/unfreeze
 
-### Unfreeze an Active account (422 from Error.UnprocessableContent — invalid state transition)
+### Unfreeze an Active account (422 from Error.InvalidInput — invalid state transition)
 # @expect status: 422
 POST {{host}}/api/accounts/{{bobChecking}}/unfreeze
 
@@ -166,8 +166,8 @@ Content-Type: application/json
 
 ### Secure withdraw — withdrawals greater than $1,000 require a verification
 ### code. The in-memory verifier returns:
-###   * 401 Error.Unauthorized        when the code is "000000" or empty
-###   * 422 Error.UnprocessableContent when the code is not exactly six digits
+###   * 401 Error.AuthenticationRequired when the code is "000000" or empty
+###   * 422 Error.InvalidInput            when the code is not exactly six digits
 ### Use a six-digit code other than "000000" (e.g. "123456") for the happy path.
 # @expect status: 401
 POST {{host}}/api/accounts/{{aliceChecking}}/secure-withdraw
@@ -201,7 +201,7 @@ Content-Type: application/json
 }
 
 ###############################################################################
-# Diagnostics — deterministic Error.InternalServerError(faultId) demo
+# Diagnostics — deterministic Error.Unexpected("diagnostics_fault", faultId) demo
 ###############################################################################
 
 ### Trigger fault (500 with stable faultId in Problem Details)

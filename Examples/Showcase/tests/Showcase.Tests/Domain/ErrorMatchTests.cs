@@ -11,7 +11,7 @@ using Trellis.Primitives;
 public class ErrorMatchTests
 {
     [Theory]
-    [InlineData(typeof(Error.InvalidInput), "unprocessable")]
+    [InlineData(typeof(Error.InvalidInput), "invalid")]
     [InlineData(typeof(Error.NotFound), "not-found")]
     [InlineData(typeof(Error.Conflict), "conflict")]
     [InlineData(typeof(Error.Forbidden), "forbidden")]
@@ -26,7 +26,7 @@ public class ErrorMatchTests
             nameof(Error.Conflict) => new Error.Conflict(null, "x"),
             nameof(Error.Forbidden) => new Error.Forbidden("policy.id"),
             nameof(Error.TransportFault) => new Error.TransportFault(new HttpError.PreconditionFailed(new ResourceRef("Thing", "1"), PreconditionKind.IfMatch)),
-            nameof(Error.Unexpected) => new Error.Unexpected("fault-id"),
+            nameof(Error.Unexpected) => new Error.Unexpected("test_reason", "fault-id"),
             _ => throw new InvalidOperationException(),
         };
 
@@ -36,7 +36,7 @@ public class ErrorMatchTests
 
     private static string Classify(Error error) => error switch
     {
-        Error.InvalidInput => "unprocessable",
+        Error.InvalidInput => "invalid",
         Error.NotFound => "not-found",
         Error.Conflict => "conflict",
         Error.Forbidden => "forbidden",
