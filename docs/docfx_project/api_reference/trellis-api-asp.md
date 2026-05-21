@@ -181,7 +181,7 @@ Default mappings: `Error.InvalidInput=422`, `Error.InvariantViolation=422`, `Err
 
 Trellis.Core.Error is transport-neutral. The ASP boundary translates domain failures to HTTP per the table below.
 
-| Domain case | Status | Problem-details `type` token (`kind` extension slug) | Headers |
+| Domain case | Status | Wire `kind` extension slug | Headers |
 |---|---|---|---|
 | `InvalidInput` | 422 | `unprocessable-content` | — |
 | `InvariantViolation` | 422 | `unprocessable-content` | — |
@@ -198,7 +198,7 @@ Trellis.Core.Error is transport-neutral. The ASP boundary translates domain fail
 | `Aggregate` | worst-status of children | `multi` | per-child |
 | `TransportFault` | per inner `HttpError` (405/406/412/413/415/416/428) | inner wire kind | inner-specific |
 
-Domain `Kind` and wire `kind` are intentionally distinct for `InvalidInput` and `InvariantViolation`: the domain slugs remain `invalid-input` / `invariant-violation`, while the on-wire problem-details `kind` stays `unprocessable-content` for backward compatibility.
+The wire token shown above is emitted in the problem-details `extensions.kind` member. The top-level Problem Details `type` field continues to default to the ASP.NET status-code URL (e.g. `https://tools.ietf.org/html/rfc4918#section-11.2` for 422); the `kind` extension is the durable identifier consumers should key on. Domain `Kind` and wire `kind` are intentionally distinct for `InvalidInput` and `InvariantViolation`: the domain slugs remain `invalid-input` / `invariant-violation`, while the on-wire problem-details `kind` stays `unprocessable-content` for backward compatibility.
 
 ### Header synthesis
 
@@ -213,7 +213,7 @@ Domain `Kind` and wire `kind` are intentionally distinct for `InvalidInput` and 
 
 ### Concurrent modification override
 
-When `Error.Conflict.ReasonCode == "concurrent_modification"` and the incoming request carried `If-Match`, the boundary emits `412 Precondition Failed` with wire `kind` / `type` `precondition-failed` instead of `409 conflict`. The domain `code` stays `"concurrent_modification"`.
+When `Error.Conflict.ReasonCode == "concurrent_modification"` and the incoming request carried `If-Match`, the boundary emits `412 Precondition Failed` with wire `kind` `precondition-failed` instead of `409 conflict`. The top-level Problem Details `type` continues to default to the ASP.NET status-code URL for 412. The domain `code` stays `"concurrent_modification"`.
 
 ### `RuleViolationProblemDetail`
 

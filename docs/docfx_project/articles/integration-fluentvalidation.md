@@ -298,7 +298,7 @@ public sealed class SubmitBatchTransfersValidator : AbstractValidator<SubmitBatc
 A request that violates both sources at once produces one 422 with **every** violation aggregated under its proper JSON Pointer.
 
 > [!NOTE]
-> Any non-`UnprocessableContent` failure (`Error.Conflict`, `Error.Forbidden`, …) returned by `IValidate` or any validator short-circuits the stage immediately and propagates as-is. Aggregation only applies to `UnprocessableContent`.
+> Any non-`InvalidInput` failure (`Error.Conflict`, `Error.Forbidden`, …) returned by `IValidate` or any validator short-circuits the stage immediately and propagates as-is. Aggregation only applies to `InvalidInput`.
 
 ### JSON Pointer normalization
 

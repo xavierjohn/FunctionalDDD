@@ -20,7 +20,7 @@ See also: [trellis-api-core.md](trellis-api-core.md), [trellis-api-http.md](trel
 - You need typed header / validator helpers such as `EntityTagValue`, `RetryAfterValue`, or `PreconditionKind`.
 - You need response metadata or write-outcome shapes (`RepresentationMetadata`, `WriteOutcome<T>`).
 - You are applying aggregate ETag preconditions from application code.
-- Consumers should `using Trellis.Http.Abstractions;` to bring `HttpError` into scope (the type lives in the `Trellis` namespace; the package reference is what makes it visible).
+- All types in this package live in the `Trellis` namespace. After adding the `Trellis.Http.Abstractions` package reference, the existing `using Trellis;` (or implicit usings) brings them into scope; no new `using` directive is required.
 
 ## Package role
 

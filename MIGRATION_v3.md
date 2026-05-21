@@ -131,7 +131,7 @@ return new Error.TransportFault(
 return result.Error switch
 {
     Error.TransportFault { Fault: HttpError.MethodNotAllowed allowed }
-        => Log("Allowed methods: " + string.Join(", ", allowed.Allow)),
+        => Log("Allowed methods: " + string.Join(", ", allowed.Allow.Items)),
     Error.TransportFault { Fault: HttpError.PreconditionFailed pf }
         => Log($"Precondition {pf.Condition} failed on {pf.Resource}"),
     _ => Log("Other error: " + result.Error),
@@ -666,6 +666,6 @@ As part of Phase 3 of the v2 redesign, the seven extension classes listed below 
 
 **Removed classes:** `ActionResultExtensions`, `ActionResultExtensionsAsync`, `HttpResultExtensions`, `HttpResultExtensionsAsync`, `PageActionResultExtensions`, `PageHttpResultExtensions`, `WriteOutcomeExtensions`.
 
-**Kept (not obsolete):** `OptionalETagAsync` / `RequireETagAsync` (`Result<T>` pipeline operators in `Trellis.Core`), `EntityTagValue`, `RepresentationMetadata`, `WriteOutcome<T>`, `PagedResponse<T>` / `PageLink` (moved alongside `PagedResponseBuilder`).
+**Kept (not obsolete):** `OptionalETagAsync` / `RequireETagAsync`, `EntityTagValue`, `AggregateETagExtensions`, `RepresentationMetadata`, `WriteOutcome<T>`, `PagedResponse<T>` / `PageLink` (moved alongside `PagedResponseBuilder`). Note: as part of the v3 error union DDD realignment, `EntityTagValue`, `AggregateETagExtensions` (with `OptionalETagAsync` / `RequireETagAsync`), `RepresentationMetadata`, and `WriteOutcome<T>` moved from `Trellis.Core` to the new `Trellis.Http.Abstractions` package. Their CLR namespace stays `Trellis`, so no `using` change is required — only the package reference.
 
 See [`docs/docfx_project/articles/asp-tohttpresponse.md`](docs/docfx_project/articles/asp-tohttpresponse.md) for canonical examples of every pattern.

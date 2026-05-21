@@ -55,7 +55,7 @@ Telemetry consumers that aggregate failures by `Error.Kind` need to update their
 
 #### Wire format unchanged
 
-The HTTP boundary (`Trellis.Asp.ResponseFailureWriter`) preserves the historical problem-details `type` / `kind` extension tokens (`unprocessable-content`, `unauthorized`, `too-many-requests`, `service-unavailable`, `internal-server-error`, `not-implemented`) verbatim. External HTTP API consumers parsing problem-details see no wire change. RFC 9110, 9457, and 6585 compliance is unaffected.
+The HTTP boundary (`Trellis.Asp.ResponseFailureWriter`) preserves the historical problem-details `kind` extension tokens (`unprocessable-content`, `unauthorized`, `too-many-requests`, `service-unavailable`, `internal-server-error`, `not-implemented`) verbatim. External HTTP API consumers parsing problem-details see no wire change. The top-level Problem Details `type` field continues to default to ASP.NET's status-code URL. RFC 9110, 9457, and 6585 compliance is unaffected.
 
 #### New package
 
