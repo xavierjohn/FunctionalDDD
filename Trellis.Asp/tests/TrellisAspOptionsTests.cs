@@ -73,7 +73,7 @@ public class TrellisAspOptionsTests
     public void GetStatusCode_PreconditionFailedError_returns_412()
     {
         var options = new TrellisAspOptions();
-        var error = new Error.PreconditionFailed(new ResourceRef("Resource", null), PreconditionKind.IfMatch) { Detail = "Stale ETag" };
+        var error = new Error.TransportFault(new HttpError.PreconditionFailed(new ResourceRef("Resource", null), PreconditionKind.IfMatch)) { Detail = "Stale ETag" };
 
         options.GetStatusCode(error).Should().Be(StatusCodes.Status412PreconditionFailed);
     }
@@ -82,7 +82,7 @@ public class TrellisAspOptionsTests
     public void GetStatusCode_PreconditionRequiredError_returns_428()
     {
         var options = new TrellisAspOptions();
-        var error = new Error.PreconditionRequired(PreconditionKind.IfMatch) { Detail = "If-Match required" };
+        var error = new Error.TransportFault(new HttpError.PreconditionRequired(PreconditionKind.IfMatch)) { Detail = "If-Match required" };
 
         options.GetStatusCode(error).Should().Be(StatusCodes.Status428PreconditionRequired);
     }
@@ -266,7 +266,7 @@ public class TrellisAspOptionsTests
         // first call's mappings, surprising hosts that compose Trellis with their own libraries.
         var services = new ServiceCollection();
         services.AddTrellisAsp(o => o.MapError<Error.Conflict>(StatusCodes.Status400BadRequest));
-        services.AddTrellisAsp(o => o.MapError<Error.PreconditionFailed>(StatusCodes.Status418ImATeapot));
+        services.AddTrellisAsp(o => o.MapError<Error.TransportFault>(StatusCodes.Status418ImATeapot));
 
         var sp = services.BuildServiceProvider();
         var resolved = sp.GetRequiredService<TrellisAspOptions>();
@@ -275,7 +275,7 @@ public class TrellisAspOptionsTests
             .GetStatusCode(new Error.Conflict(null, "k") { Detail = "x" })
             .Should().Be(StatusCodes.Status400BadRequest, "first AddTrellisAsp call's MapError must survive composition");
         resolved
-            .GetStatusCode(new Error.PreconditionFailed(new ResourceRef("R", null), PreconditionKind.IfMatch) { Detail = "x" })
+            .GetStatusCode(new Error.TransportFault(new HttpError.PreconditionFailed(new ResourceRef("R", null), PreconditionKind.IfMatch)) { Detail = "x" })
             .Should().Be(StatusCodes.Status418ImATeapot, "second AddTrellisAsp call's MapError must survive composition");
     }
 
@@ -288,7 +288,7 @@ public class TrellisAspOptionsTests
         // is a different ServiceType.
         var services = new ServiceCollection();
         services.AddTrellisAsp(o => o.MapError<Error.Conflict>(StatusCodes.Status400BadRequest));
-        services.AddTrellisAsp(o => o.MapError<Error.PreconditionFailed>(StatusCodes.Status418ImATeapot));
+        services.AddTrellisAsp(o => o.MapError<Error.TransportFault>(StatusCodes.Status418ImATeapot));
 
         services.Should().ContainSingle(d => d.ServiceType == typeof(TrellisAspOptions));
     }
@@ -404,35 +404,35 @@ public class TrellisAspOptionsTests
     public void GetStatusCode_MethodNotAllowedError_returns_405()
     {
         var options = new TrellisAspOptions();
-        options.GetStatusCode(new Error.MethodNotAllowed(EquatableArray.Create("GET")) { Detail = "Not allowed" }).Should().Be(StatusCodes.Status405MethodNotAllowed);
+        options.GetStatusCode(new Error.TransportFault(new HttpError.MethodNotAllowed(EquatableArray.Create("GET"))) { Detail = "Not allowed" }).Should().Be(StatusCodes.Status405MethodNotAllowed);
     }
 
     [Fact]
     public void GetStatusCode_NotAcceptableError_returns_406()
     {
         var options = new TrellisAspOptions();
-        options.GetStatusCode(new Error.NotAcceptable(EquatableArray<string>.Empty) { Detail = "Not acceptable" }).Should().Be(StatusCodes.Status406NotAcceptable);
+        options.GetStatusCode(new Error.TransportFault(new HttpError.NotAcceptable(EquatableArray<string>.Empty)) { Detail = "Not acceptable" }).Should().Be(StatusCodes.Status406NotAcceptable);
     }
 
     [Fact]
     public void GetStatusCode_UnsupportedMediaTypeError_returns_415()
     {
         var options = new TrellisAspOptions();
-        options.GetStatusCode(new Error.UnsupportedMediaType(EquatableArray<string>.Empty) { Detail = "Unsupported" }).Should().Be(StatusCodes.Status415UnsupportedMediaType);
+        options.GetStatusCode(new Error.TransportFault(new HttpError.UnsupportedMediaType(EquatableArray<string>.Empty)) { Detail = "Unsupported" }).Should().Be(StatusCodes.Status415UnsupportedMediaType);
     }
 
     [Fact]
     public void GetStatusCode_ContentTooLargeError_returns_413()
     {
         var options = new TrellisAspOptions();
-        options.GetStatusCode(new Error.ContentTooLarge() { Detail = "Too large" }).Should().Be(StatusCodes.Status413RequestEntityTooLarge);
+        options.GetStatusCode(new Error.TransportFault(new HttpError.ContentTooLarge()) { Detail = "Too large" }).Should().Be(StatusCodes.Status413RequestEntityTooLarge);
     }
 
     [Fact]
     public void GetStatusCode_RangeNotSatisfiableError_returns_416()
     {
         var options = new TrellisAspOptions();
-        options.GetStatusCode(new Error.RangeNotSatisfiable(1024, "bytes") { Detail = "Not satisfiable" }).Should().Be(StatusCodes.Status416RangeNotSatisfiable);
+        options.GetStatusCode(new Error.TransportFault(new HttpError.RangeNotSatisfiable(1024, "bytes")) { Detail = "Not satisfiable" }).Should().Be(StatusCodes.Status416RangeNotSatisfiable);
     }
 
     #endregion

@@ -58,13 +58,14 @@ In practice: once you call `ReadJson*`, you no longer need to dispose the respon
 
 Calling `ToResultAsync()` without a `statusMap` produces typed errors that preserve key upstream response-header context, so downstream `Trellis.Asp` rendering can faithfully forward the original wire shape:
 
-| Upstream status | Header preserved into typed error |
+| Upstream status | Strict-default result |
 | --- | --- |
-| `401 Unauthorized` | `WWW-Authenticate` schemes + best-effort `realm` / `error` / etc. auth-param parse into `Error.Unauthorized.Challenges`. Token68 form (`Negotiate <base64>`) or unparseable parameter strings degrade to scheme-only. |
-| `405 Method Not Allowed` | `Allow` into `Error.MethodNotAllowed.Allow`. Missing or empty `Allow` falls through to `Error.InternalServerError`. |
-| `416 Range Not Satisfiable` | `Content-Range` unit + complete-length into `Error.RangeNotSatisfiable`. Missing header or unspecified length falls through to `Error.InternalServerError`. |
-| `429 Too Many Requests` / `503 Service Unavailable` | `Retry-After` (delta-seconds or HTTP-date) into the typed `RetryAfter` slot. Negative or out-of-range deltas are treated as absent. |
-| Other non-2xx statuses | Typed error with default empty/zero context (e.g. `406 Not Acceptable`, `415 Unsupported Media Type`). |
+| `401 Unauthorized` | `Error.Unauthorized`. `WWW-Authenticate` is not preserved into the error payload in Phase 1; downstream ASP synthesis can still emit a scheme-only challenge when authentication is configured. |
+| `405 Method Not Allowed` | `Error.TransportFault(new HttpError.MethodNotAllowed(...))` with `Allow` preserved. Missing or empty `Allow` falls through to `Error.InternalServerError`. |
+| `406` / `412` / `413` / `415` / `428` | `Error.TransportFault(new HttpError.*(...))` with the corresponding HTTP fault case. |
+| `416 Range Not Satisfiable` | `Error.TransportFault(new HttpError.RangeNotSatisfiable(...))` with `Content-Range` unit + complete-length preserved. Missing header or unspecified length falls through to `Error.InternalServerError`. |
+| `429 Too Many Requests` / `503 Service Unavailable` | `Error.TooManyRequests` / `Error.ServiceUnavailable` with no `Retry-After` payload preservation in Phase 1. |
+| Other non-2xx statuses | The same typed Trellis errors as before (`BadRequest`, `Forbidden`, `NotFound`, `Conflict`, `Gone`, `UnprocessableContent`, `NotImplemented`, etc.). |
 
 3xx responses fall through to `Error.InternalServerError` under the strict default. Callers who set `AllowAutoRedirect = false` (e.g. SSO landing-page detection) should pass a `statusMap`.
 

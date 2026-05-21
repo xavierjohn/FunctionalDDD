@@ -5,7 +5,7 @@ using Trellis;
 
 /// <summary>
 /// Configuration options for Trellis ASP.NET Core integration.
-/// Controls how domain error types are mapped to HTTP status codes.
+/// Controls how domain error types and wrapped HTTP transport faults are mapped to status codes.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -21,8 +21,7 @@ using Trellis;
 ///     <item><term><see cref="Error.Forbidden"/></term><description>403 Forbidden</description></item>
 ///     <item><term><see cref="Error.NotFound"/></term><description>404 Not Found</description></item>
 ///     <item><term><see cref="Error.Conflict"/></term><description>409 Conflict</description></item>
-///     <item><term><see cref="Error.PreconditionFailed"/></term><description>412 Precondition Failed</description></item>
-///     <item><term><see cref="Error.PreconditionRequired"/></term><description>428 Precondition Required</description></item>
+///     <item><term><see cref="Error.TransportFault"/></term><description>Wrapped <see cref="HttpError"/> cases map by inner HTTP fault (405/406/412/413/415/416/428).</description></item>
 ///     <item><term><see cref="Error.TooManyRequests"/></term><description>429 Too Many Requests</description></item>
 ///     <item><term><see cref="Error.InternalServerError"/></term><description>500 Internal Server Error</description></item>
 ///     <item><term><see cref="Error.Unexpected"/></term><description>500 Internal Server Error</description></item>
@@ -67,6 +66,17 @@ public sealed class TrellisAspOptions
     /// </remarks>
     internal static TrellisAspOptions SystemDefault { get; } = new();
 
+    private static readonly Dictionary<Type, int> s_httpTransportMappings = new()
+    {
+        [typeof(HttpError.MethodNotAllowed)] = StatusCodes.Status405MethodNotAllowed,
+        [typeof(HttpError.NotAcceptable)] = StatusCodes.Status406NotAcceptable,
+        [typeof(HttpError.PreconditionFailed)] = StatusCodes.Status412PreconditionFailed,
+        [typeof(HttpError.ContentTooLarge)] = StatusCodes.Status413RequestEntityTooLarge,
+        [typeof(HttpError.UnsupportedMediaType)] = StatusCodes.Status415UnsupportedMediaType,
+        [typeof(HttpError.RangeNotSatisfiable)] = StatusCodes.Status416RangeNotSatisfiable,
+        [typeof(HttpError.PreconditionRequired)] = StatusCodes.Status428PreconditionRequired,
+    };
+
     private readonly Dictionary<Type, int> _errorMappings = new()
     {
         [typeof(Error.UnprocessableContent)] = StatusCodes.Status422UnprocessableEntity,
@@ -74,15 +84,8 @@ public sealed class TrellisAspOptions
         [typeof(Error.Unauthorized)] = StatusCodes.Status401Unauthorized,
         [typeof(Error.Forbidden)] = StatusCodes.Status403Forbidden,
         [typeof(Error.NotFound)] = StatusCodes.Status404NotFound,
-        [typeof(Error.MethodNotAllowed)] = StatusCodes.Status405MethodNotAllowed,
-        [typeof(Error.NotAcceptable)] = StatusCodes.Status406NotAcceptable,
         [typeof(Error.Conflict)] = StatusCodes.Status409Conflict,
         [typeof(Error.Gone)] = StatusCodes.Status410Gone,
-        [typeof(Error.PreconditionFailed)] = StatusCodes.Status412PreconditionFailed,
-        [typeof(Error.ContentTooLarge)] = StatusCodes.Status413RequestEntityTooLarge,
-        [typeof(Error.UnsupportedMediaType)] = StatusCodes.Status415UnsupportedMediaType,
-        [typeof(Error.RangeNotSatisfiable)] = StatusCodes.Status416RangeNotSatisfiable,
-        [typeof(Error.PreconditionRequired)] = StatusCodes.Status428PreconditionRequired,
         [typeof(Error.TooManyRequests)] = StatusCodes.Status429TooManyRequests,
         [typeof(Error.InternalServerError)] = StatusCodes.Status500InternalServerError,
         [typeof(Error.Unexpected)] = StatusCodes.Status500InternalServerError,
@@ -109,20 +112,37 @@ public sealed class TrellisAspOptions
     }
 
     /// <summary>
-    /// Resolves the HTTP status code for the given error by walking up the type hierarchy.
+    /// Resolves the HTTP status code for the given error by walking up the error type hierarchy.
+    /// For <see cref="Error.TransportFault"/>, explicit outer-type overrides win first; otherwise
+    /// wrapped <see cref="HttpError"/> cases are mapped by their inner subtype.
     /// Returns 500 Internal Server Error if no mapping is found.
     /// </summary>
     internal int GetStatusCode(Error error)
     {
-        var type = error.GetType();
-        while (type is not null && type != typeof(object))
+        var mappedStatus = TryResolveMapping(_errorMappings, error.GetType());
+        if (mappedStatus.HasValue)
+            return mappedStatus.Value;
+
+        if (error is Error.TransportFault { Fault: HttpError httpError })
         {
-            if (_errorMappings.TryGetValue(type, out var statusCode))
-                return statusCode;
-            type = type.BaseType;
+            mappedStatus = TryResolveMapping(s_httpTransportMappings, httpError.GetType());
+            if (mappedStatus.HasValue)
+                return mappedStatus.Value;
         }
 
         return StatusCodes.Status500InternalServerError;
+    }
+
+    private static int? TryResolveMapping(Dictionary<Type, int> mappings, Type type)
+    {
+        while (type != typeof(object))
+        {
+            if (mappings.TryGetValue(type, out var statusCode))
+                return statusCode;
+            type = type.BaseType!;
+        }
+
+        return null;
     }
 
 }

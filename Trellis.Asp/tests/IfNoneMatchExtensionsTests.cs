@@ -25,7 +25,8 @@ public class IfNoneMatchExtensionsTests
 
         var actual = result.EnforceIfNoneMatchPrecondition([EntityTagValue.Wildcard()]);
 
-        actual.Should().BeFailureOfType<Error.PreconditionFailed>();
+        actual.Should().BeFailureOfType<Error.TransportFault>()
+            .Which.Fault.Should().BeOfType<HttpError.PreconditionFailed>();
     }
 
     [Fact]
@@ -67,7 +68,8 @@ public class IfNoneMatchExtensionsTests
 
         var actual = await resultTask.EnforceIfNoneMatchPreconditionAsync([EntityTagValue.Wildcard()]);
 
-        actual.Should().BeFailureOfType<Error.PreconditionFailed>();
+        actual.Should().BeFailureOfType<Error.TransportFault>()
+            .Which.Fault.Should().BeOfType<HttpError.PreconditionFailed>();
     }
 
     [Fact]
@@ -77,7 +79,8 @@ public class IfNoneMatchExtensionsTests
 
         var actual = await resultTask.EnforceIfNoneMatchPreconditionAsync([EntityTagValue.Wildcard()]);
 
-        actual.Should().BeFailureOfType<Error.PreconditionFailed>();
+        actual.Should().BeFailureOfType<Error.TransportFault>()
+            .Which.Fault.Should().BeOfType<HttpError.PreconditionFailed>();
     }
 
     /// <summary>
@@ -94,9 +97,9 @@ public class IfNoneMatchExtensionsTests
 
         var actual = result.EnforceIfNoneMatchPrecondition([EntityTagValue.Wildcard()]);
 
-        actual.Should().BeFailureOfType<Error.PreconditionFailed>();
+        actual.Should().BeFailureOfType<Error.TransportFault>();
         actual.TryGetError(out var error).Should().BeTrue();
-        var pf = (Error.PreconditionFailed)error!;
+        var pf = ((Error.TransportFault)error!).Fault.Should().BeOfType<HttpError.PreconditionFailed>().Subject;
         pf.Resource.Type.Should().Be("List",
             "m-7: backtick-mangled CLR names like 'List`1' must not leak through to the resource ref");
     }
@@ -108,9 +111,9 @@ public class IfNoneMatchExtensionsTests
 
         var actual = result.EnforceIfNoneMatchPrecondition([EntityTagValue.Wildcard()]);
 
-        actual.Should().BeFailureOfType<Error.PreconditionFailed>();
+        actual.Should().BeFailureOfType<Error.TransportFault>();
         actual.TryGetError(out var error).Should().BeTrue();
-        var pf = (Error.PreconditionFailed)error!;
+        var pf = ((Error.TransportFault)error!).Fault.Should().BeOfType<HttpError.PreconditionFailed>().Subject;
         pf.Resource.Type.Should().Be("String",
             "m-7: Maybe<T> wrappers must be peeled so the meaningful inner domain name is the resource type");
     }

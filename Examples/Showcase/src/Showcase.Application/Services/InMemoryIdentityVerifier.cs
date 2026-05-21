@@ -1,6 +1,5 @@
 ﻿namespace Trellis.Showcase.Application.Services;
 
-using System.Collections.Immutable;
 using Trellis;
 using Trellis.Primitives;
 using Trellis.Showcase.Domain.ValueObjects;
@@ -15,11 +14,6 @@ using Trellis.Showcase.Domain.ValueObjects;
 /// </summary>
 public sealed class InMemoryIdentityVerifier : IIdentityVerifier
 {
-    private static readonly EquatableArray<AuthChallenge> VerificationChallenge = EquatableArray.Create(
-        new AuthChallenge(
-            "TrellisVerification",
-            ImmutableDictionary<string, string>.Empty.Add("realm", "showcase")));
-
     public Task<Result<Unit>> VerifyAsync(CustomerId customerId, string verificationCode, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(verificationCode))
@@ -44,7 +38,7 @@ public sealed class InMemoryIdentityVerifier : IIdentityVerifier
     }
 
     private static Error.Unauthorized Unauthorized(string detail) =>
-        new Error.Unauthorized(VerificationChallenge)
+        new()
         {
             Detail = detail,
         };

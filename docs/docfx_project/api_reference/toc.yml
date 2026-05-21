@@ -22,6 +22,8 @@
       href: trellis-api-fluentvalidation.md
     - name: Trellis.Http
       href: trellis-api-http.md
+    - name: Trellis.Http.Abstractions
+      href: trellis-api-http-abstractions.md
     - name: Trellis.ServiceDefaults
       href: trellis-api-servicedefaults.md
     - name: Trellis.StateMachine

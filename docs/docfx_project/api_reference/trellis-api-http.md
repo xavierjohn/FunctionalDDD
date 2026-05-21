@@ -12,7 +12,7 @@ audience: [llm]
 **Namespace:** `Trellis.Http`
 **Purpose:** Bridge `Task<HttpResponseMessage>` into `Task<Result<HttpResponseMessage>>` pipelines and deserialize JSON payloads into `Result<T>` / `Result<Maybe<T>>`.
 
-See also: [trellis-api-cookbook.md](trellis-api-cookbook.md) — recipes using this package.
+See also: [trellis-api-cookbook.md](trellis-api-cookbook.md) — recipes using this package, [trellis-api-http-abstractions.md](trellis-api-http-abstractions.md) for the wrapped `HttpError` and moved HTTP value types.
 
 > Bare `ToResultAsync()` is strict by default: non-2xx responses become typed Trellis failures instead of remaining on the success track.
 
@@ -61,19 +61,24 @@ public static class HttpResponseExtensions
 
 > **Business API default.** Bare `ToResultAsync()` is now the safe default for domain-facing HTTP clients. Use `HandleNotFoundAsync`, `HandleConflictAsync`, `HandleUnauthorizedAsync`, or an explicit `statusMap` only when the endpoint needs domain-specific error payloads.
 
-## Strict default with header context
+## Strict default with transport faults
 
-When `statusMap` is omitted, the default mapper inspects the `HttpResponseMessage` (not just the status code) and copies relevant HTTP headers into the typed `Error` so downstream rendering (e.g. ASP's `Allow` / `Retry-After` / `WWW-Authenticate` header emission) sees the upstream context.
+When `statusMap` is omitted, the default mapper inspects the `HttpResponseMessage` and returns the transport-agnostic core errors where possible, wrapping only the HTTP-specific payload cases in `Error.TransportFault(new HttpError.*(...))`.
 
-| HTTP status | Header consulted | Surfaces on |
+| HTTP status | Header consulted | Surfaces as |
 |---|---|---|
-| `401 Unauthorized` | `WWW-Authenticate` (scheme + best-effort `realm` / `error` / etc. parameter parse). **Token68 form** (e.g. `Negotiate <base64-token>`) degrades to scheme-only because `AuthChallenge` has no slot for the bare token; when token68 round-trip fidelity matters, either (a) call `ToResultAsync(statusMap)` and have the map return `null` for 401 — the original `HttpResponseMessage` (with raw `WWW-Authenticate` headers) flows through as `Result.Ok` for the caller to inspect — or (b) use the body-aware `ToResultAsync(mapper, ct)` overload, which receives the `HttpResponseMessage` directly. | `Error.Unauthorized.Challenges` |
-| `405 Method Not Allowed` | `Allow` (response content header). When the upstream omits `Allow`, falls through to `Error.InternalServerError` per RFC 9110 §15.5.6 (which requires the header on 405 responses). | `Error.MethodNotAllowed.Allow` |
-| `416 Range Not Satisfiable` | `Content-Range` header presence with a known length (RFC 9110 §15.5.17). The typed error preserves both unit and length, including the legitimate `bytes */0` case for an empty resource. When the upstream omits `Content-Range` entirely **or** sends a Length-unspecified form like `bytes 0-99/*`, falls through to `Error.InternalServerError` rather than synthesizing a typed error from incomplete information. | `Error.RangeNotSatisfiable.CompleteLength` + `Error.RangeNotSatisfiable.Unit` |
-| `429 Too Many Requests` | `Retry-After` (delay seconds **or** HTTP date; negative deltas treated as absent) | `Error.TooManyRequests.RetryAfter` |
-| `503 Service Unavailable` | `Retry-After` | `Error.ServiceUnavailable.RetryAfter` |
+| `401 Unauthorized` | none preserved in Phase 1 | `Error.Unauthorized` |
+| `405 Method Not Allowed` | `Allow` (response content header). When the upstream omits `Allow`, falls through to `Error.InternalServerError` per RFC 9110 §15.5.6. | `Error.TransportFault(new HttpError.MethodNotAllowed(...))` |
+| `406 Not Acceptable` | none | `Error.TransportFault(new HttpError.NotAcceptable(EquatableArray<string>.Empty))` |
+| `412 Precondition Failed` | none | `Error.TransportFault(new HttpError.PreconditionFailed(ResourceRef.For("HttpResponse"), PreconditionKind.IfMatch))` |
+| `413 Content Too Large` | none | `Error.TransportFault(new HttpError.ContentTooLarge())` |
+| `415 Unsupported Media Type` | none | `Error.TransportFault(new HttpError.UnsupportedMediaType(EquatableArray<string>.Empty))` |
+| `416 Range Not Satisfiable` | `Content-Range` header presence with a known length (RFC 9110 §15.5.17). When the upstream omits `Content-Range` entirely **or** sends a length-unspecified form like `bytes 0-99/*`, falls through to `Error.InternalServerError`. | `Error.TransportFault(new HttpError.RangeNotSatisfiable(length, unit))` |
+| `428 Precondition Required` | none | `Error.TransportFault(new HttpError.PreconditionRequired(PreconditionKind.IfMatch))` |
+| `429 Too Many Requests` | none preserved in Phase 1 | `Error.TooManyRequests` |
+| `503 Service Unavailable` | none preserved in Phase 1 | `Error.ServiceUnavailable` |
 
-Headers that aren't present produce empty arrays / null `RetryAfter` / empty `Challenges` — the mapper never invents values. **Exceptions:** `405` without `Allow` and `416` without `Content-Range` fall through to `Error.InternalServerError` (per the rows above) rather than producing typed errors with default empty/zero context, because rendering those defaults back through ASP would fabricate misleading wire headers. Status codes not listed in the table produce typed errors with their default empty/zero context (e.g. `406 Not Acceptable` and `415 Unsupported Media Type` don't have a single canonical response header to extract).
+Phase 1 intentionally does **not** preserve parsed `WWW-Authenticate` or `Retry-After` values on the core 401 / 429 / 503 errors. The strict mapper still preserves the RFC-required header payloads for 405 (`Allow`) and 416 (`Content-Range`) because those values are needed to round-trip compliant responses through ASP without fabricating wire data.
 
 ## Exception propagation
 

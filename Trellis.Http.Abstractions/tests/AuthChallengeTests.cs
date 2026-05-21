@@ -1,6 +1,7 @@
-﻿namespace Trellis.Core.Tests.Errors;
+﻿namespace Trellis.Http.Abstractions.Tests;
 
 using System.Collections.Immutable;
+using Trellis.Testing;
 
 public class AuthChallengeTests
 {

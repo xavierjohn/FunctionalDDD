@@ -72,7 +72,7 @@ public class ShowcaseApiTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
-    public async Task Secure_withdraw_with_rejected_code_returns_401_with_authenticate_challenge()
+    public async Task Secure_withdraw_with_rejected_code_returns_401_without_authenticate_challenge_when_auth_not_configured()
     {
         var client = _factory.CreateClient();
         var response = await client.PostAsJsonAsync(
@@ -81,8 +81,7 @@ public class ShowcaseApiTests : IClassFixture<WebApplicationFactory<Program>>
             Ct);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-        response.Headers.WwwAuthenticate.Should().ContainSingle()
-            .Which.ToString().Should().Be("TrellisVerification realm=\"showcase\"");
+        response.Headers.WwwAuthenticate.Should().BeEmpty();
     }
 
     [Fact]

@@ -3,9 +3,9 @@
 using System.Collections.Immutable;
 
 /// <summary>
-/// Represents a single HTTP authentication challenge (RFC 9110 §11.6.1) carried by
-/// <see cref="Error.Unauthorized"/>. Multiple challenges may be combined to round-trip
-/// the full <c>WWW-Authenticate</c> header.
+/// Represents a single HTTP authentication challenge (RFC 9110 §11.6.1).
+/// Multiple challenges may be combined to round-trip the full
+/// <c>WWW-Authenticate</c> header.
 /// </summary>
 /// <param name="Scheme">The auth scheme (e.g. <c>"Bearer"</c>, <c>"Basic"</c>).</param>
 /// <param name="Params">

@@ -1,4 +1,6 @@
-﻿namespace Trellis.Core.Tests;
+﻿namespace Trellis.Http.Abstractions.Tests;
+
+using Trellis.Testing;
 
 public class RepresentationMetadataTests
 {

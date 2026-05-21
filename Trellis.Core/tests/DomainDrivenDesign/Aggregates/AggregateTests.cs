@@ -208,7 +208,8 @@ public class AggregateTests
         // Weak tags should not match via strong comparison
         var ensured = result.OptionalETag([EntityTagValue.Weak("abc123")]);
         ensured.IsSuccess.Should().BeFalse();
-        ensured.UnwrapError().Should().BeOfType<Error.PreconditionFailed>();
+        ensured.UnwrapError().Should().BeOfType<Error.TransportFault>()
+            .Which.Fault.Should().BeOfType<HttpError.PreconditionFailed>();
     }
 
     [Fact]
@@ -230,7 +231,8 @@ public class AggregateTests
 
         var ensured = result.OptionalETag(Array.Empty<EntityTagValue>());
         ensured.IsSuccess.Should().BeFalse();
-        ensured.UnwrapError().Should().BeOfType<Error.PreconditionFailed>();
+        ensured.UnwrapError().Should().BeOfType<Error.TransportFault>()
+            .Which.Fault.Should().BeOfType<HttpError.PreconditionFailed>();
     }
 
     [Fact]
@@ -255,7 +257,8 @@ public class AggregateTests
 
         var ensured = result.RequireETag((EntityTagValue[]?)null);
         ensured.IsSuccess.Should().BeFalse();
-        ensured.UnwrapError().Should().BeOfType<Error.PreconditionRequired>();
+        ensured.UnwrapError().Should().BeOfType<Error.TransportFault>()
+            .Which.Fault.Should().BeOfType<HttpError.PreconditionRequired>();
     }
 
     [Fact]
@@ -307,7 +310,8 @@ public class AggregateTests
 
         var ensured = result.OptionalETag([EntityTagValue.Strong("stale")]);
         ensured.IsSuccess.Should().BeFalse();
-        ensured.UnwrapError().Should().BeOfType<Error.PreconditionFailed>();
+        ensured.UnwrapError().Should().BeOfType<Error.TransportFault>()
+            .Which.Fault.Should().BeOfType<HttpError.PreconditionFailed>();
     }
 
     #endregion

@@ -5,9 +5,9 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 
 /// <summary>
-/// Closed discriminated union of error values. Each case is a nested <see langword="sealed record"/>
-/// that mirrors a status from the IANA HTTP Status Code Registry (RFC 9110, RFC 6585) and carries
-/// a strongly-typed payload describing what went wrong.
+/// Closed discriminated union of Trellis error values. Domain-facing cases stay transport-neutral,
+/// while boundary-layer protocols can attach typed lower-level payloads through
+/// <see cref="TransportFault"/>.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -201,8 +201,7 @@ public abstract record Error
     }
 
     /// <summary>HTTP 401 — authentication is required or has failed.</summary>
-    /// <param name="Challenges">Authentication challenges to present to the client (round-trips <c>WWW-Authenticate</c>).</param>
-    public sealed record Unauthorized(EquatableArray<AuthChallenge> Challenges = default) : Error
+    public sealed record Unauthorized : Error
     {
         /// <inheritdoc />
         public override string Kind => "unauthorized";
@@ -228,22 +227,6 @@ public abstract record Error
         public override string Kind => "not-found";
     }
 
-    /// <summary>HTTP 405 — the HTTP method is not supported by the target resource.</summary>
-    /// <param name="Allow">The set of methods supported by the resource (becomes the <c>Allow</c> header).</param>
-    public sealed record MethodNotAllowed(EquatableArray<string> Allow) : Error
-    {
-        /// <inheritdoc />
-        public override string Kind => "method-not-allowed";
-    }
-
-    /// <summary>HTTP 406 — none of the available representations are acceptable to the client.</summary>
-    /// <param name="Available">Media types the server can produce.</param>
-    public sealed record NotAcceptable(EquatableArray<string> Available) : Error
-    {
-        /// <inheritdoc />
-        public override string Kind => "not-acceptable";
-    }
-
     /// <summary>HTTP 409 — the request conflicts with the current state of the resource.</summary>
     /// <param name="Resource">
     /// The conflicting resource, when one is identifiable. May be <see langword="null"/> for
@@ -267,43 +250,6 @@ public abstract record Error
     {
         /// <inheritdoc />
         public override string Kind => "gone";
-    }
-
-    /// <summary>HTTP 412 — a request precondition (e.g. <c>If-Match</c>) failed.</summary>
-    /// <param name="Resource">The resource the precondition was evaluated against.</param>
-    /// <param name="Condition">Which precondition failed.</param>
-    public sealed record PreconditionFailed(ResourceRef Resource, PreconditionKind Condition) : Error
-    {
-        /// <inheritdoc />
-        public override string Kind => "precondition-failed";
-
-        /// <inheritdoc />
-        public override string Code => Condition.ToString();
-    }
-
-    /// <summary>HTTP 413 — the request payload exceeds size limits.</summary>
-    /// <param name="MaxBytes">Optional maximum accepted size in bytes.</param>
-    public sealed record ContentTooLarge(long? MaxBytes = null) : Error
-    {
-        /// <inheritdoc />
-        public override string Kind => "content-too-large";
-    }
-
-    /// <summary>HTTP 415 — the request's media type is not supported.</summary>
-    /// <param name="Supported">Media types the resource can accept.</param>
-    public sealed record UnsupportedMediaType(EquatableArray<string> Supported) : Error
-    {
-        /// <inheritdoc />
-        public override string Kind => "unsupported-media-type";
-    }
-
-    /// <summary>HTTP 416 — the requested byte range cannot be satisfied.</summary>
-    /// <param name="CompleteLength">The full length of the resource (used to synthesize the <c>Content-Range</c> header).</param>
-    /// <param name="Unit">The range unit (typically <c>"bytes"</c>).</param>
-    public sealed record RangeNotSatisfiable(long CompleteLength, string Unit = "bytes") : Error
-    {
-        /// <inheritdoc />
-        public override string Kind => "range-not-satisfiable";
     }
 
     /// <summary>HTTP 422 — the request was well-formed but the content failed semantic validation.</summary>
@@ -356,20 +302,8 @@ public abstract record Error
                 EquatableArray.Create(new RuleViolation(reasonCode, Detail: detail)));
     }
 
-    /// <summary>HTTP 428 — the resource requires a precondition that the request did not include.</summary>
-    /// <param name="Condition">The precondition that must be supplied.</param>
-    public sealed record PreconditionRequired(PreconditionKind Condition) : Error
-    {
-        /// <inheritdoc />
-        public override string Kind => "precondition-required";
-
-        /// <inheritdoc />
-        public override string Code => Condition.ToString();
-    }
-
     /// <summary>HTTP 429 — the client has exceeded a rate limit.</summary>
-    /// <param name="RetryAfter">Optional advice for when the client may retry.</param>
-    public sealed record TooManyRequests(RetryAfterValue? RetryAfter = null) : Error
+    public sealed record TooManyRequests : Error
     {
         /// <inheritdoc />
         public override string Kind => "too-many-requests";
@@ -424,11 +358,21 @@ public abstract record Error
     }
 
     /// <summary>HTTP 503 — the server is temporarily unable to handle the request.</summary>
-    /// <param name="RetryAfter">Optional advice for when the client may retry.</param>
-    public sealed record ServiceUnavailable(RetryAfterValue? RetryAfter = null) : Error
+    public sealed record ServiceUnavailable : Error
     {
         /// <inheritdoc />
         public override string Kind => "service-unavailable";
+    }
+
+    /// <summary>
+    /// Opaque envelope for transport-specific lower-layer failures produced outside
+    /// <c>Trellis.Core</c>. The wrapped payload must implement <see cref="ITransportFault"/>.
+    /// </summary>
+    /// <param name="Fault">Transport-layer fault payload (for example an HTTP fault object).</param>
+    public sealed record TransportFault(ITransportFault Fault) : Error
+    {
+        /// <inheritdoc />
+        public override string Kind => "transport-fault";
     }
 
     // ───────────────────────────────────────────────────────────────────────────

@@ -2,13 +2,12 @@
 
 /// <summary>
 /// Represents the outcome of a write operation (create / replace / accept-for-async) returned
-/// by Application-layer repositories. The case selected describes <em>what happened</em> in
-/// transport-agnostic terms; transport adapters (e.g. <c>Trellis.Asp</c>) translate each case to a
-/// protocol-specific response (HTTP status code + headers, gRPC status, queue ack envelope, etc.).
+/// by Application-layer repositories. The case selected describes <em>what happened</em>; HTTP-aware
+/// boundary adapters (for example <c>Trellis.Asp</c>) translate each case to status codes and headers.
 /// </summary>
 /// <remarks>
-/// The case set aligns with the write outcomes enumerated in RFC 9110 §9.3.4 because HTTP is the
-/// most commonly served transport, but the type itself takes no dependency on any transport package.
+/// The case set aligns with the write outcomes enumerated in RFC 9110 §9.3.4 and lives in
+/// <c>Trellis.Http.Abstractions</c> so server/client HTTP packages can share the same vocabulary.
 /// </remarks>
 /// <typeparam name="T">The representation/body type returned for Created/Updated and the status payload type used by Accepted.</typeparam>
 public abstract record WriteOutcome<T>

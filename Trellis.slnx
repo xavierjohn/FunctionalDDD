@@ -99,6 +99,10 @@
     <Project Path="Trellis.Http/src/Trellis.Http.csproj" />
     <Project Path="Trellis.Http/tests/Trellis.Http.Tests.csproj" />
   </Folder>
+  <Folder Name="/Trellis.Http.Abstractions/">
+    <Project Path="Trellis.Http.Abstractions/src/Trellis.Http.Abstractions.csproj" />
+    <Project Path="Trellis.Http.Abstractions/tests/Trellis.Http.Abstractions.Tests.csproj" />
+  </Folder>
   <Folder Name="/Trellis.Mediator/">
     <Project Path="Trellis.Mediator/src/Trellis.Mediator.csproj" />
     <Project Path="Trellis.Mediator/tests/Trellis.Mediator.Tests.csproj" />

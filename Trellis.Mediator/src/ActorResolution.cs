@@ -39,11 +39,9 @@ internal static class ActorResolution
 
     /// <summary>
     /// Canonical <see cref="Error.Unauthorized"/> instance for the "no authenticated actor"
-    /// short-circuit. Empty <see cref="Error.Unauthorized.Challenges"/> defers the
-    /// <c>WWW-Authenticate</c> header to the configured ASP.NET Core authentication handler,
-    /// which knows the scheme name (Bearer, etc.) and parameters; the mediator layer does
-    /// not have that knowledge. Consumers needing strict RFC 9110 §11.6.1 compliance should
-    /// ensure their auth handler writes <c>WWW-Authenticate</c> on 401 responses.
+    /// short-circuit. The ASP.NET boundary synthesizes <c>WWW-Authenticate</c> from the
+    /// configured authentication handler when it writes a 401 response, so the mediator layer
+    /// does not need to know the scheme name or challenge parameters.
     /// </summary>
     public static Error.Unauthorized AuthenticationRequired() =>
         new() { Detail = "Authentication required." };
