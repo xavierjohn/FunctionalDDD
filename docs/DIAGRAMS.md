@@ -252,7 +252,7 @@ graph TB
     COMMAND --> DB
     DB -.->|Success| RES_OK[Result.Ok]
     DB -.->|Duplicate Key| RES_CONFLICT[Error.Conflict]
-    DB -.->|FK Violation| RES_DOMAIN[Error.UnprocessableContent]
+    DB -.->|FK Violation| RES_DOMAIN[Error.InvalidInput]
     DB -.->|Concurrency| RES_CONFLICT2[Error.Conflict]
     
     RES_OK --> HTTP_OK[200 OK]
@@ -314,7 +314,7 @@ flowchart TB
     
     TRY -->|DbUpdateException<br/>Duplicate Key| CONFLICT2[Error.Conflict<br/>Email already exists]
     
-    TRY -->|DbUpdateException<br/>Foreign Key| DOMAIN[Error.UnprocessableContent<br/>Referential integrity]
+    TRY -->|DbUpdateException<br/>Foreign Key| DOMAIN[Error.InvalidInput<br/>Referential integrity]
     
     TRY -->|Other Exception<br/>Connection/Timeout| PROPAGATE[Exception Propagates<br/>Global Handler]
     
@@ -344,7 +344,7 @@ flowchart TB
     
     EXPECTED1 --> CONVERT1[Convert to Result<br/>Error.Conflict]
     EXPECTED2 --> CONVERT2[Convert to Result<br/>Error.Conflict]
-    EXPECTED3 --> CONVERT3[Convert to Result<br/>Error.UnprocessableContent]
+    EXPECTED3 --> CONVERT3[Convert to Result<br/>Error.InvalidInput]
     
     CONVERT1 --> RETURN[Return Result&lt;T&gt;<br/>to caller]
     CONVERT2 --> RETURN
@@ -376,41 +376,44 @@ flowchart TB
 ```mermaid
 graph LR
     subgraph Errors["Error Types"]
-        VAL[Error.UnprocessableContent]
-        BAD[Error.BadRequest]
-        UNAUTH[Error.Unauthorized]
+        VAL[Error.InvalidInput]
+        INV[Error.InvariantViolation]
+        UNAUTH[Error.AuthenticationRequired]
         FORBID[Error.Forbidden]
         NOTFOUND[Error.NotFound]
+        GONE[Error.Gone]
         CONFLICT[Error.Conflict]
-        DOMAIN[Error.Conflict]
-        RATE[Error.TooManyRequests]
-        UNEXP[Error.InternalServerError]
-        UNAVAIL[Error.ServiceUnavailable]
+        RATE[Error.RateLimited]
+        UNEXP[Error.Unexpected]
+        UNAVAIL[Error.Unavailable]
+        TRANS[Error.TransportFault]
     end
-    
+
     subgraph HTTP["HTTP Status Codes"]
-        VAL --> H400[400 Bad Request]
-        BAD --> H400
+        VAL --> H422[422 Unprocessable Content]
+        INV --> H422
         UNAUTH --> H401[401 Unauthorized]
         FORBID --> H403[403 Forbidden]
         NOTFOUND --> H404[404 Not Found]
+        GONE --> H410[410 Gone]
         CONFLICT --> H409[409 Conflict]
-        DOMAIN --> H422[422 Unprocessable Entity]
         RATE --> H429[429 Too Many Requests]
         UNEXP --> H500[500 Internal Server Error]
         UNAVAIL --> H503[503 Service Unavailable]
+        TRANS --> H4XX[405 / 406 / 412 / 413 / 415 / 416 / 428<br/>per inner HttpError]
     end
-    
+
     style VAL fill:#FFE1E1
-    style BAD fill:#FFE1E1
+    style INV fill:#FFE1E1
     style UNAUTH fill:#FFE1E1
     style FORBID fill:#FFE1E1
     style NOTFOUND fill:#FFE1E1
+    style GONE fill:#FFE1E1
     style CONFLICT fill:#FFE1E1
-    style DOMAIN fill:#FFD700
     style RATE fill:#FFE1E1
     style UNEXP fill:#FFB6C6
     style UNAVAIL fill:#FFB6C6
+    style TRANS fill:#FFD700
 ```
 
 ### Error Aggregation (error-handling.md)
@@ -425,8 +428,8 @@ flowchart TB
     OP2 --> RES2{Result 2}
     OP3 --> RES3{Result 3}
     
-    RES1 -->|Error.UnprocessableContent| VAL1[Email invalid]
-    RES2 -->|Error.UnprocessableContent| VAL2[Password weak]
+    RES1 -->|Error.InvalidInput| VAL1[Email invalid]
+    RES2 -->|Error.InvalidInput| VAL2[Password weak]
     RES3 -->|Success| OK
     
     VAL1 --> COMBINE[Combine Errors]
@@ -434,7 +437,7 @@ flowchart TB
     
     COMBINE --> AGG[Error.Aggregate<br/>Multiple validation errors]
     
-    AGG --> RESPONSE[400 Bad Request<br/>errors: {<br/>&nbsp;&nbsp;email: [...],<br/>&nbsp;&nbsp;password: [...]<br/>}]
+    AGG --> RESPONSE[422 Unprocessable Content<br/>errors: {<br/>&nbsp;&nbsp;email: [...],<br/>&nbsp;&nbsp;password: [...]<br/>}]
     
     style VAL1 fill:#FFB6C6
     style VAL2 fill:#FFB6C6
@@ -667,7 +670,7 @@ sequenceDiagram
             Controller-->>Client: 409 Conflict
         end
     else Validation fails
-        Controller-->>Client: 400 Bad Request<br/>+ Validation errors
+        Controller-->>Client: 422 Unprocessable Content<br/>+ Validation errors
     end
 ```
 
@@ -743,7 +746,7 @@ sequenceDiagram
     
     API-->>Tracer: End Root Span
     Tracer->>Backend: Export Trace
-    API-->>Client: 400 Bad Request
+    API-->>Client: 422 Unprocessable Content
     
     Note over Backend: Trace shows:<br/>- Request duration<br/>- Operation timeline<br/>- Error location<br/>- Error details
 ```

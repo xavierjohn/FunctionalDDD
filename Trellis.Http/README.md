@@ -20,8 +20,8 @@ A single static class `Trellis.Http.HttpResponseExtensions` with the canonical H
 | `ToResultAsync(this Task<HttpResponseMessage>, Func<HttpResponseMessage, CancellationToken, Task<Error?>>, CancellationToken = default)` | Body-aware bridge. The async mapper is invoked only on non-success status codes. |
 | `HandleNotFoundAsync(this Task<HttpResponseMessage>, Error.NotFound)` | Map 404 to `Fail`; pass through otherwise. |
 | `HandleConflictAsync(this Task<HttpResponseMessage>, Error.Conflict)` | Map 409 to `Fail`; pass through otherwise. |
-| `HandleUnauthorizedAsync(this Task<HttpResponseMessage>, Error.Unauthorized)` | Map 401 to `Fail`; pass through otherwise. |
-| `ReadJsonAsync<T>(this Task<Result<HttpResponseMessage>>, JsonTypeInfo<T>, CancellationToken = default)` | Read and deserialize the body into `T`. Invalid JSON becomes `Fail<InternalServerError>`. |
+| `HandleUnauthorizedAsync(this Task<HttpResponseMessage>, Error.AuthenticationRequired)` | Map 401 to `Fail`; pass through otherwise. |
+| `ReadJsonAsync<T>(this Task<Result<HttpResponseMessage>>, JsonTypeInfo<T>, CancellationToken = default)` | Read and deserialize the body into `T`. Invalid JSON becomes `Fail<Error.Unexpected>`. |
 | `ReadJsonMaybeAsync<T>(this Task<Result<HttpResponseMessage>>, JsonTypeInfo<T>, CancellationToken = default)` | Read into `Maybe<T>`. `204`, `205`, empty body, JSON `null` map to `Maybe.None`. Invalid JSON throws `JsonException` (intentional). |
 | `ReadJsonOrNoneOn404Async<T>(this Task<HttpResponseMessage>, JsonTypeInfo<T>, CancellationToken = default)` | Terminal optional-resource helper: `404` maps to `Ok(Maybe.None)`; other non-2xx statuses use strict status mapping. |
 
@@ -60,20 +60,20 @@ Calling `ToResultAsync()` without a `statusMap` produces typed errors that prese
 
 | Upstream status | Strict-default result |
 | --- | --- |
-| `401 Unauthorized` | `Error.Unauthorized`. `WWW-Authenticate` is not preserved into the error payload in Phase 1; downstream ASP synthesis can still emit a scheme-only challenge when authentication is configured. |
-| `405 Method Not Allowed` | `Error.TransportFault(new HttpError.MethodNotAllowed(...))` with `Allow` preserved. Missing or empty `Allow` falls through to `Error.InternalServerError`. |
+| `401 Unauthorized` | `Error.AuthenticationRequired`. `WWW-Authenticate` is not preserved into the error payload in Phase 1; downstream ASP synthesis can still emit a scheme-only challenge when authentication is configured. |
+| `405 Method Not Allowed` | `Error.TransportFault(new HttpError.MethodNotAllowed(...))` with `Allow` preserved. Missing or empty `Allow` falls through to `Error.Unexpected("upstream_header_missing")`. |
 | `406` / `412` / `413` / `415` / `428` | `Error.TransportFault(new HttpError.*(...))` with the corresponding HTTP fault case. |
-| `416 Range Not Satisfiable` | `Error.TransportFault(new HttpError.RangeNotSatisfiable(...))` with `Content-Range` unit + complete-length preserved. Missing header or unspecified length falls through to `Error.InternalServerError`. |
-| `429 Too Many Requests` / `503 Service Unavailable` | `Error.TooManyRequests` / `Error.ServiceUnavailable` with no `Retry-After` payload preservation in Phase 1. |
-| Other non-2xx statuses | The same typed Trellis errors as before (`BadRequest`, `Forbidden`, `NotFound`, `Conflict`, `Gone`, `UnprocessableContent`, `NotImplemented`, etc.). |
+| `416 Range Not Satisfiable` | `Error.TransportFault(new HttpError.RangeNotSatisfiable(...))` with `Content-Range` unit + complete-length preserved. Missing header or unspecified length falls through to `Error.Unexpected("upstream_header_missing")`. |
+| `429 Too Many Requests` / `503 Service Unavailable` | `Error.RateLimited` / `Error.Unavailable` with no `Retry-After` payload preservation in Phase 1. |
+| Other non-2xx statuses | The same typed Trellis errors as before (`Error.InvalidInput`, `Error.Forbidden`, `Error.NotFound`, `Error.Conflict`, `Error.Gone`, `Error.Unexpected`, etc.). |
 
-3xx responses fall through to `Error.InternalServerError` under the strict default. Callers who set `AllowAutoRedirect = false` (e.g. SSO landing-page detection) should pass a `statusMap`.
+3xx responses fall through to `Error.Unexpected("unexpected_redirect")` under the strict default. Callers who set `AllowAutoRedirect = false` (e.g. SSO landing-page detection) should pass a `statusMap`.
 
 See the [API reference](https://xavierjohn.github.io/Trellis/api_reference/trellis-api-http.html) for the complete behavior matrix.
 
 ## Exception propagation
 
-`HttpRequestException`, `OperationCanceledException` / `TaskCanceledException`, and `JsonException` (from `ReadJsonMaybeAsync<T>` and `ReadJsonOrNoneOn404Async<T>` on a 2xx invalid body) propagate through the chain rather than being mapped to `Result.Fail`. `ReadJsonAsync<T>` catches `JsonException` and returns `Fail<Error.InternalServerError>` with structured position diagnostics (line / byte offset only — never response body content or `JsonException.Path`).
+`HttpRequestException`, `OperationCanceledException` / `TaskCanceledException`, and `JsonException` (from `ReadJsonMaybeAsync<T>` and `ReadJsonOrNoneOn404Async<T>` on a 2xx invalid body) propagate through the chain rather than being mapped to `Result.Fail`. `ReadJsonAsync<T>` catches `JsonException` and returns `Fail<Error.Unexpected>` (`ReasonCode = "invalid_response_body"`) with structured position diagnostics (line / byte offset only — never response body content or `JsonException.Path`).
 
 ## Breaking changes from v1
 

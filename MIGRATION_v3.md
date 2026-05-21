@@ -3,7 +3,150 @@
 > [!IMPORTANT]
 > This guide documents the historical FunctionalDDD v2.x → Trellis v3.0 migration (renamed failure-track operations: `TapError` → `TapOnFailure`, `Compensate` → `RecoverOnFailure`, etc.). The advice below still applies for projects upgrading from FunctionalDDD v2.x.
 >
-> **Trellis V2 (the current major release) introduces a separate, larger breaking change**: the `Error` type is now a closed discriminated-union ADT with 18 nested `sealed record` cases (no static factory methods, typed payloads). See [ADR-001](docs/docfx_project/adr/ADR-001-result-api-surface.md) and the [Error Handling guide](docs/docfx_project/articles/error-handling.md) for the full surface and migration patterns. The error snippets in this document have been updated in-place to use the V2 closed-ADT syntax.
+> **Trellis V2 (the current major release) introduces a separate, larger breaking change**: the `Error` type is now a closed discriminated-union ADT. The current case set is documented in [`docs/docfx_project/articles/error-handling.md`](docs/docfx_project/articles/error-handling.md). The section [Error union DDD realignment](#error-union-ddd-realignment) below covers the latest rename pass; the [CHANGELOG](CHANGELOG.md#breaking-changes--trelliscoreerror-union-ddd-realignment) carries the canonical rename and slug-change tables.
+
+## Error union DDD realignment
+
+The `Trellis.Core.Error` discriminated union is now transport-neutral. HTTP-specific failures (`405`, `406`, `412`, `413`, `415`, `416`, `428`) live in the closed `HttpError` union in the new `Trellis.Http.Abstractions` package and flow through `Result<T>` via the `Error.TransportFault(ITransportFault Fault)` envelope.
+
+The closed union now has 12 cases: `InvalidInput`, `InvariantViolation`, `NotFound`, `Forbidden`, `Conflict`, `Gone`, `AuthenticationRequired`, `Unavailable`, `RateLimited`, `Unexpected`, `Aggregate`, `TransportFault`.
+
+The [CHANGELOG entry](CHANGELOG.md#breaking-changes--trelliscoreerror-union-ddd-realignment) is the authoritative rename and slug-change reference; the examples below show the common before/after shapes.
+
+### Field validation
+
+```csharp
+// Before
+return new Error.UnprocessableContent(EquatableArray.Create(
+    new FieldViolation(InputPointer.ForProperty("email"), "invalid_format")
+    {
+        Detail = "Email is not a valid address.",
+    }));
+
+// After
+return Error.InvalidInput.ForField("email", "invalid_format", "Email is not a valid address.");
+```
+
+### Rule (cross-field / object-level) violation
+
+```csharp
+// Before
+return new Error.BadRequest("passwords_must_match") { Detail = "Password and confirmation differ." };
+
+// After
+return Error.InvalidInput.ForRule("passwords_must_match", "Password and confirmation differ.");
+```
+
+### Aggregate invariant violated outside the inbound-validation pipeline
+
+```csharp
+// New case — was previously shoe-horned into UnprocessableContent or Conflict
+return new Error.InvariantViolation(
+    "cross_aggregate_uniqueness",
+    ResourceRef.For<Order>(orderId))
+{
+    Detail = "Order number is already in use by another tenant.",
+};
+```
+
+### Concurrency conflict
+
+```csharp
+// Before
+return new Error.Conflict(ResourceRef.For<Order>(orderId), "concurrency_conflict")
+{
+    Detail = "Order was modified by another request.",
+};
+
+// After — same call shape; Conflict is unchanged.
+return new Error.Conflict(ResourceRef.For<Order>(orderId), "concurrency_conflict")
+{
+    Detail = "Order was modified by another request.",
+};
+```
+
+### Authentication challenge
+
+```csharp
+// Before
+return new Error.Unauthorized();
+
+// After
+return new Error.AuthenticationRequired(Scheme: "Bearer");
+```
+
+The boundary still emits `WWW-Authenticate` (from `Error.AuthenticationRequired.Scheme` or the registered `IAuthenticationSchemeProvider` fallback).
+
+### Rate limiting / dependency unavailable
+
+```csharp
+// Before
+return new Error.TooManyRequests();
+return new Error.ServiceUnavailable();
+
+// After
+return new Error.RateLimited(new RetryAdvice(After: TimeSpan.FromSeconds(30)));
+return new Error.Unavailable("payment_gateway_offline", new RetryAdvice(After: TimeSpan.FromSeconds(120)));
+```
+
+`RetryAdvice(TimeSpan? After, DateTimeOffset? At)` is a new transport-neutral type in `Trellis.Core`. The boundary translates it to the `Retry-After` header.
+
+### Unexpected failure with fault id
+
+```csharp
+// Before
+return new Error.InternalServerError(faultId) { Detail = "DB write failed." };
+
+// After
+return new Error.Unexpected("db_write_failed", faultId) { Detail = "DB write failed." };
+```
+
+The required `ReasonCode` makes the failure addressable in telemetry. `Error.Unexpected { ReasonCode == "not_implemented" }` is special-cased at the boundary to `501 Not Implemented`.
+
+### Aggregate of multiple errors
+
+```csharp
+// New first-class case (was previously a merged `UnprocessableContent`)
+return new Error.Aggregate(EquatableArray.Create<Error>(
+    Error.InvalidInput.ForField("email", "required"),
+    new Error.Conflict(ResourceRef.For<User>(userId), "duplicate_email")));
+```
+
+`Combine` still merges multiple `InvalidInput` failures into a single `InvalidInput`; mixed-type combinations now produce `Error.Aggregate`.
+
+### Transport fault — construction (server) and unwrapping (client)
+
+```csharp
+// Server: reject PATCH on a resource that only supports GET / PUT
+return new Error.TransportFault(
+    new HttpError.MethodNotAllowed(EquatableArray.Create("GET", "PUT")));
+
+// Server: precondition required (RFC 6585)
+return new Error.TransportFault(
+    new HttpError.PreconditionRequired(PreconditionKind.IfMatch));
+```
+
+```csharp
+// Client: pattern-match a wrapped HttpError
+return result.Error switch
+{
+    Error.TransportFault { Fault: HttpError.MethodNotAllowed allowed }
+        => Log("Allowed methods: " + string.Join(", ", allowed.Allow)),
+    Error.TransportFault { Fault: HttpError.PreconditionFailed pf }
+        => Log($"Precondition {pf.Condition} failed on {pf.Resource}"),
+    _ => Log("Other error: " + result.Error),
+};
+```
+
+`HttpError` lives in `Trellis.Http.Abstractions`. `Trellis.Asp` and `Trellis.Http` reference it transitively; add an explicit `<PackageReference Include="Trellis.Http.Abstractions" .../>` only when your boundary glue constructs or pattern-matches these types directly.
+
+### Wire format unchanged
+
+The HTTP boundary (`Trellis.Asp.ResponseFailureWriter`) preserves the historical problem-details `kind` extension tokens (`unprocessable-content`, `unauthorized`, `too-many-requests`, `service-unavailable`, `internal-server-error`, `not-implemented`) verbatim. External HTTP API consumers parsing problem-details see no change.
+
+Telemetry consumers that switch on the domain `Error.Kind` slug do need updates — the new slugs are `invalid-input`, `invariant-violation`, `authentication-required`, `rate-limited`, `unavailable`, `unexpected`, `aggregate`, `transport-fault`.
+
+---
 
 ## Breaking Changes Summary
 
@@ -314,7 +457,7 @@ public void TapError_WithAction_FailureResult_ExecutesAction()
 [Fact]
 public void TapOnFailure_WithAction_FailureResult_ExecutesAction()  // ✅ Test name changed
 {
-    var result = Result.Fail<int>(new Error.InternalServerError("test") { Detail = "Error" });
+    var result = Result.Fail<int>(new Error.Unexpected("test_failure") { Detail = "Error" });
     
     var actual = result.TapOnFailure(() => _actionExecuted = true);  // ✅ Method changed
     

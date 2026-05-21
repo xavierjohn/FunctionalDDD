@@ -135,7 +135,7 @@ public partial class ContactPhone : RequiredString<ContactPhone>
         TryCreate(value) // Generated: validates non-empty + length 10–15
             .Ensure(
                 phone => phone.Value.All(c => char.IsDigit(c) || c == '-' || c == ' '),
-                new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("contactPhone"), "validation.error") { Detail = "Phone number can only contain digits, dashes, and spaces" })));
+                Error.InvalidInput.ForField("contactPhone", "validation.error", "Phone number can only contain digits, dashes, and spaces"));
 }
 
 public partial class ZipCode : RequiredString<ZipCode>
@@ -144,10 +144,10 @@ public partial class ZipCode : RequiredString<ZipCode>
         TryCreate(value)
             .Ensure(
                 zip => zip.Value.Length == 5 || zip.Value.Length == 10,
-                new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("zipCode"), "validation.error") { Detail = "Zip code must be 5 or 10 characters (with dash)" })))
+                Error.InvalidInput.ForField("zipCode", "validation.error", "Zip code must be 5 or 10 characters (with dash)"))
             .Ensure(
                 zip => Regex.IsMatch(zip.Value, @"^\d{5}(-\d{4})?$"),
-                new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("zipCode"), "validation.error") { Detail = "Invalid zip code format (use 12345 or 12345-6789)" })));
+                Error.InvalidInput.ForField("zipCode", "validation.error", "Invalid zip code format (use 12345 or 12345-6789)"));
 }
 
 [StringLength(20, MinimumLength = 3)]
@@ -157,7 +157,7 @@ public partial class PartNumber : RequiredString<PartNumber>
         TryCreate(value) // Generated: validates non-empty + length 3–20
             .Ensure(
                 code => Regex.IsMatch(code.Value, @"^[A-Z0-9-]+$"),
-                new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("partNumber"), "validation.error") { Detail = "Part number can only contain uppercase letters, digits, and dashes" })));
+                Error.InvalidInput.ForField("partNumber", "validation.error", "Part number can only contain uppercase letters, digits, and dashes"));
 }
 
 // Usage
@@ -422,7 +422,7 @@ public class EntityService
             return result3.ToResult();
         }
         
-        return new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("entityId"), "validation.error") { Detail = "Invalid entity ID" }));
+        return Error.InvalidInput.ForField("entityId", "validation.error", "Invalid entity ID");
     }
     
     // Parsing from Guid
@@ -603,8 +603,8 @@ public partial class TrackingId : RequiredString, IParsable<TrackingId>, ITryCre
         var r = TryCreate(s);
         if (!r.TryGetValue(out var value))
         {
-            var val = (Error.UnprocessableContent)r.Error!;
-            throw new FormatException(val.FieldErrors[0].Details[0]);
+            var val = (Error.InvalidInput)r.Error!;
+            throw new FormatException(val.Fields[0].Detail ?? val.Fields[0].ReasonCode);
         }
         return value;
     }
@@ -629,7 +629,7 @@ public partial class TrackingId : RequiredString, IParsable<TrackingId>, ITryCre
             ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
             : "trackingId";
         return requiredStringOrNothing
-            .EnsureNotNullOrWhiteSpace(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Tracking Id cannot be empty." })))
+            .EnsureNotNullOrWhiteSpace(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Tracking Id cannot be empty." })))
             .Map(str => new TrackingId(str));
     }
 }
@@ -652,9 +652,9 @@ public static Result<ProductName> TryCreate(string? value, string? fieldName = n
         ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
         : "productName";
     return value
-        .EnsureNotNullOrWhiteSpace(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Product Name cannot be empty." })))
-        .Ensure(str => str.Length >= 3, new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Product Name must be at least 3 characters." })))
-        .Ensure(str => str.Length <= 50, new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Product Name must be 50 characters or fewer." })))
+        .EnsureNotNullOrWhiteSpace(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Product Name cannot be empty." })))
+        .Ensure(str => str.Length >= 3, new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Product Name must be at least 3 characters." })))
+        .Ensure(str => str.Length <= 50, new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Product Name must be 50 characters or fewer." })))
         .Map(str => new ProductName(str));
 }
 ```
@@ -691,8 +691,8 @@ public partial class EmployeeId : RequiredGuid, IParsable<EmployeeId>, ITryCreat
         var r = TryCreate(s);
         if (!r.TryGetValue(out var value))
         {
-            var val = (Error.UnprocessableContent)r.Error!;
-            throw new FormatException(val.FieldErrors[0].Details[0]);
+            var val = (Error.InvalidInput)r.Error!;
+            throw new FormatException(val.Fields[0].Detail ?? val.Fields[0].ReasonCode);
         }
         return value;
     }
@@ -719,8 +719,8 @@ public partial class EmployeeId : RequiredGuid, IParsable<EmployeeId>, ITryCreat
             ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
             : "employeeId";
         return requiredGuidOrNothing
-            .ToResult(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Employee Id cannot be empty." })))
-            .Ensure(x => x != Guid.Empty, new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Employee Id cannot be empty." })))
+            .ToResult(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Employee Id cannot be empty." })))
+            .Ensure(x => x != Guid.Empty, new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Employee Id cannot be empty." })))
             .Map(guid => new EmployeeId(guid));
      }
 
@@ -732,11 +732,11 @@ public partial class EmployeeId : RequiredGuid, IParsable<EmployeeId>, ITryCreat
             : "employeeId";
         Guid parsedGuid = Guid.Empty;
         return stringOrNull
-            .ToResult(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Employee Id cannot be empty." })))
+            .ToResult(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Employee Id cannot be empty." })))
             .Ensure(
                 x => Guid.TryParse(x, out parsedGuid), 
-                new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Guid should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)" })))
-            .Ensure(_ => parsedGuid != Guid.Empty, new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Employee Id cannot be empty." })))
+                new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Guid should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)" })))
+            .Ensure(_ => parsedGuid != Guid.Empty, new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Employee Id cannot be empty." })))
             .Map(guid => new EmployeeId(parsedGuid));
     }
 }

@@ -1,4 +1,4 @@
-# Trellis.Testing
+﻿# Trellis.Testing
 
 [![NuGet Package](https://img.shields.io/nuget/v/Trellis.Testing.svg)](https://www.nuget.org/packages/Trellis.Testing)
 
@@ -26,7 +26,7 @@ maybe.Should().HaveValue().Which.Should().Be("Ada");
 - **Result assertions** — `BeSuccess()`, `BeFailure()`, `BeFailureOfType<T>()`, `HaveErrorCode()`, async variants
 - **Maybe assertions** — `HaveValue()`, `BeNone()`, `HaveValueEqualTo()`, `HaveValueMatching()`
 - **Error assertions** — `HaveCode()`, `HaveDetail()`, `BeOfType<T>()`
-- **Error.UnprocessableContent assertions** — `HaveFieldError()`, `HaveFieldErrorWithDetail()`, `HaveFieldCount()`
+- **Error.InvalidInput assertions** — `HaveFieldError()`, `HaveFieldErrorWithDetail()`, `HaveFieldCount()`
 - **Unwrap helpers** — `Unwrap()` for extracting values in test code without analyzer warnings
 - **FakeRepository** — In-memory aggregate store with domain event tracking and unique constraints
 - **TestActorProvider** — Mutable `IActorProvider` with `AsyncLocal` scoping for authorization tests

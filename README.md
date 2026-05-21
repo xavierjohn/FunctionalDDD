@@ -63,7 +63,7 @@ using Trellis;
 
 var result = Result.Ok("ada@example.com")
     .Ensure(email => email.Contains('@'),
-        new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "validation.error") { Detail = "Email is invalid." })))
+        Error.InvalidInput.ForField("email", "validation.error", "Email is invalid."))
     .Map(email => email.Trim().ToLowerInvariant());
 ```
 
@@ -84,6 +84,7 @@ var result = Result.Ok("ada@example.com")
 | [Trellis.Asp](https://www.nuget.org/packages/Trellis.Asp) | Result-to-HTTP mapping, scalar validation, JSON/model binding (bundles the AOT-friendly JSON converter generator), and ASP.NET actor providers (Claims, Entra, Development) |
 | [Trellis.Authorization](https://www.nuget.org/packages/Trellis.Authorization) | `Actor`, permission checks, and resource authorization primitives |
 | [Trellis.Http](https://www.nuget.org/packages/Trellis.Http) | `HttpClient` extensions that stay inside the Result pipeline |
+| [Trellis.Http.Abstractions](https://www.nuget.org/packages/Trellis.Http.Abstractions) | HTTP-aware boundary primitives (`HttpError.*` cases, `EntityTagValue`, `PreconditionKind`, `RetryAfterValue`, `AuthChallenge`) shared by `Trellis.Asp` and `Trellis.Http` |
 | [Trellis.Mediator](https://www.nuget.org/packages/Trellis.Mediator) | Result-aware pipeline behaviors for [Mediator](https://github.com/martinothamar/Mediator) |
 | [Trellis.FluentValidation](https://www.nuget.org/packages/Trellis.FluentValidation) | FluentValidation output converted into Trellis results |
 | [Trellis.EntityFrameworkCore](https://www.nuget.org/packages/Trellis.EntityFrameworkCore) | EF Core conventions, converters, Maybe queries, and safe save helpers (bundles the `Maybe<T>` / owned value-object source generator) |
