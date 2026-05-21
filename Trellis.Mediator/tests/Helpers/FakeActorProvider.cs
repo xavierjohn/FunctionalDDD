@@ -24,7 +24,7 @@ internal sealed class FakeActorProvider : IActorProvider
 
     /// <summary>
     /// Fake provider that returns <see cref="Maybe{T}.None"/> — represents an unauthenticated
-    /// request. The authorization pipeline should map this to <see cref="Error.Unauthorized"/>
+    /// request. The authorization pipeline should map this to <see cref="Error.AuthenticationRequired"/>
     /// (HTTP 401).
     /// </summary>
     public static FakeActorProvider Anonymous() => new(Maybe<Actor>.None);

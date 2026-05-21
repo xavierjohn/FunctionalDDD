@@ -19,9 +19,9 @@ public class RecoverBenchmarks
     public void Setup()
     {
         _successResult = Result.Ok(42);
-        _failureResult = Result.Fail<int>(new Error.InternalServerError(Guid.NewGuid().ToString("N")) { Detail = "Unexpected error" });
+        _failureResult = Result.Fail<int>(new Error.Unexpected(Guid.NewGuid().ToString("N")) { Detail = "Unexpected error" });
         _notFoundFailure = Result.Fail<int>(new Error.NotFound(new ResourceRef("Resource", null)) { Detail = "Resource not found" });
-        _validationFailure = Result.Fail<int>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Validation failed" });
+        _validationFailure = Result.Fail<int>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Validation failed" });
     }
 
     [Benchmark(Baseline = true)]
@@ -85,7 +85,7 @@ public class RecoverBenchmarks
     {
         return _failureResult
             .RecoverOnFailure(() => Result.Fail<int>(new Error.NotFound(new ResourceRef("Resource", null)) { Detail = "Fail 1" }))
-            .RecoverOnFailure(() => Result.Fail<int>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Fail 2" }))
+            .RecoverOnFailure(() => Result.Fail<int>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Fail 2" }))
             .RecoverOnFailure(() => Result.Ok(100));
     }
 
@@ -101,8 +101,8 @@ public class RecoverBenchmarks
     {
         return _failureResult
             .RecoverOnFailure(error => error is Error.NotFound, () => Result.Ok(10))
-            .RecoverOnFailure(error => error is Error.UnprocessableContent, () => Result.Ok(20))
-            .RecoverOnFailure(error => error is Error.InternalServerError, () => Result.Ok(30));
+            .RecoverOnFailure(error => error is Error.InvalidInput, () => Result.Ok(20))
+            .RecoverOnFailure(error => error is Error.Unexpected, () => Result.Ok(30));
     }
 
     [Benchmark]
@@ -150,10 +150,10 @@ public class RecoverBenchmarks
     {
         return _failureResult
             .RecoverOnFailure(
-                predicate: error => error is Error.NotFound || error is Error.UnprocessableContent,
+                predicate: error => error is Error.NotFound || error is Error.InvalidInput,
                 func: () => Result.Ok(50))
             .RecoverOnFailure(
-                predicate: error => error is Error.InternalServerError,
+                predicate: error => error is Error.Unexpected,
                 func: () => Result.Ok(100));
     }
 
@@ -162,8 +162,8 @@ public class RecoverBenchmarks
         return error switch
         {
             Error.NotFound => Result.Ok(10),
-            Error.UnprocessableContent => Result.Ok(20),
-            Error.InternalServerError => Result.Ok(30),
+            Error.InvalidInput => Result.Ok(20),
+            Error.Unexpected => Result.Ok(30),
             _ => Result.Ok(0)
         };
     }

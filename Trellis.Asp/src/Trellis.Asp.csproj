@@ -18,6 +18,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\Trellis.Core\src\Trellis.Core.csproj" />
     <ProjectReference Include="..\..\Trellis.Authorization\src\Trellis.Authorization.csproj" />
+    <ProjectReference Include="..\..\Trellis.Http.Abstractions\src\Trellis.Http.Abstractions.csproj" />
   </ItemGroup>
 
   <!--

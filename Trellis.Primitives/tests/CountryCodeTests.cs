@@ -66,7 +66,7 @@ public class CountryCodeTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Country code is required.");
     }
 
@@ -83,7 +83,7 @@ public class CountryCodeTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Country code must be an ISO 3166-1 alpha-2 code.");
     }
 
@@ -100,7 +100,7 @@ public class CountryCodeTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Country code must be an ISO 3166-1 alpha-2 code.");
     }
 
@@ -117,7 +117,7 @@ public class CountryCodeTests
         var result = CountryCode.TryCreate(code);
 
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Country code must be an ISO 3166-1 alpha-2 code.");
     }
 
@@ -129,7 +129,7 @@ public class CountryCodeTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/country");
     }
 

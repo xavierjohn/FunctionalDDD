@@ -10,7 +10,7 @@ using Trellis.Mediator;
 /// <summary>
 /// Adapts FluentValidation <see cref="IValidator{T}"/> implementations into the Trellis
 /// Mediator validation stage. Resolves every <c>IValidator&lt;TMessage&gt;</c> registered in DI,
-/// runs them, and returns an aggregated <see cref="Error.UnprocessableContent"/> failure when
+/// runs them, and returns an aggregated <see cref="Error.InvalidInput"/> failure when
 /// any validator reports errors.
 /// </summary>
 /// <remarks>
@@ -82,7 +82,7 @@ public sealed class FluentValidationMessageValidatorAdapter<TMessage>
         }
 
         if (violations is { Count: > 0 })
-            return Result.Fail(new Error.UnprocessableContent(EquatableArray.Create(violations.ToArray())));
+            return Result.Fail(new Error.InvalidInput(EquatableArray.Create(violations.ToArray())));
 
         return Result.Ok();
     }

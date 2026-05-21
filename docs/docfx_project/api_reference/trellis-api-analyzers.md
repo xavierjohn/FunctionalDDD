@@ -202,7 +202,7 @@ result.Match(
     onFailure: error => error switch
     {
         Error.NotFound nf            => ...,
-        Error.UnprocessableContent uc => ...,
+        Error.InvalidInput uc => ...,
         Error.Conflict c             => ...,
         _                            => ...,
     });

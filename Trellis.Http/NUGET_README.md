@@ -1,4 +1,4 @@
-# Trellis.Http
+﻿# Trellis.Http
 
 [![NuGet Package](https://img.shields.io/nuget/v/Trellis.Http.svg)](https://www.nuget.org/packages/Trellis.Http)
 
@@ -44,11 +44,11 @@ The library owns `HttpResponseMessage` disposal on terminal/transformative paths
 
 ## Strict-default behavior
 
-`ToResultAsync()` without a `statusMap` produces typed errors that preserve key upstream response-header context — `WWW-Authenticate` schemes + best-effort auth-param parse on `401` (token68 or unparseable parameter strings degrade to scheme-only), `Allow` on `405`, `Content-Range` unit + length on `416`, `Retry-After` on `429` / `503` — so downstream `Trellis.Asp` rendering can faithfully forward the original wire shape. Missing or unusable header values for `405` and `416` fall through to `Error.InternalServerError` rather than fabricating misleading wire headers. 3xx responses fall through; redirect-aware callers should pass a `statusMap`.
+`ToResultAsync()` without a `statusMap` produces typed errors with HTTP-specific cases wrapped in `Error.TransportFault(new HttpError.*(...))`. The strict default preserves `Allow` on `405` and `Content-Range` on `416`. `401` does not carry parsed `WWW-Authenticate` challenges, and `429` / `503` do not preserve `Retry-After` into the error payload. Missing or unusable header values for `405` and `416` fall through to `Error.Unexpected` rather than fabricating misleading wire headers. 3xx responses fall through; redirect-aware callers should pass a `statusMap`.
 
 ## Exception propagation
 
-`HttpRequestException`, `OperationCanceledException` / `TaskCanceledException`, and `JsonException` (from `ReadJsonMaybeAsync<T>` / `ReadJsonOrNoneOn404Async<T>` on a 2xx invalid body) propagate through the chain rather than being mapped to `Result.Fail`. `ReadJsonAsync<T>` catches `JsonException` and returns `Fail<Error.InternalServerError>` with structured position diagnostics only (no response body, no `JsonException.Path`).
+`HttpRequestException`, `OperationCanceledException` / `TaskCanceledException`, and `JsonException` (from `ReadJsonMaybeAsync<T>` / `ReadJsonOrNoneOn404Async<T>` on a 2xx invalid body) propagate through the chain rather than being mapped to `Result.Fail`. `ReadJsonAsync<T>` catches `JsonException` and returns `Fail<Error.Unexpected>` with structured position diagnostics only (no response body, no `JsonException.Path`).
 
 ## Breaking changes from v1
 

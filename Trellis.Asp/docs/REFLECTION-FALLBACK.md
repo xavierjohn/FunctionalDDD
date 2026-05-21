@@ -123,9 +123,9 @@ public class EmailAddress : ScalarValueObject<EmailAddress, string>,
     {
         var field = fieldName ?? "email";
         if (string.IsNullOrWhiteSpace(value))
-            return new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Email is required." }));
+            return new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Email is required." }));
         if (!value.Contains('@'))
-            return new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Email must contain @." }));
+            return new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), "validation.error") { Detail = "Email must contain @." }));
         return new EmailAddress(value);
     }
 }

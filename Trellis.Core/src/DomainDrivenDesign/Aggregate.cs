@@ -65,18 +65,18 @@ using System.Text.Json.Serialization;
 ///     }
 ///     
 ///     public static Result<Order> Create(CustomerId customerId) =>
-///         customerId.ToResult(Error.UnprocessableContent.ForField("customerId", "invalid", "Customer ID required"))
+///         customerId.ToResult(Error.InvalidInput.ForField("customerId", "invalid", "Customer ID required"))
 ///             .Map(id => new Order(OrderId.NewUniqueV7(), id));
 ///     
 ///     // All modifications go through methods that enforce invariants
 ///     public Result<Order> AddLine(ProductId productId, int quantity, Money unitPrice) =>
 ///         this.ToResult()
 ///             .Ensure(_ => Status == OrderStatus.Draft,
-///                    Error.UnprocessableContent.ForRule("invalid", "Cannot modify submitted order"))
+///                    Error.InvalidInput.ForRule("invalid", "Cannot modify submitted order"))
 ///             .Ensure(_ => quantity > 0,
-///                    Error.UnprocessableContent.ForField("quantity", "invalid", "Quantity must be positive"))
+///                    Error.InvalidInput.ForField("quantity", "invalid", "Quantity must be positive"))
 ///             .Ensure(_ => _lines.Count < 100,
-///                    Error.UnprocessableContent.ForRule("invalid", "Order cannot have more than 100 lines"))
+///                    Error.InvalidInput.ForRule("invalid", "Order cannot have more than 100 lines"))
 ///             .Tap(_ =>
 ///             {
 ///                 var line = new OrderLine(productId, quantity, unitPrice);
@@ -90,9 +90,9 @@ using System.Text.Json.Serialization;
 ///     public Result<Order> Submit() =>
 ///         this.ToResult()
 ///             .Ensure(_ => Status == OrderStatus.Draft,
-///                    Error.UnprocessableContent.ForRule("invalid", "Order already submitted"))
+///                    Error.InvalidInput.ForRule("invalid", "Order already submitted"))
 ///             .Ensure(_ => _lines.Count > 0,
-///                    Error.UnprocessableContent.ForRule("invalid", "Cannot submit empty order"))
+///                    Error.InvalidInput.ForRule("invalid", "Cannot submit empty order"))
 ///             .Tap(_ =>
 ///             {
 ///                 Status = OrderStatus.Submitted;

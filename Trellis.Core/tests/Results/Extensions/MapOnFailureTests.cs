@@ -44,7 +44,7 @@ public class MapOnFailureTests : TestBase
     {
         var success = Result.Ok(42);
 
-        var mapped = success.MapOnFailure(e => new Error.InternalServerError("test") { Detail = "ShouldNotHappen" });
+        var mapped = success.MapOnFailure(e => new Error.Unexpected("test") { Detail = "ShouldNotHappen" });
 
         mapped.Should().BeSuccess()
             .Which.Should().Be(42);
@@ -68,7 +68,7 @@ public class MapOnFailureTests : TestBase
     {
         var original = Result.Ok(42).AsTask();
 
-        var mapped = await original.MapOnFailureAsync(e => new Error.InternalServerError("test") { Detail = "ShouldNotHappen" });
+        var mapped = await original.MapOnFailureAsync(e => new Error.Unexpected("test") { Detail = "ShouldNotHappen" });
 
         mapped.Should().BeSuccess()
             .Which.Should().Be(42);
@@ -103,7 +103,7 @@ public class MapOnFailureTests : TestBase
         Func<Error, Task<Error>> mapper = async e =>
         {
             await Task.Delay(1);
-            return new Error.InternalServerError("test") { Detail = "ShouldNotHappen" };
+            return new Error.Unexpected("test") { Detail = "ShouldNotHappen" };
         };
 
         var mapped = await original.MapOnFailureAsync(mapper);
@@ -151,7 +151,7 @@ public class MapOnFailureTests : TestBase
     {
         var original = Result.Ok(42).AsValueTask();
 
-        var mapped = await original.MapOnFailureAsync(e => new Error.InternalServerError("test") { Detail = "ShouldNotHappen" });
+        var mapped = await original.MapOnFailureAsync(e => new Error.Unexpected("test") { Detail = "ShouldNotHappen" });
 
         mapped.Should().BeSuccess()
             .Which.Should().Be(42);
@@ -179,7 +179,7 @@ public class MapOnFailureTests : TestBase
         var original = Result.Ok(42);
 
         var mapped = await original.MapOnFailureAsync(e =>
-            ValueTask.FromResult<Error>(new Error.InternalServerError("test") { Detail = "ShouldNotHappen" }));
+            ValueTask.FromResult<Error>(new Error.Unexpected("test") { Detail = "ShouldNotHappen" }));
 
         mapped.Should().BeSuccess()
             .Which.Should().Be(42);
@@ -212,11 +212,11 @@ public class MapOnFailureTests : TestBase
         var domainResult = Result.Fail<string>(new Error.Conflict(null, "domain.violation") { Detail = "Insufficient balance" });
 
         // Act
-        var apiResult = domainResult.MapOnFailure(e => new Error.BadRequest("bad.request") { Detail = $"API Error: {e.Detail}" });
+        var apiResult = domainResult.MapOnFailure(e => Error.InvalidInput.ForRule("bad.request", $"API Error: {e.Detail}"));
 
         // Assert
         apiResult.Should().BeFailure();
-        apiResult.Error!.Should().BeOfType<Error.BadRequest>();
+        apiResult.Error!.Should().BeOfType<Error.InvalidInput>();
         apiResult.Error!.Detail.Should().Contain("Insufficient balance");
     }
 
@@ -239,15 +239,15 @@ public class MapOnFailureTests : TestBase
     public async Task MapOnFailureAsync_ChainedErrorTransformations()
     {
         // Arrange
-        var result = Result.Fail<int>(new Error.InternalServerError("test") { Detail = "Internal error" }).AsTask();
+        var result = Result.Fail<int>(new Error.Unexpected("test") { Detail = "Internal error" }).AsTask();
 
         // Act
         var transformed = await result
-            .MapOnFailureAsync(e => new Error.ServiceUnavailable() { Detail = $"Service error: {e.Detail}" });
+            .MapOnFailureAsync(e => new Error.Unavailable() { Detail = $"Service error: {e.Detail}" });
 
         // Assert
         transformed.Should().BeFailure();
-        transformed.Error!.Should().BeOfType<Error.ServiceUnavailable>();
+        transformed.Error!.Should().BeOfType<Error.Unavailable>();
     }
 
     [Fact]
@@ -256,7 +256,7 @@ public class MapOnFailureTests : TestBase
         using var activityTest = new ActivityTestHelper();
 
         var result = Result.Ok(42)
-            .MapOnFailure(error => new Error.InternalServerError("test") { Detail = $"Wrapped: {error.Detail}" });
+            .MapOnFailure(error => new Error.Unexpected("test") { Detail = $"Wrapped: {error.Detail}" });
 
         result.Should().BeSuccess()
             .Which.Should().Be(42);
@@ -268,7 +268,7 @@ public class MapOnFailureTests : TestBase
     {
         using var activityTest = new ActivityTestHelper();
 
-        var result = await Result.Fail<int>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Bad input" })
+        var result = await Result.Fail<int>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Bad input" })
             .MapOnFailureAsync(error => Task.FromResult<Error>(new Error.Conflict(null, "conflict") { Detail = $"Wrapped: {error.Detail}" }));
 
         result.Should().BeFailureOfType<Error.Conflict>();

@@ -5,25 +5,25 @@ using FluentAssertions.Execution;
 using FluentAssertions.Primitives;
 
 /// <summary>
-/// Extension methods to enable FluentAssertions on <see cref="Error.UnprocessableContent"/>.
+/// Extension methods to enable FluentAssertions on <see cref="Error.InvalidInput"/>.
 /// </summary>
 public static class ValidationErrorAssertionsExtensions
 {
     /// <summary>
-    /// Returns an assertions object for fluent assertions on <see cref="Error.UnprocessableContent"/>.
+    /// Returns an assertions object for fluent assertions on <see cref="Error.InvalidInput"/>.
     /// </summary>
-    public static ValidationErrorAssertions Should(this Error.UnprocessableContent error) => new(error);
+    public static ValidationErrorAssertions Should(this Error.InvalidInput error) => new(error);
 }
 
 /// <summary>
-/// Contains assertion methods for <see cref="Error.UnprocessableContent"/>.
+/// Contains assertion methods for <see cref="Error.InvalidInput"/>.
 /// </summary>
-public class ValidationErrorAssertions : ReferenceTypeAssertions<Error.UnprocessableContent, ValidationErrorAssertions>
+public class ValidationErrorAssertions : ReferenceTypeAssertions<Error.InvalidInput, ValidationErrorAssertions>
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="ValidationErrorAssertions"/> class.
     /// </summary>
-    public ValidationErrorAssertions(Error.UnprocessableContent error)
+    public ValidationErrorAssertions(Error.InvalidInput error)
         : base(error)
     {
     }

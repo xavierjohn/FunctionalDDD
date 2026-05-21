@@ -153,7 +153,7 @@ public static partial class Result
 
     /// <summary>
     /// Executes the function and converts exceptions to a failed result using the optional mapper
-    /// (default <see cref="Error.InternalServerError"/> with a per-incident fault ID).
+    /// (default <see cref="Error.Unexpected"/> with a per-incident fault ID).
     /// </summary>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="func"/> is null.</exception>
     public static Result<T> Try<T>(Func<T> func, Func<Exception, Error>? map = null)
@@ -237,10 +237,10 @@ public static partial class Result
     }
 
     /// <summary>
-    /// Default mapper converting an exception into an <see cref="Error.InternalServerError"/>.
+    /// Default mapper converting an exception into an <see cref="Error.Unexpected"/>.
     /// The exception message is attached as <c>Detail</c>; richer diagnostics belong in the
     /// logging/telemetry layer indexed by <c>FaultId</c>.
     /// </summary>
-    private static Error.InternalServerError DefaultExceptionMapper(Exception ex) =>
-        new(FaultId: Guid.NewGuid().ToString("N")) { Detail = ex.Message };
+    private static Error.Unexpected DefaultExceptionMapper(Exception ex) =>
+        new("unhandled_exception", Guid.NewGuid().ToString("N")) { Detail = ex.Message };
 }

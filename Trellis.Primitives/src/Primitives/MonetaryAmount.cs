@@ -33,7 +33,7 @@ public class MonetaryAmount : ScalarValueObject<MonetaryAmount, decimal>, IScala
     /// </summary>
     /// <param name="value">The decimal value (must be non-negative).</param>
     /// <param name="fieldName">Optional field name for validation error messages.</param>
-    /// <returns>Success with the MonetaryAmount if valid; Failure with <see cref="Error.UnprocessableContent"/> if negative.</returns>
+    /// <returns>Success with the MonetaryAmount if valid; Failure with <see cref="Error.InvalidInput"/> if negative.</returns>
     public static Result<MonetaryAmount> TryCreate(decimal value, string? fieldName = null)
     {
         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(MonetaryAmount) + '.' + nameof(TryCreate));
@@ -41,7 +41,7 @@ public class MonetaryAmount : ScalarValueObject<MonetaryAmount, decimal>, IScala
         var field = fieldName.NormalizeFieldName("amount");
 
         if (value < 0)
-            return Result.Fail<MonetaryAmount>(Error.UnprocessableContent.ForField(field, "validation.error", "Amount cannot be negative."));
+            return Result.Fail<MonetaryAmount>(Error.InvalidInput.ForField(field, "validation.error", "Amount cannot be negative."));
 
         var rounded = Math.Round(value, DefaultDecimalPlaces, MidpointRounding.AwayFromZero);
         return Result.Ok(new MonetaryAmount(rounded));
@@ -57,7 +57,7 @@ public class MonetaryAmount : ScalarValueObject<MonetaryAmount, decimal>, IScala
         var field = fieldName.NormalizeFieldName("amount");
 
         if (value is null)
-            return Result.Fail<MonetaryAmount>(Error.UnprocessableContent.ForField(field, "validation.error", "Amount is required."));
+            return Result.Fail<MonetaryAmount>(Error.InvalidInput.ForField(field, "validation.error", "Amount is required."));
 
         return TryCreate(value.Value, fieldName);
     }
@@ -67,17 +67,17 @@ public class MonetaryAmount : ScalarValueObject<MonetaryAmount, decimal>, IScala
     /// </summary>
     /// <param name="value">The string value to parse (must be a valid decimal).</param>
     /// <param name="fieldName">Optional field name for validation error messages.</param>
-    /// <returns>Success with the MonetaryAmount if valid; Failure with <see cref="Error.UnprocessableContent"/> otherwise.</returns>
+    /// <returns>Success with the MonetaryAmount if valid; Failure with <see cref="Error.InvalidInput"/> otherwise.</returns>
     /// <remarks>The activity is opened by the leaf <c>TryCreate(decimal, ...)</c> overload to avoid double-nested telemetry spans.</remarks>
     public static Result<MonetaryAmount> TryCreate(string? value, string? fieldName = null)
     {
         var field = fieldName.NormalizeFieldName("amount");
 
         if (string.IsNullOrWhiteSpace(value))
-            return Result.Fail<MonetaryAmount>(Error.UnprocessableContent.ForField(field, "validation.error", "Amount is required."));
+            return Result.Fail<MonetaryAmount>(Error.InvalidInput.ForField(field, "validation.error", "Amount is required."));
 
         if (!decimal.TryParse(value, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out var parsed))
-            return Result.Fail<MonetaryAmount>(Error.UnprocessableContent.ForField(field, "validation.error", "Amount must be a valid decimal."));
+            return Result.Fail<MonetaryAmount>(Error.InvalidInput.ForField(field, "validation.error", "Amount must be a valid decimal."));
 
         return TryCreate(parsed, fieldName);
     }
@@ -88,17 +88,17 @@ public class MonetaryAmount : ScalarValueObject<MonetaryAmount, decimal>, IScala
     /// <param name="value">The string value to parse (must be a valid decimal).</param>
     /// <param name="provider">The format provider for culture-sensitive parsing. Defaults to <see cref="System.Globalization.CultureInfo.InvariantCulture"/> when null.</param>
     /// <param name="fieldName">Optional field name for validation error messages.</param>
-    /// <returns>Success with the MonetaryAmount if valid; Failure with <see cref="Error.UnprocessableContent"/> otherwise.</returns>
+    /// <returns>Success with the MonetaryAmount if valid; Failure with <see cref="Error.InvalidInput"/> otherwise.</returns>
     /// <remarks>The activity is opened by the leaf <c>TryCreate(decimal, ...)</c> overload to avoid double-nested telemetry spans.</remarks>
     public static Result<MonetaryAmount> TryCreate(string? value, IFormatProvider? provider, string? fieldName = null)
     {
         var field = fieldName.NormalizeFieldName("amount");
 
         if (string.IsNullOrWhiteSpace(value))
-            return Result.Fail<MonetaryAmount>(Error.UnprocessableContent.ForField(field, "validation.error", "Amount is required."));
+            return Result.Fail<MonetaryAmount>(Error.InvalidInput.ForField(field, "validation.error", "Amount is required."));
 
         if (!decimal.TryParse(value, System.Globalization.NumberStyles.Number, provider ?? System.Globalization.CultureInfo.InvariantCulture, out var parsed))
-            return Result.Fail<MonetaryAmount>(Error.UnprocessableContent.ForField(field, "validation.error", "Amount must be a valid decimal."));
+            return Result.Fail<MonetaryAmount>(Error.InvalidInput.ForField(field, "validation.error", "Amount must be a valid decimal."));
 
         return TryCreate(parsed, fieldName);
     }
@@ -110,7 +110,7 @@ public class MonetaryAmount : ScalarValueObject<MonetaryAmount, decimal>, IScala
         ArgumentNullException.ThrowIfNull(other);
 
         try { return TryCreate(Value + other.Value); }
-        catch (OverflowException) { return Result.Fail<MonetaryAmount>(Error.UnprocessableContent.ForField("amount", "validation.error", "Addition would overflow.")); }
+        catch (OverflowException) { return Result.Fail<MonetaryAmount>(Error.InvalidInput.ForField("amount", "validation.error", "Addition would overflow.")); }
     }
 
     /// <summary>Subtracts a monetary amount. Fails if result would be negative.</summary>
@@ -120,7 +120,7 @@ public class MonetaryAmount : ScalarValueObject<MonetaryAmount, decimal>, IScala
         ArgumentNullException.ThrowIfNull(other);
 
         try { return TryCreate(Value - other.Value); }
-        catch (OverflowException) { return Result.Fail<MonetaryAmount>(Error.UnprocessableContent.ForField("amount", "validation.error", "Subtraction would overflow.")); }
+        catch (OverflowException) { return Result.Fail<MonetaryAmount>(Error.InvalidInput.ForField("amount", "validation.error", "Subtraction would overflow.")); }
     }
 
     /// <summary>Multiplies by a non-negative integer quantity.</summary>
@@ -128,10 +128,10 @@ public class MonetaryAmount : ScalarValueObject<MonetaryAmount, decimal>, IScala
     {
         if (quantity < 0)
             return Result.Fail<MonetaryAmount>(
-                Error.UnprocessableContent.ForField(nameof(quantity), "validation.error", "Quantity cannot be negative."));
+                Error.InvalidInput.ForField(nameof(quantity), "validation.error", "Quantity cannot be negative."));
 
         try { return TryCreate(Value * quantity); }
-        catch (OverflowException) { return Result.Fail<MonetaryAmount>(Error.UnprocessableContent.ForField("amount", "validation.error", "Multiplication would overflow.")); }
+        catch (OverflowException) { return Result.Fail<MonetaryAmount>(Error.InvalidInput.ForField("amount", "validation.error", "Multiplication would overflow.")); }
     }
 
     /// <summary>Multiplies by a non-negative decimal multiplier.</summary>
@@ -139,10 +139,10 @@ public class MonetaryAmount : ScalarValueObject<MonetaryAmount, decimal>, IScala
     {
         if (multiplier < 0)
             return Result.Fail<MonetaryAmount>(
-                Error.UnprocessableContent.ForField(nameof(multiplier), "validation.error", "Multiplier cannot be negative."));
+                Error.InvalidInput.ForField(nameof(multiplier), "validation.error", "Multiplier cannot be negative."));
 
         try { return TryCreate(Value * multiplier); }
-        catch (OverflowException) { return Result.Fail<MonetaryAmount>(Error.UnprocessableContent.ForField("amount", "validation.error", "Multiplication would overflow.")); }
+        catch (OverflowException) { return Result.Fail<MonetaryAmount>(Error.InvalidInput.ForField("amount", "validation.error", "Multiplication would overflow.")); }
     }
 
     /// <inheritdoc/>

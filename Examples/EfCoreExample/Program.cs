@@ -336,9 +336,9 @@ static async Task<bool> TrySaveChangesAsync(AppDbContext context)
 static string DescribeError(Error error) =>
     error switch
     {
-        Error.UnprocessableContent validation when validation.Fields.Items.Length > 0 =>
+        Error.InvalidInput validation when validation.Fields.Items.Length > 0 =>
             string.Join("; ", validation.Fields.Items.Select(field => field.Detail ?? field.ReasonCode)),
-        Error.UnprocessableContent validation when validation.Rules.Items.Length > 0 =>
+        Error.InvalidInput validation when validation.Rules.Items.Length > 0 =>
             string.Join("; ", validation.Rules.Items.Select(rule => rule.Detail ?? rule.ReasonCode)),
         _ => error.Detail ?? error.Code
     };

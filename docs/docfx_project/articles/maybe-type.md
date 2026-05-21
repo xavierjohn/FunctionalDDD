@@ -253,7 +253,7 @@ using Trellis;
 
 static Result<string> NonEmpty(string value) =>
     string.IsNullOrWhiteSpace(value)
-        ? Result.Fail<string>(new Error.UnprocessableContent(EquatableArray.Create(
+        ? Result.Fail<string>(new Error.InvalidInput(EquatableArray.Create(
             new FieldViolation(InputPointer.ForProperty("nickname"), "validation.error")
             {
                 Detail = "Value is required",
@@ -266,7 +266,7 @@ Result<Maybe<string>> result = Maybe.Optional(input, NonEmpty);
 
 ## Multi-field invariants
 
-`MaybeInvariant` enforces shape rules across several `Maybe<T>` fields and returns `Result<Unit>`. Failures are collected as `Error.UnprocessableContent` with one `FieldViolation` per offending field; field paths are normalized via `InputPointer.ForProperty(name)`.
+`MaybeInvariant` enforces shape rules across several `Maybe<T>` fields and returns `Result<Unit>`. Failures are collected as `Error.InvalidInput` with one `FieldViolation` per offending field; field paths are normalized via `InputPointer.ForProperty(name)`.
 
 | Helper | Rule | Available arities |
 |---|---|---|
@@ -378,7 +378,7 @@ static Task<Result<Unit>> SendWelcomeAsync(string email, CancellationToken ct) =
 public Task<Result<Unit>> WelcomeAsync(string id, CancellationToken ct) =>
     Load(id)
         .Bind(customer => customer.Email.ToResult(
-            new Error.UnprocessableContent(EquatableArray.Create(
+            new Error.InvalidInput(EquatableArray.Create(
                 new FieldViolation(InputPointer.ForProperty("email"), "validation.error")
                 {
                     Detail = "Customer has no email address on file.",

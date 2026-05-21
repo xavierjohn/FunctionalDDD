@@ -29,7 +29,7 @@ public class SubmitBatchTransfersHandlerTests
         var result = await handler.Handle(command, CancellationToken.None);
 
         result.TryGetError(out var error).Should().BeTrue("an empty batch is invalid input, not a runtime crash");
-        var upc = error.Should().BeOfType<Error.UnprocessableContent>().Which;
+        var upc = error.Should().BeOfType<Error.InvalidInput>().Which;
         upc.Fields.Items.Should().ContainSingle()
             .Which.ReasonCode.Should().Be("batch.empty");
     }

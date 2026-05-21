@@ -90,7 +90,7 @@ public static class ValidationErrorsContext
         s_current.Value?.AddError(fieldName, errorMessage);
 
     /// <summary>
-    /// Adds all field violations and rule violations from an existing <see cref="Error.UnprocessableContent"/> to the current scope.
+    /// Adds all field violations and rule violations from an existing <see cref="Error.InvalidInput"/> to the current scope.
     /// </summary>
     /// <param name="unprocessableContent">The error whose violations should be merged.</param>
     /// <remarks>
@@ -99,22 +99,22 @@ public static class ValidationErrorsContext
     /// The merge preserves each field violation's full structure — including its
     /// <see cref="FieldViolation.ReasonCode"/>, <see cref="FieldViolation.Args"/>,
     /// and <see cref="FieldViolation.Detail"/> — and also preserves any top-level
-    /// <see cref="Error.UnprocessableContent.Rules"/> entries. Used by the framework's
+    /// <see cref="Error.InvalidInput.Rules"/> entries. Used by the framework's
     /// reflection-mode converters and by AOT-generated scalar value converters to surface
     /// rich, structured validation failures.
     /// </para>
     /// </remarks>
-    public static void AddError(Error.UnprocessableContent unprocessableContent) =>
+    public static void AddError(Error.InvalidInput unprocessableContent) =>
         s_current.Value?.AddError(unprocessableContent);
 
     /// <summary>
-    /// Gets the aggregated <see cref="Error.UnprocessableContent"/> from the current scope, or null if no errors were collected.
+    /// Gets the aggregated <see cref="Error.InvalidInput"/> from the current scope, or null if no errors were collected.
     /// </summary>
     /// <returns>
-    /// An <see cref="Error.UnprocessableContent"/> containing all collected field and rule violations,
+    /// An <see cref="Error.InvalidInput"/> containing all collected field and rule violations,
     /// or <c>null</c> if no validation errors were recorded.
     /// </returns>
-    public static Error.UnprocessableContent? GetUnprocessableContent() =>
+    public static Error.InvalidInput? GetUnprocessableContent() =>
         s_current.Value?.GetUnprocessableContent();
 
     /// <summary>
@@ -183,7 +183,7 @@ public static class ValidationErrorsContext
             }
         }
 
-        public void AddError(Error.UnprocessableContent unprocessableContent)
+        public void AddError(Error.InvalidInput unprocessableContent)
         {
             lock (_lock)
             {
@@ -212,7 +212,7 @@ public static class ValidationErrorsContext
             }
         }
 
-        public Error.UnprocessableContent? GetUnprocessableContent()
+        public Error.InvalidInput? GetUnprocessableContent()
         {
             lock (_lock)
             {
@@ -225,7 +225,7 @@ public static class ValidationErrorsContext
 
                 var ruleArray = _ruleErrors.ToArray();
 
-                return new Error.UnprocessableContent(
+                return new Error.InvalidInput(
                     EquatableArray.Create(fieldArray),
                     EquatableArray.Create(ruleArray))
                 {

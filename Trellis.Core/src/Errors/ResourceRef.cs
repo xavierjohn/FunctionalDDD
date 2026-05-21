@@ -5,7 +5,7 @@ using System.Globalization;
 /// <summary>
 /// Identifies a resource by its type and optional identifier. Used as the typed payload
 /// for resource-oriented errors such as <see cref="Error.NotFound"/>, <see cref="Error.Conflict"/>,
-/// <see cref="Error.Gone"/>, and <see cref="Error.PreconditionFailed"/>.
+/// <see cref="Error.Gone"/>, and transport faults that still identify a resource.
 /// </summary>
 /// <param name="Type">
 /// The resource type name (e.g. <c>"User"</c>, <c>"Order"</c>). Use

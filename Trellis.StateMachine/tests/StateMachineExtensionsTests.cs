@@ -88,7 +88,7 @@ public class StateMachineExtensionsTests
         // Assert
         result.IsFailure.Should().BeTrue();
         result.TryGetError(out var err).Should().BeTrue();
-        err!.Should().BeOfType<Error.UnprocessableContent>();
+        err!.Should().BeOfType<Error.InvalidInput>();
         err!.Detail.Should().Contain("Pause");
         err!.Detail.Should().Contain("Idle");
     }
@@ -119,8 +119,8 @@ public class StateMachineExtensionsTests
 
         // Assert
         result.TryGetError(out var err).Should().BeTrue();
-        err!.Code.Should().Be("unprocessable-content");
-        var unproc = err!.Should().BeOfType<Error.UnprocessableContent>().Subject;
+        err!.Code.Should().Be("invalid-input");
+        var unproc = err!.Should().BeOfType<Error.InvalidInput>().Subject;
         unproc.Rules.Items.Should().ContainSingle().Which.ReasonCode.Should().Be("state.machine.invalid.transition");
     }
 
@@ -136,7 +136,7 @@ public class StateMachineExtensionsTests
         // Assert
         result.IsFailure.Should().BeTrue();
         result.TryGetError(out var err).Should().BeTrue();
-        err!.Should().BeOfType<Error.UnprocessableContent>();
+        err!.Should().BeOfType<Error.InvalidInput>();
     }
 
     [Fact]
@@ -146,7 +146,7 @@ public class StateMachineExtensionsTests
         // suppress invalid-trigger exceptions (e.g. log + ignore). FireResult must
         // honor that policy by invoking Fire even on the !CanFire path — the user's
         // handler runs, no exception escapes, and we surface the (unchanged) state
-        // as success rather than synthesizing an Error.UnprocessableContent the user opted out of.
+        // as success rather than synthesizing an Error.InvalidInput the user opted out of.
         var unhandledCalls = 0;
         var machine = new StateMachine<State, Trigger>(State.Idle);
         machine.Configure(State.Idle).Permit(Trigger.Start, State.Running);
@@ -214,7 +214,7 @@ public class StateMachineExtensionsTests
         // Assert
         result.IsFailure.Should().BeTrue();
         result.TryGetError(out var err).Should().BeTrue();
-        err!.Should().BeOfType<Error.UnprocessableContent>();
+        err!.Should().BeOfType<Error.InvalidInput>();
         err!.Detail.Should().Contain("Start");
         err!.Detail.Should().Contain("Idle");
     }
@@ -356,7 +356,7 @@ public class StateMachineExtensionsTests
         // Assert
         result.IsFailure.Should().BeTrue();
         result.TryGetError(out var err).Should().BeTrue();
-        err!.Should().BeOfType<Error.UnprocessableContent>();
+        err!.Should().BeOfType<Error.InvalidInput>();
     }
 
     #endregion

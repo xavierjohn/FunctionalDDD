@@ -73,7 +73,7 @@ public class ShowcaseMinimalApiTests : IClassFixture<WebApplicationFactory<Progr
     }
 
     [Fact]
-    public async Task Secure_withdraw_with_rejected_code_returns_401_with_authenticate_challenge()
+    public async Task Secure_withdraw_with_rejected_code_returns_401_without_authenticate_challenge_when_auth_not_configured()
     {
         var client = _factory.CreateClient();
         var response = await client.PostAsJsonAsync(
@@ -82,8 +82,7 @@ public class ShowcaseMinimalApiTests : IClassFixture<WebApplicationFactory<Progr
             Ct);
 
         response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
-        response.Headers.WwwAuthenticate.Should().ContainSingle()
-            .Which.ToString().Should().Be("TrellisVerification realm=\"showcase\"");
+        response.Headers.WwwAuthenticate.Should().BeEmpty();
     }
 
     [Fact]
@@ -250,12 +249,12 @@ public class ShowcaseMinimalApiTests : IClassFixture<WebApplicationFactory<Progr
     }
 
     [Fact]
-    public async Task Malformed_cursor_returns_400_problem_details()
+    public async Task Malformed_cursor_returns_422_problem_details()
     {
         var client = _factory.CreateClient();
         var response = await client.GetAsync(new Uri("/api/accounts/?cursor=not-a-real-cursor", UriKind.Relative), Ct);
 
-        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
     }
 
     [Fact]

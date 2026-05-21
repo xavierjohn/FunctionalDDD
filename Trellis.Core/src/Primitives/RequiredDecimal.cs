@@ -62,12 +62,12 @@
 /// // Create from existing decimal with validation
 /// var result1 = UnitPrice.TryCreate(19.99m);
 /// // Returns: Success(UnitPrice) unless [Range] or ValidateAdditional rejects the value
-/// // Nullable overloads return Failure(Error.UnprocessableContent) when the value is null
+/// // Nullable overloads return Failure(Error.InvalidInput) when the value is null
 /// 
 /// // Create from string with validation
 /// var result2 = UnitPrice.TryCreate("19.99");
 /// // Returns: Success(UnitPrice) if valid decimal format
-/// // Returns: Failure(Error.UnprocessableContent) if invalid format
+/// // Returns: Failure(Error.InvalidInput) if invalid format
 /// 
 /// // With custom field name for validation errors
 /// var result3 = UnitPrice.TryCreate(input, "product.price");

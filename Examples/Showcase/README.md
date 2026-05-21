@@ -8,16 +8,16 @@ the two hosting styles side-by-side over a single, identical contract.
 
 | Concept | Where to look |
 |---|---|
-| `Error.UnprocessableContent` + `FieldViolation` collected before failing | `Showcase.Domain/Aggregates/BankAccount.cs` (`TryCreate`) |
+| `Error.InvalidInput` + `FieldViolation` collected before failing | `Showcase.Domain/Aggregates/BankAccount.cs` (`TryCreate`) |
 | `Error.Conflict` for domain rule violations | `Showcase.Domain/Aggregates/BankAccount.cs` (`Deposit`, `Withdraw`) |
 | `Error.NotFound` with `ResourceRef` | `Showcase.Application/Persistence/IAccountRepository.cs` |
-| `Error.PreconditionFailed` | `ConditionalRequestExample` (sibling sample) |
+| `HttpError.PreconditionFailed` via `Error.TransportFault` envelope | `ConditionalRequestExample` (sibling sample) |
 | `Error.Forbidden` with `policyId` | `Showcase.Application/Services/InMemoryIdentityVerifier.cs` |
-| `Error.InternalServerError` with `faultId` | `Showcase.Mvc/Controllers/DiagnosticsController.cs` and `Showcase.MinimalApi/Endpoints/DiagnosticsEndpoints.cs` |
-| `Error.Unauthorized` from a boundary adapter | `Showcase.Application/Services/InMemoryIdentityVerifier.cs` |
+| `Error.Unexpected` with `faultId` | `Showcase.Mvc/Controllers/DiagnosticsController.cs` and `Showcase.MinimalApi/Endpoints/DiagnosticsEndpoints.cs` |
+| `Error.AuthenticationRequired` from a boundary adapter | `Showcase.Application/Services/InMemoryIdentityVerifier.cs` |
 | Plain ROP (`Ensure`/`Bind`/`Tap`/`Map`) | `Showcase.Domain/Aggregates/BankAccount.cs` (money operations) |
 | `Trellis.StateMachine` lifecycle modeling | `Showcase.Domain/Aggregates/BankAccount.cs` (`Freeze`, `Unfreeze`, `Close`) |
-| Invalid state transition → `Error.Conflict` via `FireResult` | `BankAccount.Unfreeze` on an Active account |
+| Invalid state transition → `Error.InvalidInput` via `FireResult` | `BankAccount.Unfreeze` on an Active account |
 | Application/workflow boundary (events → AcceptChanges → persist) | `Showcase.Application/Workflows/BankingWorkflow.cs` |
 | `Trellis.Asp.ToHttpResponse(...).AsActionResult<T>()` mapping (MVC) | `Showcase.Mvc/Controllers/*` |
 | `Trellis.Asp.ToHttpResponseAsync(...)` mapping (Minimal API) | `Showcase.MinimalApi/Endpoints/*` |

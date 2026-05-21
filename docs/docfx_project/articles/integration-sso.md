@@ -501,7 +501,7 @@ public sealed class KeycloakActorProvider(
             ?? throw new InvalidOperationException("No HttpContext available.");
 
         // No authenticated identity / missing id claim → no usable actor → Maybe.None,
-        // which the mediator pipeline maps to Error.Unauthorized (HTTP 401).
+        // which the mediator pipeline maps to Error.AuthenticationRequired (HTTP 401).
         var identity = httpContext.User.Identities
             .FirstOrDefault(i => i.IsAuthenticated) as ClaimsIdentity;
         if (identity is null)
@@ -664,7 +664,7 @@ For a multi-IdP API the simplest pattern is to derive a stable user key from `(i
 
 - **One audience per scheme.** Each `AddJwtBearer("<scheme>", ...)` validates exactly one (or via `ValidAudiences`, a set of) audience values. A token whose `aud` matches no scheme returns HTTP 401.
 - **Same scope, different schemes.** All registered schemes share `HttpContext.User` — once a token validates, the downstream actor provider, mediator pipeline, and handlers don't know (and don't need to know) which IdP issued it.
-- **WWW-Authenticate.** Trellis's [`ResponseFailureWriter`](integration-asp-authorization.md#anatomy-of-a-401) synthesizes a single `WWW-Authenticate` header from the configured *default* challenge / authenticate scheme — it does not enumerate every registered scheme. With the parameterless `AddAuthentication()` shown above there is no default, so the synthesizer emits nothing. If you need clients to discover multiple Bearer challenges, either (a) set a default scheme on `AddAuthentication("<scheme>")` so synthesis fires, accepting that only that scheme's name is advertised, or (b) emit explicit challenges per scheme via `Error.Unauthorized.Challenges` from your handler / failure mapper, which `ResponseFailureWriter` writes verbatim ahead of the synthesis path.
+- **WWW-Authenticate.** Trellis's [`ResponseFailureWriter`](integration-asp-authorization.md#anatomy-of-a-401) synthesizes a single `WWW-Authenticate` header from the configured *default* challenge / authenticate scheme — it does not enumerate every registered scheme. With the parameterless `AddAuthentication()` shown above there is no default, so the synthesizer emits nothing. If you need clients to discover a specific Bearer challenge, either (a) set a default scheme on `AddAuthentication("<scheme>")` so synthesis fires, accepting that only that scheme's name is advertised, or (b) return `new Error.AuthenticationRequired("Bearer realm=\"api\"")` from the handler / failure mapper so `ResponseFailureWriter` emits it verbatim. If you need to advertise multiple challenges, write `WWW-Authenticate` yourself before Trellis renders the failure.
 - **Diagnostics.** Log `iss` and the winning scheme on first request from each IdP — silent "wrong scheme picked" is almost always an audience mismatch.
 
 ## JWT validation options
@@ -673,7 +673,7 @@ Trellis does not own JWT validation — that lives in `Microsoft.AspNetCore.Auth
 
 | `JwtBearerOptions` setting | Effect on Trellis |
 |---|---|
-| `Authority` | Determines OIDC discovery / signing keys. If validation fails, `HttpContext.User` is unauthenticated and the actor provider returns `Maybe<Actor>.None`, which the mediator pipeline maps to `Error.Unauthorized` (HTTP 401). |
+| `Authority` | Determines OIDC discovery / signing keys. If validation fails, `HttpContext.User` is unauthenticated and the actor provider returns `Maybe<Actor>.None`, which the mediator pipeline maps to `Error.AuthenticationRequired` (HTTP 401). |
 | `Audience` (or `TokenValidationParameters.ValidAudiences`) | Must match the token `aud`. Mismatched audiences never reach the actor provider — the request is rejected with `401`. |
 | `TokenValidationParameters.ValidIssuers` | Required when `Authority` does not match the literal `iss` claim (Google emits both `https://accounts.google.com` and `accounts.google.com`). |
 | `TokenValidationParameters.ValidateIssuer = false` | Multi-tenant Entra requires this; tenant pinning then lives in `MapAttributes` or a custom validator. See [Multi-tenant Entra](#multi-tenant-entra). |

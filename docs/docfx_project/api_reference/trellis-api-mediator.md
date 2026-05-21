@@ -78,7 +78,7 @@ public sealed class AuthorizationBehavior<TMessage, TResponse>(IActorProvider ac
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)` | `ValueTask<TResponse>` | Resolves the current actor via `IActorProvider`. When the provider returns `Maybe<Actor>.None`, short-circuits with `TResponse.CreateFailure(new Error.Unauthorized { Detail = "Authentication required." })` (HTTP 401, RFC 9110 §15.5.2). When the actor is present but lacks one of `RequiredPermissions`, short-circuits with `TResponse.CreateFailure(new Error.Forbidden("authorization.insufficient.permissions") { Detail = "Insufficient permissions." })` (HTTP 403). The 401 vs 403 distinction is shared with `ResourceAuthorizationBehavior` and `ResourceAuthorizationViaBehavior` via the internal `ActorResolution.TryResolveAsync` / `ActorResolution.AuthenticationRequired()` helpers; provider-side `InvalidOperationException` (genuine bugs — no `HttpContext`, mapping delegate threw, etc.) propagates uncaught and surfaces as `Error.InternalServerError` (HTTP 500) via `ExceptionBehavior`. |
+| `public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)` | `ValueTask<TResponse>` | Resolves the current actor via `IActorProvider`. When the provider returns `Maybe<Actor>.None`, short-circuits with `TResponse.CreateFailure(new Error.AuthenticationRequired { Detail = "Authentication required." })` (HTTP 401, RFC 9110 §15.5.2). When the actor is present but lacks one of `RequiredPermissions`, short-circuits with `TResponse.CreateFailure(new Error.Forbidden("authorization.insufficient.permissions") { Detail = "Insufficient permissions." })` (HTTP 403). The 401 vs 403 distinction is shared with `ResourceAuthorizationBehavior` and `ResourceAuthorizationViaBehavior` via the internal `ActorResolution.TryResolveAsync` / `ActorResolution.AuthenticationRequired()` helpers; provider-side `InvalidOperationException` (genuine bugs — no `HttpContext`, mapping delegate threw, etc.) propagates uncaught and surfaces as `Error.Unexpected` (HTTP 500) via `ExceptionBehavior`. |
 
 ### ExceptionBehavior<TMessage, TResponse>
 **Declaration**
@@ -103,7 +103,7 @@ public sealed partial class ExceptionBehavior<TMessage, TResponse> : IPipelineBe
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)` | `ValueTask<TResponse>` | Catches unhandled exceptions except `OperationCanceledException`, logs them, and returns `TResponse.CreateFailure(new Error.InternalServerError(Guid.NewGuid().ToString("N")) { Detail = "An unexpected error occurred while processing the request." })`. |
+| `public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)` | `ValueTask<TResponse>` | Catches unhandled exceptions except `OperationCanceledException`, logs them, and returns `TResponse.CreateFailure(new Error.Unexpected(Guid.NewGuid().ToString("N")) { Detail = "An unexpected error occurred while processing the request." })`. |
 
 ### IValidate
 **Declaration**
@@ -391,7 +391,7 @@ Extensibility hook for the unified validation stage. Implementations are resolve
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `ValueTask<IResult> ValidateAsync(TMessage message, CancellationToken cancellationToken)` | `ValueTask<IResult>` | Returns `Result.Ok()` on success, or `Result.Fail(new Error.UnprocessableContent(...))` with field/rule violations on failure. `Error.UnprocessableContent` failures from every validator (and `IValidate.Validate()` if implemented) are aggregated into a single response failure by `ValidationBehavior`. Returning a non-`Error.UnprocessableContent` failure (e.g., `Error.Conflict`, `Error.Forbidden`) is allowed but short-circuits the stage immediately and is propagated as-is. |
+| `ValueTask<IResult> ValidateAsync(TMessage message, CancellationToken cancellationToken)` | `ValueTask<IResult>` | Returns `Result.Ok()` on success, or `Result.Fail(new Error.InvalidInput(...))` with field/rule violations on failure. `Error.InvalidInput` failures from every validator (and `IValidate.Validate()` if implemented) are aggregated into a single response failure by `ValidationBehavior`. Returning a non-`Error.InvalidInput` failure (e.g., `Error.Conflict`, `Error.Forbidden`) is allowed but short-circuits the stage immediately and is propagated as-is. |
 
 ### ValidationBehavior<TMessage, TResponse>
 **Declaration**
@@ -400,7 +400,7 @@ Extensibility hook for the unified validation stage. Implementations are resolve
 public sealed class ValidationBehavior<TMessage, TResponse>(IEnumerable<IMessageValidator<TMessage>> validators) : IPipelineBehavior<TMessage, TResponse> where TMessage : global::Mediator.IMessage where TResponse : IResult, IFailureFactory<TResponse>
 ```
 
-Unified validation stage. Runs `IValidate.Validate()` (when the message implements `IValidate`) and every `IMessageValidator<TMessage>` registered in DI for the message, then aggregates `Error.UnprocessableContent` failures into a single response. The behavior is registered for **all** messages — when the message does not implement `IValidate` and no validators are registered it is a no-op pass-through.
+Unified validation stage. Runs `IValidate.Validate()` (when the message implements `IValidate`) and every `IMessageValidator<TMessage>` registered in DI for the message, then aggregates `Error.InvalidInput` failures into a single response. The behavior is registered for **all** messages — when the message does not implement `IValidate` and no validators are registered it is a no-op pass-through.
 
 **Constructors**
 
@@ -418,7 +418,7 @@ Unified validation stage. Runs `IValidate.Validate()` (when the message implemen
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)` | `ValueTask<TResponse>` | Aggregation rules: (1) Multiple `Error.UnprocessableContent` failures from `IValidate` and validators are merged into a single `Error.UnprocessableContent` whose `Fields` and `Rules` collect every reported violation. (2) An `Error.UnprocessableContent` with empty `Fields` AND empty `Rules` still short-circuits the handler — original failure semantics are preserved. (3) A non-`Error.UnprocessableContent` failure returned by any source short-circuits the stage immediately and is propagated as-is. |
+| `public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)` | `ValueTask<TResponse>` | Aggregation rules: (1) Multiple `Error.InvalidInput` failures from `IValidate` and validators are merged into a single `Error.InvalidInput` whose `Fields` and `Rules` collect every reported violation. (2) An `Error.InvalidInput` with empty `Fields` AND empty `Rules` still short-circuits the handler — original failure semantics are preserved. (3) A non-`Error.InvalidInput` failure returned by any source short-circuits the stage immediately and is propagated as-is. |
 
 ### IDomainEventHandler
 **Declaration**
@@ -546,12 +546,12 @@ public interface IDomainEventPublisher
 
 The Trellis pipeline executes outermost → innermost in this order. The first five are registered by `AddTrellisBehaviors()`; the last two are opt-in.
 
-1. **`ExceptionBehavior<,>`** — catches unhandled exceptions (except `OperationCanceledException`), logs them, and converts them to a typed `TResponse.CreateFailure(new Error.InternalServerError(...))`. Sits outermost so every other layer is wrapped.
+1. **`ExceptionBehavior<,>`** — catches unhandled exceptions (except `OperationCanceledException`), logs them, and converts them to a typed `TResponse.CreateFailure(new Error.Unexpected(Guid.NewGuid().ToString("N")) { Detail = "An unexpected error occurred while processing the request." })`. Sits outermost so every other layer is wrapped.
 2. **`TracingBehavior<,>`** — opens an OpenTelemetry `Activity` per message under the `"Trellis.Mediator"` activity source. On failure tags `error.code` / `error.type` and sets `ActivityStatusCode.Error`. `Error.Detail` is redacted from `StatusDescription` unless `TrellisMediatorTelemetryOptions.IncludeErrorDetail` is `true`.
 3. **`LoggingBehavior<,>`** — structured logging with start/end and elapsed-ms entries; emits the stable `Error.Code` on failure. Inherits the same correlation context propagated by the surrounding `Activity`. `Error.Detail` is redacted unless `IncludeErrorDetail` is `true`.
 4. **`AuthorizationBehavior<,>`** — runs for `IAuthorize` messages; resolves the actor and rejects with `new Error.Forbidden("authorization.insufficient.permissions")` when `RequiredPermissions` are not satisfied. No I/O.
 5. **`ResourceAuthorizationBehavior<,,>`** *(opt-in via `AddResourceAuthorization(...)`)* — runs for `IAuthorizeResource<TResource>` messages. Inserted **immediately before `ValidationBehavior<,>`** so a 403 short-circuits before a 422 is computed. Resolves the actor first (fail-fast, no I/O when null), then loads the resource via `IResourceLoader<TMessage, TResource>` and calls `message.Authorize(actor, resource)`.
-6. **`ValidationBehavior<,>`** — unified validation stage. Runs `IValidate.Validate()` if implemented, then every `IMessageValidator<TMessage>` resolved from DI; aggregates all `Error.UnprocessableContent` failures into a single response. External validation sources (e.g., the `Trellis.FluentValidation` adapter) participate here without occupying their own pipeline slot.
+6. **`ValidationBehavior<,>`** — unified validation stage. Runs `IValidate.Validate()` if implemented, then every `IMessageValidator<TMessage>` resolved from DI; aggregates all `Error.InvalidInput` failures into a single response. External validation sources (e.g., the `Trellis.FluentValidation` adapter) participate here without occupying their own pipeline slot.
 7. **`DomainEventDispatchBehavior<,>`** *(opt-in via `AddDomainEventDispatch(...)`)* — runs for `ICommand<TResponse>` messages where `TResponse` is `IResult<TAggregate>` (typically `Result<TAggregate>`) and `TAggregate : IAggregate`. After the inner pipeline returns success, dispatches each event from `aggregate.UncommittedEvents()` to its registered `IDomainEventHandler<TEvent>` instances and calls `AcceptChanges()`. When `TransactionalCommandBehavior` is registered innermost, dispatch fires after the transaction commits — handlers see committed state. Non-cancellation handler exceptions are logged and swallowed; the command still succeeds. `OperationCanceledException` matching the request's token is the one exception that propagates so cancellation aborts the dispatch loop and skips `AcceptChanges()`.
 8. **`TransactionalCommandBehavior<,>`** *(opt-in, lives in `Trellis.EntityFrameworkCore`, not registered by `AddTrellisBehaviors()`)* — wraps the handler for `ICommand<TResponse>` messages and calls `IUnitOfWork.CommitAsync` on success. Register via `AddTrellisUnitOfWork<TContext>()` from the EFCore package **after** `AddTrellisBehaviors()` and `AddDomainEventDispatch(...)` so it lands innermost (closest to the handler) and commit failures remain visible to outer logging/tracing/dispatch. Queries are skipped.
 

@@ -14,14 +14,14 @@ audience: [llm]
 - **Namespace:** `Trellis.FluentValidation`
 - **Purpose:** Two integration paths for FluentValidation in Trellis:
   1. **Mediator integration** — `AddTrellisFluentValidation()` plugs FluentValidation validators into the existing `ValidationBehavior<TMessage,TResponse>` via the open-generic `IMessageValidator<TMessage>` adapter. No additional pipeline behavior is added.
-  2. **Standalone helpers** — `FluentValidationResultExtensions` converts a `ValidationResult` (or runs an `IValidator<T>` synchronously/asynchronously) into a `Result<T>` failure backed by `Error.UnprocessableContent`.
+  2. **Standalone helpers** — `FluentValidationResultExtensions` converts a `ValidationResult` (or runs an `IValidator<T>` synchronously/asynchronously) into a `Result<T>` failure backed by `Error.InvalidInput`.
 
 See also: [trellis-api-cookbook.md](trellis-api-cookbook.md) — recipes using this package.
 
 ## Use this file when
 
 - You want FluentValidation validators to run inside the Trellis Mediator validation behavior.
-- You need to convert a FluentValidation `ValidationResult` into `Result<T>` / `Error.UnprocessableContent`.
+- You need to convert a FluentValidation `ValidationResult` into `Result<T>` / `Error.InvalidInput`.
 - You need exact JSON Pointer normalization behavior for FluentValidation property names.
 
 ## Patterns Index
@@ -55,7 +55,7 @@ public static class FluentValidationServiceCollectionExtensions
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public static IServiceCollection AddTrellisFluentValidation(this IServiceCollection services)` | `IServiceCollection` | Registers `FluentValidationMessageValidatorAdapter<TMessage>` as the open-generic `IMessageValidator<TMessage>` implementation. Every `IValidator<T>` registered for the message in DI then runs inside the existing `ValidationBehavior<TMessage,TResponse>` and contributes its failures to an aggregated `Error.UnprocessableContent`. **AOT/trim-safe**; uses open-generic DI registration with no reflection. Idempotent — repeated calls do not duplicate the adapter. Throws `ArgumentNullException` when `services` is `null`. Validators must be registered explicitly (e.g., `services.AddScoped<IValidator<CreateOrderCommand>, CreateOrderCommandValidator>()`). |
+| `public static IServiceCollection AddTrellisFluentValidation(this IServiceCollection services)` | `IServiceCollection` | Registers `FluentValidationMessageValidatorAdapter<TMessage>` as the open-generic `IMessageValidator<TMessage>` implementation. Every `IValidator<T>` registered for the message in DI then runs inside the existing `ValidationBehavior<TMessage,TResponse>` and contributes its failures to an aggregated `Error.InvalidInput`. **AOT/trim-safe**; uses open-generic DI registration with no reflection. Idempotent — repeated calls do not duplicate the adapter. Throws `ArgumentNullException` when `services` is `null`. Validators must be registered explicitly (e.g., `services.AddScoped<IValidator<CreateOrderCommand>, CreateOrderCommandValidator>()`). |
 | `public static IServiceCollection AddTrellisFluentValidation(this IServiceCollection services, params Assembly[] assemblies)` | `IServiceCollection` | Calls the parameterless overload, then scans the supplied assemblies for concrete `IValidator<T>` implementations and registers each as a scoped service. **Not AOT or trim-compatible** — annotated `[RequiresUnreferencedCode]` and `[RequiresDynamicCode]`. Skips abstract/interface/open-generic types. Deduplicates so repeated calls (or overlapping assemblies) do not register the same validator twice. Throws `ArgumentNullException` for null `services`/`assemblies`, and `ArgumentException` when `assemblies` is empty or contains a `null` element. Tolerates `ReflectionTypeLoadException` by using only loadable types. |
 
 ### `FluentValidationMessageValidatorAdapter<TMessage>`
@@ -73,7 +73,7 @@ public sealed class FluentValidationMessageValidatorAdapter<TMessage>(
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public ValueTask<IResult> ValidateAsync(TMessage message, CancellationToken cancellationToken)` | `ValueTask<IResult>` | Runs every injected `IValidator<TMessage>` against `message`. Returns `Result.Ok()` when all validators pass (or none are registered — the empty injected sequence allocates no violations). Otherwise aggregates every `ValidationFailure` into a single `new Error.UnprocessableContent(EquatableArray.Create(violations))`, where `violations` is the collected `FieldViolation` set. Each FluentValidation failure becomes a `FieldViolation(new InputPointer(pointerPath), reasonCode) { Detail = failure.ErrorMessage }`. `pointerPath` is derived by `JsonPointerNormalizer.ToJsonPointer` from the FV property name; `reasonCode` defaults to `"validation.error"` when `failure.ErrorCode` is null/whitespace. Root-level failures (whitespace `PropertyName`) use `typeof(TMessage).Name`. |
+| `public ValueTask<IResult> ValidateAsync(TMessage message, CancellationToken cancellationToken)` | `ValueTask<IResult>` | Runs every injected `IValidator<TMessage>` against `message`. Returns `Result.Ok()` when all validators pass (or none are registered — the empty injected sequence allocates no violations). Otherwise aggregates every `ValidationFailure` into a single `new Error.InvalidInput(EquatableArray.Create(violations))`, where `violations` is the collected `FieldViolation` set. Each FluentValidation failure becomes a `FieldViolation(new InputPointer(pointerPath), reasonCode) { Detail = failure.ErrorMessage }`. `pointerPath` is derived by `JsonPointerNormalizer.ToJsonPointer` from the FV property name; `reasonCode` defaults to `"validation.error"` when `failure.ErrorCode` is null/whitespace. Root-level failures (whitespace `PropertyName`) use `typeof(TMessage).Name`. |
 
 ### Pointer normalization (RFC 6901)
 
@@ -107,7 +107,7 @@ public static class FluentValidationResultExtensions
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public static Result<T> ToResult<T>(this ValidationResult validationResult, T value, [CallerArgumentExpression(nameof(value))] string paramName = "value")` | `Result<T>` | Returns `Result.Ok(value)` when `validationResult.IsValid` is `true` (does **not** independently reject `null` values). Otherwise emits one `FieldViolation` per `validationResult.Errors` entry and returns `Result.Fail<T>(new Error.UnprocessableContent(fieldViolations))`. Each FluentValidation failure becomes a `FieldViolation(new InputPointer(JsonPointerNormalizer.ToJsonPointer(rawName)), reasonCode) { Detail = fvMessage }`, where `rawName = string.IsNullOrWhiteSpace(failure.PropertyName) ? paramName : failure.PropertyName` and `reasonCode = string.IsNullOrWhiteSpace(failure.ErrorCode) ? "validation.error" : failure.ErrorCode`. Multiple failures on the same property produce multiple `FieldViolation` entries (no grouping). Throws `ArgumentNullException` when `validationResult` is `null`. |
+| `public static Result<T> ToResult<T>(this ValidationResult validationResult, T value, [CallerArgumentExpression(nameof(value))] string paramName = "value")` | `Result<T>` | Returns `Result.Ok(value)` when `validationResult.IsValid` is `true` (does **not** independently reject `null` values). Otherwise emits one `FieldViolation` per `validationResult.Errors` entry and returns `Result.Fail<T>(new Error.InvalidInput(fieldViolations))`. Each FluentValidation failure becomes a `FieldViolation(new InputPointer(JsonPointerNormalizer.ToJsonPointer(rawName)), reasonCode) { Detail = fvMessage }`, where `rawName = string.IsNullOrWhiteSpace(failure.PropertyName) ? paramName : failure.PropertyName` and `reasonCode = string.IsNullOrWhiteSpace(failure.ErrorCode) ? "validation.error" : failure.ErrorCode`. Multiple failures on the same property produce multiple `FieldViolation` entries (no grouping). Throws `ArgumentNullException` when `validationResult` is `null`. |
 | `public static Result<T> ValidateToResult<T>(this IValidator<T> validator, T value, [CallerArgumentExpression(nameof(value))] string paramName = "value", string? message = null)` | `Result<T>` | Throws `ArgumentNullException` when `validator` is `null`. If `value is null`, does **not** call `validator.Validate`; instead returns a validation failure for `paramName` using `message ?? $"'{paramName}' must not be empty."`. Otherwise calls `validator.Validate(value)` and forwards to `ToResult(value, paramName)`. |
 | `public static async Task<Result<T>> ValidateToResultAsync<T>(this IValidator<T> validator, T value, [CallerArgumentExpression(nameof(value))] string paramName = "value", string? message = null, CancellationToken cancellationToken = default)` | `Task<Result<T>>` | Throws `ArgumentNullException` when `validator` is `null`. Observes `cancellationToken` BEFORE the null-value short-circuit, so a cancelled token always wins over the synchronous fallback path. If `value is null`, does **not** call `validator.ValidateAsync`; instead returns the same validation failure shape as `ValidateToResult`. Otherwise awaits `validator.ValidateAsync(value, cancellationToken).ConfigureAwait(false)` and forwards to `ToResult(value, paramName)`. |
 
@@ -142,7 +142,7 @@ public static async Task<Result<T>> ValidateToResultAsync<T>(
 - FluentValidation does **not** add an additional pipeline behavior. It plugs into the existing `ValidationBehavior<TMessage,TResponse>` via the open-generic `IMessageValidator<TMessage>` extension point.
 - The adapter is registered scoped, matching the typical scoped lifetime of FluentValidation validators.
 - When no `IValidator<TMessage>` is registered for a message type, `IEnumerable<IValidator<TMessage>>` is empty, the adapter returns `Result.Ok()`, and no allocations are performed.
-- All validators are awaited sequentially; failures from every validator are aggregated into a single `Error.UnprocessableContent` rather than short-circuiting on the first failure.
+- All validators are awaited sequentially; failures from every validator are aggregated into a single `Error.InvalidInput` rather than short-circuiting on the first failure.
 - The adapter forwards the ambient `CancellationToken` to `validator.ValidateAsync`.
 - `AddTrellisFluentValidation()` is **idempotent** — calling it multiple times (directly, or via the scanning overload) only registers the open-generic adapter once.
 - The assembly-scan overload deduplicates `(serviceType, implementationType)` pairs against existing registrations, so calling it twice with overlapping assemblies will not register a validator more than once.
@@ -152,7 +152,7 @@ public static async Task<Result<T>> ValidateToResultAsync<T>(
 - The extension methods are stateless; they do not keep shared mutable state or add synchronization.
 - Shared validator instances are only as concurrency-safe as the underlying `IValidator<T>` implementation; these helpers do not change that.
 - `ToResult<T>` only null-checks `validationResult`; it does not independently reject a `null` `value`.
-- Validation failures are converted into `Error.UnprocessableContent` whose `Fields` collection is built from one `FieldViolation` per FluentValidation failure (no grouping; multiple failures on the same property emit multiple violations).
+- Validation failures are converted into `Error.InvalidInput` whose `Fields` collection is built from one `FieldViolation` per FluentValidation failure (no grouping; multiple failures on the same property emit multiple violations).
 - Field-name selection rule: `string.IsNullOrWhiteSpace(e.PropertyName) ? paramName : e.PropertyName` (FluentValidation root-level failures fall back to the caller-captured `paramName`).
 - `ValidateToResult<T>` and `ValidateToResultAsync<T>` short-circuit `null` input before invoking FluentValidation.
 - Null-input failures are created as `new ValidationResult([new ValidationFailure(paramName, message ?? $"'{paramName}' must not be empty.")])`.

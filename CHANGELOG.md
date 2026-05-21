@@ -7,6 +7,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Breaking changes — `Trellis.Core.Error` union DDD realignment
+
+The `Trellis.Core.Error` discriminated union no longer embeds HTTP/RFC transport vocabulary. The domain stays transport-neutral; HTTP-specific error types now live in a new `Trellis.Http.Abstractions` package and flow through `Result<T>` via the `Error.TransportFault(ITransportFault Fault)` envelope.
+
+The closed union now has 12 cases: `InvalidInput`, `InvariantViolation`, `NotFound`, `Forbidden`, `Conflict`, `Gone`, `AuthenticationRequired`, `Unavailable`, `RateLimited`, `Unexpected`, `Aggregate`, `TransportFault`.
+
+#### Migration table
+
+| Old | New |
+|---|---|
+| `Error.BadRequest("X")` | `Error.InvalidInput.ForRule("X")` |
+| `Error.BadRequest("X", pointer)` | `Error.InvalidInput.ForField(pointer, "X")` |
+| `Error.BadRequest("X") { Detail = d }` | `Error.InvalidInput.ForRule("X", d)` |
+| `Error.UnprocessableContent(fields, rules)` | `new Error.InvalidInput(fields, rules)` |
+| `Error.UnprocessableContent.ForField/ForRule(...)` | `Error.InvalidInput.ForField/ForRule(...)` |
+| `Error.Unauthorized()` | `Error.AuthenticationRequired()` (optional `Scheme`) |
+| `Error.TooManyRequests()` | `Error.RateLimited()` (optional `RetryAdvice`) |
+| `Error.ServiceUnavailable()` | `Error.Unavailable()` (optional `ReasonCode`, `RetryAdvice`) |
+| `Error.InternalServerError(faultId)` | `new Error.Unexpected(reasonCode, faultId)` |
+| `Error.NotImplemented("X")` | `new Error.Unexpected("not_implemented") { Detail = "Feature 'X' is not implemented." }` |
+| `Error.MethodNotAllowed`, `NotAcceptable`, `UnsupportedMediaType`, `RangeNotSatisfiable`, `ContentTooLarge`, `PreconditionFailed`, `PreconditionRequired` | Removed from `Trellis.Core`. Use `new Error.TransportFault(new HttpError.X(...))` from `Trellis.Http.Abstractions`. |
+
+#### New cases
+
+- `Error.InvariantViolation(ReasonCode, ResourceRef?)` — global / multi-field business invariant violated outside the inbound-validation pipeline.
+- `Error.Aggregate(EquatableArray<Error>)` — first-class envelope for multiple failures.
+- `Error.TransportFault(ITransportFault)` — envelope for transport-specific failures (currently `HttpError.*`).
+
+#### New transport-neutral type
+
+- `RetryAdvice(TimeSpan? After = null, DateTimeOffset? At = null)` in `Trellis.Core` — replaces the HTTP-specific `RetryAfterValue` on retry-bearing error cases. `RetryAfterValue` still exists, but now lives in `Trellis.Http.Abstractions` and is used only at the HTTP boundary.
+
+#### Kind-slug changes
+
+Telemetry consumers that aggregate failures by `Error.Kind` need to update their slug sets:
+
+| Old slug | New slug |
+|---|---|
+| `bad-request` | `invalid-input` (BadRequest folded into InvalidInput) |
+| `unprocessable-content` | `invalid-input` |
+| `unauthorized` | `authentication-required` |
+| `too-many-requests` | `rate-limited` |
+| `service-unavailable` | `unavailable` |
+| `internal-server-error` | `unexpected` |
+| `not-implemented` | `unexpected` (with `ReasonCode == "not_implemented"`) |
+
+#### Wire format unchanged
+
+The HTTP boundary (`Trellis.Asp.ResponseFailureWriter`) preserves the historical problem-details `kind` extension tokens (`unprocessable-content`, `unauthorized`, `too-many-requests`, `service-unavailable`, `internal-server-error`, `not-implemented`) verbatim. External HTTP API consumers parsing problem-details see no wire change. The top-level Problem Details `type` field continues to default to ASP.NET's status-code URL. RFC 9110, 9457, and 6585 compliance is unaffected.
+
+#### New package
+
+`Trellis.Http.Abstractions` — shared by `Trellis.Asp` (server) and `Trellis.Http` (client). Hosts the `HttpError.*` closed union and the HTTP supporting types previously in `Trellis.Core` (`PreconditionKind`, `AuthChallenge`, `RetryAfterValue`, `EntityTagValue`, `AggregateETagExtensions`, `RepresentationMetadata`, `WriteOutcome<T>`). Add `<PackageReference Include="Trellis.Http.Abstractions" .../>` only when boundary code references these types directly; `Trellis.Asp` and `Trellis.Http` bring it in transitively.
+
+See [`MIGRATION_v3.md`](MIGRATION_v3.md#error-union-ddd-realignment) for code-level before/after examples.
+
 ### Fixed
 
 - **`Trellis.EntityFrameworkCore`** — `ApplyTrellisConventions(...)` now includes the `Trellis.Authorization` assembly in its default scan set. After the v3 typed-`ActorId` change, an aggregate carrying a `CreatedByActorId : ActorId` audit field silently failed EF mapping because the convention previously only included `Trellis.Core` and `Trellis.Primitives` by default; consumers had to pass `typeof(ActorId).Assembly` explicitly to get the scalar converter. The default scan set now mirrors the `Trellis.Primitives` precedent so `ApplyTrellisConventions(typeof(MyDomainId).Assembly)` is sufficient. `Trellis.EntityFrameworkCore` gains a project reference on `Trellis.Authorization` — a lightweight dependency (its only reference is `Trellis.Core`) that ASP consumers already receive transitively via `Trellis.Asp`.

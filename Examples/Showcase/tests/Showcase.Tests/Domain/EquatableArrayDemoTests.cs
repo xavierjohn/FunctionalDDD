@@ -10,12 +10,12 @@ using Trellis.Primitives;
 public class EquatableArrayDemoTests
 {
     [Fact]
-    public void Two_UnprocessableContent_with_same_field_violations_are_equal()
+    public void Two_InvalidInput_with_same_field_violations_are_equal()
     {
-        var a = new Error.UnprocessableContent(EquatableArray.Create(
+        var a = new Error.InvalidInput(EquatableArray.Create(
             new FieldViolation(InputPointer.ForProperty("email"), "validation.required") { Detail = "Email is required" }));
 
-        var b = new Error.UnprocessableContent(EquatableArray.Create(
+        var b = new Error.InvalidInput(EquatableArray.Create(
             new FieldViolation(InputPointer.ForProperty("email"), "validation.required") { Detail = "Email is required" }));
 
         a.Should().Be(b);
@@ -25,10 +25,10 @@ public class EquatableArrayDemoTests
     [Fact]
     public void Differing_field_violations_break_equality()
     {
-        var a = new Error.UnprocessableContent(EquatableArray.Create(
+        var a = new Error.InvalidInput(EquatableArray.Create(
             new FieldViolation(InputPointer.ForProperty("email"), "validation.required")));
 
-        var b = new Error.UnprocessableContent(EquatableArray.Create(
+        var b = new Error.InvalidInput(EquatableArray.Create(
             new FieldViolation(InputPointer.ForProperty("name"), "validation.required")));
 
         a.Should().NotBe(b);

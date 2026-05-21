@@ -210,20 +210,22 @@ Each term maps directly to a Trellis construct:
 
 ### Error Types
 
-Trellis provides a closed set of typed error cases that map to HTTP status codes:
+Trellis defines a closed set of domain error cases. They are transport-neutral; the HTTP boundary maps them to status codes (preserving wire kinds for clients that switch on the historical tokens).
 
-| Error | HTTP | Use Case |
-|-------|------|----------|
-| Error.BadRequest | 400 | Malformed input or invalid request syntax |
-| Error.Unauthorized | 401 | Missing or invalid authentication |
-| Error.Forbidden | 403 | Insufficient permissions |
-| Error.NotFound | 404 | Entity doesn't exist |
-| Error.Conflict | 409 | Duplicate or concurrency violation |
-| Error.PreconditionFailed | 412 | Failed conditional request or concurrency precondition |
-| Error.UnprocessableContent | 422 | Invalid domain input with field-level or rule-level details |
-| Error.TooManyRequests | 429 | Rate limit exceeded |
-| Error.InternalServerError | 500 | Unhandled failure |
-| Error.ServiceUnavailable | 503 | Temporary dependency or service outage |
+| Error case | Default HTTP | Use case |
+|-----------|------|----------|
+| `Error.InvalidInput` | 422 | Inbound payload failed semantic validation (field- and/or rule-level violations) |
+| `Error.InvariantViolation` | 422 | Global or multi-field business invariant was violated |
+| `Error.NotFound` | 404 | Resource does not exist |
+| `Error.Forbidden` | 403 | Policy denied the request |
+| `Error.Conflict` | 409 | State precondition rejected an otherwise-valid request |
+| `Error.Gone` | 410 | Resource existed but has been permanently removed |
+| `Error.AuthenticationRequired` | 401 | No (or invalid) credentials |
+| `Error.Unavailable` | 503 | Dependency or service temporarily offline |
+| `Error.RateLimited` | 429 | Rate limit exceeded |
+| `Error.Unexpected` | 500 | Unhandled failure (carries a fault id) |
+| `Error.Aggregate` | per inner | Multiple errors merged for a single response |
+| `Error.TransportFault` | per inner `HttpError` | HTTP transport-specific failure unwrapped at the ASP boundary (`HttpError.MethodNotAllowed`, `HttpError.NotAcceptable`, `HttpError.PreconditionFailed`, `HttpError.ContentTooLarge`, `HttpError.UnsupportedMediaType`, `HttpError.RangeNotSatisfiable`, `HttpError.PreconditionRequired`) |
 
 The API reference is the source of truth for the full error catalog and default ASP.NET mappings.
 

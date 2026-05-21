@@ -80,14 +80,14 @@ public sealed class ToHttpResponseTests
         // RFC 9457 §3 mandates application/problem+json for problem responses. The 422 path
         // must align with the rest of the framework's error surface (404, 403, 409, etc.),
         // which all emit problem+json. The instance assertion here specifically pins the
-        // ResponseFailureWriter ValidationProblem branch (Error.UnprocessableContent with
+        // ResponseFailureWriter ValidationProblem branch (Error.InvalidInput with
         // field violations), distinct from the Results.Problem(...) branch exercised by the
         // NotFound test below.
         var ctx = NewContext();
         ctx.Request.Path = "/api/customers";
         ctx.Request.QueryString = new QueryString("?api-version=2026-11-12");
         var r = Result.Fail<Todo>(
-            Error.UnprocessableContent.ForField("title", "required", "Title is required."));
+            Error.InvalidInput.ForField("title", "required", "Title is required."));
 
         await r.ToHttpResponse(TodoResponse.From).ExecuteAsync(ctx);
 
@@ -142,7 +142,7 @@ public sealed class ToHttpResponseTests
     public async Task MethodNotAllowed_emits_Allow_header()
     {
         var ctx = NewContext();
-        var r = Result.Fail<Todo>(new Error.MethodNotAllowed(EquatableArray.Create("GET", "PUT")));
+        var r = Result.Fail<Todo>(new Error.TransportFault(new HttpError.MethodNotAllowed(EquatableArray.Create("GET", "PUT"))));
 
         await r.ToHttpResponse(TodoResponse.From).ExecuteAsync(ctx);
 
@@ -151,15 +151,15 @@ public sealed class ToHttpResponseTests
     }
 
     [Fact]
-    public async Task TooManyRequests_with_RetryAfter_emits_RetryAfter_header()
+    public async Task TooManyRequests_without_retry_after_does_not_emit_RetryAfter_header()
     {
         var ctx = NewContext();
-        var r = Result.Fail<Todo>(new Error.TooManyRequests(RetryAfterValue.FromSeconds(30)));
+        var r = Result.Fail<Todo>(new Error.RateLimited());
 
         await r.ToHttpResponse(TodoResponse.From).ExecuteAsync(ctx);
 
         ctx.Response.StatusCode.Should().Be(429);
-        ctx.Response.Headers["Retry-After"].ToString().Should().Be("30");
+        ctx.Response.Headers.ContainsKey("Retry-After").Should().BeFalse();
     }
 
     [Fact]

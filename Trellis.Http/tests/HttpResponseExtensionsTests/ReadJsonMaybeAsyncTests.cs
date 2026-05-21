@@ -92,7 +92,7 @@ public class ReadJsonMaybeAsyncTests
 
         var result = await task.ReadJsonMaybeAsync(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
 
-        result.Should().BeFailureOfType<Error.InternalServerError>();
+        result.Should().BeFailureOfType<Error.Unexpected>();
         tracker.Disposed.Should().BeTrue();
     }
 

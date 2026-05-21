@@ -97,7 +97,7 @@ public class CompositeRequiredStringFlowThroughTests
     {
         var result = FlowThroughStrictComposite.TryCreate("", 5);
         result.IsFailure.Should().BeTrue();
-        var ve = (Error.UnprocessableContent)result.UnwrapError();
+        var ve = (Error.InvalidInput)result.UnwrapError();
         ve.Fields[0].Detail.Should().Be("Flow Through Strict Name cannot be empty.");
     }
 

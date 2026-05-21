@@ -108,7 +108,7 @@ public sealed class UsersController : ControllerBase
     private static Result<UserResponse> RegisterCore(RegisterUserRequest request)
     {
         return string.IsNullOrWhiteSpace(request.Email)
-            ? new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "validation.error") { Detail = "Email is required." }))
+            ? new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "validation.error") { Detail = "Email is required." }))
             : Result.Ok(new UserResponse(request.Email));
     }
 }
@@ -143,7 +143,7 @@ public static class UserRoutes
     private static Result<UserResponse> RegisterCore(RegisterUserRequest request)
     {
         return string.IsNullOrWhiteSpace(request.Email)
-            ? new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "validation.error") { Detail = "Email is required." }))
+            ? new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "validation.error") { Detail = "Email is required." }))
             : Result.Ok(new UserResponse(request.Email));
     }
 }
@@ -208,7 +208,7 @@ validator.RuleFor(x => x.Email).NotEmpty().EmailAddress();
 Result<CreateCustomer> result = validator.ValidateToResult(new CreateCustomer("user@example.com"));
 ```
 
-If validation fails, the result becomes a `Error.UnprocessableContent` with field-level details. That makes it easy to carry the same rule set from your application layer to HTTP responses.
+If validation fails, the result becomes a `Error.InvalidInput` with field-level details. That makes it easy to carry the same rule set from your application layer to HTTP responses.
 
 See [FluentValidation Integration](integration-fluentvalidation.md) for a full walkthrough.
 
@@ -263,7 +263,7 @@ static Task<Result<Unit>> SendPromotionNotificationAsync(string email) =>
 
 string message = await GetCustomerByIdAsync(1)
     .ToResultAsync(new Error.NotFound(ResourceRef.For("Customer", 1)) { Detail = "Customer not found." })
-    .EnsureAsync(customer => customer.CanBePromoted, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Customer cannot be promoted." })
+    .EnsureAsync(customer => customer.CanBePromoted, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Customer cannot be promoted." })
     .TapAsync(customer => customer.PromoteAsync())
     .BindAsync(customer => SendPromotionNotificationAsync(customer.Email))
     .MatchAsync(
@@ -289,7 +289,7 @@ IResult httpResult = result.Match(
     onSuccess: order => Results.Ok(order),
     onFailure: error => error switch
     {
-        Error.UnprocessableContent uc => Results.UnprocessableEntity(uc.Fields.Items),
+        Error.InvalidInput uc => Results.UnprocessableEntity(uc.Fields.Items),
         Error.NotFound nf             => Results.NotFound(nf.Detail),
         Error.Conflict c              => Results.Conflict(c.Detail),
         _                              => Results.StatusCode(StatusCodes.Status500InternalServerError)
@@ -306,7 +306,7 @@ This is especially handy when you want to shape the HTTP response yourself inste
 | --- | --- |
 | Validate several incoming fields | `A.TryCreate(...).Combine(B.TryCreate(...))` |
 | Move from validated input to domain logic | `.Bind(...)` |
-| Add a business rule | `.Ensure(..., new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = ... })` |
+| Add a business rule | `.Ensure(..., new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = ... })` |
 | Save or notify on success | `.Tap(...)` / `.TapAsync(...)` |
 | Fallback on acceptable failures | `.RecoverOnFailure(...)` |
 | Return HTTP from MVC or Minimal API | `.ToHttpResponse()` / `.ToHttpResponse().AsActionResult<T>()` |

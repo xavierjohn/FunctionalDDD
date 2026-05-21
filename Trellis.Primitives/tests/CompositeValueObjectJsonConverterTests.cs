@@ -171,25 +171,25 @@ public class CompositeValueObjectJsonConverterTests
     }
 
     [Fact]
-    public void Read_thrown_exception_carries_structured_UnprocessableContent_for_multi_field_failure()
+    public void Read_thrown_exception_carries_structured_InvalidInput_for_multi_field_failure()
     {
-        // F9 regression guard (lab feedback round 2): when a composite VO's TryCreate
-        // returns an Error.UnprocessableContent with multiple FieldViolations, the
-        // converter MUST populate TrellisJsonValidationException.UnprocessableContent
-        // with the structured payload (preserving each leaf path and detail) rather than
-        // collapsing them into a ;-joined message string. ScalarValueValidationMiddleware
-        // depends on this property to emit per-leaf wire entries.
+        // When a composite VO's TryCreate returns an Error.InvalidInput with multiple
+        // FieldViolations, the converter MUST populate
+        // TrellisJsonValidationException.InvalidInput with the structured payload
+        // (preserving each leaf path and detail) rather than collapsing them into a
+        // ;-joined message string. ScalarValueValidationMiddleware depends on this
+        // property to emit per-leaf wire entries.
         try
         {
             JsonSerializer.Deserialize<MultiFieldValidatedVo>("{\"street\":\"\",\"city\":\"\",\"state\":\"\"}");
         }
         catch (TrellisJsonValidationException ex)
         {
-            // Avoid the Trellis-specific Error.UnprocessableContent assertion overload by
+            // Avoid the Trellis-specific Error.InvalidInput assertion overload by
             // null-checking directly before calling .Should() on the EquatableArray.
-            Assert.NotNull(ex.UnprocessableContent);
+            Assert.NotNull(ex.InvalidInput);
             var fieldsList = new List<FieldViolation>();
-            foreach (var f in ex.UnprocessableContent.Fields)
+            foreach (var f in ex.InvalidInput.Fields)
                 fieldsList.Add(f);
             var fields = fieldsList.ToArray();
             fields.Length.Should().Be(3,
@@ -433,7 +433,7 @@ public class CompositeValueObjectJsonConverterTests
 
         public static Result<ValidatedVo> TryCreate(int number, string? fieldName = null) =>
             number < 0
-                ? Result.Fail<ValidatedVo>(new Error.UnprocessableContent(EquatableArray.Create(
+                ? Result.Fail<ValidatedVo>(new Error.InvalidInput(EquatableArray.Create(
                     new FieldViolation(InputPointer.ForProperty("number"), "validation.error") { Detail = "must be non-negative." })))
                 : Result.Ok(new ValidatedVo(number));
     }
@@ -470,7 +470,7 @@ public class CompositeValueObjectJsonConverterTests
                 violations.Add(new FieldViolation(InputPointer.ForProperty("state"), "validation.error") { Detail = "State is required." });
 
             return violations.Count > 0
-                ? Result.Fail<MultiFieldValidatedVo>(new Error.UnprocessableContent(EquatableArray.Create(violations.ToArray())))
+                ? Result.Fail<MultiFieldValidatedVo>(new Error.InvalidInput(EquatableArray.Create(violations.ToArray())))
                 : Result.Ok(new MultiFieldValidatedVo(street, city, state));
         }
     }

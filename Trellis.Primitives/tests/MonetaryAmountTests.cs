@@ -302,7 +302,7 @@ public class MonetaryAmountTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
+        result.UnwrapError().Should().BeOfType<Error.InvalidInput>();
     }
 
     [Fact]
@@ -313,7 +313,7 @@ public class MonetaryAmountTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
+        result.UnwrapError().Should().BeOfType<Error.InvalidInput>();
     }
 
     [Fact]
@@ -324,7 +324,7 @@ public class MonetaryAmountTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
+        result.UnwrapError().Should().BeOfType<Error.InvalidInput>();
     }
 
     [Theory]
@@ -337,7 +337,7 @@ public class MonetaryAmountTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
+        result.UnwrapError().Should().BeOfType<Error.InvalidInput>();
     }
 
     [Fact]
@@ -348,7 +348,7 @@ public class MonetaryAmountTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/price");
     }
 
@@ -360,7 +360,7 @@ public class MonetaryAmountTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Amount cannot be negative.");
     }
 

@@ -73,7 +73,7 @@ public sealed class ResponseFailureWriterMvcIntegrationTests
         using var body = await ReadBodyAsync(resp);
         var raw = body.RootElement.GetRawText();
 
-        body.RootElement.GetProperty("code").GetString().Should().Be("unprocessable-content");
+        body.RootElement.GetProperty("code").GetString().Should().Be("invalid-input");
         body.RootElement.TryGetProperty("errors", out var errors)
             .Should().BeTrue($"errors dict missing. body={raw}");
         errors.GetProperty("email").EnumerateArray().Should().HaveCount(2);
@@ -142,7 +142,7 @@ public sealed class DiagController : ControllerBase
         var fields = EquatableArray.Create(
             new FieldViolation(new InputPointer("/email"), "format", null, "must be email"),
             new FieldViolation(new InputPointer("/email"), "required", null, "required"));
-        return Result.Fail<T>(new Error.UnprocessableContent(fields))
+        return Result.Fail<T>(new Error.InvalidInput(fields))
             .ToHttpResponse(t => t)
             .AsActionResult<T>()
             .ToTask();
@@ -155,7 +155,7 @@ public sealed class DiagController : ControllerBase
             new RuleViolation("must_have_items",
                 EquatableArray.Create(new InputPointer("/items")),
                 null, "Order must have items."));
-        return Result.Fail<T>(new Error.UnprocessableContent(default, rules))
+        return Result.Fail<T>(new Error.InvalidInput(default, rules))
             .ToHttpResponse(t => t)
             .AsActionResult<T>()
             .ToTask();

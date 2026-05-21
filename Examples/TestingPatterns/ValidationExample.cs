@@ -6,7 +6,7 @@ namespace Example;
 using System.Collections.Immutable;
 using Trellis;
 using static Result;
-using static Trellis.Error.UnprocessableContent;
+using static Trellis.Error.InvalidInput;
 
 public class ValidationExample
 {
@@ -19,7 +19,7 @@ public class ValidationExample
         var actual = EmailAddress.TryCreate("xavier@somewhere.com")
             .Combine(FirstName.TryCreate("Xavier"))
             .Combine(LastName.TryCreate("John"))
-            .Combine(Ensure(createdAt <= updatedAt, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "updateAt cannot be less than createdAt" }))
+            .Combine(Ensure(createdAt <= updatedAt, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "updateAt cannot be less than createdAt" }))
             .Bind((email, firstName, lastName, _) => Result.Ok(string.Join(" ", firstName, lastName, email)));
 
         actual.Unwrap().Should().Be("Xavier John xavier@somewhere.com");
@@ -42,7 +42,7 @@ public class ValidationExample
         var actual = FirstName.TryCreate("Xavier")
             .Combine(LastName.TryCreate(string.Empty))
             .Combine(EmailAddress.TryCreate("xavier @ somewhereelse.com"))
-            .Combine(Ensure(createdAt <= updatedAt, new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(nameof(updatedAt)), "validation.error") { Detail = "updateAt cannot be less than createdAt" }))))
+            .Combine(Ensure(createdAt <= updatedAt, new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(nameof(updatedAt)), "validation.error") { Detail = "updateAt cannot be less than createdAt" }))))
             .Bind((firstName, lastName, email, _) =>
             {
                 true.Should().BeFalse("this code should not get executed");
@@ -50,7 +50,7 @@ public class ValidationExample
             });
         // Assert
         actual.IsFailure.Should().BeTrue();
-        var validationErrors = (Error.UnprocessableContent)actual.UnwrapError();
+        var validationErrors = (Error.InvalidInput)actual.UnwrapError();
         validationErrors.Fields.Items.Should().HaveCount(3);
         validationErrors.Fields.Items.Should().BeEquivalentTo(expected);
     }
@@ -86,8 +86,8 @@ public class ValidationExample
             .Bind(Add);
 
         actual.IsFailure.Should().BeTrue();
-        actual.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
-        var validationError = (Error.UnprocessableContent)actual.UnwrapError();
+        actual.UnwrapError().Should().BeOfType<Error.InvalidInput>();
+        var validationError = (Error.InvalidInput)actual.UnwrapError();
         validationError.Fields[0].Detail.Should().Be("First Name cannot be empty.");
 
         static Result<string> Add(EmailAddress emailAddress, Maybe<FirstName> firstname, Maybe<LastName> lastname)

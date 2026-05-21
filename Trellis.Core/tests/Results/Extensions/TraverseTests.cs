@@ -111,7 +111,7 @@ public class TraverseTests : TestBase
         var result = items.Traverse(s =>
             s.Length >= 3
                 ? Result.Ok(s.ToUpper(CultureInfo.InvariantCulture))
-                : Result.Fail<string>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = $"String too short: {s}" }));
+                : Result.Fail<string>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = $"String too short: {s}" }));
 
         // Assert
         result.Should().BeFailure();
@@ -292,7 +292,7 @@ public class TraverseTests : TestBase
         var result = emails.Traverse(email =>
             email.Contains('@')
                 ? Result.Ok(email.ToLower(CultureInfo.InvariantCulture))
-                : Result.Fail<string>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = $"Invalid email: {email}" }));
+                : Result.Fail<string>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = $"Invalid email: {email}" }));
 
         // Assert
         result.Should().BeSuccess();
@@ -309,7 +309,7 @@ public class TraverseTests : TestBase
         var result = emails.Traverse(email =>
             email.Contains('@')
                 ? Result.Ok(email.ToLower(CultureInfo.InvariantCulture))
-                : Result.Fail<string>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = $"Invalid email: {email}" }));
+                : Result.Fail<string>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = $"Invalid email: {email}" }));
 
         // Assert
         result.Should().BeFailure();
@@ -375,7 +375,7 @@ public class TraverseTests : TestBase
         var result = names.Traverse(name =>
             !string.IsNullOrWhiteSpace(name)
                 ? Result.Ok(new Name(name))
-                : Result.Fail<Name>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Name cannot be empty" }));
+                : Result.Fail<Name>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Name cannot be empty" }));
 
         // Assert
         result.Should().BeSuccess();

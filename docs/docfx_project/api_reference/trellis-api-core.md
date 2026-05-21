@@ -1,7 +1,7 @@
 ﻿---
 package: Trellis.Core
 namespaces: [Trellis]
-types: [Result, "Result<T>", IResult, "IResult<TValue>", "IFailureFactory<TSelf>", "Maybe<T>", Maybe, MaybeInvariant, Error, Unit, "Page<T>", Page, Cursor, "EquatableArray<T>", EquatableArray, ResourceRef, EntityTagValue, RetryAfterValue, PreconditionKind, InputPointer, FieldViolation, RuleViolation, AuthChallenge, RepresentationMetadata, "WriteOutcome<T>", IAggregate, "Aggregate<TId>", IEntity, "Entity<TId>", IDomainEvent, ValueObject, "ScalarValueObject<TSelf,T>", "IScalarValue<TSelf,TPrimitive>", "IFormattableScalarValue<TSelf,TPrimitive>", "RequiredString<TSelf>", "RequiredInt<TSelf>", "RequiredLong<TSelf>", "RequiredDecimal<TSelf>", "RequiredBool<TSelf>", "RequiredGuid<TSelf>", "RequiredDateTime<TSelf>", "RequiredEnum<TSelf>", "RequiredEnumJsonConverter<T>", "ParsableJsonConverter<T>", ResultRequiresExplicitHttpMappingConverter, PrimitiveValueObjectTrace, "Specification<T>", TrellisJsonValidationException, RangeAttribute, StringLengthAttribute, NotDefaultAttribute, TrimAttribute, RailwayTrackAttribute, TrackBehavior, EnumValueAttribute, ResultDebugSettings]
+types: [Result, "Result<T>", IResult, "IResult<TValue>", "IFailureFactory<TSelf>", "Maybe<T>", Maybe, MaybeInvariant, Error, ITransportFault, RetryAdvice, Unit, "Page<T>", Page, Cursor, "EquatableArray<T>", EquatableArray, ResourceRef, InputPointer, FieldViolation, RuleViolation, IAggregate, "Aggregate<TId>", IEntity, "Entity<TId>", IDomainEvent, ValueObject, "ScalarValueObject<TSelf,T>", "IScalarValue<TSelf,TPrimitive>", "IFormattableScalarValue<TSelf,TPrimitive>", "RequiredString<TSelf>", "RequiredInt<TSelf>", "RequiredLong<TSelf>", "RequiredDecimal<TSelf>", "RequiredBool<TSelf>", "RequiredGuid<TSelf>", "RequiredDateTime<TSelf>", "RequiredEnum<TSelf>", "RequiredEnumJsonConverter<T>", "ParsableJsonConverter<T>", ResultRequiresExplicitHttpMappingConverter, PrimitiveValueObjectTrace, "Specification<T>", TrellisJsonValidationException, RangeAttribute, StringLengthAttribute, NotDefaultAttribute, TrimAttribute, RailwayTrackAttribute, TrackBehavior, EnumValueAttribute, ResultDebugSettings]
 version: v3
 last_verified: 2026-05-06
 audience: [llm]
@@ -10,15 +10,15 @@ audience: [llm]
 
 **Package:** `Trellis.Core`  
 **Namespace:** `Trellis`  
-**Purpose:** Provides Trellis result, maybe, scalar-value, and HTTP-oriented error primitives for railway-oriented application flows.
+**Purpose:** Provides Trellis result, maybe, scalar-value, and transport-agnostic error primitives for railway-oriented application flows.
 
-See also: [trellis-api-cookbook.md](trellis-api-cookbook.md) — recipes using this package, [trellis-api-asp.md](trellis-api-asp.md), [trellis-api-primitives.md](trellis-api-primitives.md).
+See also: [trellis-api-cookbook.md](trellis-api-cookbook.md) — recipes using this package, [trellis-api-http-abstractions.md](trellis-api-http-abstractions.md), [trellis-api-asp.md](trellis-api-asp.md), [trellis-api-primitives.md](trellis-api-primitives.md).
 
 ---
 
 ## Use this file when
 
-- You need exact signatures for `Result`, `Result<T>`, `Maybe<T>`, `Error`, `WriteOutcome<T>`, `Page<T>`, DDD primitives, specifications, custom primitive base classes, or generated primitive JSON/tracing support.
+- You need exact signatures for `Result`, `Result<T>`, `Maybe<T>`, `Error`, `ITransportFault`, `Page<T>`, DDD primitives, specifications, custom primitive base classes, or generated primitive JSON/tracing support.
 - You are composing domain/application flows and need the canonical ROP operation: `Bind`, `Map`, `Tap`, `Ensure`, `Combine`, `ParallelAsync`, `AsTask`, or `AsValueTask`.
 - You are defining aggregates, entities, domain events, specifications, or source-generated `Required*<TSelf>` value objects.
 
@@ -53,9 +53,9 @@ public async Task<Result<OrderResponse>> Handle(CreateDraftOrderCommand cmd, Can
 {
     // 1. Sync precondition — produces a Result<Unit>, chains synchronously.
     var preconditions = Result.Ensure(cmd.LineItems.Count > 0,
-                            Error.UnprocessableContent.ForField("lineItems", "required", "..."))
+                            Error.InvalidInput.ForField("lineItems", "required", "..."))
                         .Bind(_ => Result.Ensure(!cmd.HasDuplicates,
-                            Error.UnprocessableContent.ForField("lineItems", "duplicate_product", "...")));
+                            Error.InvalidInput.ForField("lineItems", "duplicate_product", "...")));
 
     if (preconditions.IsFailure) return Result.Fail<OrderResponse>(preconditions.Error);
 
@@ -115,15 +115,15 @@ Migration notes for users moving from the previous `Trellis.Core` API surface.
 | Conditional factory | `Result.SuccessIf(cond, value, error)` / `Result.SuccessIf(cond, t1, t2, error)` | *(removed)* | Use a ternary: `cond ? Result.Ok(value) : Result.Fail<T>(error)` | <!-- stale-doc-ok: migration-comparison row intentionally cites removed v1 factory -->
 | Inverse-conditional factory | `Result.FailureIf(cond, value, error)` / `Result.FailureIf(predicate, value, error)` | *(removed)* | Use a ternary: `cond ? Result.Fail<T>(error) : Result.Ok(value)` | <!-- stale-doc-ok: migration-comparison row intentionally cites removed v1 factory -->
 | Async-conditional factories | `Result.SuccessIfAsync(predicate, value, error)` / `Result.FailureIfAsync(predicate, value, error)` | *(removed)* | `(await predicate()) ? Result.Ok(value) : Result.Fail<T>(error)` (invert as needed; parens required because `await` binds tighter than `?:`) | <!-- stale-doc-ok: migration-comparison row intentionally cites removed v1 factory -->
-| Exception → result helpers | `Result.FromException(ex)` / `Result.FromException<T>(ex)` | *(removed)* | Use `Result.Fail(new Error.InternalServerError(faultId) { Detail = ex.Message, Cause = ... })` or rely on `Result.Try` / `Result.TryAsync` for inline exception capture. |
+| Exception → result helpers | `Result.FromException(ex)` / `Result.FromException<T>(ex)` | *(removed)* | Use `Result.Fail(new Error.Unexpected("unhandled_exception", faultId) { Detail = ex.Message, Cause = ... })` or rely on `Result.Try` / `Result.TryAsync` for inline exception capture. |
 | Implicit operators on `Result<T>` | `Result<T> r = value;` and `Result<T> r = error;` | *(removed)* | Use the explicit factory: `Result.Ok(value)` / `Result.Fail<T>(error)`. The compiler flags every site with CS0029. |
 | Non-generic `Result` for void flows | `Result` was a separate `readonly struct` for success/failure with no payload, distinct from `Result<T>`. | The non-generic `Result` instance type was removed. `Result` is now a `public static partial class` factory only; for no-payload success/failure use `Result<Unit>` (returned by parameterless `Result.Ok()` / `Result.Fail(error)` / `Result.Ensure(...)` / `Result.Try(...)` factories). The `Trellis.Unit` type is a public `readonly record struct` with a single value (`Unit.Default`). | Replace `Result` parameter/return types with `Result<Unit>`; replace `Task<Result>` with `Task<Result<Unit>>`; in lambdas after `.Bind(...)` / `BindAsync(...)` accept the `Unit` argument explicitly (`_ =>` or `(Unit _) =>`). |
-| `Error` as open class hierarchy | `Error` was a `class` with 18 hand-written subclasses (`ValidationError`, `NotFoundError`, …) and static factory helpers (`Error.Validation(...)`, `Error.NotFound(...)`, …). | `Error` is an `abstract record` with **20 nested `sealed record` cases** (`Error.NotFound`, `Error.UnprocessableContent`, …). Closed via `private` constructor; no static factories. | Replace `Error.X("msg")` factories with `new Error.X(payload) { Detail = "msg" }`. Replace concrete subclass type names (`ValidationError`, `NotFoundError`) with `Error.UnprocessableContent`, `Error.NotFound`. See "Error Cases (closed ADT)" below. | <!-- v1-stale-ok: migration-comparison row intentionally cites removed v1 factories -->
-| `MatchErrorExtensions` | `result.MatchError(onValidation: ..., onNotFound: ..., onUnexpected: ...)` | *(removed)* | Use a `switch` expression on the closed ADT: `result.Match(_ => ..., e => e switch { Error.NotFound nf => ..., Error.UnprocessableContent uc => ..., _ => ... })`. C# verifies exhaustiveness against the closed catalog. |
-| `FlattenValidationErrorsExtensions` | `result.FlattenValidationErrors()` | *(removed)* | `Combine` over multiple `Result<T>` automatically merges `Error.UnprocessableContent.Fields` and `.Rules`. |
+| `Error` as open class hierarchy | `Error` was a `class` with 18 hand-written subclasses (`ValidationError`, `NotFoundError`, …) and static factory helpers (`Error.Validation(...)`, `Error.NotFound(...)`, …). | `Error` is an `abstract record` with **12 nested `sealed record` cases** (`Error.NotFound`, `Error.InvalidInput`, …). Closed via `private` constructor; no static factories. | Replace `Error.X("msg")` factories with `new Error.X(payload) { Detail = "msg" }`. Replace concrete subclass type names (`ValidationError`, `NotFoundError`) with `Error.InvalidInput`, `Error.NotFound`. See "Error Cases (closed ADT)" below. | <!-- v1-stale-ok: migration-comparison row intentionally cites removed v1 factories -->
+| `MatchErrorExtensions` | `result.MatchError(onValidation: ..., onNotFound: ..., onUnexpected: ...)` | *(removed)* | Use a `switch` expression on the closed ADT: `result.Match(_ => ..., e => e switch { Error.NotFound nf => ..., Error.InvalidInput uc => ..., _ => ... })`. C# verifies exhaustiveness against the closed catalog. |
+| `FlattenValidationErrorsExtensions` | `result.FlattenValidationErrors()` | *(removed)* | `Combine` over multiple `Result<T>` automatically merges `Error.InvalidInput.Fields` and `.Rules`. |
 | `Error.Instance` field | `error.Instance` (string-shaped HTTP vocabulary) | *(removed)* | The ASP wire layer populates `ProblemDetails.Instance` from the server-relative request path+query (RFC 9457 §3.1). Typed payloads expose `ResourceRef` directly via fields like `Error.NotFound.Resource` for callers that need to assert on the resource identity. |
 | Public `Value` / `Error` accessors on `Result<T>` | Both threw on the wrong branch. | `result.Error` is `public Error?` and **never throws** (null on success). The throwing `result.Value` getter was removed entirely because it was the primary cause of unsafe value access. | Read errors with `if (result.Error is { } error) { ... }` or `result.TryGetError(out var error)`. Extract success values with `result.TryGetValue(out var v)`, `result.TryGetValue(out var v, out var err)`, `result.Match(...)`, or `var (ok, v, err) = result;` (Deconstruct). | <!-- stale-doc-ok: migration-comparison row intentionally cites removed value accessor -->
-| `WriteOutcome<T>` package + namespace | `Trellis.Asp.WriteOutcome<T>` (in `Trellis.Asp`) | `Trellis.WriteOutcome<T>` (in `Trellis.Core`) | Replace `using Trellis.Asp;` with `using Trellis;` for any file that names `WriteOutcome<T>` directly. The type, its case records, and member shapes are unchanged; only the assembly and namespace move. ASP-specific HTTP mapping remains in `Trellis.Asp` through `ToHttpResponse(...)` / `ToHttpResponseAsync(...)` and the typed MVC adapters `AsActionResult<T>()` / `AsActionResultAsync<T>()`. |
+| HTTP transport abstractions package | `Trellis.Core` | `Trellis.Http.Abstractions` | Add a PackageReference to `Trellis.Http.Abstractions` for code that names `WriteOutcome<T>`, `RepresentationMetadata`, `EntityTagValue`, `RetryAfterValue`, `PreconditionKind`, `AuthChallenge`, or `AggregateETagExtensions`. The CLR namespace stays `Trellis`, so most source files only need the package-reference change. |
 | Package id | `Trellis.Results` | `Trellis.Core` | Replace `<PackageReference Include="Trellis.Results" ... />` with `<PackageReference Include="Trellis.Core" ... />`. The CLR namespace stays `Trellis` — no `using` changes are needed. The legacy `Trellis.Results` package is unlisted with a redirect notice; there is no metapackage shim. | <!-- stale-doc-ok: migration-comparison row intentionally cites previous package id -->
 | OpenTelemetry `ActivitySource` name | `"Trellis.Results"` | `"Trellis.Core"` | Update OTel subscriptions: `builder.AddSource("Trellis.Results")` → `builder.AddSource("Trellis.Core")`. The `RopTrace.ActivitySourceName` constant exposes the name programmatically. | <!-- stale-doc-ok: migration-comparison row intentionally cites previous activity source name -->
 | Test helper namespace | `Trellis.Results.Tests.*` | `Trellis.Core.Tests.*` | Internal change only — affects users who took an InternalsVisibleTo dependency on the test assembly (none expected). | <!-- stale-doc-ok: migration-comparison row intentionally cites previous test namespace -->
@@ -235,7 +235,7 @@ Static factory and helper surface for `Result<TValue>`. There is no non-generic 
 | `public static Result<(T1, ..., T9)> Combine<...>(...)` | Additional generated arities up to 9 |
 | `public static (Task<Result<T1>>, ..., Task<Result<T9>>) ParallelAsync<...>(...)` | Starts async result-producing operations in parallel, arities 2-9 |
 
-The default exception mapper produces `new Error.InternalServerError(FaultId: Guid.NewGuid().ToString("N")) { Detail = ex.Message }`. `OperationCanceledException` is always rethrown rather than mapped.
+The default exception mapper produces `new Error.Unexpected("unhandled_exception", Guid.NewGuid().ToString("N")) { Detail = ex.Message }`. `OperationCanceledException` is always rethrown rather than mapped.
 
 #### Factory Methods
 
@@ -320,7 +320,7 @@ None.
 
 ### `public static class MaybeInvariant`
 
-Multi-field validation helpers for `Maybe<T>` values. Each method returns `Result<Unit>` — success when the invariant holds, or an `Error.UnprocessableContent` whose `Fields` list carries one `FieldViolation` per offending field. Field paths are normalized via `InputPointer.ForProperty(name)` (RFC 6901 JSON Pointer).
+Multi-field validation helpers for `Maybe<T>` values. Each method returns `Result<Unit>` — success when the invariant holds, or an `Error.InvalidInput` whose `Fields` list carries one `FieldViolation` per offending field. Field paths are normalized via `InputPointer.ForProperty(name)` (RFC 6901 JSON Pointer).
 
 #### Methods
 
@@ -453,22 +453,22 @@ Inherited only.
 
 ### `public abstract record Error`
 
-Closed discriminated union of error values. Each case is a nested `sealed record` mirroring an entry from the IANA HTTP Status Code Registry (RFC 9110, RFC 6585) and carrying a strongly-typed payload. The base record has a `private` constructor — only the cases declared in `Error.cs` may inherit, which makes `switch` over an `Error` reference exhaustive at the language level.
+Closed discriminated union of domain error values. Each case is a nested `sealed record` carrying a typed payload. The base record has a `private` constructor — only the cases declared in `Error.cs` may inherit, which makes `switch` over an `Error` reference exhaustive at the language level.
 
 #### Properties
 
 | Name | Type | Notes |
 | --- | --- | --- |
-| `Kind` | `string` | Stable, IANA-aligned slug (e.g. `"not-found"`, `"unprocessable-content"`). Survives CLR renames. Suitable for telemetry, problem-details `type` URI synthesis, and wire serialization. Abstract; each case overrides. |
-| `Code` | `string` | Per-instance machine-readable code. Defaults to `Kind`; cases whose payload carries a per-instance `ReasonCode` (e.g. `Conflict`, `Forbidden`, `BadRequest`, `InternalServerError`) override this. |
-| `Detail` | `string?` | Human-readable detail. Init-only (`Detail = "..."`). Boundary renderer prefers it when non-null; otherwise it computes a localized message from `Kind`/`Code` plus the typed payload. |
+| `Kind` | `string` | Stable domain slug (e.g. `"not-found"`, `"invalid-input"`). Survives CLR renames. Suitable for telemetry. Wire-format mapping for HTTP problem-details `type` is the boundary's responsibility — see `trellis-api-asp.md`. |
+| `Code` | `string` | Per-instance machine-readable code. Defaults to `Kind`; cases whose payload carries a per-instance reason (for example `Conflict`, `Forbidden`, `InvariantViolation`, `Unexpected`) override it. |
+| `Detail` | `string?` | Human-readable detail. Init-only (`Detail = "..."`). Boundary renderers prefer it when non-null; otherwise they compute a message from `Kind`/`Code` plus the typed payload. |
 | `Cause` | `Error?` | Structured cause chain. **Never holds a live `System.Exception`** — wrap context as a child `Error`. Cycles are detected at `init` and throw `InvalidOperationException`. |
 
 #### Methods
 
 | Signature | Notes |
 | --- | --- |
-| `public string GetDisplayMessage()` | Computes the rendered detail. Returns `Detail` when non-null; otherwise composes from `Kind`/`Code` and the typed payload. For an `UnprocessableContent` carrying a single `FieldViolation`, returns just that violation's `Detail`. |
+| `public string GetDisplayMessage()` | Computes the rendered detail. Returns `Detail` when non-null; otherwise composes from `Kind`/`Code` and the typed payload. For an `InvalidInput` carrying a single `FieldViolation`, returns just that violation's `Detail`. |
 | `public override bool Equals(object? obj)` / `Equals(Error? other)` | Value equality over discriminator + typed payload + `Detail`. **`Cause` is excluded** so two errors with identical surface payload compare equal regardless of how deeply they were wrapped (mirrors `System.Exception` precedent). Collection-bearing payloads use `EquatableArray<T>` for sequence equality. |
 | `public override int GetHashCode()` | Hash matches `Equals`. |
 
@@ -480,192 +480,61 @@ Construct cases directly: `new Error.NotFound(payload) { Detail = "..." }`. The 
 
 ### Concrete error cases
 
-Twenty nested `sealed record` cases under `Error`. Each case constructor is `internal` from external code's perspective only insofar as the base ctor is `private`; cases themselves are `public sealed record`s and instantiable with `new`.
+Nested `sealed record` cases under `Error`. The base constructor is `private`, so the case set is closed even though each nested case is publicly instantiable with `new`.
 
-| Case | Constructor | Wire status | Notes |
-| --- | --- | --- | --- |
-| `Error.BadRequest` | `(string ReasonCode, InputPointer? At = null)` | 400 | `Code` returns `ReasonCode`; `At` is an optional RFC 6901 JSON Pointer to the offending input. |
-| `Error.Unauthorized` | `(EquatableArray<AuthChallenge> Challenges = default)` | 401 | Round-trips real `WWW-Authenticate` (per RFC 9110 §11.6.1). |
-| `Error.Forbidden` | `(string PolicyId, ResourceRef? Resource = null)` | 403 | `Code` returns `PolicyId`. |
-| `Error.NotFound` | `(ResourceRef Resource)` | 404 | `Resource` is the typed reference to the missing entity (e.g. `ResourceRef.For<Order>(orderId)`) — exposed for direct assertion. `ProblemDetails.Instance` is populated from the request path+query. |
-| `Error.MethodNotAllowed` | `(EquatableArray<string> Allow)` | 405 | `Allow` populates the `Allow` response header (RFC 9110 §15.5.6). |
-| `Error.NotAcceptable` | `(EquatableArray<string> Available)` | 406 | Available media types. |
-| `Error.Conflict` | `(ResourceRef? Resource, string ReasonCode)` | 409 | `Code` returns `ReasonCode`. |
-| `Error.Gone` | `(ResourceRef Resource)` | 410 | Soft-deleted resource. |
-| `Error.PreconditionFailed` | `(ResourceRef Resource, PreconditionKind Condition)` | 412 | Optimistic concurrency mismatch. `Condition` is the typed precondition kind (`IfMatch`, `IfNoneMatch`, `IfModifiedSince`, `IfUnmodifiedSince`). |
-| `Error.ContentTooLarge` | `(long? MaxBytes = null)` | 413 | |
-| `Error.UnsupportedMediaType` | `(EquatableArray<string> Supported)` | 415 | |
-| `Error.RangeNotSatisfiable` | `(long CompleteLength, string Unit = "bytes")` | 416 | Drives `Content-Range` synthesis. |
-| `Error.UnprocessableContent` | `(EquatableArray<FieldViolation> Fields, EquatableArray<RuleViolation> Rules = default)` | 422 | The single domain-validation case — replaces the previous validation error class. Carries both per-field violations and cross-field rule violations. **Single-violation factories** (preferred over manual construction): `Error.UnprocessableContent.ForField(string propertyName, string reasonCode, string? detail = null)` (escapes `propertyName` via `InputPointer.ForProperty`), `ForField(InputPointer field, string reasonCode, string? detail = null)` (use for nested/array pointers or `InputPointer.Root`), and `ForRule(string reasonCode, string? detail = null)` (single rule, empty fields). Use `Validate` builder when aggregating multiple violations. |
-| `Error.PreconditionRequired` | `(PreconditionKind Condition)` | 428 | Missing concurrency token on PUT. |
-| `Error.TooManyRequests` | `(RetryAfterValue? RetryAfter = null)` | 429 | |
-| `Error.InternalServerError` | `(string FaultId)` | 500 | `Code` returns `FaultId`. **Never holds a live `Exception`**; the `FaultId` indexes into the logging/telemetry layer. |
-| `Error.Unexpected` | `(string ReasonCode)` | 500 | "Shouldn't happen" condition: default-initialized `Result`/`Result<T>` (per §3.5.1), exhausted match arms, internal invariant violations. `Code` returns `ReasonCode` (e.g. `"default_initialized"`). Distinct from `InternalServerError`: no opaque per-incident `FaultId`, and the ASP boundary does **not** attach a `faultId` extension. |
-| `Error.NotImplemented` | `(string Feature)` | 501 | `Code` returns `Feature`. |
-| `Error.ServiceUnavailable` | `(RetryAfterValue? RetryAfter = null)` | 503 | |
-| `Error.Aggregate` | `(EquatableArray<Error> Errors)` <br> `(IEnumerable<Error> errors)` <br> `(params Error[] errors)` | 207 / `extensions.errors` | Composition node. Auto-flattens nested `Aggregate` instances at construction. Three constructor overloads accept either an `EquatableArray<Error>`, any `IEnumerable<Error>`, or a `params` array; all three throw `ArgumentException` if no errors are supplied. `InputPointer.ForProperty` is used to escape `~` and `/` per RFC 6901. (`Cause` is inherited from `Error`'s base init property and is not blocked on `Aggregate`; previous wording claimed `Cause` was disallowed, which the source does not enforce.) |
+| Case | Constructor | Domain semantics |
+| --- | --- | --- |
+| `Error.InvalidInput` | `(EquatableArray<FieldViolation> Fields, EquatableArray<RuleViolation> Rules = default)` | Request input failed semantic validation. Use `ForField(...)` / `ForRule(...)` for the common single-violation shapes. |
+| `Error.InvariantViolation` | `(string ReasonCode, ResourceRef? Resource = null)` | Domain rule failed outside field-bound request validation; use for cross-aggregate invariants or internal preconditions. |
+| `Error.NotFound` | `(ResourceRef Resource)` | The addressed resource does not exist. |
+| `Error.Forbidden` | `(string PolicyId, ResourceRef? Resource = null)` | The caller is authenticated but not allowed by the named policy. |
+| `Error.Conflict` | `(ResourceRef? Resource, string ReasonCode)` | The request collides with current state (for example duplicate keys or concurrent modification). |
+| `Error.Gone` | `(ResourceRef Resource)` | The resource previously existed but has been permanently removed (tombstone). |
+| `Error.AuthenticationRequired` | `(string? Scheme = null)` | Authentication is missing or could not be established. |
+| `Error.Unavailable` | `(string? ReasonCode = null, RetryAdvice? Retry = null)` | A dependency or subsystem is temporarily unavailable; retry may succeed later. |
+| `Error.RateLimited` | `(RetryAdvice? Retry = null)` | The caller exceeded a quota or rate limit. |
+| `Error.Unexpected` | `(string ReasonCode, string? FaultId = null)` | Unhandled internal failure or “shouldn't happen” condition. `FaultId`, when supplied, correlates to telemetry. |
+| `Error.Aggregate` | `(EquatableArray<Error> Errors)` <br> `(IEnumerable<Error> errors)` <br> `(params Error[] errors)` | Composition node that flattens nested aggregates and preserves every inner error. |
+| `Error.TransportFault` | `(ITransportFault Fault)` | Opaque envelope for lower-layer, transport-specific faults produced outside the domain model. |
+
+#### Closed union — exhaustive matching
+
+The catalog is closed to these 12 cases: `InvalidInput`, `InvariantViolation`, `NotFound`, `Forbidden`, `Conflict`, `Gone`, `AuthenticationRequired`, `Unavailable`, `RateLimited`, `Unexpected`, `Aggregate`, and `TransportFault`. Pattern matching over `Error` stays explicit and exhaustive at the language level.
+
+#### Error.TransportFault envelope
+
+Domain code treats `ITransportFault` as opaque and does not inspect concrete transport payloads. Boundary layers such as `Trellis.Asp` unwrap `HttpError` to synthesize HTTP status codes, companion headers, and problem-details extensions. The built-in HTTP transport payload union lives in [Trellis.Http.Abstractions](trellis-api-http-abstractions.md).
+
+#### RetryAdvice
+
+`RetryAdvice` is a transport-neutral retry hint: `public readonly record struct RetryAdvice(TimeSpan? After = null, DateTimeOffset? At = null);`. `Error.RateLimited` and `Error.Unavailable` carry it so the boundary can emit `Retry-After` without teaching the domain about HTTP headers.
+
+HTTP-specific status codes, headers, and problem-details `type` tokens are not the domain's responsibility. See [trellis-api-asp.md](trellis-api-asp.md#trellisaspoptions) for the boundary mapping table.
 
 #### Supporting types
 
+HTTP-specific supporting types (`AuthChallenge`, `EntityTagValue`, `RetryAfterValue`, `PreconditionKind`, `RepresentationMetadata`, `WriteOutcome<T>`, and `AggregateETagExtensions`) now live in [Trellis.Http.Abstractions](trellis-api-http-abstractions.md).
+
 | Type | Shape | Purpose |
 | --- | --- | --- |
-| `ResourceRef` | `readonly record struct (string Type, string? Id = null)` plus `ResourceRef.For(string type, object? id = null)` and `ResourceRef.For<TResource>(object? id = null)` | Aggregate identity. The `For(...)` helpers convert IDs with invariant formatting when possible. `For<TResource>` builds the type name from `typeof(TResource)`: it recursively peels `Maybe<T>` wrappers and strips generic arity (the CLR backtick suffix), so a closed generic `Maybe<Order>` resolves to `"Order"` and `List<Order>` resolves to `"List"`. Other generic wrappers (e.g. `Result<T>`) are NOT peeled — `Result<Order>` arity-strips to `"Result"`, not `"Order"`. Use `For(string, object?)` with an explicit name when the auto-derived simple name is not the desired domain resource name. |
-| `InputPointer` | `readonly record struct` with `InputPointer(string Path)` | RFC 6901 JSON Pointer (e.g. `/email`). The constructor accepts only `""` or paths beginning with `/` and rejects invalid `~` escapes. Construct simple property names via `InputPointer.ForProperty("email")`, or use the document-root sentinel `InputPointer.Root` (path `""`). `default(InputPointer)` is observed as root. |
-| `FieldViolation` | `sealed record (InputPointer Field, string ReasonCode, ImmutableDictionary<string,string>? Args = null, string? Detail = null)` | Single per-field violation inside `UnprocessableContent.Fields`. `Detail` is the 4th positional parameter; supplies the boundary renderer's user-facing message when non-null. `Equals`/`GetHashCode` compare `Args` by content. |
-| `RuleViolation` | `sealed record (string ReasonCode, EquatableArray<InputPointer> Fields = default, ImmutableDictionary<string,string>? Args = null, string? Detail = null)` | Multi-field invariant or object-level rule inside `UnprocessableContent.Rules`. `Detail` is the 4th positional parameter. `Equals`/`GetHashCode` compare `Args` by content. |
-| `AuthChallenge` | `sealed record (string Scheme, ImmutableDictionary<string,string>? Params = null)` | Carried by `Unauthorized` to round-trip `WWW-Authenticate`. `Equals`/`GetHashCode` compare the auth scheme and parameter keys case-insensitively, compare parameter values ordinally, and ignore parameter order. |
-| `RetryAfterValue` | sealed class, see below | `Retry-After` as delay seconds or absolute date. |
-| `PreconditionKind` | `enum { IfMatch, IfNoneMatch, IfModifiedSince, IfUnmodifiedSince }` | Typed precondition vocabulary. |
-| `EquatableArray<T>` | `readonly struct (ImmutableArray<T> Items)` | Wraps `ImmutableArray<T>` so records get sequence equality (built-in records compare arrays by reference). See dedicated section below. Construct with `EquatableArray.Create(...)`, `EquatableArray.From(items)`, `EquatableArray<T>.Empty`, or implicitly from an `ImmutableArray<T>`. |
+| `ResourceRef` | `readonly record struct (string Type, string? Id = null)` plus `ResourceRef.For(string type, object? id = null)` and `ResourceRef.For<TResource>(object? id = null)` | Aggregate identity. The `For(...)` helpers convert IDs with invariant formatting when possible. `For<TResource>` peels `Maybe<T>` wrappers and strips generic arity. |
+| `InputPointer` | `readonly record struct` with `InputPointer(string Path)` | RFC 6901 JSON Pointer (for example `/email`). Construct simple property names via `InputPointer.ForProperty("email")`, or use `InputPointer.Root` for the document root. |
+| `FieldViolation` | `sealed record (InputPointer Field, string ReasonCode, ImmutableDictionary<string,string>? Args = null, string? Detail = null)` | Single per-field violation inside `InvalidInput.Fields`. `Equals` / `GetHashCode` compare `Args` by content. |
+| `RuleViolation` | `sealed record (string ReasonCode, EquatableArray<InputPointer> Fields = default, ImmutableDictionary<string,string>? Args = null, string? Detail = null)` | Multi-field invariant or object-level rule inside `InvalidInput.Rules`. `Equals` / `GetHashCode` compare `Args` by content. |
+| `ITransportFault` | marker interface | Transport-specific payload contract used by `Error.TransportFault`. HTTP-aware code uses `HttpError` from `Trellis.Http.Abstractions`; other transports can define their own implementations. |
+| `RetryAdvice` | `readonly record struct (TimeSpan? After = null, DateTimeOffset? At = null)` | Transport-neutral retry hint carried by `Error.RateLimited` and `Error.Unavailable`. Boundary layers translate it to headers such as `Retry-After`. |
+| `EquatableArray<T>` | `readonly struct (ImmutableArray<T> Items)` | Wraps `ImmutableArray<T>` so records get sequence equality instead of reference equality. |
 
 ---
 
-### `public sealed class RetryAfterValue : IEquatable<RetryAfterValue>`
+### Moved HTTP transport types
 
-Represents `Retry-After` as either delay seconds or a date.
-
-#### Properties
-
-| Name | Type |
-| --- | --- |
-| `IsDelaySeconds` | `bool` |
-| `IsDate` | `bool` |
-| `DelaySeconds` | `int` |
-| `Date` | `DateTimeOffset` |
-
-#### Methods
-
-| Signature | Notes |
-| --- | --- |
-| `public static RetryAfterValue FromSeconds(int seconds)` | Delay form |
-| `public static RetryAfterValue FromDate(DateTimeOffset date)` | Absolute-date form |
-| `public string ToHeaderValue()` | RFC header value |
-| `public override string ToString()` | String form |
-| `public bool Equals(RetryAfterValue? other)` | Equality |
-| `public override bool Equals(object? obj)` | Equality |
-| `public override int GetHashCode()` | Hash code |
-
-#### Factory Methods
-
-`FromSeconds` and `FromDate`.
-
----
-
-### `public sealed record EntityTagValue`
-
-Represents strong, weak, or wildcard ETags.
-
-#### Properties
-
-| Name | Type |
-| --- | --- |
-| `OpaqueTag` | `string` |
-| `IsWeak` | `bool` |
-| `IsWildcard` | `bool` |
-
-#### Methods
-
-| Signature | Notes |
-| --- | --- |
-| `public static EntityTagValue Strong(string opaqueTag)` | Strong ETag |
-| `public static EntityTagValue Weak(string opaqueTag)` | Weak ETag |
-| `public static EntityTagValue Wildcard()` | Precondition wildcard token (`*`) |
-| `public static Result<EntityTagValue> TryParse(string? headerValue)` | Parse wildcard (`*`), strong (`"tag"`), or weak (`W/"tag"`) HTTP header values |
-| `public bool StrongEquals(EntityTagValue other)` | Strong comparison |
-| `public bool WeakEquals(EntityTagValue other)` | Weak comparison |
-| `public string ToHeaderValue()` | RFC header form |
-| `public override string ToString()` | String form |
-
-#### Factory Methods
-
-`Strong`, `Weak`, `Wildcard`, and `TryParse`.
-
----
-
-### `public sealed class RepresentationMetadata`
-
-Metadata used by Trellis ASP helpers for validators, caching, and response headers.
-
-#### Properties
-
-| Name | Type |
-| --- | --- |
-| `ETag` | `EntityTagValue?` |
-| `LastModified` | `DateTimeOffset?` |
-| `Vary` | `IReadOnlyList<string>?` |
-| `ContentLanguage` | `IReadOnlyList<string>?` |
-| `ContentLocation` | `string?` |
-| `AcceptRanges` | `string?` |
-
-#### Methods
-
-| Signature | Notes |
-| --- | --- |
-| `public static Builder Create()` | Starts fluent builder |
-| `public static RepresentationMetadata WithETag(EntityTagValue eTag)` | Convenience metadata |
-| `public static RepresentationMetadata WithStrongETag(string opaqueTag)` | Strong ETag convenience |
-
-#### Factory Methods
-
-`Create`, `WithETag`, `WithStrongETag`.
-
----
-
-### `public sealed class RepresentationMetadata.Builder`
-
-Fluent builder for `RepresentationMetadata`.
-
-#### Properties
-
-None.
-
-#### Methods
-
-| Signature | Notes |
-| --- | --- |
-| `public Builder SetETag(EntityTagValue eTag)` | Sets ETag |
-| `public Builder SetStrongETag(string opaqueTag)` | Convenience strong ETag |
-| `public Builder SetWeakETag(string opaqueTag)` | Convenience weak ETag |
-| `public Builder SetLastModified(DateTimeOffset lastModified)` | Sets last modified |
-| `public Builder AddVary(params string[] fieldNames)` | Adds `Vary` fields |
-| `public Builder AddContentLanguage(params string[] languages)` | Adds content languages |
-| `public Builder SetContentLocation(string uri)` | Sets content location |
-| `public Builder SetAcceptRanges(string value)` | Sets `Accept-Ranges` |
-| `public RepresentationMetadata Build()` | Builds metadata |
-
-#### Factory Methods
-
-Use `RepresentationMetadata.Create()`.
-
----
-
-### `public abstract record WriteOutcome<T>`
-
-Closed union representing the outcome of a write operation (create / replace / accept-for-async) returned by Application-layer repositories. Transport adapters (e.g. `Trellis.Asp`'s `WriteOutcomeExtensions`) translate each case to a protocol-specific response. The case set aligns with RFC 9110 §9.3.4 because HTTP is the most commonly served transport, but `WriteOutcome<T>` itself takes no dependency on any transport package.
-
-```csharp
-public abstract record WriteOutcome<T>
-{
-    public sealed record Created(T Value, string Location, RepresentationMetadata? Metadata = null)         : WriteOutcome<T>;
-    public sealed record Updated(T Value, RepresentationMetadata? Metadata = null)                          : WriteOutcome<T>;
-    public sealed record UpdatedNoContent(RepresentationMetadata? Metadata = null)                          : WriteOutcome<T>;
-    public sealed record Accepted(T StatusBody, string? MonitorUri = null, RetryAfterValue? RetryAfter = null)      : WriteOutcome<T>;
-    public sealed record AcceptedNoContent(string? MonitorUri = null, RetryAfterValue? RetryAfter = null)           : WriteOutcome<T>;
-}
-```
-
-| Case | Members | Transports as |
-| --- | --- | --- |
-| `Created` | `T Value`, `string Location`, `RepresentationMetadata? Metadata` | HTTP `201 Created` + `Location` |
-| `Updated` | `T Value`, `RepresentationMetadata? Metadata` | HTTP `200 OK` |
-| `UpdatedNoContent` | `RepresentationMetadata? Metadata` | HTTP `204 No Content` |
-| `Accepted` | `T StatusBody`, `string? MonitorUri`, `RetryAfterValue? RetryAfter` | HTTP `202 Accepted` + body |
-| `AcceptedNoContent` | `string? MonitorUri`, `RetryAfterValue? RetryAfter` | HTTP `202 Accepted` |
+`AuthChallenge`, `EntityTagValue`, `RetryAfterValue`, `PreconditionKind`, `RepresentationMetadata`, `WriteOutcome<T>`, and `AggregateETagExtensions` are no longer part of `Trellis.Core`.
+Use [Trellis.Http.Abstractions](trellis-api-http-abstractions.md) when you need header-aware HTTP payloads, conditional-request helpers, representation metadata, or HTTP-shaped write outcomes.
 
 The base record's constructor is `private`; new cases cannot be added by consumers.
 
 ---
-
 ### `public sealed class RailwayTrackAttribute : Attribute`
 
 Annotates result helpers with whether they operate on the success or failure railway.
@@ -1040,7 +909,7 @@ IActionResult Render(Result<Order> r) =>
         err   => err switch
         {
             Error.NotFound nf            => NotFound(nf.Resource.Id),
-            Error.UnprocessableContent u => UnprocessableEntity(u.Fields),
+            Error.InvalidInput u => UnprocessableEntity(u.Fields),
             _                            => Problem(err.GetDisplayMessage()),
         });
 ```
@@ -1083,11 +952,11 @@ Predicate-based validation. `Ensure` short-circuits on the first failed predicat
 ```csharp
 Result<Quote> Validate(Quote q) =>
     Result.Ok(q).EnsureAll(
-        (x => x.Total > 0,            Error.UnprocessableContent.ForField("total", "must_be_positive")),
-        (x => x.Currency.Length == 3, Error.UnprocessableContent.ForField("currency", "iso4217")));
+        (x => x.Total > 0,            Error.InvalidInput.ForField("total", "must_be_positive")),
+        (x => x.Currency.Length == 3, Error.InvalidInput.ForField("currency", "iso4217")));
 
 Result<string> NotBlank(string? raw) =>
-    raw.EnsureNotNullOrWhiteSpace(new Error.BadRequest("blank", InputPointer.Root));
+    raw.EnsureNotNullOrWhiteSpace(Error.InvalidInput.ForField(InputPointer.Root, "blank"));
 ```
 
 #### Check / CheckIf families — `CheckExtensions`, `CheckExtensionsAsync`, `CheckIfExtensions`, `CheckIfExtensionsAsync`
@@ -1240,7 +1109,7 @@ Result<IReadOnlyList<Money>> subtotals =
 
 #### TraverseAll / SequenceAll — `TraverseAllExtensions`, `SequenceAllExtensions`
 
-Accumulating-error counterparts to `Traverse` / `Sequence`. Run the selector over every item (no short-circuit) and fold failures via the existing `Error.Combine` extension. A single failure returns unchanged (no `Error.Aggregate` wrap); multiple `UnprocessableContent` failures merge their fields/rules; heterogeneous failures flatten into `Error.Aggregate`. Use these when you need to surface every failure (form-style validation) rather than the first.
+Accumulating-error counterparts to `Traverse` / `Sequence`. Run the selector over every item (no short-circuit) and fold failures via the existing `Error.Combine` extension. A single failure returns unchanged (no `Error.Aggregate` wrap); multiple `InvalidInput` failures merge their fields/rules; heterogeneous failures flatten into `Error.Aggregate`. Use these when you need to surface every failure (form-style validation) rather than the first.
 
 | Signature | Returns | Description |
 | --- | --- | --- |
@@ -1257,7 +1126,7 @@ Accumulating-error counterparts to `Traverse` / `Sequence`. Run the selector ove
 // Form-style validation: collect every field error in one pass.
 Result<IReadOnlyList<EmailAddress>> emails =
     raw.TraverseAll(EmailAddress.TryCreate);
-//   ↳ on multiple invalid entries, returns one Error.UnprocessableContent
+//   ↳ on multiple invalid entries, returns one Error.InvalidInput
 //     whose Fields/Rules concatenate every per-item violation.
 
 // Heterogeneous failures flatten into Error.Aggregate:
@@ -1381,28 +1250,20 @@ public Task<Result<Page<Order>>> List(string? cursorToken, int limit, Cancellati
 
 ## Error Cases (closed ADT)
 
-| Case | Constructor | Default `Code` | HTTP Status |
+| Case | Constructor | Default Code | Kind slug |
 | --- | --- | --- | --- |
-| `Error.BadRequest` | `(string ReasonCode, InputPointer? At = null)` | `ReasonCode` | 400 |
-| `Error.Unauthorized` | `(EquatableArray<AuthChallenge> Challenges = default)` | `unauthorized` | 401 |
-| `Error.Forbidden` | `(string PolicyId, ResourceRef? Resource = null)` | `PolicyId` | 403 |
-| `Error.NotFound` | `(ResourceRef Resource)` | `not-found` | 404 |
-| `Error.MethodNotAllowed` | `(EquatableArray<string> Allow)` | `method-not-allowed` | 405 |
-| `Error.NotAcceptable` | `(EquatableArray<string> Available)` | `not-acceptable` | 406 |
-| `Error.Conflict` | `(ResourceRef? Resource, string ReasonCode)` | `ReasonCode` | 409 |
-| `Error.Gone` | `(ResourceRef Resource)` | `gone` | 410 |
-| `Error.PreconditionFailed` | `(ResourceRef Resource, PreconditionKind Condition)` | `precondition-failed` | 412 |
-| `Error.ContentTooLarge` | `(long? MaxBytes = null)` | `content-too-large` | 413 |
-| `Error.UnsupportedMediaType` | `(EquatableArray<string> Supported)` | `unsupported-media-type` | 415 |
-| `Error.RangeNotSatisfiable` | `(long CompleteLength, string Unit = "bytes")` | `range-not-satisfiable` | 416 |
-| `Error.UnprocessableContent` | `(EquatableArray<FieldViolation> Fields, EquatableArray<RuleViolation> Rules = default)` | `unprocessable-content` | 422 |
-| `Error.PreconditionRequired` | `(PreconditionKind Condition)` | `precondition-required` | 428 |
-| `Error.TooManyRequests` | `(RetryAfterValue? RetryAfter = null)` | `too-many-requests` | 429 |
-| `Error.InternalServerError` | `(string FaultId)` | `FaultId` | 500 |
-| `Error.Unexpected` | `(string ReasonCode)` | `ReasonCode` | 500 |
-| `Error.NotImplemented` | `(string Feature)` | `Feature` | 501 |
-| `Error.ServiceUnavailable` | `(RetryAfterValue? RetryAfter = null)` | `service-unavailable` | 503 |
-| `Error.Aggregate` | `(EquatableArray<Error> Errors)` | `aggregate` | depends on contained errors; serialized via `ProblemDetails.Extensions["errors"]` (RFC 9457) |
+| `Error.InvalidInput` | `(EquatableArray<FieldViolation> Fields, EquatableArray<RuleViolation> Rules = default)` | `invalid-input` | `invalid-input` |
+| `Error.InvariantViolation` | `(string ReasonCode, ResourceRef? Resource = null)` | `ReasonCode` | `invariant-violation` |
+| `Error.NotFound` | `(ResourceRef Resource)` | `not-found` | `not-found` |
+| `Error.Forbidden` | `(string PolicyId, ResourceRef? Resource = null)` | `PolicyId` | `forbidden` |
+| `Error.Conflict` | `(ResourceRef? Resource, string ReasonCode)` | `ReasonCode` | `conflict` |
+| `Error.Gone` | `(ResourceRef Resource)` | `gone` | `gone` |
+| `Error.AuthenticationRequired` | `(string? Scheme = null)` | `authentication-required` | `authentication-required` |
+| `Error.Unavailable` | `(string? ReasonCode = null, RetryAdvice? Retry = null)` | `ReasonCode ?? "unavailable"` | `unavailable` |
+| `Error.RateLimited` | `(RetryAdvice? Retry = null)` | `rate-limited` | `rate-limited` |
+| `Error.Unexpected` | `(string ReasonCode, string? FaultId = null)` | `ReasonCode` | `unexpected` |
+| `Error.Aggregate` | `(EquatableArray<Error> Errors)` <br> `(IEnumerable<Error> errors)` <br> `(params Error[] errors)` | `aggregate` | `aggregate` |
+| `Error.TransportFault` | `(ITransportFault Fault)` | `transport-fault` | `transport-fault` |
 
 ---
 
@@ -1414,8 +1275,7 @@ public Task<Result<Page<Order>>> List(string? cursorToken, int limit, Cancellati
 using Trellis;
 
 Result<int> Divide(int left, int right) =>
-    Result.Ensure(right != 0, new Error.BadRequest("right_must_not_be_zero")
-        { Detail = "Right operand must not be zero" })
+    Result.Ensure(right != 0, Error.InvalidInput.ForRule("right_must_not_be_zero", "Right operand must not be zero"))
         .Map(_ => left / right);
 ```
 
@@ -1427,7 +1287,7 @@ using Trellis;
 Maybe<string> maybeEmail = Maybe.From("user@example.com");
 
 Result<string> emailResult = maybeEmail.ToResult(
-    Error.UnprocessableContent.ForField("email", "required", "Email is required"));
+    Error.InvalidInput.ForField("email", "required", "Email is required"));
 ```
 
 ### Reading errors without throwing
@@ -1443,7 +1303,7 @@ if (!result.TryGetValue(out var order, out var error))
     return error switch
     {
         Error.NotFound nf            => NotFound(nf.Resource.Id),
-        Error.UnprocessableContent uc => UnprocessableEntity(uc.Fields),
+        Error.InvalidInput uc => UnprocessableEntity(uc.Fields),
         Error.Conflict c             => Conflict(c.ReasonCode),
         _                            => Problem(error.GetDisplayMessage()),
     };
@@ -1460,7 +1320,7 @@ using Trellis;
 var streetCity = MaybeInvariant.AllOrNone(cmd.Street, cmd.City, "street", "city");
 var contact    = MaybeInvariant.ExactlyOne(cmd.Email, cmd.Phone, "email", "phone");
 
-// Combine merges any UnprocessableContent.Fields/Rules from multiple results
+// Combine merges any InvalidInput.Fields/Rules from multiple results
 return Result.Combine(streetCity, contact)
     .Map(_ => new Address(cmd.Street, cmd.City));
 ```
@@ -1622,6 +1482,8 @@ where T : IComparable
 
 ### `AggregateETagExtensions`
 
+Defined in `Trellis.Http.Abstractions`; listed here because the extension methods remain in `namespace Trellis` and are commonly used alongside aggregates.
+
 ```csharp
 public static class AggregateETagExtensions
 ```
@@ -1632,8 +1494,8 @@ public static class AggregateETagExtensions
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public static Result<T> OptionalETag<T>(this Result<T> result, EntityTagValue[]? expectedETags) where T : IAggregate` | `Result<T>` | If `expectedETags` is `null`, returns the original result unchanged; otherwise enforces strong ETag matching. Failure modes: empty array → `"If-Match header is empty."`; only weak tags after filtering → `"If-Match contains only weak ETags. Strong comparison is required."`; no match → `"Resource has been modified. Please reload and retry."`. `EntityTagValue.Wildcard()` short-circuits to success. |
-| `public static Result<T> RequireETag<T>(this Result<T> result, EntityTagValue[]? expectedETags) where T : IAggregate` | `Result<T>` | Requires an `If-Match` value and enforces strong ETag matching. Failure modes are the same as `OptionalETag<T>` plus: `null` array → `"If-Match header is required."`. |
+| `public static Result<T> OptionalETag<T>(this Result<T> result, EntityTagValue[]? expectedETags) where T : IAggregate` | `Result<T>` | If `expectedETags` is `null`, returns the original result unchanged; otherwise enforces strong ETag matching. Failure modes wrap `HttpError.PreconditionFailed` in `Error.TransportFault`; `EntityTagValue.Wildcard()` short-circuits to success. |
+| `public static Result<T> RequireETag<T>(this Result<T> result, EntityTagValue[]? expectedETags) where T : IAggregate` | `Result<T>` | Requires an `If-Match` value and enforces strong ETag matching. Missing headers now produce `Error.TransportFault(new HttpError.PreconditionRequired(PreconditionKind.IfMatch))`; all other failure modes wrap `HttpError.PreconditionFailed`. |
 | `public static Task<Result<T>> OptionalETagAsync<T>(this Task<Result<T>> resultTask, EntityTagValue[]? expectedETags) where T : IAggregate` | `Task<Result<T>>` | Async `Task` wrapper for `OptionalETag<T>`. |
 | `public static ValueTask<Result<T>> OptionalETagAsync<T>(this ValueTask<Result<T>> resultTask, EntityTagValue[]? expectedETags) where T : IAggregate` | `ValueTask<Result<T>>` | Async `ValueTask` wrapper for `OptionalETag<T>`. |
 | `public static Task<Result<T>> RequireETagAsync<T>(this Task<Result<T>> resultTask, EntityTagValue[]? expectedETags) where T : IAggregate` | `Task<Result<T>>` | Async `Task` wrapper for `RequireETag<T>`. |
@@ -1675,9 +1537,9 @@ public sealed class TrellisJsonValidationException : System.Text.Json.JsonExcept
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `UnprocessableContent` | `Error.UnprocessableContent?` (init-only) | Optional structured payload describing per-field violations recovered during deserialization. Populated by `CompositeValueObjectJsonConverter<T>` when a composite VO's `TryCreate` returns an `Error.UnprocessableContent`. When non-null with at least one `FieldViolation`, `Trellis.Asp`'s `ScalarValueValidationMiddleware` emits one wire entry per `FieldViolation` keyed `<parentPath>.<leaf>` (MVC dot+bracket convention) instead of collapsing all leaves into the single `;`-joined `Message`. When `null` or `Fields` is empty (e.g., rules-only `Error.UnprocessableContent`), the middleware falls back to a single entry under the translated parent path with `Message` as the value, preserving the curated message. |
+| `UnprocessableContent` | `Error.InvalidInput?` (init-only) | Optional structured payload describing per-field violations recovered during deserialization. Populated by `CompositeValueObjectJsonConverter<T>` when a composite VO's `TryCreate` returns an `Error.InvalidInput`. When non-null with at least one `FieldViolation`, `Trellis.Asp`'s `ScalarValueValidationMiddleware` emits one wire entry per `FieldViolation` keyed `<parentPath>.<leaf>` (MVC dot+bracket convention) instead of collapsing all leaves into the single `;`-joined `Message`. When `null` or `Fields` is empty (e.g., rules-only `Error.InvalidInput`), the middleware falls back to a single entry under the translated parent path with `Message` as the value, preserving the curated message. |
 
-Marker subclass of `System.Text.Json.JsonException` thrown by Trellis JSON converters when a structured value object's invariants are violated during deserialization (e.g., `CompositeValueObjectJsonConverter<Money>` rejecting a negative amount). `Trellis.Asp`'s `ScalarValueValidationMiddleware` recognizes this subtype and surfaces its content in the resulting Problem Details payload — preferring the structured per-field shape from `UnprocessableContent` when present (one entry per `FieldViolation`), and falling back to surfacing `Message` and `JsonException.Path` as a single entry otherwise. Plain `JsonException` instances are deliberately not surfaced because their messages can include internal type names; converters opt in to message surfacing by throwing this subclass with a curated message (e.g., `error.GetDisplayMessage()` from a `Result` failure).
+Marker subclass of `System.Text.Json.JsonException` thrown by Trellis JSON converters when a structured value object's invariants are violated during deserialization (e.g., `CompositeValueObjectJsonConverter<Money>` rejecting a negative amount). `Trellis.Asp`'s `ScalarValueValidationMiddleware` recognizes this subtype and surfaces its content in the resulting Problem Details payload — preferring the structured per-field shape from `Error.InvalidInput` when present (one entry per `FieldViolation`), and falling back to surfacing `Message` and `JsonException.Path` as a single entry otherwise. Plain `JsonException` instances are deliberately not surfaced because their messages can include internal type names; converters opt in to message surfacing by throwing this subclass with a curated message (e.g., `error.GetDisplayMessage()` from a `Result` failure).
 
 ## Primitive value object base classes
 
@@ -2177,6 +2039,8 @@ public static class Example
 
 ### `AggregateETagExtensions`
 
+Defined in `Trellis.Http.Abstractions`; the signatures stay the same in `namespace Trellis`.
+
 ```csharp
 public static Result<T> OptionalETag<T>(this Result<T> result, EntityTagValue[]? expectedETags) where T : IAggregate
 public static Result<T> RequireETag<T>(this Result<T> result, EntityTagValue[]? expectedETags) where T : IAggregate
@@ -2189,10 +2053,10 @@ public static ValueTask<Result<T>> RequireETagAsync<T>(this ValueTask<Result<T>>
 Notes:
 
 - Matching is always strong RFC 9110 comparison.
-- `expectedETags is null` means "no `If-Match` header supplied". `OptionalETag` returns success unchanged; `RequireETag` fails with `Error.PreconditionFailed` whose `Detail` is `"If-Match header is required."`.
-- `expectedETags.Length == 0` fails with `Error.PreconditionFailed` whose `Detail` is `"If-Match header is empty."`.
-- A non-empty array containing only weak tags fails with `Detail` = `"If-Match contains only weak ETags. Strong comparison is required."` (RFC 9110 forbids weak comparison for `If-Match`).
-- A non-empty array of strong tags with no match fails with `Detail` = `"Resource has been modified. Please reload and retry."`.
+- `expectedETags is null` means "no `If-Match` header supplied". `OptionalETag` returns success unchanged; `RequireETag` fails with `Error.TransportFault(new HttpError.PreconditionRequired(PreconditionKind.IfMatch))` whose `Detail` is `"If-Match header is required."`.
+- `expectedETags.Length == 0` fails with `Error.TransportFault(new HttpError.PreconditionFailed(ResourceRef.For<T>(), PreconditionKind.IfMatch))` whose `Detail` is `"If-Match header is empty."`.
+- A non-empty array containing only weak tags fails with the same wrapped `HttpError.PreconditionFailed`, with `Detail` = `"If-Match contains only weak ETags. Strong comparison is required."` (RFC 9110 forbids weak comparison for `If-Match`).
+- A non-empty array of strong tags with no match fails with the same wrapped `HttpError.PreconditionFailed`, with `Detail` = `"Resource has been modified. Please reload and retry."`.
 - `EntityTagValue.Wildcard()` bypasses value comparison and succeeds immediately.
 
 ## Internal types
@@ -2213,13 +2077,13 @@ public sealed class OrderId : ScalarValueObject<OrderId, Guid>, IScalarValue<Ord
 
     public static Result<OrderId> TryCreate(Guid value, string? fieldName = null) =>
         value == Guid.Empty
-            ? Result.Fail<OrderId>(Error.UnprocessableContent.ForField(fieldName ?? "orderId", "required", "Order ID is required."))
+            ? Result.Fail<OrderId>(Error.InvalidInput.ForField(fieldName ?? "orderId", "required", "Order ID is required."))
             : Result.Ok(new OrderId(value));
 
     public static Result<OrderId> TryCreate(string? value, string? fieldName = null) =>
         Guid.TryParse(value, out var guid)
             ? TryCreate(guid, fieldName)
-            : Result.Fail<OrderId>(Error.UnprocessableContent.ForField(fieldName ?? "orderId", "must_be_guid", "Order ID must be a GUID."));
+            : Result.Fail<OrderId>(Error.InvalidInput.ForField(fieldName ?? "orderId", "must_be_guid", "Order ID must be a GUID."));
 }
 
 public sealed record OrderPlaced(OrderId OrderId, DateTimeOffset OccurredAt) : IDomainEvent;
@@ -2276,7 +2140,8 @@ var spec = new ExpiredSubscriptionSpec(DateTimeOffset.UtcNow)
 
 ## Cross-references
 
-- [Trellis.Core API reference](trellis-api-core.md) — `Result<T>`, `Maybe<T>`, `Error`, `EntityTagValue`, `IScalarValue<TSelf, TPrimitive>`, and `IFormattableScalarValue<TSelf, TPrimitive>`
+- [Trellis.Core API reference](trellis-api-core.md) — `Result<T>`, `Maybe<T>`, `Error`, `ITransportFault`, `IScalarValue<TSelf, TPrimitive>`, and `IFormattableScalarValue<TSelf, TPrimitive>`
+- [Trellis.Http.Abstractions API reference](trellis-api-http-abstractions.md) — `HttpError`, `EntityTagValue`, `RetryAfterValue`, `RepresentationMetadata`, `WriteOutcome<T>`, and `AggregateETagExtensions`
 - [Trellis.Primitives API reference](trellis-api-primitives.md) — built-in scalar and composite value objects that build on these DDD primitives
 - [Trellis.EntityFrameworkCore API reference](trellis-api-efcore.md) — EF Core conventions and interceptors for `IEntity`, `IAggregate`, `ValueObject`, and `Maybe<T>`
 

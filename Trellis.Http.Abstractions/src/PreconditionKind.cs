@@ -2,7 +2,7 @@
 
 /// <summary>
 /// Identifies which conditional precondition was the subject of a
-/// <see cref="Error.PreconditionFailed"/> or <see cref="Error.PreconditionRequired"/> error.
+/// <see cref="HttpError.PreconditionFailed"/> or <see cref="HttpError.PreconditionRequired"/> fault.
 /// </summary>
 public enum PreconditionKind
 {

@@ -11,22 +11,22 @@ using Trellis.Primitives;
 public class ErrorMatchTests
 {
     [Theory]
-    [InlineData(typeof(Error.UnprocessableContent), "unprocessable")]
+    [InlineData(typeof(Error.InvalidInput), "invalid")]
     [InlineData(typeof(Error.NotFound), "not-found")]
     [InlineData(typeof(Error.Conflict), "conflict")]
     [InlineData(typeof(Error.Forbidden), "forbidden")]
-    [InlineData(typeof(Error.PreconditionFailed), "precondition")]
-    [InlineData(typeof(Error.InternalServerError), "internal")]
+    [InlineData(typeof(Error.TransportFault), "precondition")]
+    [InlineData(typeof(Error.Unexpected), "internal")]
     public void Match_returns_expected_label_for_each_case(Type errorType, string expectedLabel)
     {
         Error error = errorType.Name switch
         {
-            nameof(Error.UnprocessableContent) => new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty),
+            nameof(Error.InvalidInput) => new Error.InvalidInput(EquatableArray<FieldViolation>.Empty),
             nameof(Error.NotFound) => new Error.NotFound(new ResourceRef("Thing", "1")),
             nameof(Error.Conflict) => new Error.Conflict(null, "x"),
             nameof(Error.Forbidden) => new Error.Forbidden("policy.id"),
-            nameof(Error.PreconditionFailed) => new Error.PreconditionFailed(new ResourceRef("Thing", "1"), PreconditionKind.IfMatch),
-            nameof(Error.InternalServerError) => new Error.InternalServerError("fault-id"),
+            nameof(Error.TransportFault) => new Error.TransportFault(new HttpError.PreconditionFailed(new ResourceRef("Thing", "1"), PreconditionKind.IfMatch)),
+            nameof(Error.Unexpected) => new Error.Unexpected("test_reason", "fault-id"),
             _ => throw new InvalidOperationException(),
         };
 
@@ -36,12 +36,12 @@ public class ErrorMatchTests
 
     private static string Classify(Error error) => error switch
     {
-        Error.UnprocessableContent => "unprocessable",
+        Error.InvalidInput => "invalid",
         Error.NotFound => "not-found",
         Error.Conflict => "conflict",
         Error.Forbidden => "forbidden",
-        Error.PreconditionFailed => "precondition",
-        Error.InternalServerError => "internal",
+        Error.TransportFault { Fault: HttpError.PreconditionFailed } => "precondition",
+        Error.Unexpected => "internal",
         _ => throw new InvalidOperationException($"Unhandled Error case: {error.GetType().Name}"),
     };
 }

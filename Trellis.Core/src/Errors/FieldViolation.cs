@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 
 /// <summary>
 /// Describes a validation failure attached to a specific field of an input document.
-/// Used inside <see cref="Error.UnprocessableContent"/>.
+/// Used inside <see cref="Error.InvalidInput"/>.
 /// </summary>
 /// <param name="Field">JSON Pointer locating the offending field.</param>
 /// <param name="ReasonCode">

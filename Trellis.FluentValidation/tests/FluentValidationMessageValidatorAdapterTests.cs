@@ -62,7 +62,7 @@ public class FluentValidationMessageValidatorAdapterTests
 
         var result = await adapter.ValidateAsync(command, CancellationToken.None);
 
-        var error = ExtractError(result).Should().BeOfType<Error.UnprocessableContent>().Which;
+        var error = ExtractError(result).Should().BeOfType<Error.InvalidInput>().Which;
         error.Fields.Items.Should().ContainSingle()
             .Which.Field.Path.Should().Be("/Name");
     }
@@ -76,7 +76,7 @@ public class FluentValidationMessageValidatorAdapterTests
 
         var result = await adapter.ValidateAsync(command, CancellationToken.None);
 
-        var error = ExtractError(result).Should().BeOfType<Error.UnprocessableContent>().Which;
+        var error = ExtractError(result).Should().BeOfType<Error.InvalidInput>().Which;
         error.Fields.Items.Should().HaveCount(2);
         error.Fields.Items.Should().Contain(fv => fv.Field.Path == "/Name");
         error.Fields.Items.Should().Contain(fv => fv.Field.Path == "/Email");
@@ -91,7 +91,7 @@ public class FluentValidationMessageValidatorAdapterTests
 
         var result = await adapter.ValidateAsync(command, CancellationToken.None);
 
-        var error = ExtractError(result).Should().BeOfType<Error.UnprocessableContent>().Which;
+        var error = ExtractError(result).Should().BeOfType<Error.InvalidInput>().Which;
         error.Fields.Items.Should().ContainSingle()
             .Which.ReasonCode.Should().Be("email.invalid");
     }
@@ -105,7 +105,7 @@ public class FluentValidationMessageValidatorAdapterTests
 
         var result = await adapter.ValidateAsync(command, CancellationToken.None);
 
-        var error = ExtractError(result).Should().BeOfType<Error.UnprocessableContent>().Which;
+        var error = ExtractError(result).Should().BeOfType<Error.InvalidInput>().Which;
         var paths = error.Fields.Items.Select(fv => fv.Field.Path).ToArray();
         paths.Should().Contain("/Address/Zip");
         paths.Should().Contain("/Lines/0/Sku");
@@ -120,7 +120,7 @@ public class FluentValidationMessageValidatorAdapterTests
 
         var result = await adapter.ValidateAsync(command, CancellationToken.None);
 
-        var error = ExtractError(result).Should().BeOfType<Error.UnprocessableContent>().Which;
+        var error = ExtractError(result).Should().BeOfType<Error.InvalidInput>().Which;
         error.Fields.Items.Should().ContainSingle()
             .Which.Field.Path.Should().Be("/CreateUserCommand");
     }
@@ -177,7 +177,7 @@ public class FluentValidationMessageValidatorAdapterTests
             new CreateUserCommand(string.Empty, "ada@example.com"),
             CancellationToken.None);
 
-        var error = ExtractError(result).Should().BeOfType<Error.UnprocessableContent>().Which;
+        var error = ExtractError(result).Should().BeOfType<Error.InvalidInput>().Which;
         error.Fields.Items.Should().HaveCount(1);
     }
 
@@ -276,7 +276,7 @@ public class FluentValidationMessageValidatorAdapterTests
         using var singleScope = singleProvider.CreateScope();
         var singleAdapter = singleScope.ServiceProvider.GetRequiredService<IMessageValidator<CreateUserCommand>>();
         var singleResult = await singleAdapter.ValidateAsync(command, CancellationToken.None);
-        var singleError = ExtractError(singleResult).Should().BeOfType<Error.UnprocessableContent>().Which;
+        var singleError = ExtractError(singleResult).Should().BeOfType<Error.InvalidInput>().Which;
         var baselineCount = singleError.Fields.Items.Length;
 
         // Scan twice — must produce the same count, not double.
@@ -287,7 +287,7 @@ public class FluentValidationMessageValidatorAdapterTests
         using var doubleScope = doubleProvider.CreateScope();
         var doubleAdapter = doubleScope.ServiceProvider.GetRequiredService<IMessageValidator<CreateUserCommand>>();
         var doubleResult = await doubleAdapter.ValidateAsync(command, CancellationToken.None);
-        var doubleError = ExtractError(doubleResult).Should().BeOfType<Error.UnprocessableContent>().Which;
+        var doubleError = ExtractError(doubleResult).Should().BeOfType<Error.InvalidInput>().Which;
 
         doubleError.Fields.Items.Length.Should().Be(baselineCount, "scanning the same assembly twice must not double validator execution");
     }
@@ -318,7 +318,7 @@ public class FluentValidationMessageValidatorAdapterTests
             new CreateUserCommand(string.Empty, "bad"),
             CancellationToken.None);
 
-        var error = ExtractError(result).Should().BeOfType<Error.UnprocessableContent>().Which;
+        var error = ExtractError(result).Should().BeOfType<Error.InvalidInput>().Which;
         error.Fields.Items.Should().HaveCountGreaterThanOrEqualTo(2);
     }
 

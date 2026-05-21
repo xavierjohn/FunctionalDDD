@@ -31,7 +31,7 @@ using System.Diagnostics;
 ///
 /// // Value-threaded guard inside a pipeline:
 /// var validated = parseAmount
-///     .Ensure(amt =&gt; amt &gt; 0, Error.UnprocessableContent.ForField("amount", "must_be_positive"));
+///     .Ensure(amt =&gt; amt &gt; 0, Error.InvalidInput.ForField("amount", "must_be_positive"));
 /// </code>
 /// </example>
 [DebuggerStepThrough]

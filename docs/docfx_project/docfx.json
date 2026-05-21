@@ -10,6 +10,7 @@
             "Trellis.Asp/src/Trellis.Asp.csproj",
             "Trellis.Asp.ApiVersioning/src/Trellis.Asp.ApiVersioning.csproj",
             "Trellis.Http/src/Trellis.Http.csproj",
+            "Trellis.Http.Abstractions/src/Trellis.Http.Abstractions.csproj",
             "Trellis.Primitives/src/Trellis.Primitives.csproj",
             "Trellis.ServiceDefaults/src/Trellis.ServiceDefaults.csproj",
             "Trellis.Testing/src/Trellis.Testing.csproj",

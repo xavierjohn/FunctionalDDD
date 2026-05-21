@@ -44,7 +44,7 @@ public class TraverseAllTests : TestBase
     [Fact]
     public void TraverseAll_MultipleHeterogeneousFailures_ReturnsAggregate()
     {
-        var unprocessable = Error.UnprocessableContent.ForField("name", "validation.required", "Name is required");
+        var unprocessable = Error.InvalidInput.ForField("name", "validation.required", "Name is required");
         var conflict = new Error.Conflict(new ResourceRef("Resource", null), "duplicate");
         var items = new[] { "ok", "unprocessable", "conflict" };
 
@@ -67,17 +67,17 @@ public class TraverseAllTests : TestBase
 
         var result = items.TraverseAll(s => s switch
         {
-            "name" => Result.Fail<string>(new Error.UnprocessableContent(
+            "name" => Result.Fail<string>(new Error.InvalidInput(
                 EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("name"), "validation.required") { Detail = "Name required" }),
                 EquatableArray.Create(new RuleViolation("rule.one") { Detail = "Rule one" }))),
-            "email" => Result.Fail<string>(new Error.UnprocessableContent(
+            "email" => Result.Fail<string>(new Error.InvalidInput(
                 EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "validation.format") { Detail = "Invalid email" }),
                 EquatableArray.Create(new RuleViolation("rule.two") { Detail = "Rule two" }))),
             _ => Result.Ok(s),
         });
 
         result.Should().BeFailure();
-        var merged = result.Error.Should().BeOfType<Error.UnprocessableContent>().Subject;
+        var merged = result.Error.Should().BeOfType<Error.InvalidInput>().Subject;
         merged.Fields.Items.Select(f => f.Field.Path).Should().Equal(["/name", "/email"]);
         merged.Rules.Items.Select(r => r.ReasonCode).Should().Equal(["rule.one", "rule.two"]);
     }

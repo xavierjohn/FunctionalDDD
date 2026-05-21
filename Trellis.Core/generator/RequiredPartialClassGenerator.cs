@@ -111,8 +111,8 @@ using Trellis.PrimitiveValueObjectGenerator;
 ///         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity("CustomerId.TryCreate");
 ///         var field = fieldName.NormalizeFieldName("customerId");
 ///         return requiredGuidOrNothing
-///             .ToResult(() => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = "Customer Id cannot be empty." }})))
-///             .Ensure(x =&gt; x != Guid.Empty, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = "Customer Id cannot be empty." }})))
+///             .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = "Customer Id cannot be empty." }})))
+///             .Ensure(x =&gt; x != Guid.Empty, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = "Customer Id cannot be empty." }})))
 ///             .Map(guid =&gt; new CustomerId(guid));
 ///     }
 ///
@@ -304,7 +304,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                 onSuccess: value => value,
                 onFailure: error =>
                 {{
-                    var val = (Error.UnprocessableContent)error;
+                    var val = (Error.InvalidInput)error;
                     throw new FormatException(val.Fields.Items[0].Detail ?? val.Fields.Items[0].ReasonCode);
                 }});
         }}
@@ -403,7 +403,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                 onSuccess: value => value,
                 onFailure: error =>
                 {{
-                    var val = (Error.UnprocessableContent)error;
+                    var val = (Error.InvalidInput)error;
                     throw new FormatException(val.Fields.Items[0].Detail ?? val.Fields.Items[0].ReasonCode);
                 }});
         }}
@@ -451,15 +451,15 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
         var notDefaultCheck = g.HasNotDefault
             ? $@"
             if (value == Guid.Empty)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})));"
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})));"
             : "";
         var notDefaultNullableEnsure = g.HasNotDefault
             ? $@"
-                .Ensure(x => x != Guid.Empty, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
+                .Ensure(x => x != Guid.Empty, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
             : "";
         var notDefaultParsedEnsure = g.HasNotDefault
             ? $@"
-                .Ensure(_ => parsedGuid != Guid.Empty, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
+                .Ensure(_ => parsedGuid != Guid.Empty, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
             : "";
 
         return $@"
@@ -505,7 +505,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             string? additionalError = null;
             ValidateAdditional(value, field, ref additionalError);
             if (additionalError is not null)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             return Result.Ok(new {g.ClassName}(value));
         }}
 
@@ -514,13 +514,13 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             var validated = requiredGuidOrNothing
-                .ToResult(() => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }}))){notDefaultNullableEnsure};
+                .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }}))){notDefaultNullableEnsure};
             if (validated.TryGetValue(out var value))
             {{
                 string? additionalError = null;
                 ValidateAdditional(value, field, ref additionalError);
                 if (additionalError is not null)
-                    return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                    return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             }}
             return validated.Map(guid => new {g.ClassName}(guid));
         }}
@@ -531,14 +531,14 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             Guid parsedGuid = default;
             var validated = stringOrNull
-                .ToResult(() => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})))
-                .Ensure(x => Guid.TryParse(x, out parsedGuid), _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Guid should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)"" }}))){notDefaultParsedEnsure};
+                .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})))
+                .Ensure(x => Guid.TryParse(x, out parsedGuid), _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Guid should contain 32 digits with 4 dashes (xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)"" }}))){notDefaultParsedEnsure};
             if (validated.IsSuccess)
             {{
                 string? additionalError = null;
                 ValidateAdditional(parsedGuid, field, ref additionalError);
                 if (additionalError is not null)
-                    return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                    return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             }}
             return validated.Map(guid => new {g.ClassName}(parsedGuid));
         }}
@@ -665,14 +665,14 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
         {
             lengthChecks += $@"
     if (normalized.Length < {g.MinLength.Value})
-        return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at least {g.MinLength.Value} {"character" + (g.MinLength.Value == 1 ? "" : "s")}."" }})));";
+        return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at least {g.MinLength.Value} {"character" + (g.MinLength.Value == 1 ? "" : "s")}."" }})));";
         }
 
         if (g.MaxLength.HasValue)
         {
             lengthChecks += $@"
     if (normalized.Length > {g.MaxLength.Value})
-        return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be {g.MaxLength.Value} {"character" + (g.MaxLength.Value == 1 ? "" : "s")} or fewer."" }})));";
+        return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be {g.MaxLength.Value} {"character" + (g.MaxLength.Value == 1 ? "" : "s")} or fewer."" }})));";
         }
 
         // String validation pipeline, attribute-driven:
@@ -687,7 +687,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
         var notDefaultStep = g.HasNotDefault
             ? $@"
     if (normalized.Length == 0)
-        return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})));"
+        return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})));"
             : "";
 
         return $@"
@@ -713,13 +713,13 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             if (value is null)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})));
             var normalized = value;
             {trimStep}{notDefaultStep}{lengthChecks}
             string? additionalError = null;
             ValidateAdditional(normalized, field, ref additionalError);
             if (additionalError is not null)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             return Result.Ok(new {g.ClassName}(normalized));
         }}
 
@@ -750,15 +750,15 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
         var notDefaultIfCheck = g.HasNotDefault
             ? $@"
             if (value == 0)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})));"
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})));"
             : "";
         var notDefaultNullableEnsure = g.HasNotDefault
             ? $@"
-                .Ensure(x => x != 0, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
+                .Ensure(x => x != 0, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
             : "";
         var notDefaultParsedEnsure = g.HasNotDefault
             ? $@"
-                .Ensure(_ => parsedInt != 0, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
+                .Ensure(_ => parsedInt != 0, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
             : "";
 
         // Validate [Range] constraints are consistent
@@ -805,13 +805,13 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");{notDefaultIfCheck}
             if (value < {rangeMin})
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at least {rangeMin}."" }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at least {rangeMin}."" }})));
             if (value > {rangeMax})
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at most {rangeMax}."" }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at most {rangeMax}."" }})));
             string? additionalError = null;
             ValidateAdditional(value, field, ref additionalError);
             if (additionalError is not null)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             return Result.Ok(new {g.ClassName}(value));
         }}
 
@@ -820,15 +820,15 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             var validated = valueOrNothing
-                .ToResult(() => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }}))){notDefaultNullableEnsure}
-                .Ensure(x => x >= {rangeMin}, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at least {rangeMin}."" }})))
-                .Ensure(x => x <= {rangeMax}, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at most {rangeMax}."" }})));
+                .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }}))){notDefaultNullableEnsure}
+                .Ensure(x => x >= {rangeMin}, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at least {rangeMin}."" }})))
+                .Ensure(x => x <= {rangeMax}, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at most {rangeMax}."" }})));
             if (validated.TryGetValue(out var value))
             {{
                 string? additionalError = null;
                 ValidateAdditional(value, field, ref additionalError);
                 if (additionalError is not null)
-                    return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                    return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             }}
             return validated.Map(val => new {g.ClassName}(val));
         }}
@@ -839,16 +839,16 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             int parsedInt = 0;
             var validated = stringOrNull
-                .ToResult(() => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})))
-                .Ensure(x => int.TryParse(x, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out parsedInt), _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid integer."" }}))){notDefaultParsedEnsure}
-                .Ensure(_ => parsedInt >= {rangeMin}, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at least {rangeMin}."" }})))
-                .Ensure(_ => parsedInt <= {rangeMax}, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at most {rangeMax}."" }})));
+                .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})))
+                .Ensure(x => int.TryParse(x, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out parsedInt), _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid integer."" }}))){notDefaultParsedEnsure}
+                .Ensure(_ => parsedInt >= {rangeMin}, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at least {rangeMin}."" }})))
+                .Ensure(_ => parsedInt <= {rangeMax}, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at most {rangeMax}."" }})));
             if (validated.IsSuccess)
             {{
                 string? additionalError = null;
                 ValidateAdditional(parsedInt, field, ref additionalError);
                 if (additionalError is not null)
-                    return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                    return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             }}
             return validated.Map(_ => new {g.ClassName}(parsedInt));
         }}";
@@ -881,7 +881,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             string? additionalError = null;
             ValidateAdditional(value, field, ref additionalError);
             if (additionalError is not null)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             return Result.Ok(new {g.ClassName}(value));
         }}
 
@@ -890,13 +890,13 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             var validated = valueOrNothing
-                .ToResult(() => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }}))){notDefaultNullableEnsure};
+                .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }}))){notDefaultNullableEnsure};
             if (validated.TryGetValue(out var value))
             {{
                 string? additionalError = null;
                 ValidateAdditional(value, field, ref additionalError);
                 if (additionalError is not null)
-                    return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                    return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             }}
             return validated.Map(val => new {g.ClassName}(val));
         }}
@@ -907,14 +907,14 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             int parsedInt = 0;
             var validated = stringOrNull
-                .ToResult(() => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})))
-                .Ensure(x => int.TryParse(x, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out parsedInt), _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid integer."" }}))){notDefaultParsedEnsure};
+                .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})))
+                .Ensure(x => int.TryParse(x, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out parsedInt), _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid integer."" }}))){notDefaultParsedEnsure};
             if (validated.IsSuccess)
             {{
                 string? additionalError = null;
                 ValidateAdditional(parsedInt, field, ref additionalError);
                 if (additionalError is not null)
-                    return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                    return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             }}
             return validated.Map(_ => new {g.ClassName}(parsedInt));
         }}";
@@ -936,9 +936,9 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             if (value is null)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})));
             if (!int.TryParse(value, System.Globalization.NumberStyles.Integer, provider ?? System.Globalization.CultureInfo.InvariantCulture, out var parsed))
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid integer."" }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid integer."" }})));
             return TryCreate(parsed, fieldName);
         }}";
 
@@ -991,15 +991,15 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
         var notDefaultIfCheck = g.HasNotDefault
             ? $@"
             if (value == 0m)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})));"
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})));"
             : "";
         var notDefaultNullableEnsure = g.HasNotDefault
             ? $@"
-                .Ensure(x => x != 0m, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
+                .Ensure(x => x != 0m, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
             : "";
         var notDefaultParsedEnsure = g.HasNotDefault
             ? $@"
-                .Ensure(_ => parsedDecimal != 0m, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
+                .Ensure(_ => parsedDecimal != 0m, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
             : "";
 
         // Validate [Range] constraints are consistent
@@ -1065,13 +1065,13 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");{notDefaultIfCheck}
             if (value < {minStr}m)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at least {minStr}."" }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at least {minStr}."" }})));
             if (value > {maxStr}m)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at most {maxStr}."" }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at most {maxStr}."" }})));
             string? additionalError = null;
             ValidateAdditional(value, field, ref additionalError);
             if (additionalError is not null)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             return Result.Ok(new {g.ClassName}(value));
         }}
 
@@ -1080,15 +1080,15 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             var validated = valueOrNothing
-                .ToResult(() => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }}))){notDefaultNullableEnsure}
-                .Ensure(x => x >= {minStr}m, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at least {minStr}."" }})))
-                .Ensure(x => x <= {maxStr}m, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at most {maxStr}."" }})));
+                .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }}))){notDefaultNullableEnsure}
+                .Ensure(x => x >= {minStr}m, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at least {minStr}."" }})))
+                .Ensure(x => x <= {maxStr}m, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at most {maxStr}."" }})));
             if (validated.TryGetValue(out var value))
             {{
                 string? additionalError = null;
                 ValidateAdditional(value, field, ref additionalError);
                 if (additionalError is not null)
-                    return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                    return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             }}
             return validated.Map(val => new {g.ClassName}(val));
         }}
@@ -1099,16 +1099,16 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             decimal parsedDecimal = 0m;
             var validated = stringOrNull
-                .ToResult(() => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})))
-                .Ensure(x => decimal.TryParse(x, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out parsedDecimal), _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid decimal."" }}))){notDefaultParsedEnsure}
-                .Ensure(_ => parsedDecimal >= {minStr}m, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at least {minStr}."" }})))
-                .Ensure(_ => parsedDecimal <= {maxStr}m, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at most {maxStr}."" }})));
+                .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})))
+                .Ensure(x => decimal.TryParse(x, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out parsedDecimal), _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid decimal."" }}))){notDefaultParsedEnsure}
+                .Ensure(_ => parsedDecimal >= {minStr}m, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at least {minStr}."" }})))
+                .Ensure(_ => parsedDecimal <= {maxStr}m, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at most {maxStr}."" }})));
             if (validated.IsSuccess)
             {{
                 string? additionalError = null;
                 ValidateAdditional(parsedDecimal, field, ref additionalError);
                 if (additionalError is not null)
-                    return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                    return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             }}
             return validated.Map(_ => new {g.ClassName}(parsedDecimal));
         }}";
@@ -1141,7 +1141,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             string? additionalError = null;
             ValidateAdditional(value, field, ref additionalError);
             if (additionalError is not null)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             return Result.Ok(new {g.ClassName}(value));
         }}
 
@@ -1150,13 +1150,13 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             var validated = valueOrNothing
-                .ToResult(() => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }}))){notDefaultNullableEnsure};
+                .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }}))){notDefaultNullableEnsure};
             if (validated.TryGetValue(out var value))
             {{
                 string? additionalError = null;
                 ValidateAdditional(value, field, ref additionalError);
                 if (additionalError is not null)
-                    return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                    return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             }}
             return validated.Map(val => new {g.ClassName}(val));
         }}
@@ -1167,14 +1167,14 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             decimal parsedDecimal = 0m;
             var validated = stringOrNull
-                .ToResult(() => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})))
-                .Ensure(x => decimal.TryParse(x, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out parsedDecimal), _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid decimal."" }}))){notDefaultParsedEnsure};
+                .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})))
+                .Ensure(x => decimal.TryParse(x, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out parsedDecimal), _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid decimal."" }}))){notDefaultParsedEnsure};
             if (validated.IsSuccess)
             {{
                 string? additionalError = null;
                 ValidateAdditional(parsedDecimal, field, ref additionalError);
                 if (additionalError is not null)
-                    return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                    return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             }}
             return validated.Map(_ => new {g.ClassName}(parsedDecimal));
         }}";
@@ -1196,9 +1196,9 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             if (value is null)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})));
             if (!decimal.TryParse(value, System.Globalization.NumberStyles.Number, provider ?? System.Globalization.CultureInfo.InvariantCulture, out var parsed))
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid decimal."" }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid decimal."" }})));
             return TryCreate(parsed, fieldName);
         }}";
 
@@ -1249,15 +1249,15 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
         var notDefaultIfCheck = g.HasNotDefault
             ? $@"
             if (value == 0L)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})));"
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})));"
             : "";
         var notDefaultNullableEnsure = g.HasNotDefault
             ? $@"
-                .Ensure(x => x != 0L, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
+                .Ensure(x => x != 0L, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
             : "";
         var notDefaultParsedEnsure = g.HasNotDefault
             ? $@"
-                .Ensure(_ => parsedLong != 0L, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
+                .Ensure(_ => parsedLong != 0L, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
             : "";
 
         // Validate [Range] constraints are consistent
@@ -1304,13 +1304,13 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");{notDefaultIfCheck}
             if (value < {rangeLongMin}L)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at least {rangeLongMin}."" }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at least {rangeLongMin}."" }})));
             if (value > {rangeLongMax}L)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at most {rangeLongMax}."" }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at most {rangeLongMax}."" }})));
             string? additionalError = null;
             ValidateAdditional(value, field, ref additionalError);
             if (additionalError is not null)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             return Result.Ok(new {g.ClassName}(value));
         }}
 
@@ -1319,15 +1319,15 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             var validated = valueOrNothing
-                .ToResult(() => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }}))){notDefaultNullableEnsure}
-                .Ensure(x => x >= {rangeLongMin}L, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at least {rangeLongMin}."" }})))
-                .Ensure(x => x <= {rangeLongMax}L, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at most {rangeLongMax}."" }})));
+                .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }}))){notDefaultNullableEnsure}
+                .Ensure(x => x >= {rangeLongMin}L, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at least {rangeLongMin}."" }})))
+                .Ensure(x => x <= {rangeLongMax}L, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at most {rangeLongMax}."" }})));
             if (validated.TryGetValue(out var value))
             {{
                 string? additionalError = null;
                 ValidateAdditional(value, field, ref additionalError);
                 if (additionalError is not null)
-                    return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                    return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             }}
             return validated.Map(val => new {g.ClassName}(val));
         }}
@@ -1338,16 +1338,16 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             long parsedLong = 0;
             var validated = stringOrNull
-                .ToResult(() => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})))
-                .Ensure(x => long.TryParse(x, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out parsedLong), _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid long."" }}))){notDefaultParsedEnsure}
-                .Ensure(_ => parsedLong >= {rangeLongMin}L, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at least {rangeLongMin}."" }})))
-                .Ensure(_ => parsedLong <= {rangeLongMax}L, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at most {rangeLongMax}."" }})));
+                .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})))
+                .Ensure(x => long.TryParse(x, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out parsedLong), _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid long."" }}))){notDefaultParsedEnsure}
+                .Ensure(_ => parsedLong >= {rangeLongMin}L, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at least {rangeLongMin}."" }})))
+                .Ensure(_ => parsedLong <= {rangeLongMax}L, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} must be at most {rangeLongMax}."" }})));
             if (validated.IsSuccess)
             {{
                 string? additionalError = null;
                 ValidateAdditional(parsedLong, field, ref additionalError);
                 if (additionalError is not null)
-                    return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                    return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             }}
             return validated.Map(_ => new {g.ClassName}(parsedLong));
         }}";
@@ -1380,7 +1380,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             string? additionalError = null;
             ValidateAdditional(value, field, ref additionalError);
             if (additionalError is not null)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             return Result.Ok(new {g.ClassName}(value));
         }}
 
@@ -1389,13 +1389,13 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             var validated = valueOrNothing
-                .ToResult(() => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }}))){notDefaultNullableEnsure};
+                .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }}))){notDefaultNullableEnsure};
             if (validated.TryGetValue(out var value))
             {{
                 string? additionalError = null;
                 ValidateAdditional(value, field, ref additionalError);
                 if (additionalError is not null)
-                    return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                    return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             }}
             return validated.Map(val => new {g.ClassName}(val));
         }}
@@ -1406,14 +1406,14 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             long parsedLong = 0;
             var validated = stringOrNull
-                .ToResult(() => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})))
-                .Ensure(x => long.TryParse(x, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out parsedLong), _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid long."" }}))){notDefaultParsedEnsure};
+                .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})))
+                .Ensure(x => long.TryParse(x, System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out parsedLong), _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid long."" }}))){notDefaultParsedEnsure};
             if (validated.IsSuccess)
             {{
                 string? additionalError = null;
                 ValidateAdditional(parsedLong, field, ref additionalError);
                 if (additionalError is not null)
-                    return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                    return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             }}
             return validated.Map(_ => new {g.ClassName}(parsedLong));
         }}";
@@ -1435,9 +1435,9 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             if (value is null)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})));
             if (!long.TryParse(value, System.Globalization.NumberStyles.Integer, provider ?? System.Globalization.CultureInfo.InvariantCulture, out var parsed))
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid long."" }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid long."" }})));
             return TryCreate(parsed, fieldName);
         }}";
 
@@ -1503,7 +1503,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             string? additionalError = null;
             ValidateAdditional(value, field, ref additionalError);
             if (additionalError is not null)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             return Result.Ok(new {g.ClassName}(value));
         }}
 
@@ -1512,13 +1512,13 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             var validated = valueOrNothing
-                .ToResult(() => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})));
+                .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})));
             if (validated.TryGetValue(out var value))
             {{
                 string? additionalError = null;
                 ValidateAdditional(value, field, ref additionalError);
                 if (additionalError is not null)
-                    return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                    return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             }}
             return validated.Map(val => new {g.ClassName}(val));
         }}
@@ -1529,14 +1529,14 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             bool parsedBool = false;
             var validated = stringOrNull
-                .ToResult(() => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})))
-                .Ensure(x => bool.TryParse(x, out parsedBool), _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid boolean (true or false)."" }})));
+                .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})))
+                .Ensure(x => bool.TryParse(x, out parsedBool), _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid boolean (true or false)."" }})));
             if (validated.IsSuccess)
             {{
                 string? additionalError = null;
                 ValidateAdditional(parsedBool, field, ref additionalError);
                 if (additionalError is not null)
-                    return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                    return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             }}
             return validated.Map(_ => new {g.ClassName}(parsedBool));
         }}
@@ -1577,15 +1577,15 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
         var notDefaultCheck = g.HasNotDefault
             ? $@"
             if (value == DateTime.MinValue)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})));"
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})));"
             : "";
         var notDefaultNullableEnsure = g.HasNotDefault
             ? $@"
-                .Ensure(x => x != DateTime.MinValue, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
+                .Ensure(x => x != DateTime.MinValue, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
             : "";
         var notDefaultParsedEnsure = g.HasNotDefault
             ? $@"
-                .Ensure(_ => parsedDateTime != DateTime.MinValue, _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
+                .Ensure(_ => parsedDateTime != DateTime.MinValue, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
             : "";
 
         return $@"
@@ -1613,7 +1613,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             string? additionalError = null;
             ValidateAdditional(value, field, ref additionalError);
             if (additionalError is not null)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             return Result.Ok(new {g.ClassName}(value));
         }}
 
@@ -1622,13 +1622,13 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             var validated = valueOrNothing
-                .ToResult(() => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }}))){notDefaultNullableEnsure};
+                .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }}))){notDefaultNullableEnsure};
             if (validated.TryGetValue(out var value))
             {{
                 string? additionalError = null;
                 ValidateAdditional(value, field, ref additionalError);
                 if (additionalError is not null)
-                    return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                    return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             }}
             return validated.Map(val => new {g.ClassName}(val));
         }}
@@ -1639,14 +1639,14 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             DateTime parsedDateTime = default;
             var validated = stringOrNull
-                .ToResult(() => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})))
-                .Ensure(x => DateTime.TryParse(x, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out parsedDateTime), _ => new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid date/time."" }}))){notDefaultParsedEnsure};
+                .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})))
+                .Ensure(x => DateTime.TryParse(x, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out parsedDateTime), _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid date/time."" }}))){notDefaultParsedEnsure};
             if (validated.IsSuccess)
             {{
                 string? additionalError = null;
                 ValidateAdditional(parsedDateTime, field, ref additionalError);
                 if (additionalError is not null)
-                    return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+                    return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
             }}
             return validated.Map(_ => new {g.ClassName}(parsedDateTime));
         }}
@@ -1664,9 +1664,9 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             if (value is null)
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})));
             if (!DateTime.TryParse(value, provider ?? System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out var parsed))
-                return Result.Fail<{g.ClassName}>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid date/time."" }})));
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid date/time."" }})));
             return TryCreate(parsed, fieldName);
         }}
 

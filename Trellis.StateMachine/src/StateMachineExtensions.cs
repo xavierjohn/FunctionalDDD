@@ -12,7 +12,7 @@ using Trellis;
 /// <para>
 /// These extensions pre-check the trigger with <see cref="StateMachine{TState, TTrigger}.CanFire(TTrigger)"/>
 /// (which honors <c>PermitIf</c>/<c>IgnoreIf</c> guards) and translate disallowed transitions
-/// into an <see cref="Error.UnprocessableContent"/> (HTTP 422) — the requested action is a
+/// into an <see cref="Error.InvalidInput"/> (HTTP 422) — the requested action is a
 /// semantic rule violation against the aggregate's current state, not a concurrent-modification
 /// conflict. Exceptions thrown by user-supplied entry/exit/transition actions are not swallowed.
 /// </para>
@@ -45,7 +45,7 @@ public static class StateMachineExtensions
     /// <param name="trigger">The trigger to fire.</param>
     /// <returns>
     /// A <see cref="Result{TState}"/> containing the new state if the transition is valid,
-    /// or an <see cref="Error.UnprocessableContent"/> carrying a single
+    /// or an <see cref="Error.InvalidInput"/> carrying a single
     /// <see cref="RuleViolation"/> with reason code <c>state.machine.invalid.transition</c>
     /// if the trigger cannot be fired from the current state (including when blocked by a guard).
     /// </returns>
@@ -61,7 +61,7 @@ public static class StateMachineExtensions
     /// <b>HTTP semantics.</b> An invalid state-machine transition is a semantic rule violation
     /// (the aggregate cannot honor the requested action from its current state), not a
     /// concurrent-modification conflict — retry will not succeed. The returned error is therefore
-    /// <see cref="Error.UnprocessableContent"/> (HTTP 422), not <see cref="Error.Conflict"/>
+    /// <see cref="Error.InvalidInput"/> (HTTP 422), not <see cref="Error.Conflict"/>
     /// (HTTP 409). Callers can still distinguish state-machine rejections from other 422s by
     /// matching on the <see cref="RuleViolation.ReasonCode"/> value <c>state.machine.invalid.transition</c>.
     /// </para>
@@ -87,7 +87,7 @@ public static class StateMachineExtensions
     ///
     /// // Invalid transition — Idle has no Trigger.Start defined here.
     /// Result&lt;State&gt; invalid = machine.FireResult(Trigger.Pause);
-    /// // invalid.IsFailure == true; invalid.Error is Error.UnprocessableContent.
+    /// // invalid.IsFailure == true; invalid.Error is Error.InvalidInput.
     /// </code>
     /// </example>
     public static Result<TState> FireResult<TState, TTrigger>(
@@ -108,7 +108,7 @@ public static class StateMachineExtensions
         // unhandled-trigger handler is in effect it throws InvalidOperationException —
         // because we already know CanFire returned false, any InvalidOperationException
         // from this Fire call is by definition the unhandled-trigger path, so we translate
-        // it to Error.UnprocessableContent (HTTP 422) — invalid state-machine transitions
+        // it to Error.InvalidInput (HTTP 422) — invalid state-machine transitions
         // are semantic rule violations, not concurrent-modification conflicts. Other
         // exception types (custom user handlers throwing typed exceptions) propagate untouched.
         try
@@ -121,11 +121,11 @@ public static class StateMachineExtensions
             // Populate Detail on BOTH the outer Error.Detail AND the single RuleViolation.Detail
             // so HTTP-422 rendering surfaces the same message in both Problem Details.detail
             // (top-level, read from Error.Detail) and per-rule context (read from
-            // RuleViolation.Detail). Error.UnprocessableContent.ForRule(reasonCode, detail)
+            // RuleViolation.Detail). Error.InvalidInput.ForRule(reasonCode, detail)
             // sets RuleViolation.Detail only; the `with { Detail = detail }` lifts it to
             // Error.Detail. Trellis.Asp.ResponseFailureWriter consumes both surfaces.
             return Result.Fail<TState>(
-                Error.UnprocessableContent.ForRule(
+                Error.InvalidInput.ForRule(
                     reasonCode: "state.machine.invalid.transition",
                     detail: detail) with
                 { Detail = detail });

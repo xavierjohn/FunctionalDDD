@@ -57,9 +57,9 @@ public class TryTests
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2201:Do not raise reserved exception types")]
     public void Custom_exception_mapper()
     {
-        var r = Result.Try<int>(() => throw new Exception("HideMe"), ex => new Error.BadRequest("bad.request") { Detail = "Mapped" });
+        var r = Result.Try<int>(() => throw new Exception("HideMe"), ex => Error.InvalidInput.ForRule("bad.request", "Mapped"));
 
         r.IsFailure.Should().BeTrue();
-        r.Error!.Should().Be(new Error.BadRequest("bad.request") { Detail = "Mapped" });
+        r.Error!.Should().Be(Error.InvalidInput.ForRule("bad.request", "Mapped"));
     }
 }

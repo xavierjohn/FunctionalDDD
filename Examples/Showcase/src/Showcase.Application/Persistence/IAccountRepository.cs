@@ -15,7 +15,8 @@ public interface IAccountRepository
     /// Returns at most <paramref name="limit"/> accounts after <paramref name="cursor"/> (or
     /// from the start when <paramref name="cursor"/> is <c>null</c>), ordered by
     /// <see cref="AccountId"/> ascending. The server applies a hard cap of 5 regardless of
-    /// the requested limit. A malformed cursor produces <see cref="Error.BadRequest"/>.
+    /// the requested limit. A malformed cursor produces <see cref="Error.InvalidInput"/>
+    /// carrying a field violation on <c>cursor</c>.
     /// </summary>
     Result<Page<BankAccount>> GetPage(int limit, Cursor? cursor);
 }
@@ -73,7 +74,7 @@ public sealed class InMemoryAccountRepository : IAccountRepository
             if (!TryDecodeCursor(c, out var decoded))
             {
                 return Result.Fail<Page<BankAccount>>(
-                    new Error.BadRequest("invalid_cursor") { Detail = "Cursor is not a recognized token." });
+                    Error.InvalidInput.ForField("cursor", "invalid_cursor", "Cursor is not a recognized token."));
             }
 
             afterId = decoded;

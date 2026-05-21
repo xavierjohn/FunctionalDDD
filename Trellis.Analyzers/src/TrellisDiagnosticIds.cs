@@ -63,7 +63,7 @@ public static class TrellisDiagnosticIds
 
     // TRLS011 (EmptyErrorMessage / EmptyErrorMessageAnalyzer) was removed in
     // v3-alpha. It hard-coded the v1 static factory names (Error.Validation, // v1-stale-ok
-    // Error.NotFound, Error.Unauthorized, Error.Forbidden, Error.Conflict,
+    // Error.NotFound, Error.AuthenticationRequired, Error.Forbidden, Error.Conflict,
     // Error.Unexpected) as its detection set. None of those factories exist
     // on the closed-ADT Error type (only UnprocessableContent.ForField/
     // ForRule survived), so the analyzer never matched a real call site.

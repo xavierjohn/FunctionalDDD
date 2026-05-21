@@ -193,7 +193,7 @@ public static Result<Product> TryCreateExisting(ProductId id, ProductName name, 
 private static Result<Unit> Validate(ProductName name, Sku sku)
 {
     if (sku.Value.StartsWith("LEGACY-", StringComparison.OrdinalIgnoreCase))
-        return Result.Fail(new Error.UnprocessableContent(EquatableArray.Create(
+        return Result.Fail(new Error.InvalidInput(EquatableArray.Create(
             new FieldViolation(InputPointer.ForProperty(nameof(sku)), "validation.error")
             {
                 Detail = "SKU cannot start with LEGACY.",

@@ -108,7 +108,7 @@ public class AuthorizationBehaviorTests
     {
         // "No authenticated actor" is modelled as Maybe<Actor>.None on the IActorProvider
         // contract — client-error state, not an exception. The authorization pipeline must
-        // short-circuit with Error.Unauthorized (HTTP 401) and must not invoke the handler.
+        // short-circuit with Error.AuthenticationRequired (HTTP 401) and must not invoke the handler.
         var behavior = new AuthorizationBehavior<AdminCommand, Result<string>>(new NoActorProvider());
         var command = new AdminCommand("data");
         var (next, tracker) = NextDelegate.TrackingAsync<AdminCommand, Result<string>>(
@@ -117,7 +117,7 @@ public class AuthorizationBehaviorTests
         var result = await behavior.Handle(command, next, CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.Unauthorized>();
+        result.UnwrapError().Should().BeOfType<Error.AuthenticationRequired>();
         tracker.WasInvoked.Should().BeFalse();
     }
 
@@ -165,7 +165,7 @@ public class AuthorizationBehaviorTests
 
     /// <summary>
     /// Actor provider that returns <see cref="Maybe{T}.None"/> — represents an unauthenticated
-    /// request. The authorization pipeline maps this to <see cref="Error.Unauthorized"/> (HTTP 401).
+    /// request. The authorization pipeline maps this to <see cref="Error.AuthenticationRequired"/> (HTTP 401).
     /// </summary>
     private sealed class NoActorProvider : IActorProvider
     {

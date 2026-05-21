@@ -1,4 +1,4 @@
-namespace Trellis.Mediator;
+﻿namespace Trellis.Mediator;
 
 using Trellis.Authorization;
 
@@ -16,7 +16,7 @@ internal static class ActorResolution
     /// Resolves the current actor via <paramref name="actorProvider"/>. Returns the actor on
     /// success; returns <see langword="null"/> when no authenticated actor is available, in
     /// which case the caller should short-circuit the pipeline with
-    /// <see cref="Error.Unauthorized"/> (HTTP 401).
+    /// <see cref="Error.AuthenticationRequired"/> (HTTP 401).
     /// </summary>
     /// <remarks>
     /// <para>
@@ -25,7 +25,7 @@ internal static class ActorResolution
     /// implementations that legitimately cannot operate (no <c>HttpContext</c>, mapping
     /// delegate threw, etc.) still throw <see cref="System.InvalidOperationException"/>, which
     /// propagates here unhandled and is caught later by
-    /// <see cref="ExceptionBehavior{TMessage,TResponse}"/> as <see cref="Error.InternalServerError"/>
+    /// <see cref="ExceptionBehavior{TMessage,TResponse}"/> as <see cref="Error.Unexpected"/>
     /// (HTTP 500). That preserves the bug-vs-auth-state distinction.
     /// </para>
     /// </remarks>
@@ -38,13 +38,11 @@ internal static class ActorResolution
     }
 
     /// <summary>
-    /// Canonical <see cref="Error.Unauthorized"/> instance for the "no authenticated actor"
-    /// short-circuit. Empty <see cref="Error.Unauthorized.Challenges"/> defers the
-    /// <c>WWW-Authenticate</c> header to the configured ASP.NET Core authentication handler,
-    /// which knows the scheme name (Bearer, etc.) and parameters; the mediator layer does
-    /// not have that knowledge. Consumers needing strict RFC 9110 §11.6.1 compliance should
-    /// ensure their auth handler writes <c>WWW-Authenticate</c> on 401 responses.
+    /// Canonical <see cref="Error.AuthenticationRequired"/> instance for the "no authenticated actor"
+    /// short-circuit. The ASP.NET boundary synthesizes <c>WWW-Authenticate</c> from the
+    /// configured authentication handler when it writes a 401 response, so the mediator layer
+    /// does not need to know the scheme name or challenge parameters.
     /// </summary>
-    public static Error.Unauthorized AuthenticationRequired() =>
+    public static Error.AuthenticationRequired AuthenticationRequired() =>
         new() { Detail = "Authentication required." };
 }

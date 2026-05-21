@@ -83,7 +83,7 @@
 /// // Create from string with validation
 /// var result2 = CustomerId.TryCreate("550e8400-e29b-41d4-a716-446655440000");
 /// // Returns: Success(CustomerId) if valid GUID format
-/// // Returns: Failure(Error.UnprocessableContent) if invalid format
+/// // Returns: Failure(Error.InvalidInput) if invalid format
 /// // (or, when [NotDefault] is applied, also Failure if the parsed GUID is Guid.Empty)
 /// 
 /// // With custom field name for validation errors
@@ -184,7 +184,7 @@
 ///     
 ///     public Result&lt;Order&gt; AddLine(ProductId productId, int quantity) =>
 ///         this.ToResult()
-///             .Ensure(_ => quantity > 0, new Error.UnprocessableContent(EquatableArray&lt;FieldViolation&gt;.Empty) { Detail = "Quantity must be positive" })
+///             .Ensure(_ => quantity > 0, new Error.InvalidInput(EquatableArray&lt;FieldViolation&gt;.Empty) { Detail = "Quantity must be positive" })
 ///             .Tap(_ => _lines.Add(new OrderLine(productId, quantity)));
 ///     
 ///     // Compiler prevents mixing IDs:

@@ -22,14 +22,14 @@ public sealed class TestM2Sku : ScalarValueObject<TestM2Sku, string>, IScalarVal
         var field = fieldName ?? "testM2Sku";
         if (string.IsNullOrWhiteSpace(value))
         {
-            return Result.Fail<TestM2Sku>(new Error.UnprocessableContent(EquatableArray.Create(
+            return Result.Fail<TestM2Sku>(new Error.InvalidInput(EquatableArray.Create(
                 new FieldViolation(InputPointer.ForProperty(field), "validation.required")
                 { Detail = "TestM2Sku is required." })));
         }
 
         if (value!.Length < 3)
         {
-            return Result.Fail<TestM2Sku>(new Error.UnprocessableContent(EquatableArray.Create(
+            return Result.Fail<TestM2Sku>(new Error.InvalidInput(EquatableArray.Create(
                 new FieldViolation(InputPointer.ForProperty(field), "validation.length.min")
                 { Detail = "TestM2Sku must be at least 3 characters long." })));
         }

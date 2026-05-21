@@ -1,4 +1,4 @@
-# Debugging Railway Oriented Programming
+﻿# Debugging Railway Oriented Programming
 
 Chained functional pipelines can be hard to debug. This guide covers the built-in debugger support, stepping behavior, debug extensions, and practical strategies for diagnosing failures in ROP chains.
 
@@ -22,7 +22,7 @@ Expanding a `Result<T>` in the debugger shows a structured proxy view:
 | `Value` — the wrapped value | `Error` — the `Error` object |
 | | `Code` — e.g. `"validation.error"` |
 | | `Detail` — e.g. `"Email is invalid"` |
-| | `ErrorType` — e.g. `"Error.UnprocessableContent"` |
+| | `ErrorType` — e.g. `"Error.InvalidInput"` |
 | | `Instance` — optional correlation ID |
 
 ### Error
@@ -33,7 +33,7 @@ Display:  Email address is not valid.
 
 The base `Error` type shows its `Detail` property directly.
 
-### Error.UnprocessableContent
+### Error.InvalidInput
 
 ```
 Display:  Validation: 2 field(s) — Email address is not valid; First name is required.
@@ -57,7 +57,7 @@ Display:  Aggregate: 3 error(s)
 Expanding shows each contained error with its type:
 
 ```
-▶ Error.UnprocessableContent: Email is invalid
+▶ Error.InvalidInput: Email is invalid
 ▶ Error.NotFound: User 123 not found
 ▶ Error.Conflict: Order already exists
 ```
@@ -104,7 +104,7 @@ spans, making it visible in .NET Aspire, Application Insights, Jaeger, and simil
 | Method | What it does |
 |--------|-------------|
 | `.Debug("label")` | Logs status + value/error as Activity tags |
-| `.DebugDetailed("label")` | Same as `Debug` plus error type, `Error.UnprocessableContent` fields, `Error.Aggregate` contents |
+| `.DebugDetailed("label")` | Same as `Debug` plus error type, `Error.InvalidInput` fields, `Error.Aggregate` contents |
 | `.DebugWithStack("label")` | Same as `Debug` plus up to 10 stack frames |
 | `.DebugOnSuccess(v => …)` | Runs a custom action (only on success) |
 | `.DebugOnFailure(err => …)` | Runs a custom action (only on failure) |
@@ -116,7 +116,7 @@ All methods have `Task` and `ValueTask` async variants (`DebugAsync`, `DebugDeta
 ```csharp
 var result = GetUser(id)
     .Debug("After GetUser")
-    .Ensure(u => u.IsActive, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Inactive" })
+    .Ensure(u => u.IsActive, Error.InvalidInput.ForRule("validation.error", "Inactive"))
     .Debug("After Ensure")
     .Bind(ProcessUser)
     .DebugDetailed("Final result");
@@ -146,7 +146,7 @@ var result = await GetUserAsync(id)
 ```csharp
 var result = await GetUserAsync(id)
     .TapAsync(u => _logger.LogDebug("Found user: {Id}", u.Id))
-    .EnsureAsync(u => u.IsActive, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "User inactive" })
+    .EnsureAsync(u => u.IsActive, Error.InvalidInput.ForRule("validation.error", "User inactive"))
     .TapOnFailureAsync(err => _logger.LogWarning("Validation failed: {Error}", err.Detail))
     .BindAsync(u => GetOrdersAsync(u.Id))
     .TapAsync(orders => _logger.LogDebug("Found {Count} orders", orders.Count))
@@ -158,7 +158,7 @@ var result = await GetUserAsync(id)
 ```csharp
 var result = await GetUserAsync(id)
     .ToResultAsync(new Error.NotFound(ResourceRef.For("User", id)) { Detail = $"User {id} not found" })
-    .EnsureAsync(u => u.IsActive, new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("isActive"), "validation.error") { Detail = "User account is inactive" })))
+    .EnsureAsync(u => u.IsActive, Error.InvalidInput.ForField("isActive", "validation.error", "User account is inactive"))
     .BindAsync(u => GetOrdersAsync(u.Id))
     .EnsureAsync(orders => orders.Any(), new Error.NotFound(ResourceRef.For("User", id)) { Detail = $"No orders for user {id}" });
 ```
@@ -170,7 +170,7 @@ var userResult = await GetUserAsync(id)
     .ToResultAsync(new Error.NotFound(ResourceRef.For("User", id)) { Detail = "User not found" });
 
 var activeResult = userResult
-    .Ensure(u => u.IsActive, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Inactive" });
+    .Ensure(u => u.IsActive, Error.InvalidInput.ForRule("validation.error", "Inactive"));
 
 var ordersResult = await activeResult
     .BindAsync(u => GetOrdersAsync(u.Id));
@@ -194,7 +194,7 @@ var result = await GetUserAsync(id)
 ### Combine error inspection
 
 `Combine` aggregates all errors. The debugger proxy makes inspection easy —
-expand the error to see if it's a `Error.UnprocessableContent` (merged fields) or an
+expand the error to see if it's a `Error.InvalidInput` (merged fields) or an
 `Error.Aggregate` (mixed types). You can also log them:
 
 ```csharp
@@ -206,9 +206,9 @@ var result = EmailAddress.TryCreate(email)
         if (error is Error.Aggregate agg)
             foreach (var err in agg.Errors)
                 _logger.LogWarning("{Type}: {Detail}", err.GetType().Name, err.Detail);
-        else if (error is Error.UnprocessableContent val)
-            foreach (var field in val.FieldErrors)
-                _logger.LogWarning("{Field}: {Details}", field.FieldName, string.Join(", ", field.Details));
+        else if (error is Error.InvalidInput val)
+            foreach (var field in val.Fields)
+                _logger.LogWarning("{Field}: {Reason} ({Detail})", field.Field.Path, field.ReasonCode, field.Detail);
         else
             _logger.LogWarning("{Detail}", error.Detail);
     });
@@ -270,7 +270,7 @@ public void Should_Fail_With_Validation_Error()
     var result = ProcessOrder(invalidOrder);
 
     result.IsFailure.Should().BeTrue();
-    result.Error.Should().BeOfType<Error.UnprocessableContent>();
+    result.Error.Should().BeOfType<Error.InvalidInput>();
     result.Error.Detail.Should().Contain("invalid quantity");
 }
 ```
@@ -281,12 +281,12 @@ public void Should_Fail_With_Validation_Error()
 // Compose from testable pieces
 public Result<User> GetActiveUser(string id) =>
     GetUser(id)
-        .Ensure(u => u.IsActive, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "User is inactive" });
+        .Ensure(u => u.IsActive, Error.InvalidInput.ForRule("validation.error", "User is inactive"));
 
 public Result<User> ValidateEmail(User user) =>
     user.Email.Value.Contains('@')
         ? Result.Ok(user)
-        : Result.Fail<User>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "validation.error") { Detail = "Invalid email" })));
+        : Result.Fail<User>(Error.InvalidInput.ForField("email", "validation.error", "Invalid email"));
 
 // Compose
 public Result<User> ValidateAndProcess(string id) =>

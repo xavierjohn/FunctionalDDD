@@ -32,10 +32,10 @@ public class IpAddress : ScalarValueObject<IpAddress, string>, IScalarValue<IpAd
         using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(nameof(IpAddress) + '.' + nameof(TryCreate));
         var field = fieldName.NormalizeFieldName("ipAddress");
         if (string.IsNullOrWhiteSpace(value))
-            return Result.Fail<IpAddress>(Error.UnprocessableContent.ForField(field, "validation.error", "IP address is required."));
+            return Result.Fail<IpAddress>(Error.InvalidInput.ForField(field, "validation.error", "IP address is required."));
         var trimmed = value.Trim();
         if (!IPAddress.TryParse(trimmed, out var ip))
-            return Result.Fail<IpAddress>(Error.UnprocessableContent.ForField(field, "validation.error", "IP address must be a valid IPv4 or IPv6."));
+            return Result.Fail<IpAddress>(Error.InvalidInput.ForField(field, "validation.error", "IP address must be a valid IPv4 or IPv6."));
         return Result.Ok(new IpAddress(trimmed, ip));
     }
 

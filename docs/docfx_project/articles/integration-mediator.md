@@ -105,12 +105,12 @@ public sealed class PublishDocumentHandler : ICommandHandler<PublishDocumentComm
 
 | # | Behavior | Runs for | What it does |
 |---|---|---|---|
-| 1 | `ExceptionBehavior` | all messages | Catches everything except `OperationCanceledException`; returns `Error.InternalServerError`. |
+| 1 | `ExceptionBehavior` | all messages | Catches everything except `OperationCanceledException`; returns `Error.Unexpected`. |
 | 2 | `TracingBehavior` | all messages | Opens an `Activity` under `"Trellis.Mediator"`; tags `error.code` / `error.type` on failure. |
 | 3 | `LoggingBehavior` | all messages | Structured start/end with elapsed ms; emits `Error.Code` on failure. |
 | 4 | `AuthorizationBehavior` | `IAuthorize` messages | Resolves the actor and checks `RequiredPermissions`. |
 | 5 | `ResourceAuthorizationBehavior` *(opt-in)* | `IAuthorizeResource<T>` messages | Loads the resource and calls `Authorize(actor, resource)`. Inserted by `AddResourceAuthorization(...)` immediately before `ValidationBehavior`. |
-| 6 | `ValidationBehavior` | all messages | Runs `IValidate.Validate()` and every `IMessageValidator<TMessage>`; aggregates `Error.UnprocessableContent`. |
+| 6 | `ValidationBehavior` | all messages | Runs `IValidate.Validate()` and every `IMessageValidator<TMessage>`; aggregates `Error.InvalidInput`. |
 | 7 | `DomainEventDispatchBehavior` *(opt-in)* | `ICommand<TResponse>` where `TResponse : IResult` | After a successful response, extracts the aggregate via `IResult<TAggregate>` and publishes the events it raised. Inserted by `AddDomainEventDispatch(...)`. See [Domain event dispatch](#domain-event-dispatch). |
 | 8 | `TransactionalCommandBehavior` *(opt-in, EFCore)* | `ICommand<TResponse>` | `IUnitOfWork.CommitAsync` on success; wraps each command in `using var scope = unitOfWork.BeginScope();` so nested commands defer commit to the outermost scope. Register **after** `AddTrellisBehaviors()` so it lands innermost. See [Nested commands and scope-aware commit](integration-ef.md#nested-commands-and-scope-aware-commit). |
 
@@ -273,9 +273,9 @@ public static class Composition
 
 **Aggregation rules**
 
-- All `Error.UnprocessableContent` failures from both sources are merged into a single `Error.UnprocessableContent` whose `Fields` and `Rules` collect every reported violation. The caller never gets "the first failure" — they get the full list in one round trip.
-- An `Error.UnprocessableContent` with empty `Fields` and empty `Rules` still short-circuits the handler.
-- A non-`Error.UnprocessableContent` failure (e.g., `Error.Conflict`, `Error.Forbidden`) returned by any source short-circuits the stage immediately and is propagated as-is.
+- All `Error.InvalidInput` failures from both sources are merged into a single `Error.InvalidInput` whose `Fields` and `Rules` collect every reported violation. The caller never gets "the first failure" — they get the full list in one round trip.
+- An `Error.InvalidInput` with empty `Fields` and empty `Rules` still short-circuits the handler.
+- A non-`Error.InvalidInput` failure (e.g., `Error.Conflict`, `Error.Forbidden`) returned by any source short-circuits the stage immediately and is propagated as-is.
 
 ```csharp
 using System.Threading;
@@ -302,7 +302,7 @@ public sealed class ArchiveDocumentHandler : ICommandHandler<ArchiveDocumentComm
 
 ### Custom `IMessageValidator<TMessage>`
 
-Implement `IMessageValidator<TMessage>` to plug an arbitrary async validator into the same stage as `IValidate`. Field-level violations should be wrapped in `Error.UnprocessableContent` so they aggregate with other validators' output.
+Implement `IMessageValidator<TMessage>` to plug an arbitrary async validator into the same stage as `IValidate`. Field-level violations should be wrapped in `Error.InvalidInput` so they aggregate with other validators' output.
 
 ```csharp
 using System.Threading;
@@ -327,7 +327,7 @@ public sealed class UniqueEmailValidator(IUserDirectory directory)
     {
         var taken = await directory.IsEmailTakenAsync(message.Email, cancellationToken).ConfigureAwait(false);
         return taken
-            ? Result.Fail(new Error.UnprocessableContent(EquatableArray.Create(
+            ? Result.Fail(new Error.InvalidInput(EquatableArray.Create(
                 new FieldViolation(InputPointer.ForProperty(nameof(message.Email)), "email.taken") { Detail = "Email already in use." })))
             : Result.Ok();
     }
@@ -342,7 +342,7 @@ public static class Composition
 
 ### FluentValidation adapter
 
-Add the optional `Trellis.FluentValidation` package and call `AddTrellisFluentValidation()` to surface every registered `IValidator<TMessage>` through `IMessageValidator<TMessage>`. The adapter normalizes FluentValidation property paths (e.g., `Lines[0].Memo`) into RFC 6901 JSON Pointers (`/Lines/0/Memo`) so `Error.UnprocessableContent.Fields` has a consistent pointer shape regardless of which source produced each violation.
+Add the optional `Trellis.FluentValidation` package and call `AddTrellisFluentValidation()` to surface every registered `IValidator<TMessage>` through `IMessageValidator<TMessage>`. The adapter normalizes FluentValidation property paths (e.g., `Lines[0].Memo`) into RFC 6901 JSON Pointers (`/Lines/0/Memo`) so `Error.InvalidInput.Fields` has a consistent pointer shape regardless of which source produced each violation.
 
 ```csharp
 using System.Collections.Generic;
@@ -501,9 +501,9 @@ When the response is `Result<Unit>` or any non-aggregate shape and you still nee
 `ExceptionBehavior` is the outermost behavior. It:
 
 - Catches every unhandled exception **except** `OperationCanceledException` (which propagates so cancellation flows correctly).
-- Logs the exception, then returns `TResponse.CreateFailure(new Error.InternalServerError(Guid.NewGuid().ToString("N")) { Detail = "An unexpected error occurred while processing the request." })`.
+- Logs the exception, then returns `TResponse.CreateFailure(new Error.Unexpected(Guid.NewGuid().ToString("N")) { Detail = "An unexpected error occurred while processing the request." })`.
 
-The generated `"N"`-format Guid is the fault correlation id surfaced in `Error.Code` so operators can join the failed response to the logged stack trace.
+The generated `"N"`-format Guid becomes `Error.ReasonCode` (and therefore `Error.Code`) today, so operators can join the failed response to the logged stack trace.
 
 > [!WARNING]
 > Don't use exceptions for expected business outcomes — return `Result<T>` failures instead and let `ExceptionBehavior` handle only true surprises.

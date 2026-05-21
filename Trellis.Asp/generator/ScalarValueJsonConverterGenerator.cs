@@ -547,7 +547,7 @@ internal sealed class GenerateScalarValueConvertersAttribute : Attribute
         sb.AppendLine("            onSuccess: v => v,");
         sb.AppendLine("            onFailure: createError =>");
         sb.AppendLine("            {");
-        sb.AppendLine("                if (createError is global::Trellis.Error.UnprocessableContent unprocessable)");
+        sb.AppendLine("                if (createError is global::Trellis.Error.InvalidInput unprocessable)");
         sb.AppendLine("                {");
         sb.AppendLine("                    global::Trellis.Asp.ValidationErrorsContext.AddError(unprocessable);");
         sb.AppendLine("                }");

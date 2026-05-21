@@ -461,9 +461,9 @@ internal sealed class PagedSuccessHeaderWrapper(
                     {
                         // 412 deliberately does NOT inherit the selector value — a transient
                         // client error must not be cached as a negative response.
-                        var pf = new Error.PreconditionFailed(
+                        var pf = new Error.TransportFault(new HttpError.PreconditionFailed(
                             preconditionFailedRef,
-                            failedKind ?? PreconditionKind.IfMatch)
+                            failedKind ?? PreconditionKind.IfMatch))
                         { Detail = "A conditional request header evaluated to false." };
 
                         var statusCode = resolveErrorStatusCode is not null

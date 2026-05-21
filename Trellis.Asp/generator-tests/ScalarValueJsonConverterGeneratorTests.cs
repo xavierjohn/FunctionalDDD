@@ -85,7 +85,7 @@ public class ScalarValueJsonConverterGeneratorTests
                     value.ToResult()
                         .Ensure(
                             v => v >= -273.15m,
-                            Error.UnprocessableContent.ForField(fieldName ?? "temperature", "below_absolute_zero", "Below absolute zero"))
+                            Error.InvalidInput.ForField(fieldName ?? "temperature", "below_absolute_zero", "Below absolute zero"))
                         .Map(v => new Temperature(v));
             }
             """;
@@ -174,7 +174,7 @@ public class ScalarValueJsonConverterGeneratorTests
                 public static Result<Duration> TryCreate(string? value, string? fieldName = null) =>
                     System.TimeSpan.TryParse(value, out var v)
                         ? Result.Ok(new Duration(v))
-                        : Result.Fail<Duration>(Error.UnprocessableContent.ForField(fieldName ?? "value", "Invalid"));
+                        : Result.Fail<Duration>(Error.InvalidInput.ForField(fieldName ?? "value", "Invalid"));
             }
             """;
 
@@ -239,7 +239,7 @@ public class ScalarValueJsonConverterGeneratorTests
         converter.Should().NotContain("TryCreate(primitiveValue, null)",
             "M-2: TryCreate must receive the resolved fieldName, not a literal null, so failures carry an actionable field reference");
         converter.Should().Contain("TryCreate(primitiveValue, fieldName",
-            "M-2: TryCreate must receive the resolved fieldName so the resulting Error.UnprocessableContent points at the right property");
+            "M-2: TryCreate must receive the resolved fieldName so the resulting Error.InvalidInput points at the right property");
     }
 
     [Fact]
@@ -401,7 +401,7 @@ public class ScalarValueJsonConverterGeneratorTests
                 public static Result<Duration> TryCreate(string? value, string? fieldName = null) =>
                     System.TimeSpan.TryParse(value, out var v)
                         ? Result.Ok(new Duration(v))
-                        : Result.Fail<Duration>(Error.UnprocessableContent.ForField(fieldName ?? "value", "Invalid"));
+                        : Result.Fail<Duration>(Error.InvalidInput.ForField(fieldName ?? "value", "Invalid"));
             }
             """;
 
@@ -468,7 +468,7 @@ public class ScalarValueJsonConverterGeneratorTests
 
                     public static Result<Quantity> TryCreate(int value, string? fieldName = null) => Result.Ok(new Quantity(value));
                     public static Result<Quantity> TryCreate(string? value, string? fieldName = null) =>
-                        int.TryParse(value, out var v) ? Result.Ok(new Quantity(v)) : Result.Fail<Quantity>(Error.UnprocessableContent.ForField(fieldName ?? "value", "Invalid"));
+                        int.TryParse(value, out var v) ? Result.Ok(new Quantity(v)) : Result.Fail<Quantity>(Error.InvalidInput.ForField(fieldName ?? "value", "Invalid"));
                 }
             }
 
@@ -480,7 +480,7 @@ public class ScalarValueJsonConverterGeneratorTests
 
                     public static Result<Quantity> TryCreate(int value, string? fieldName = null) => Result.Ok(new Quantity(value));
                     public static Result<Quantity> TryCreate(string? value, string? fieldName = null) =>
-                        int.TryParse(value, out var v) ? Result.Ok(new Quantity(v)) : Result.Fail<Quantity>(Error.UnprocessableContent.ForField(fieldName ?? "value", "Invalid"));
+                        int.TryParse(value, out var v) ? Result.Ok(new Quantity(v)) : Result.Fail<Quantity>(Error.InvalidInput.ForField(fieldName ?? "value", "Invalid"));
                 }
             }
             """;

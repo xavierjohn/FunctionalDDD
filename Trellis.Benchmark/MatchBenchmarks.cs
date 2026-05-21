@@ -18,7 +18,7 @@ public class MatchBenchmarks
     public void Setup()
     {
         _successResult = Result.Ok(42);
-        _failureResult = Result.Fail<int>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Test error" });
+        _failureResult = Result.Fail<int>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Test error" });
         _sideEffectCounter = 0;
     }
 
@@ -85,7 +85,7 @@ public class MatchBenchmarks
     {
         return _successResult
             .Map(v => v * 2)
-            .Ensure(v => v > 0, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Must be positive" })
+            .Ensure(v => v > 0, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Must be positive" })
             .Match(
                 v => $"Value: {v}",
                 e => $"Error: {e.Detail}");
@@ -96,7 +96,7 @@ public class MatchBenchmarks
     {
         return _failureResult
             .Map(v => v * 2)
-            .Ensure(v => v > 0, new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Must be positive" })
+            .Ensure(v => v > 0, new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Must be positive" })
             .Match(
                 v => $"Value: {v}",
                 e => $"Error: {e.Detail}");

@@ -58,7 +58,7 @@ public class LinqTests : TestBase
             Result.Ok(5)
                   .Where(v => v > 10); // predicate false
 
-        r.Should().BeFailure().Which.Should().Be(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Result filtered out by predicate." });
+        r.Should().BeFailure().Which.Should().Be(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Result filtered out by predicate." });
     }
 
     [Fact]

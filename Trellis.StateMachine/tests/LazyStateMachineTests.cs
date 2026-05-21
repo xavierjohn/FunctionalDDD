@@ -112,7 +112,7 @@ public class LazyStateMachineTests
 
         result.IsFailure.Should().BeTrue();
         result.TryGetError(out var err).Should().BeTrue();
-        var unproc = err!.Should().BeOfType<Error.UnprocessableContent>().Subject;
+        var unproc = err!.Should().BeOfType<Error.InvalidInput>().Subject;
         unproc.Rules.Items.Should().ContainSingle().Which.ReasonCode.Should().Be("state.machine.invalid.transition");
     }
 
@@ -225,7 +225,7 @@ public class LazyStateMachineTests
 
         result.IsFailure.Should().BeTrue();
         result.TryGetError(out var err).Should().BeTrue();
-        err!.Should().BeOfType<Error.UnprocessableContent>();
+        err!.Should().BeOfType<Error.InvalidInput>();
     }
 
     #endregion
@@ -262,7 +262,7 @@ public class LazyStateMachineTests
 
         result.IsFailure.Should().BeTrue();
         result.TryGetError(out var err).Should().BeTrue();
-        err!.Should().BeOfType<Error.UnprocessableContent>();
+        err!.Should().BeOfType<Error.InvalidInput>();
     }
 
     #endregion

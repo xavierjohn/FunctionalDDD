@@ -119,9 +119,9 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
             () => CalculateShippingAsync(request.ShippingAddress)
         ).WhenAllAsync();
 
-        // Assert - should fail with Error.UnprocessableContent (permanent business rule)
+        // Assert - should fail with Error.InvalidInput (permanent business rule)
         result.Should().BeFailure();
-        result.Error!.Should().BeOfType<Error.UnprocessableContent>();
+        result.Error!.Should().BeOfType<Error.InvalidInput>();
         result.Error!.Detail.Should().Contain("expired");
     }
 
@@ -135,7 +135,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
         var result = await Result.ParallelAsync(
             () => FetchUserAsync("nonexistent-user"),      // Error.NotFound
             () => CheckInventoryAsync("prod-out-of-stock"), // Error.Conflict
-            () => ValidatePaymentAsync("pm-expired"),       // Error.UnprocessableContent
+            () => ValidatePaymentAsync("pm-expired"),       // Error.InvalidInput
             () => CalculateShippingAsync(request.ShippingAddress)  // Success
         ).WhenAllAsync();
 
@@ -146,7 +146,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
         aggregateError.Errors.Items.Should().HaveCount(3);
         aggregateError.Errors.Items.Should().ContainSingle(e => e is Error.NotFound);
         aggregateError.Errors.Items.Should().ContainSingle(e => e is Error.Conflict);
-        aggregateError.Errors.Items.Should().ContainSingle(e => e is Error.UnprocessableContent);
+        aggregateError.Errors.Items.Should().ContainSingle(e => e is Error.InvalidInput);
     }
 
     #endregion
@@ -166,7 +166,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
             {
                 // First attempt: transient error (503 Service Unavailable)
                 await Task.Delay(10); // Simulate network delay
-                return Result.Fail<InventoryResponse>(new Error.ServiceUnavailable() { Detail = "Inventory service temporarily unavailable" });
+                return Result.Fail<InventoryResponse>(new Error.Unavailable() { Detail = "Inventory service temporarily unavailable" });
             }
 
             // Retry succeeds
@@ -181,7 +181,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
             () => FetchUserAsync(request.UserId),
             () => CheckInventoryWithRetry(request.ProductId)
                 .RecoverOnFailureAsync(
-                    predicate: error => error is Error.ServiceUnavailable,
+                    predicate: error => error is Error.Unavailable,
                     funcAsync: async () =>
                     {
                         await Task.Delay(50); // Backoff delay
@@ -209,7 +209,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
             {
                 // Fail first 2 attempts (transient)
                 await Task.Delay(10);
-                return Result.Fail<PaymentResponse>(new Error.ServiceUnavailable() { Detail = "Payment service timeout" });
+                return Result.Fail<PaymentResponse>(new Error.Unavailable() { Detail = "Payment service timeout" });
             }
 
             // Third attempt succeeds
@@ -220,13 +220,13 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
         // Act - chain RecoverOnFailureAsync for multiple retries
         var result = await ValidatePaymentWithRetries("pm-789")
             .RecoverOnFailureAsync(
-                predicate: error => error is Error.ServiceUnavailable,
+                predicate: error => error is Error.Unavailable,
                 funcAsync: async () =>
                 {
                     await Task.Delay(50); // First retry delay
                     return await ValidatePaymentWithRetries("pm-789")
                         .RecoverOnFailureAsync(
-                            predicate: error => error is Error.ServiceUnavailable,
+                            predicate: error => error is Error.Unavailable,
                             funcAsync: async () =>
                             {
                                 await Task.Delay(100); // Second retry delay (exponential backoff)
@@ -249,19 +249,19 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
         {
             attemptCount++;
             await Task.Delay(10);
-            return Result.Fail<ShippingResponse>(new Error.ServiceUnavailable() { Detail = "Shipping service down" });
+            return Result.Fail<ShippingResponse>(new Error.Unavailable() { Detail = "Shipping service down" });
         }
 
         // Act - try with 2 retries (3 total attempts)
         var result = await CalculateShippingAlwaysFails("123 Main St")
             .RecoverOnFailureAsync(
-                predicate: error => error is Error.ServiceUnavailable,
+                predicate: error => error is Error.Unavailable,
                 funcAsync: async () =>
                 {
                     await Task.Delay(50); // First retry
                     return await CalculateShippingAlwaysFails("123 Main St")
                         .RecoverOnFailureAsync(
-                            predicate: error => error is Error.ServiceUnavailable,
+                            predicate: error => error is Error.Unavailable,
                             funcAsync: async () =>
                             {
                                 await Task.Delay(100); // Second retry
@@ -272,7 +272,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
 
         // Assert - should fail after all retries exhausted
         result.Should().BeFailure();
-        result.Error!.Should().BeOfType<Error.ServiceUnavailable>();
+        result.Error!.Should().BeOfType<Error.Unavailable>();
         attemptCount.Should().Be(3); // Initial + 2 retries
     }
 
@@ -572,7 +572,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
         await Task.Delay(40); // Simulate shipping calculation
 
         if (string.IsNullOrWhiteSpace(address))
-            return Result.Fail<ShippingResponse>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Shipping address required" });
+            return Result.Fail<ShippingResponse>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Shipping address required" });
 
         // Calculate based on inventory (heavier items cost more)
         var rate = inventory.StockLevel > 50 ? 12.99m : 9.99m;
@@ -599,7 +599,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
             "nonexistent-user" => Result.Fail<UserResponse>(new Error.NotFound(new ResourceRef("Resource", null)) { Detail = $"User not found: {userId}" }),
             "user-123" => Result.Ok(new UserResponse(userId, "user@example.com", true)),
             "user-high-risk" => Result.Ok(new UserResponse(userId, "highrisk@example.com", true)),
-            _ => Result.Fail<UserResponse>(new Error.InternalServerError("test") { Detail = "Unknown user ID" })
+            _ => Result.Fail<UserResponse>(new Error.Unexpected("test") { Detail = "Unknown user ID" })
         };
     }
 
@@ -622,7 +622,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
 
         return paymentMethodId switch
         {
-            "pm-expired" => Result.Fail<PaymentResponse>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Payment method expired" }),
+            "pm-expired" => Result.Fail<PaymentResponse>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Payment method expired" }),
             "pm-789" => Result.Ok(new PaymentResponse(paymentMethodId, true)),
             _ => Result.Fail<PaymentResponse>(new Error.NotFound(new ResourceRef("Resource", null)) { Detail = $"Payment method not found: {paymentMethodId}" })
         };
@@ -633,7 +633,7 @@ public class ParallelAsyncHttpRealWorldTests : TestBase
         await Task.Delay(50);
 
         if (string.IsNullOrWhiteSpace(address))
-            return Result.Fail<ShippingResponse>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Shipping address required" });
+            return Result.Fail<ShippingResponse>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Shipping address required" });
 
         return Result.Ok(new ShippingResponse("USPS", 9.99m));
     }

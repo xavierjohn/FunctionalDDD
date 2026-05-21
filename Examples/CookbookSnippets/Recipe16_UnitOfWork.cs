@@ -26,7 +26,7 @@ public sealed class Order : Aggregate<OrderId>
     private Order(OrderId id) : base(id) { }
 
     public static Result<Order> TryCreate(Money? total) =>
-        total.ToResult(Error.UnprocessableContent.ForField("total", "validation.error", "Total is required."))
+        total.ToResult(Error.InvalidInput.ForField("total", "validation.error", "Total is required."))
             .Map(t => new Order(OrderId.NewUniqueV4()) { Total = t });
 }
 

@@ -9,8 +9,9 @@ public static class IfNoneMatchExtensions
 {
     /// <summary>
     /// For create-if-absent (PUT/POST) patterns: checks If-None-Match: * against resource existence.
-    /// Returns PreconditionFailed (412) if the resource already exists and If-None-Match: * was sent.
-    /// No-op if no If-None-Match header is present.
+    /// Returns <see cref="Error.TransportFault"/> wrapping <see cref="HttpError.PreconditionFailed"/>
+    /// if the resource already exists and If-None-Match: * was sent. No-op if no If-None-Match
+    /// header is present.
     /// </summary>
     public static Result<T> EnforceIfNoneMatchPrecondition<T>(this Result<T> result, EntityTagValue[]? ifNoneMatchETags)
     {
@@ -19,7 +20,10 @@ public static class IfNoneMatchExtensions
         if (result.IsFailure)
             return result;
         if (ifNoneMatchETags.Any(tag => tag.IsWildcard))
-            return Result.Fail<T>(new Error.PreconditionFailed(ResourceRef.For<T>(), PreconditionKind.IfNoneMatch) { Detail = "Resource already exists. If-None-Match: * requires the resource to be absent." });
+            return Result.Fail<T>(new Error.TransportFault(new HttpError.PreconditionFailed(ResourceRef.For<T>(), PreconditionKind.IfNoneMatch))
+            {
+                Detail = "Resource already exists. If-None-Match: * requires the resource to be absent.",
+            });
         return result;
     }
 

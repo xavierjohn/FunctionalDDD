@@ -22,8 +22,8 @@ public class RequiredIntTests
 
         // Assert
         ticketNumber.IsFailure.Should().BeTrue();
-        ticketNumber.UnwrapError().Should().BeOfType<Error.UnprocessableContent>();
-        var validation = (Error.UnprocessableContent)ticketNumber.UnwrapError();
+        ticketNumber.UnwrapError().Should().BeOfType<Error.InvalidInput>();
+        var validation = (Error.InvalidInput)ticketNumber.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/ticketNumber");
         validation.Fields[0].Detail.Should().Be("Ticket Number cannot be empty.");
     }
@@ -227,7 +227,7 @@ public class RequiredIntTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/myField");
     }
 }

@@ -24,7 +24,7 @@ public static class StringExtensions
         T.TryCreate(s!).Match(
             onSuccess: value => value,
             onFailure: error => throw new FormatException(
-                error is Error.UnprocessableContent uc && uc.Fields.Length > 0
+                error is Error.InvalidInput uc && uc.Fields.Length > 0
                     ? uc.Fields[0].Detail ?? error.Detail ?? "Validation failed."
                     : error.Detail ?? "Validation failed."));
 

@@ -24,7 +24,7 @@ public class ExceptionBehaviorTests
         var result = await behavior.Handle(command, next, CancellationToken.None);
 
         result.IsFailure.Should().BeTrue();
-        result.UnwrapError().Should().BeOfType<Error.InternalServerError>();
+        result.UnwrapError().Should().BeOfType<Error.Unexpected>();
         result.UnwrapError().Detail.Should().NotContain("Something went wrong");
         result.UnwrapError().Detail.Should().Be("An unexpected error occurred while processing the request.");
     }
@@ -133,7 +133,7 @@ public class ExceptionBehaviorTests
         var logger = new FakeLogger<ExceptionBehavior<TestCommand, Result<string>>>(logEntries);
         var behavior = new ExceptionBehavior<TestCommand, Result<string>>(logger);
         var command = new TestCommand("Alice");
-        var error = new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("field"), "validation.error") { Detail = "Business rule failed." }));
+        var error = new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("field"), "validation.error") { Detail = "Business rule failed." }));
         var next = NextDelegate.ReturningAsync<TestCommand, Result<string>>(
             Result.Fail<string>(error));
 

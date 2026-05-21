@@ -10,6 +10,11 @@ using Trellis.Testing;
 
 public class ToResultAsyncTests
 {
+    private static THttpError AssertTransportFault<THttpError>(Result<HttpResponseMessage> result)
+        where THttpError : HttpError =>
+        result.Should().BeFailureOfType<Error.TransportFault>()
+            .Which.Fault.Should().BeOfType<THttpError>().Subject;
+
     [Theory]
     [InlineData(HttpStatusCode.OK)]
     [InlineData(HttpStatusCode.Created)]
@@ -27,32 +32,33 @@ public class ToResultAsyncTests
     }
 
     [Theory]
-    [InlineData((int)HttpStatusCode.BadRequest, typeof(Error.BadRequest))]
-    [InlineData((int)HttpStatusCode.Unauthorized, typeof(Error.Unauthorized))]
-    [InlineData((int)HttpStatusCode.Forbidden, typeof(Error.Forbidden))]
-    [InlineData((int)HttpStatusCode.NotFound, typeof(Error.NotFound))]
+    [InlineData((int)HttpStatusCode.BadRequest, typeof(Error.InvalidInput), null)]
+    [InlineData((int)HttpStatusCode.Unauthorized, typeof(Error.AuthenticationRequired), null)]
+    [InlineData((int)HttpStatusCode.Forbidden, typeof(Error.Forbidden), null)]
+    [InlineData((int)HttpStatusCode.NotFound, typeof(Error.NotFound), null)]
     // 405 (Method Not Allowed) is omitted here: it requires the Allow header to be present
     // (per RFC 9110 §15.5.6) and falls through to InternalServerError when absent. Header-aware
     // behavior is covered by Default_405_preserves_Allow_header_in_typed_error and
     // Default_405_with_no_Allow_header_falls_through_to_InternalServerError.
-    [InlineData((int)HttpStatusCode.NotAcceptable, typeof(Error.NotAcceptable))]
-    [InlineData((int)HttpStatusCode.Conflict, typeof(Error.Conflict))]
-    [InlineData((int)HttpStatusCode.Gone, typeof(Error.Gone))]
-    [InlineData((int)HttpStatusCode.PreconditionFailed, typeof(Error.PreconditionFailed))]
-    [InlineData((int)HttpStatusCode.RequestEntityTooLarge, typeof(Error.ContentTooLarge))]
-    [InlineData((int)HttpStatusCode.UnsupportedMediaType, typeof(Error.UnsupportedMediaType))]
+    [InlineData((int)HttpStatusCode.NotAcceptable, typeof(Error.TransportFault), typeof(HttpError.NotAcceptable))]
+    [InlineData((int)HttpStatusCode.Conflict, typeof(Error.Conflict), null)]
+    [InlineData((int)HttpStatusCode.Gone, typeof(Error.Gone), null)]
+    [InlineData((int)HttpStatusCode.PreconditionFailed, typeof(Error.TransportFault), typeof(HttpError.PreconditionFailed))]
+    [InlineData((int)HttpStatusCode.RequestEntityTooLarge, typeof(Error.TransportFault), typeof(HttpError.ContentTooLarge))]
+    [InlineData((int)HttpStatusCode.UnsupportedMediaType, typeof(Error.TransportFault), typeof(HttpError.UnsupportedMediaType))]
     // 416 (Range Not Satisfiable) is omitted here: it requires the Content-Range header to be
     // present (per RFC 9110 §15.5.17) and falls through to InternalServerError when absent.
     // Header-aware behavior is covered by Default_416_preserves_Content_Range_* and
     // Default_416_with_no_Content_Range_header_falls_through_to_InternalServerError.
-    [InlineData((int)HttpStatusCode.UnprocessableEntity, typeof(Error.UnprocessableContent))]
-    [InlineData(428, typeof(Error.PreconditionRequired))]
-    [InlineData(429, typeof(Error.TooManyRequests))]
-    [InlineData((int)HttpStatusCode.NotImplemented, typeof(Error.NotImplemented))]
-    [InlineData((int)HttpStatusCode.ServiceUnavailable, typeof(Error.ServiceUnavailable))]
+    [InlineData((int)HttpStatusCode.UnprocessableEntity, typeof(Error.InvalidInput), null)]
+    [InlineData(428, typeof(Error.TransportFault), typeof(HttpError.PreconditionRequired))]
+    [InlineData(429, typeof(Error.RateLimited), null)]
+    [InlineData((int)HttpStatusCode.NotImplemented, typeof(Error.Unexpected), null)]
+    [InlineData((int)HttpStatusCode.ServiceUnavailable, typeof(Error.Unavailable), null)]
     public async Task Default_null_status_map_returns_typed_failure_for_known_non_success_statuses(
         int statusCode,
-        Type errorType)
+        Type errorType,
+        Type? transportFaultType)
     {
         var status = (HttpStatusCode)statusCode;
         var tracker = new TrackingHttpResponseMessage(status);
@@ -61,7 +67,16 @@ public class ToResultAsyncTests
         var result = await task.ToResultAsync();
 
         result.Should().BeFailure();
-        result.Error.Should().BeOfType(errorType);
+        if (transportFaultType is null)
+        {
+            result.Error.Should().BeOfType(errorType);
+        }
+        else
+        {
+            var error = result.Should().BeFailureOfType<Error.TransportFault>().Subject;
+            error.Fault.Should().BeOfType(transportFaultType);
+        }
+
         result.Error!.Detail.Should().Contain(((int)status).ToString(CultureInfo.InvariantCulture));
         tracker.Disposed.Should().BeTrue();
     }
@@ -75,7 +90,7 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        result.Should().BeFailureOfType<Error.InternalServerError>()
+        result.Should().BeFailureOfType<Error.Unexpected>()
             .Which.Detail.Should().Contain("599");
         tracker.Disposed.Should().BeTrue();
     }
@@ -98,11 +113,11 @@ public class ToResultAsyncTests
     {
         var tracker = new TrackingHttpResponseMessage(HttpStatusCode.ServiceUnavailable);
         var task = Task.FromResult<HttpResponseMessage>(tracker);
-        var error = new Error.InternalServerError("F1") { Detail = "503" };
+        var error = new Error.Unexpected("F1") { Detail = "503" };
 
         var result = await task.ToResultAsync(_ => error);
 
-        result.Should().BeFailureOfType<Error.InternalServerError>()
+        result.Should().BeFailureOfType<Error.Unexpected>()
             .Which.Should().HaveDetail("503");
         tracker.Disposed.Should().BeTrue();
     }
@@ -156,13 +171,13 @@ public class ToResultAsyncTests
     {
         var tracker = new TrackingHttpResponseMessage(HttpStatusCode.BadRequest);
         var task = Task.FromResult<HttpResponseMessage>(tracker);
-        var error = new Error.InternalServerError("F2") { Detail = "bad request body" };
+        var error = new Error.Unexpected("F2") { Detail = "bad request body" };
 
         var result = await task.ToResultAsync(
             (_, _) => Task.FromResult<Error?>(error),
             CancellationToken.None);
 
-        result.Should().BeFailureOfType<Error.InternalServerError>()
+        result.Should().BeFailureOfType<Error.Unexpected>()
             .Which.Should().HaveDetail("bad request body");
         tracker.Disposed.Should().BeTrue();
     }
@@ -294,7 +309,7 @@ public class ToResultAsyncTests
     [Fact]
     public async Task Default_405_preserves_Allow_header_in_typed_error()
     {
-        // Inspection finding i-H2: Error.MethodNotAllowed.Allow drives the wire-level
+        // Inspection finding i-H2: HttpError.MethodNotAllowed.Allow drives the wire-level
         // Allow response header in ASP. The strict default mapper must extract the
         // upstream Allow header rather than producing an empty list.
         var tracker = new TrackingHttpResponseMessage(HttpStatusCode.MethodNotAllowed)
@@ -308,14 +323,14 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        var err = result.Should().BeFailureOfType<Error.MethodNotAllowed>().Subject;
+        var err = AssertTransportFault<HttpError.MethodNotAllowed>(result);
         err.Allow.Items.Should().Equal("GET", "HEAD");
     }
 
     [Fact]
     public async Task Default_416_preserves_Content_Range_complete_length_in_typed_error()
     {
-        // Inspection finding i-H2: Error.RangeNotSatisfiable.CompleteLength comes from
+        // Inspection finding i-H2: HttpError.RangeNotSatisfiable.CompleteLength comes from
         // the upstream Content-Range: */<size> header.
         var tracker = new TrackingHttpResponseMessage(HttpStatusCode.RequestedRangeNotSatisfiable)
         {
@@ -326,28 +341,27 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        var err = result.Should().BeFailureOfType<Error.RangeNotSatisfiable>().Subject;
+        var err = AssertTransportFault<HttpError.RangeNotSatisfiable>(result);
         err.CompleteLength.Should().Be(9999);
     }
 
     [Fact]
-    public async Task Default_429_preserves_Retry_After_seconds_in_typed_error()
+    public async Task Default_429_with_Retry_After_header_preserves_RetryAdvice_After()
     {
-        // Inspection finding i-H2: Retry-After is part of the typed error.
         var tracker = new TrackingHttpResponseMessage(HttpStatusCode.TooManyRequests);
         tracker.Headers.RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.FromSeconds(60));
         var task = Task.FromResult<HttpResponseMessage>(tracker);
 
         var result = await task.ToResultAsync();
 
-        var err = result.Should().BeFailureOfType<Error.TooManyRequests>().Subject;
-        err.RetryAfter.Should().NotBeNull();
-        err.RetryAfter!.IsDelaySeconds.Should().BeTrue();
-        err.RetryAfter.DelaySeconds.Should().Be(60);
+        var rate = result.Should().BeFailureOfType<Error.RateLimited>().Subject;
+        rate.Retry.Should().NotBeNull();
+        rate.Retry!.Value.After.Should().Be(TimeSpan.FromSeconds(60));
+        rate.Retry.Value.At.Should().BeNull();
     }
 
     [Fact]
-    public async Task Default_503_preserves_Retry_After_date_in_typed_error()
+    public async Task Default_503_with_Retry_After_header_preserves_RetryAdvice_At()
     {
         var when = new DateTimeOffset(2027, 1, 1, 0, 0, 0, TimeSpan.Zero);
         var tracker = new TrackingHttpResponseMessage(HttpStatusCode.ServiceUnavailable);
@@ -356,10 +370,22 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        var err = result.Should().BeFailureOfType<Error.ServiceUnavailable>().Subject;
-        err.RetryAfter.Should().NotBeNull();
-        err.RetryAfter!.IsDelaySeconds.Should().BeFalse();
-        err.RetryAfter.Date.Should().Be(when);
+        var unavailable = result.Should().BeFailureOfType<Error.Unavailable>().Subject;
+        unavailable.Retry.Should().NotBeNull();
+        unavailable.Retry!.Value.At.Should().Be(when);
+        unavailable.Retry.Value.After.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Default_501_maps_to_Unexpected_with_not_implemented_reason_code()
+    {
+        var tracker = new TrackingHttpResponseMessage(HttpStatusCode.NotImplemented);
+        var task = Task.FromResult<HttpResponseMessage>(tracker);
+
+        var result = await task.ToResultAsync();
+
+        var unexpected = result.Should().BeFailureOfType<Error.Unexpected>().Subject;
+        unexpected.ReasonCode.Should().Be("not_implemented");
     }
 
     [Fact]
@@ -376,19 +402,18 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        result.Should().BeFailureOfType<Error.InternalServerError>();
+        result.Should().BeFailureOfType<Error.Unexpected>();
     }
 
     [Fact]
-    public async Task Default_429_with_no_Retry_After_header_keeps_RetryAfter_null()
+    public async Task Default_429_with_no_Retry_After_header_returns_TooManyRequests()
     {
         var tracker = new TrackingHttpResponseMessage(HttpStatusCode.TooManyRequests);
         var task = Task.FromResult<HttpResponseMessage>(tracker);
 
         var result = await task.ToResultAsync();
 
-        var err = result.Should().BeFailureOfType<Error.TooManyRequests>().Subject;
-        err.RetryAfter.Should().BeNull();
+        result.Should().BeFailureOfType<Error.RateLimited>();
     }
 
     [Fact]
@@ -405,61 +430,36 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        result.Should().BeFailureOfType<Error.InternalServerError>();
+        result.Should().BeFailureOfType<Error.Unexpected>();
     }
 
     [Fact]
-    public async Task Default_429_with_negative_Retry_After_treats_header_as_absent()
+    public async Task Default_429_with_negative_Retry_After_still_returns_TooManyRequests()
     {
-        // Inspection finding (GPT-5.5 pre-commit review): a malformed negative Retry-After
-        // would have caused RetryAfterValue.FromSeconds to throw ArgumentOutOfRangeException
-        // *inside* MapStatusToError, leaking the response. ExtractRetryAfter now treats
-        // negative deltas as absent (null).
         var tracker = new TrackingHttpResponseMessage(HttpStatusCode.TooManyRequests);
-        // Synthesize a malformed (negative) delta — adversarial / buggy upstream pattern.
-        tracker.Headers.RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.FromSeconds(-30));
+        tracker.Headers.TryAddWithoutValidation("Retry-After", "-30");
         var task = Task.FromResult<HttpResponseMessage>(tracker);
 
         var result = await task.ToResultAsync();
 
-        var err = result.Should().BeFailureOfType<Error.TooManyRequests>().Subject;
-        err.RetryAfter.Should().BeNull("malformed (negative) Retry-After must not crash the strict-default mapper");
+        result.Should().BeFailureOfType<Error.RateLimited>();
     }
 
     [Fact]
-    public async Task Default_429_with_Retry_After_seconds_overflowing_int_treats_header_as_absent()
+    public async Task Default_429_with_Retry_After_seconds_overflowing_int_still_returns_TooManyRequests()
     {
-        // Round-6 PR finding: RFC 9110 §10.2.3 permits arbitrary delay-seconds (1*DIGIT,
-        // unsigned, no upper bound), but our typed RetryAfterValue uses int (~68 years).
-        // The original concern was that values > int.MaxValue would be silently clamped to
-        // ~68 years, inventing a wire value the upstream didn't send. End-to-end the
-        // contract is now: an out-of-range delta is treated as absent (RetryAfter is null
-        // on the typed error).
-        //
-        // .NET's HttpResponseHeaders parser actually rejects delta-seconds > int.MaxValue
-        // at the wire-parsing layer (Headers.RetryAfter returns null for such values), so
-        // ExtractRetryAfter never sees them — but the contract holds either way: the
-        // mapper's defensive `seconds is < 0 or > int.MaxValue` guard is belt-and-suspenders
-        // in case a future .NET change starts surfacing larger deltas. This test pins the
-        // public end-to-end contract.
         var tracker = new TrackingHttpResponseMessage(HttpStatusCode.TooManyRequests);
-        // Set the wire form via TryAddWithoutValidation to bypass the
-        // RetryConditionHeaderValue(TimeSpan) ctor's argument validation, which itself
-        // rejects values > int.MaxValue seconds.
         tracker.Headers.TryAddWithoutValidation("Retry-After", "9999999999");
         var task = Task.FromResult<HttpResponseMessage>(tracker);
 
         var result = await task.ToResultAsync();
 
-        var err = result.Should().BeFailureOfType<Error.TooManyRequests>().Subject;
-        err.RetryAfter.Should().BeNull("Retry-After delta-seconds out of int range is treated as absent (no misleading clamped value round-trips through ASP)");
+        result.Should().BeFailureOfType<Error.RateLimited>();
     }
 
     [Fact]
-    public async Task Default_401_preserves_WWW_Authenticate_schemes_in_typed_error()
+    public async Task Default_401_with_WWW_Authenticate_header_returns_Unauthorized()
     {
-        // Inspection finding (GPT-5.5 pre-commit review): 401 had no header preservation
-        // even though Error.Unauthorized.Challenges round-trips through ASP's response writer.
         var tracker = new TrackingHttpResponseMessage(HttpStatusCode.Unauthorized);
         tracker.Headers.WwwAuthenticate.Add(new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", "realm=\"api\""));
         tracker.Headers.WwwAuthenticate.Add(new System.Net.Http.Headers.AuthenticationHeaderValue("Basic"));
@@ -467,101 +467,13 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        var err = result.Should().BeFailureOfType<Error.Unauthorized>().Subject;
-        err.Challenges.Length.Should().Be(2);
-        err.Challenges.Items[0].Scheme.Should().Be("Bearer");
-        err.Challenges.Items[1].Scheme.Should().Be("Basic");
-    }
-
-    [Fact]
-    public async Task Default_401_preserves_WWW_Authenticate_parameters_in_typed_error()
-    {
-        // Copilot PR-comment finding: ExtractAuthChallenges previously dropped the auth
-        // parameters and produced bare-scheme challenges. ASP's ResponseFailureWriter then
-        // re-emitted Bearer with no realm/error/etc. — losing important auth semantics.
-        // The mapper now does a best-effort parse of the parameter string.
-        var tracker = new TrackingHttpResponseMessage(HttpStatusCode.Unauthorized);
-        tracker.Headers.WwwAuthenticate.Add(new System.Net.Http.Headers.AuthenticationHeaderValue(
-            "Bearer", "realm=\"api\", error=\"invalid_token\", error_description=\"The access token expired\""));
-        var task = Task.FromResult<HttpResponseMessage>(tracker);
-
-        var result = await task.ToResultAsync();
-
-        var err = result.Should().BeFailureOfType<Error.Unauthorized>().Subject;
-        err.Challenges.Length.Should().Be(1);
-        var challenge = err.Challenges.Items[0];
-        challenge.Scheme.Should().Be("Bearer");
-        challenge.Params.Should().NotBeNull();
-        challenge.Params!["realm"].Should().Be("api");
-        challenge.Params["error"].Should().Be("invalid_token");
-        challenge.Params["error_description"].Should().Be("The access token expired");
-    }
-
-    [Fact]
-    public async Task Default_401_token68_challenge_degrades_to_scheme_only()
-    {
-        // Documented limitation: AuthChallenge has no slot for the RFC 7235 token68
-        // form (e.g. "Negotiate <base64-token>"), so a token68-form challenge captures
-        // only the scheme on round-trip. Callers needing token68 support must use
-        // ToResultAsync(statusMap) or the body-aware overload. This test pins the
-        // documented behavior so future changes don't silently regress callers.
-        var tracker = new TrackingHttpResponseMessage(HttpStatusCode.Unauthorized);
-        tracker.Headers.WwwAuthenticate.Add(new System.Net.Http.Headers.AuthenticationHeaderValue(
-            "Negotiate", "TlRMTVNTUAABAAAA"));
-        var task = Task.FromResult<HttpResponseMessage>(tracker);
-
-        var result = await task.ToResultAsync();
-
-        var err = result.Should().BeFailureOfType<Error.Unauthorized>().Subject;
-        err.Challenges.Length.Should().Be(1);
-        err.Challenges.Items[0].Scheme.Should().Be("Negotiate");
-        err.Challenges.Items[0].Params.Should().BeNull("token68 is not parsed; AuthChallenge has no slot for it");
-    }
-
-    [Fact]
-    public async Task Default_401_quoted_string_with_escaped_chars_unescapes_correctly()
-    {
-        // Coverage for UnescapeQuotedPair: RFC 9110 §5.6.4 quoted-pair forms (\" and \\) must
-        // be unescaped in the parsed Params dictionary so a downstream consumer sees the
-        // original characters, not the on-the-wire escape sequences.
-        var tracker = new TrackingHttpResponseMessage(HttpStatusCode.Unauthorized);
-        tracker.Headers.WwwAuthenticate.Add(new System.Net.Http.Headers.AuthenticationHeaderValue(
-            "Bearer", "realm=\"my \\\"quoted\\\" realm\", error=\"path \\\\ with backslash\""));
-        var task = Task.FromResult<HttpResponseMessage>(tracker);
-
-        var result = await task.ToResultAsync();
-
-        var err = result.Should().BeFailureOfType<Error.Unauthorized>().Subject;
-        err.Challenges.Length.Should().Be(1);
-        err.Challenges.Items[0].Params.Should().NotBeNull();
-        err.Challenges.Items[0].Params!["realm"].Should().Be("my \"quoted\" realm");
-        err.Challenges.Items[0].Params!["error"].Should().Be("path \\ with backslash");
-    }
-
-    [Fact]
-    public async Task Default_401_unparseable_parameter_falls_back_to_scheme_only()
-    {
-        // Coverage for the BuildChallenge fallback: when the parameter string contains no
-        // recognizable name=value pairs (e.g. just garbage), the regex matches nothing,
-        // builder.Count stays at 0, and we return scheme-only rather than an empty-params
-        // challenge.
-        var tracker = new TrackingHttpResponseMessage(HttpStatusCode.Unauthorized);
-        tracker.Headers.WwwAuthenticate.Add(new System.Net.Http.Headers.AuthenticationHeaderValue(
-            "Bearer", "@@@ no equals here @@@"));
-        var task = Task.FromResult<HttpResponseMessage>(tracker);
-
-        var result = await task.ToResultAsync();
-
-        var err = result.Should().BeFailureOfType<Error.Unauthorized>().Subject;
-        err.Challenges.Length.Should().Be(1);
-        err.Challenges.Items[0].Scheme.Should().Be("Bearer");
-        err.Challenges.Items[0].Params.Should().BeNull("parser matched no name=value pairs; falls back to scheme-only");
+        result.Should().BeFailureOfType<Error.AuthenticationRequired>();
     }
 
     [Fact]
     public async Task Default_416_preserves_Content_Range_unit_in_typed_error()
     {
-        // Copilot PR-comment finding: Error.RangeNotSatisfiable.Unit drives the wire-level
+        // Copilot PR-comment finding: HttpError.RangeNotSatisfiable.Unit drives the wire-level
         // Content-Range unit when ASP renders the error. The mapper must preserve the upstream
         // unit (e.g. "items") rather than hard-coding "bytes".
         var tracker = new TrackingHttpResponseMessage(HttpStatusCode.RequestedRangeNotSatisfiable)
@@ -576,21 +488,20 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        var err = result.Should().BeFailureOfType<Error.RangeNotSatisfiable>().Subject;
+        var err = AssertTransportFault<HttpError.RangeNotSatisfiable>(result);
         err.CompleteLength.Should().Be(50);
         err.Unit.Should().Be("items");
     }
 
     [Fact]
-    public async Task Default_401_with_no_WWW_Authenticate_header_keeps_challenges_empty()
+    public async Task Default_401_with_no_WWW_Authenticate_header_returns_Unauthorized()
     {
         var tracker = new TrackingHttpResponseMessage(HttpStatusCode.Unauthorized);
         var task = Task.FromResult<HttpResponseMessage>(tracker);
 
         var result = await task.ToResultAsync();
 
-        var err = result.Should().BeFailureOfType<Error.Unauthorized>().Subject;
-        err.Challenges.IsEmpty.Should().BeTrue();
+        result.Should().BeFailureOfType<Error.AuthenticationRequired>();
     }
 
     // -------- RFC-strict defensive cases (gaps in initial i-H2 coverage) --------
@@ -606,8 +517,8 @@ public class ToResultAsyncTests
     {
         // RFC 9110 §15.5.17: a 416 response SHOULD include Content-Range. `bytes */0` is the
         // legitimate form for an empty resource. Mapping must produce a typed
-        // RangeNotSatisfiable(0) so it round-trips (mapper → typed error → ASP renderer →
-        // wire) without losing the zero-length signal.
+        // HttpError.RangeNotSatisfiable(0) so it round-trips (mapper → typed error → ASP
+        // renderer → wire) without losing the zero-length signal.
         var tracker = new TrackingHttpResponseMessage(HttpStatusCode.RequestedRangeNotSatisfiable)
         {
             Content = new ByteArrayContent(Array.Empty<byte>()),
@@ -617,7 +528,7 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        var err = result.Should().BeFailureOfType<Error.RangeNotSatisfiable>().Subject;
+        var err = AssertTransportFault<HttpError.RangeNotSatisfiable>(result);
         err.CompleteLength.Should().Be(0);
         err.Unit.Should().Be("bytes");
     }
@@ -639,7 +550,7 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        result.Should().BeFailureOfType<Error.InternalServerError>();
+        result.Should().BeFailureOfType<Error.Unexpected>();
     }
 
     [Fact]
@@ -662,26 +573,19 @@ public class ToResultAsyncTests
 
         var result = await task.ToResultAsync();
 
-        result.Should().BeFailureOfType<Error.InternalServerError>();
+        result.Should().BeFailureOfType<Error.Unexpected>();
     }
 
     [Fact]
-    public async Task Default_429_zero_Retry_After_delta_means_retry_now()
+    public async Task Default_429_zero_Retry_After_delta_still_returns_TooManyRequests()
     {
-        // RFC 9110 §10.2.3: Retry-After: 0 is well-formed and conveys "retry immediately".
-        // The mapper preserves zero (distinct from a missing header) so consumers can
-        // distinguish "server explicitly said retry now" from "server didn't say
-        // anything".
         var tracker = new TrackingHttpResponseMessage(HttpStatusCode.TooManyRequests);
         tracker.Headers.RetryAfter = new System.Net.Http.Headers.RetryConditionHeaderValue(TimeSpan.Zero);
         var task = Task.FromResult<HttpResponseMessage>(tracker);
 
         var result = await task.ToResultAsync();
 
-        var err = result.Should().BeFailureOfType<Error.TooManyRequests>().Subject;
-        err.RetryAfter.Should().NotBeNull();
-        err.RetryAfter!.IsDelaySeconds.Should().BeTrue();
-        err.RetryAfter.DelaySeconds.Should().Be(0);
+        result.Should().BeFailureOfType<Error.RateLimited>();
     }
 
     #endregion

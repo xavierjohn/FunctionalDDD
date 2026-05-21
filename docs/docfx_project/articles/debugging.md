@@ -89,7 +89,7 @@ static string Describe(Result<int> result) =>
         onSuccess: value => $"Value: {value}",
         onFailure: error => error switch
         {
-            Error.UnprocessableContent uc => $"Validation: {uc.GetDisplayMessage()}",
+            Error.InvalidInput uc => $"Validation: {uc.GetDisplayMessage()}",
             _                              => $"Error: {error.Code}"
         });
 ```
@@ -172,7 +172,7 @@ What to inspect:
 
 - `error.Code` — usually ends with `.error` (for example `validation.error`)
 - `error.Detail` — human-readable explanation
-- concrete error type — for example `Error.UnprocessableContent`
+- concrete error type — for example `Error.InvalidInput`
 - nested failures if the error is aggregated
 
 ## Common debugging patterns
@@ -200,7 +200,7 @@ static Result<int> DoubleIfPositive(Result<int> result) =>
 static Result<int> ValidatePositive(int value) =>
     value > 0
         ? Result.Ok(value)
-        : new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Value must be positive." };
+        : new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Value must be positive." };
 ```
 
 Named methods give you cleaner stack traces and more searchable logs.
@@ -269,7 +269,7 @@ static string Render(Result<int> result) =>
         onSuccess: value => $"Value: {value}",
         onFailure: error => error switch
         {
-            Error.UnprocessableContent uc => $"Validation: {uc.GetDisplayMessage()}",
+            Error.InvalidInput uc => $"Validation: {uc.GetDisplayMessage()}",
             _                              => $"Fallback: {error.Detail}"
         });
 ```

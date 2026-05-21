@@ -35,7 +35,7 @@ public class TapTupleTracingTests : TestBase
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
-        var result = Result.Fail<(int, string)>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Validation failed" });
+        var result = Result.Fail<(int, string)>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Validation failed" });
 
         // Act
         var actual = result.Tap((a, b) => { /* should not execute */ });
@@ -120,7 +120,7 @@ public class TapTupleTracingTests : TestBase
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
-        var result = Result.Fail<(int, string)>(new Error.InternalServerError("test") { Detail = "Error" });
+        var result = Result.Fail<(int, string)>(new Error.Unexpected("test") { Detail = "Error" });
 
         // Act
         await result.TapAsync((a, b) => Task.CompletedTask);
@@ -313,7 +313,7 @@ public class TapTupleTracingTests : TestBase
 
         // Act
         var result = Result.Ok("valid")
-            .Combine(Result.Fail<string>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid" }))
+            .Combine(Result.Fail<string>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid" }))
             .Tap((a, b) => { /* Should not execute */ });
 
         // Assert

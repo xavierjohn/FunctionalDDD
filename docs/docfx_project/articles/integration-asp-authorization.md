@@ -121,13 +121,13 @@ sequenceDiagram
         Asp->>Mediator: Run command
         Mediator->>Provider: GetCurrentActorAsync
         Provider-->>Mediator: Maybe of Actor is None
-        Mediator->>Writer: Error.Unauthorized with empty Challenges
+        Mediator->>Writer: Error.AuthenticationRequired without explicit Scheme
         Writer->>Writer: Resolve default scheme via IAuthenticationSchemeProvider
         Writer-->>Client: 401 plus WWW-Authenticate scheme name
     end
 ```
 
-Same 401 status and `WWW-Authenticate` contract from both paths, different challenge details (the JwtBearer challenge carries scheme-specific `error="invalid_token"` parameters; the synthesized challenge is scheme-only). The mediator-emitted 401 (right branch) is the path the framework controls; consumers populate `Error.Unauthorized.Challenges` explicitly when they need a parametrized challenge (with `realm`, `scope`, etc.).
+Same 401 status and `WWW-Authenticate` contract from both paths, different challenge details (the JwtBearer challenge carries scheme-specific `error="invalid_token"` parameters; the synthesized challenge is scheme-only). The mediator-emitted 401 (right branch) is the path the framework controls; consumers set `Error.AuthenticationRequired.Scheme` to an explicit challenge string (for example, `Bearer realm="api", scope="orders.read"`) when they need something more specific than the default-scheme fallback.
 
 ### Anatomy of a 403
 
@@ -308,7 +308,7 @@ For IdP wiring (Authority URL, audience format, multi-tenant pinning), see [SSO 
 | `EntraActorOptions.MapForbiddenPermissions` | empty `HashSet<string>` | Project a deny-list claim or DB lookup. |
 | `EntraActorOptions.MapAttributes` | extracts `tid`, `preferred_username`, `azp`, `azpacr`, `acrs`; adds `ip_address` from `Connection.RemoteIpAddress` and `mfa = "true"\|"false"` from any `amr` claim equal to `"mfa"` | Add tenant-scoped or request-scoped attributes. |
 
-`EntraActorProvider` returns `Maybe<Actor>.None` when no authenticated `ClaimsIdentity` exists or the configured `IdClaimType` is missing from the identity. The short `oid` fallback runs only when `IdClaimType` is left at the default long-form objectidentifier URI (`http://schemas.microsoft.com/identity/claims/objectidentifier`); a non-default `IdClaimType` (e.g. `"sub"`, `"upn"`) is looked up literally with no fallback. The mediator authorization pipeline maps `Maybe.None` to `Error.Unauthorized` (HTTP 401, RFC 9110 §15.5.2). It throws `InvalidOperationException` only when invoked outside an HTTP request scope (no `HttpContext`) — a configuration bug that surfaces as HTTP 500. Any exception thrown by `MapPermissions`, `MapForbiddenPermissions`, or `MapAttributes` is rewrapped in `InvalidOperationException` naming the failing delegate.
+`EntraActorProvider` returns `Maybe<Actor>.None` when no authenticated `ClaimsIdentity` exists or the configured `IdClaimType` is missing from the identity. The short `oid` fallback runs only when `IdClaimType` is left at the default long-form objectidentifier URI (`http://schemas.microsoft.com/identity/claims/objectidentifier`); a non-default `IdClaimType` (e.g. `"sub"`, `"upn"`) is looked up literally with no fallback. The mediator authorization pipeline maps `Maybe.None` to `Error.AuthenticationRequired` (HTTP 401, RFC 9110 §15.5.2). It throws `InvalidOperationException` only when invoked outside an HTTP request scope (no `HttpContext`) — a configuration bug that surfaces as HTTP 500. Any exception thrown by `MapPermissions`, `MapForbiddenPermissions`, or `MapAttributes` is rewrapped in `InvalidOperationException` naming the failing delegate.
 
 ## Generic claims provider
 
@@ -401,7 +401,7 @@ public sealed class DatabaseActorProvider(
             ?? throw new InvalidOperationException("No HttpContext available.");
 
         // No authenticated identity / missing id claim → no usable actor → Maybe.None,
-        // which the mediator pipeline maps to Error.Unauthorized (HTTP 401).
+        // which the mediator pipeline maps to Error.AuthenticationRequired (HTTP 401).
         var userId = httpContext.User.FindFirst("sub")?.Value;
         if (userId is null)
             return Maybe<Actor>.None;
@@ -563,7 +563,7 @@ var mfaPassed = actor.GetAttribute(ActorAttributes.MfaAuthenticated) == "true";
 
 ## Mediator integration
 
-When a request flows through `Trellis.Mediator`, prefer pipeline behaviors over per-handler permission checks. All three authorization behaviors — `AuthorizationBehavior<TMessage, TResponse>` (for `IAuthorize`), `ResourceAuthorizationBehavior<TMessage, TResource, TResponse>` (for `IAuthorizeResource<T>`), and `ResourceAuthorizationViaBehavior<TMessage, TLeaf, TOwner, TResponse>` (for `IAuthorizeResourceVia<TOwner>`) — share an internal `ActorResolution.TryResolveAsync` helper that calls `IActorProvider.GetCurrentActorAsync` and short-circuits with `Error.Unauthorized` when no actor is resolved. Each behavior then runs its own denial check and emits `Error.Forbidden` on permission-missing or resource-rule failure. See [`trellis-api-mediator.md`](../api_reference/trellis-api-mediator.md).
+When a request flows through `Trellis.Mediator`, prefer pipeline behaviors over per-handler permission checks. All three authorization behaviors — `AuthorizationBehavior<TMessage, TResponse>` (for `IAuthorize`), `ResourceAuthorizationBehavior<TMessage, TResource, TResponse>` (for `IAuthorizeResource<T>`), and `ResourceAuthorizationViaBehavior<TMessage, TLeaf, TOwner, TResponse>` (for `IAuthorizeResourceVia<TOwner>`) — share an internal `ActorResolution.TryResolveAsync` helper that calls `IActorProvider.GetCurrentActorAsync` and short-circuits with `Error.AuthenticationRequired` when no actor is resolved. Each behavior then runs its own denial check and emits `Error.Forbidden` on permission-missing or resource-rule failure. See [`trellis-api-mediator.md`](../api_reference/trellis-api-mediator.md).
 
 ### Static permission checks via `IAuthorize`
 
@@ -818,7 +818,7 @@ public static class DocumentService
     {
         var maybeActor = await actors.GetCurrentActorAsync(ct);
         if (!maybeActor.TryGetValue(out var actor))
-            return Result.Fail<Document>(new Error.Unauthorized { Detail = "Authentication required." });
+            return Result.Fail<Document>(new Error.AuthenticationRequired { Detail = "Authentication required." });
 
         return await repo.GetByIdAsync(id, ct)
             .EnsureAsync(

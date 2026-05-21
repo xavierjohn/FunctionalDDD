@@ -16,6 +16,8 @@ A package- and namespace-rename combined with a tightened public surface. Per-pa
 > [!NOTE]
 > **Coming from a 3.0-alpha build?** See [`CHANGELOG.md` → 3.0.0](https://github.com/xavierjohn/Trellis/blob/main/CHANGELOG.md#300) for the four breaking changes between the late-alpha and 3.0 GA: `Actor.Id` typed as `ActorId`, `Result<T>` JSON throws `NotSupportedException`, `RequiredXxx<T>` POLA realignment (opt-in `[NotDefault]` / `[Trim]`), and `IActorProvider.GetCurrentActorAsync` returning `Task<Maybe<Actor>>`.
 
+This page focuses on the public FunctionalDdd 2.x → Trellis 3.0 jump. For release-by-release migration details during the preview churn — including the final move to the current 12-case `Trellis.Core.Error` union — use [`CHANGELOG.md`](https://github.com/xavierjohn/Trellis/blob/main/CHANGELOG.md) as the canonical ledger.
+
 ## Patterns Index
 
 | Old API / artifact | New API / artifact | See |
@@ -23,12 +25,12 @@ A package- and namespace-rename combined with a tightened public surface. Per-pa
 | `Result.Success(...)` / `Result.Failure(...)` | `Result.Ok(...)` / `Result.Fail(...)` | [Result and Error renames](#result-and-error-renames-trelliscore) |
 | Implicit `T → Result<T>` / `Error → Result<T>` | Explicit `Result.Ok(value)` / `Result.Fail<T>(error)` | [Result and Error renames](#result-and-error-renames-trelliscore) |
 | `Result.SuccessIf` / `Result.FailureIf` / `*Async` variants | Inline ternary | [Removed factories](#removed-factories) |
-| `Result.FromException(ex)` | `Result.Try` / `Result.TryAsync` or `new Error.InternalServerError(...)` | [Removed factories](#removed-factories) |
+| `Result.FromException(ex)` | `Result.Try` / `Result.TryAsync` or `new Error.Unexpected("unhandled_exception", ...)` | [Removed factories](#removed-factories) |
 | Non-generic `Result` instance type | `Result<Unit>` (ADR-005) | [Non-generic Result removed (ADR-005)](#non-generic-result-removed-adr-005) |
 | `result.Value` getter | `TryGetValue` / `Match` / `var (ok, v, err) = result;` | [Accessor changes](#accessor-changes) |
 | `Error` open class hierarchy + `Error.X("msg")` factories | `Error` closed ADT + `new Error.X(payload) { Detail = "msg" }` | [Error becomes a closed ADT](#error-becomes-a-closed-adt) |
 | `MatchErrorExtensions.MatchError(...)` | `Match(...)` + `switch` over the closed ADT | [Removed extensions](#removed-extensions) |
-| `FlattenValidationErrorsExtensions` | `Combine` (auto-merges `Error.UnprocessableContent.Fields` / `.Rules`) | [Removed extensions](#removed-extensions) |
+| `FlattenValidationErrorsExtensions` | `Combine` (auto-merges `Error.InvalidInput.Fields` / `.Rules`) | [Removed extensions](#removed-extensions) |
 | `Error.Instance` field | ASP wire layer populates `ProblemDetails.Instance` from the request path+query; typed `ResourceRef` is exposed on the payload (e.g. `Error.NotFound.Resource`) for direct assertion | [Removed extensions](#removed-extensions) |
 | `Trellis.Asp.WriteOutcome<T>` | `Trellis.WriteOutcome<T>` (in `Trellis.Core`) | [ASP.NET Core (Trellis.Asp)](#aspnet-core-trellisasp) |
 | `Trellis.Stateless` package + namespace | `Trellis.StateMachine` package + namespace | [State machine (Trellis.StateMachine)](#state-machine-trellisstatemachine) |
@@ -64,7 +66,7 @@ A package- and namespace-rename combined with a tightened public surface. Per-pa
 | Result accessors | `.Value` getter removed; `.Error` is `Error?` and never throws | [`trellis-api-core.md` → Breaking changes from v1](../api_reference/trellis-api-core.md#breaking-changes-from-v1) |
 | Implicit conversions | Removed on `Result<T>`; explicit factory required | [`trellis-api-core.md` → Breaking changes from v1](../api_reference/trellis-api-core.md#breaking-changes-from-v1) |
 | Non-generic `Result` instance type | Removed; use `Result<Unit>`. `Result` is now a static factory class only. | [`trellis-api-core.md` → Breaking changes from v1](../api_reference/trellis-api-core.md#breaking-changes-from-v1), [ADR-005](../adr/ADR-005-reintroduce-unit.md) |
-| `Error` model | Open `class` + 18 subclasses + static factories → `abstract record` with 20 nested `sealed record` cases | [`trellis-api-core.md` → Breaking changes from v1](../api_reference/trellis-api-core.md#breaking-changes-from-v1) |
+| `Error` model | Open `class` + 18 subclasses + static factories → closed 12-case domain union + `Error.TransportFault` boundary case | [`trellis-api-core.md` → Breaking changes from v1](../api_reference/trellis-api-core.md#breaking-changes-from-v1) |
 | Removed extensions | `MatchError`, `FlattenValidationErrors`, `Error.Instance` field | [`trellis-api-core.md` → Breaking changes from v1](../api_reference/trellis-api-core.md#breaking-changes-from-v1) |
 | Package merges | DDD, Primitives generator, Asp source generator, EF Core generator, Asp authorization | [`trellis-api-core.md` → Breaking changes from v1](../api_reference/trellis-api-core.md#breaking-changes-from-v1) |
 | `WriteOutcome<T>` move | `Trellis.Asp.WriteOutcome<T>` → `Trellis.WriteOutcome<T>` (in `Trellis.Core`) | [`trellis-api-core.md` → Breaking changes from v1](../api_reference/trellis-api-core.md#breaking-changes-from-v1) |
@@ -107,7 +109,7 @@ return (await predicate()) ? Result.Ok(value) : Result.Fail<T>(error);
 
 // Exception → result: use Try / TryAsync, or build the error explicitly
 return Result.Try(() => DoWork());
-return Result.Fail<T>(new Error.InternalServerError(faultId) { Detail = ex.Message, Cause = ex });
+return Result.Fail<T>(new Error.Unexpected("unhandled_exception", faultId) { Detail = ex.Message, Cause = ex });
 ```
 
 `OperationCanceledException` is always rethrown by `Try` / `TryAsync` rather than mapped.
@@ -147,7 +149,7 @@ result.TryGetError(out var err);
 
 v1 `Error` was a `class` with 18 hand-written subclasses (`ValidationError`, `NotFoundError`, …) and static factory helpers (`Error.Validation(...)`, `Error.NotFound(...)`). <!-- v1-stale-ok -->
 
-v2 `Error` is an `abstract record` with **20 nested `sealed record` cases** (`Error.NotFound`, `Error.UnprocessableContent`, …). The base constructor is `private` so the catalog is closed; there are no static factories.
+The current Trellis `Error` surface is an `abstract record` with **12 domain cases** plus `Error.TransportFault` for HTTP-specific payloads. The base constructor is `private` so the catalog is closed; there are no static factories.
 
 ```csharp
 // v1
@@ -163,8 +165,8 @@ C# verifies exhaustiveness against the closed catalog when you `switch` on the c
 
 | v1 | v2 replacement |
 |---|---|
-| `result.MatchError(onValidation: ..., onNotFound: ..., onUnexpected: ...)` | `result.Match(_ => ..., e => e switch { Error.NotFound nf => ..., Error.UnprocessableContent uc => ..., _ => ... })` |
-| `result.FlattenValidationErrors()` | `Result.Combine(...)` automatically merges `Error.UnprocessableContent.Fields` and `.Rules` |
+| `result.MatchError(onValidation: ..., onNotFound: ..., onUnexpected: ...)` | `result.Match(_ => ..., e => e switch { Error.NotFound nf => ..., Error.InvalidInput uc => ..., _ => ... })` |
+| `result.FlattenValidationErrors()` | `Result.Combine(...)` automatically merges `Error.InvalidInput.Fields` and `.Rules` |
 | `error.Instance` field | ASP wire layer populates `ProblemDetails.Instance` from the request path+query; typed `ResourceRef` is exposed on the payload (e.g. `Error.NotFound.Resource`) for direct assertion |
 
 ### Non-generic Result removed (ADR-005)
@@ -192,7 +194,7 @@ The v1 surface (60+ overloads across two static classes) collapsed to one static
 |---|---|
 | `ReadResultFromJsonAsync<T>` (sync, `Result<HRM>`, `Task<HRM>`, `Task<Result<HRM>>`) | `ReadJsonAsync<T>(this Task<Result<HttpResponseMessage>>, JsonTypeInfo<T>, CancellationToken)` |
 | `ReadResultMaybeFromJsonAsync<T>` (all shapes) | `ReadJsonMaybeAsync<T>(this Task<Result<HttpResponseMessage>>, JsonTypeInfo<T>, CancellationToken)` |
-| `HandleNotFound` / `HandleConflict` / `HandleUnauthorized` (all shapes) | `Handle{NotFound,Conflict,Unauthorized}Async(this Task<HttpResponseMessage>, Error.{NotFound,Conflict,Unauthorized})` |
+| `HandleNotFound` / `HandleConflict` / `HandleUnauthorized` (all shapes) | `Handle{NotFound,Conflict,Unauthorized}Async(this Task<HttpResponseMessage>, Error.{NotFound,Conflict,AuthenticationRequired})` |
 | `HandleForbidden*` | **Removed.** Use `ToResultAsync(status => status == HttpStatusCode.Forbidden ? new Error.Forbidden(...) : null)`. |
 | `HandleClientError*` (4xx) / `HandleServerError*` (5xx) | **Removed.** Use `ToResultAsync(statusMap)` with a `switch` over `HttpStatusCode`. |
 | `EnsureSuccess` / `EnsureSuccessAsync` (all shapes) | **Removed.** Use `ToResultAsync(status => (int)status >= 400 ? error : null)` or body-aware `ToResultAsync(mapper, ct)`. |
@@ -304,7 +306,7 @@ Recommended order — each step is small enough that the build should succeed be
 2. **Update `PackageReference` / `Directory.Packages.props`.** Apply the [Package map](#package-map-legacy--current). Drop generator packages that are now bundled. Add `Trellis.StateMachine` if you used `Trellis.Stateless`.
 3. **Mechanical rename of factories.** `Result.Success` → `Result.Ok`; `Result.Failure` → `Result.Fail`. Find-and-replace is safe because `IsSuccess` / `IsFailure` are unchanged and not affected.
 4. **Replace `Result` returns and parameters with `Result<Unit>` (ADR-005).** Including `Task<Result>` → `Task<Result<Unit>>`. Add `_ =>` or `(Unit _) =>` to lambdas after `.Bind`/`.BindAsync`/`.Tap`/etc.
-5. **Convert `Error.X("msg")` factory calls to constructor + `with` syntax.** `new Error.X(payload) { Detail = "msg" }`. Replace concrete subclass type names (`ValidationError`, `NotFoundError`) with the closed cases (`Error.UnprocessableContent`, `Error.NotFound`).
+5. **Convert `Error.X("msg")` factory calls to constructor + `with` syntax.** `new Error.X(payload) { Detail = "msg" }`. Replace concrete subclass type names (`ValidationError`, `NotFoundError`) with the closed cases (`Error.InvalidInput`, `Error.NotFound`).
 6. **Replace `result.Value` reads.** Use `TryGetValue`, `Match`, or deconstruction. Replace `result.Error` reads with `if (result.Error is { } e)` or `result.TryGetError(out var e)`.
 7. **Remove `MatchError` / `FlattenValidationErrors` calls.** `MatchError` → `Match` + `switch`. `FlattenValidationErrors` is no-op — `Combine` already merges field/rule violations.
 8. **Audit HTTP call sites.** Replace `EnsureSuccess*` / `HandleClientError*` / `HandleServerError*` / `HandleForbidden*` / `HandleFailureAsync<TContext>` with `ToResultAsync(statusMap)` or body-aware `ToResultAsync(mapper, ct)`. Rename `ReadResultFromJsonAsync` / `ReadResultMaybeFromJsonAsync` to `ReadJsonAsync` / `ReadJsonMaybeAsync`. Stop disposing `HttpResponseMessage` after the chain reaches `ReadJson*` — `Trellis.Http` owns it.

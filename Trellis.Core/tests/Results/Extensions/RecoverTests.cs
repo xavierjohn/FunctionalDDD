@@ -22,7 +22,7 @@ public class RecoverTests
     [Fact]
     public void Recover_WhenResultIsFailure_ShouldReturnSuccessWithFallback()
     {
-        var sut = Result.Fail<string>(new Error.InternalServerError("test") { Detail = "error" });
+        var sut = Result.Fail<string>(new Error.Unexpected("test") { Detail = "error" });
 
         var result = sut.Recover("Fallback");
 
@@ -48,7 +48,7 @@ public class RecoverTests
     [Fact]
     public void Recover_Func_WhenResultIsFailure_ShouldCallFuncAndReturnSuccess()
     {
-        var sut = Result.Fail<string>(new Error.InternalServerError("test") { Detail = "error" });
+        var sut = Result.Fail<string>(new Error.Unexpected("test") { Detail = "error" });
 
         var result = sut.Recover(() => "Fallback");
 
@@ -58,7 +58,7 @@ public class RecoverTests
     [Fact]
     public void Recover_Func_WithNullFunc_ShouldThrowArgumentNullException()
     {
-        var sut = Result.Fail<string>(new Error.InternalServerError("test") { Detail = "error" });
+        var sut = Result.Fail<string>(new Error.Unexpected("test") { Detail = "error" });
 
         var act = () => sut.Recover((Func<string>)null!);
 
@@ -98,7 +98,7 @@ public class RecoverTests
     [Fact]
     public void Recover_ErrorFunc_WithNullFunc_ShouldThrowArgumentNullException()
     {
-        var sut = Result.Fail<string>(new Error.InternalServerError("test") { Detail = "error" });
+        var sut = Result.Fail<string>(new Error.Unexpected("test") { Detail = "error" });
 
         var act = () => sut.Recover((Func<Error, string>)null!);
 
@@ -123,7 +123,7 @@ public class RecoverTests
     [Fact]
     public async Task RecoverAsync_Task_WhenFailure_ShouldReturnFallback()
     {
-        var sut = Task.FromResult(Result.Fail<string>(new Error.InternalServerError("test") { Detail = "error" }));
+        var sut = Task.FromResult(Result.Fail<string>(new Error.Unexpected("test") { Detail = "error" }));
 
         var result = await sut.RecoverAsync("Fallback");
 
@@ -143,7 +143,7 @@ public class RecoverTests
     [Fact]
     public async Task RecoverAsync_Task_Func_WhenFailure_ShouldCallFunc()
     {
-        var sut = Task.FromResult(Result.Fail<string>(new Error.InternalServerError("test") { Detail = "error" }));
+        var sut = Task.FromResult(Result.Fail<string>(new Error.Unexpected("test") { Detail = "error" }));
 
         var result = await sut.RecoverAsync(() => "Fallback");
 
@@ -180,7 +180,7 @@ public class RecoverTests
     [Fact]
     public async Task RecoverAsync_ValueTask_WhenFailure_ShouldReturnFallback()
     {
-        var sut = new ValueTask<Result<string>>(Result.Fail<string>(new Error.InternalServerError("test") { Detail = "error" }));
+        var sut = new ValueTask<Result<string>>(Result.Fail<string>(new Error.Unexpected("test") { Detail = "error" }));
 
         var result = await sut.RecoverAsync("Fallback");
 
@@ -190,7 +190,7 @@ public class RecoverTests
     [Fact]
     public async Task RecoverAsync_ValueTask_Func_WhenFailure_ShouldCallFunc()
     {
-        var sut = new ValueTask<Result<string>>(Result.Fail<string>(new Error.InternalServerError("test") { Detail = "error" }));
+        var sut = new ValueTask<Result<string>>(Result.Fail<string>(new Error.Unexpected("test") { Detail = "error" }));
 
         var result = await sut.RecoverAsync(() => "Fallback");
 

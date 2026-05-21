@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 
 /// <summary>
 /// Describes a global or multi-field business-rule failure attached to a
-/// <see cref="Error.UnprocessableContent"/>. Use this for invariant violations that are
+/// <see cref="Error.InvalidInput"/>. Use this for invariant violations that are
 /// not bound to a single field (e.g. <c>"order_must_have_items"</c>,
 /// <c>"passwords_must_match"</c>, <c>"cancel_after_ship"</c>).
 /// </summary>

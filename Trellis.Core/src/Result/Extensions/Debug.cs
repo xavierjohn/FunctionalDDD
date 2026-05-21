@@ -39,7 +39,7 @@ public static class ResultDebugExtensions
     /// <code>
     /// var result = GetUser(id)
     ///     .Debug("After GetUser")
-    ///     .Ensure(u => u.IsActive, Error.UnprocessableContent.ForRule("inactive", "User is inactive"))
+    ///     .Ensure(u => u.IsActive, Error.InvalidInput.ForRule("inactive", "User is inactive"))
     ///     .Debug("After Ensure")
     ///     .Bind(ProcessUser)
     ///     .Debug("After ProcessUser");
@@ -117,7 +117,7 @@ public static class ResultDebugExtensions
                 activity.SetTag("debug.error.detail", error.Detail);
                 activity.SetTag("debug.error.kind", error.Kind);
 
-                if (error is Error.UnprocessableContent validationError)
+                if (error is Error.InvalidInput validationError)
                 {
                     activity.SetTag("debug.error.validation.field_count", validationError.Fields.Length);
                     for (int i = 0; i < Math.Min(validationError.Fields.Length, 10); i++)

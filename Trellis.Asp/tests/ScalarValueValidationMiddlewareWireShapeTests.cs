@@ -296,8 +296,8 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
         //     "shippingAddress.state":  ["State is required."]
         //   }
         //
-        // The composite VO converter must carry the structured `Error.UnprocessableContent`
-        // on the thrown `TrellisJsonValidationException` (via the new `UnprocessableContent`
+        // The composite VO converter must carry the structured `Error.InvalidInput`
+        // on the thrown `TrellisJsonValidationException` (via the `InvalidInput`
         // init property) so the middleware can emit per-leaf entries instead of one opaque
         // joined string.
         var ctx = NewContext();
@@ -307,14 +307,14 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
             new FieldViolation(InputPointer.ForProperty("city"),   "validation.error") { Detail = "City is required." },
             new FieldViolation(InputPointer.ForProperty("state"),  "validation.error") { Detail = "State is required." },
         ]);
-        var error = new Error.UnprocessableContent(fields, EquatableArray<RuleViolation>.Empty)
+        var error = new Error.InvalidInput(fields, EquatableArray<RuleViolation>.Empty)
         {
             Detail = "ShippingAddress validation failed.",
         };
 
         var inner = new TrellisJsonValidationException(error.GetDisplayMessage())
         {
-            UnprocessableContent = error,
+            InvalidInput = error,
         };
         typeof(JsonException).GetProperty("Path")!.SetValue(inner, "$.shippingAddress");
         var bre = new BadHttpRequestException("Failed to read body", StatusCodes.Status400BadRequest, inner);
@@ -352,11 +352,11 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
             new FieldViolation(InputPointer.ForProperty("amount"),   "validation.error") { Detail = "Amount must be positive." },
             new FieldViolation(InputPointer.ForProperty("currency"), "validation.error") { Detail = "Currency must be ISO 4217." },
         ]);
-        var error = new Error.UnprocessableContent(fields, EquatableArray<RuleViolation>.Empty);
+        var error = new Error.InvalidInput(fields, EquatableArray<RuleViolation>.Empty);
 
         var inner = new TrellisJsonValidationException(error.GetDisplayMessage())
         {
-            UnprocessableContent = error,
+            InvalidInput = error,
         };
         // Root path — JsonException.Path stays default ("$" or null).
         var bre = new BadHttpRequestException("Failed to read body", StatusCodes.Status400BadRequest, inner);
@@ -387,11 +387,11 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
         [
             new FieldViolation(InputPointer.ForProperty("amount"), "amount.required"),  // no Detail
         ]);
-        var error = new Error.UnprocessableContent(fields, EquatableArray<RuleViolation>.Empty);
+        var error = new Error.InvalidInput(fields, EquatableArray<RuleViolation>.Empty);
 
         var inner = new TrellisJsonValidationException(error.GetDisplayMessage())
         {
-            UnprocessableContent = error,
+            InvalidInput = error,
         };
         var bre = new BadHttpRequestException("Failed to read body", StatusCodes.Status400BadRequest, inner);
 
@@ -420,11 +420,11 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
             new FieldViolation(InputPointer.ForProperty("street"), "street.required") { Detail = "Street is required." },
             new FieldViolation(InputPointer.ForProperty("street"), "street.too-short") { Detail = "Street must be at least 3 characters." },
         ]);
-        var error = new Error.UnprocessableContent(fields, EquatableArray<RuleViolation>.Empty);
+        var error = new Error.InvalidInput(fields, EquatableArray<RuleViolation>.Empty);
 
         var inner = new TrellisJsonValidationException(error.GetDisplayMessage())
         {
-            UnprocessableContent = error,
+            InvalidInput = error,
         };
         typeof(JsonException).GetProperty("Path")!.SetValue(inner, "$.shippingAddress");
         var bre = new BadHttpRequestException("Failed to read body", StatusCodes.Status400BadRequest, inner);
@@ -455,11 +455,11 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
         [
             new FieldViolation(InputPointer.Root, "address.invalid") { Detail = "Address is malformed." },
         ]);
-        var error = new Error.UnprocessableContent(fields, EquatableArray<RuleViolation>.Empty);
+        var error = new Error.InvalidInput(fields, EquatableArray<RuleViolation>.Empty);
 
         var inner = new TrellisJsonValidationException(error.GetDisplayMessage())
         {
-            UnprocessableContent = error,
+            InvalidInput = error,
         };
         typeof(JsonException).GetProperty("Path")!.SetValue(inner, "$.shippingAddress");
         var bre = new BadHttpRequestException("Failed to read body", StatusCodes.Status400BadRequest, inner);
@@ -480,8 +480,8 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
     [Fact]
     public async Task TrellisJsonValidationException_with_RulesOnly_falls_back_to_unstructured_entry()
     {
-        // Review feedback (PR #474, comment 1): when an Error.UnprocessableContent has only
-        // RuleViolations and no FieldViolations (e.g., produced by Error.UnprocessableContent.ForRule(...)),
+        // Review feedback (PR #474, comment 1): when an Error.InvalidInput has only
+        // RuleViolations and no FieldViolations (e.g., produced by Error.InvalidInput.ForRule(...)),
         // the structured per-leaf branch must NOT swallow the validation message into an empty
         // `errors` object. Fall back to the unstructured single-entry shape under the parent path
         // with the curated exception message intact.
@@ -490,11 +490,11 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
         [
             new RuleViolation("order.total.exceeds-credit-limit") { Detail = "Order total exceeds the customer's credit limit." },
         ]);
-        var error = new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty, rules);
+        var error = new Error.InvalidInput(EquatableArray<FieldViolation>.Empty, rules);
 
         var inner = new TrellisJsonValidationException(error.GetDisplayMessage())
         {
-            UnprocessableContent = error,
+            InvalidInput = error,
         };
         typeof(JsonException).GetProperty("Path")!.SetValue(inner, "$.order");
         var bre = new BadHttpRequestException("Failed to read body", StatusCodes.Status400BadRequest, inner);
@@ -528,11 +528,11 @@ public sealed class ScalarValueValidationMiddlewareWireShapeTests
         [
             new FieldViolation(new InputPointer(fieldPointer), "validation.error") { Detail = "Invalid line item." },
         ]);
-        var error = new Error.UnprocessableContent(fields, EquatableArray<RuleViolation>.Empty);
+        var error = new Error.InvalidInput(fields, EquatableArray<RuleViolation>.Empty);
 
         var inner = new TrellisJsonValidationException(error.GetDisplayMessage())
         {
-            UnprocessableContent = error,
+            InvalidInput = error,
         };
         typeof(JsonException).GetProperty("Path")!.SetValue(inner, "$.items");
         var bre = new BadHttpRequestException("Failed to read body", StatusCodes.Status400BadRequest, inner);

@@ -56,7 +56,7 @@ public class MatchTupleTracingTests : TestBase
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
-        var result = Result.Fail<(string, string)>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "unprocessable-content") { Detail = "Invalid email" })));
+        var result = Result.Fail<(string, string)>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("email"), "unprocessable-content") { Detail = "Invalid email" })));
 
         // Act
         var output = result.Match(
@@ -65,7 +65,7 @@ public class MatchTupleTracingTests : TestBase
         );
 
         // Assert
-        output.Should().Be("unprocessable-content");
+        output.Should().Be("invalid-input");
         activityTest.AssertActivityCapturedWithStatus("Match", ActivityStatusCode.Error);
     }
 
@@ -115,7 +115,7 @@ public class MatchTupleTracingTests : TestBase
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
-        var result = Result.Fail<(int, string)>(new Error.InternalServerError("test") { Detail = "Server error" });
+        var result = Result.Fail<(int, string)>(new Error.Unexpected("test") { Detail = "Server error" });
         var errorLogged = false;
 
         // Act
@@ -394,7 +394,7 @@ public class MatchTupleTracingTests : TestBase
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
-        var resultTask = Task.FromResult(Result.Fail<(int, string)>(new Error.InternalServerError("test") { Detail = "Error" }));
+        var resultTask = Task.FromResult(Result.Fail<(int, string)>(new Error.Unexpected("test") { Detail = "Error" }));
         var errorLogged = false;
 
         // Act
@@ -439,7 +439,7 @@ public class MatchTupleTracingTests : TestBase
     {
         // Arrange
         using var activityTest = new ActivityTestHelper();
-        var combined = Result.Fail<(string, string)>(new Error.UnprocessableContent(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("field"), "unprocessable-content") { Detail = "Bad input" })));
+        var combined = Result.Fail<(string, string)>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty("field"), "unprocessable-content") { Detail = "Bad input" })));
 
         // Act
         var response = combined.Match(

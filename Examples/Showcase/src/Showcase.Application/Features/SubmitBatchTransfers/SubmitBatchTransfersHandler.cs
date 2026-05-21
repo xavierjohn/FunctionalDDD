@@ -25,7 +25,7 @@ public sealed class SubmitBatchTransfersHandler
         if (command.Lines.Count == 0)
         {
             return ValueTask.FromResult(Result.Fail<BatchTransferReceipt>(
-                Error.UnprocessableContent.ForField(
+                Error.InvalidInput.ForField(
                     nameof(command.Lines),
                     "batch.empty",
                     "At least one line is required.")));
@@ -38,7 +38,7 @@ public sealed class SubmitBatchTransfersHandler
             if (!string.Equals(line.Amount.Currency.Value, currency, System.StringComparison.Ordinal))
             {
                 return ValueTask.FromResult(Result.Fail<BatchTransferReceipt>(
-                    Error.UnprocessableContent.ForField(
+                    Error.InvalidInput.ForField(
                         nameof(command.Lines),
                         "batch.mixed-currency",
                         "All lines in a batch must share a single currency.")));

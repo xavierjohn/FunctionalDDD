@@ -60,7 +60,7 @@ internal static class Recipe9StateMachineSurface
 
         Result<DocumentState> invalid = machine.FireResult(DocumentTrigger.Approve);
         Error? error = invalid.Error;
-        Error.UnprocessableContent? unprocessable = error as Error.UnprocessableContent;
+        Error.InvalidInput? unprocessable = error as Error.InvalidInput;
         EquatableArray<RuleViolation> rules = unprocessable?.Rules ?? EquatableArray<RuleViolation>.Empty;
         string reasonCode = rules.Items[0].ReasonCode;
 

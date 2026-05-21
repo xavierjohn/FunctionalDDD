@@ -415,13 +415,13 @@ public class TapOnFailureTests : TestBase
     public async Task TapOnFailureAsync_IncrementErrorMetrics()
     {
         // Arrange
-        var result = Result.Fail<int>(new Error.ServiceUnavailable() { Detail = "External service down" });
+        var result = Result.Fail<int>(new Error.Unavailable() { Detail = "External service down" });
         var errorCount = 0;
 
         // Act
         var actual = await result.TapOnFailureAsync(error =>
         {
-            if (error is Error.ServiceUnavailable)
+            if (error is Error.Unavailable)
                 errorCount++;
             return Task.CompletedTask;
         });
@@ -438,7 +438,7 @@ public class TapOnFailureTests : TestBase
         var errorMessages = new List<string>();
 
         // Act
-        var result = Result.Fail<int>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid input" })
+        var result = Result.Fail<int>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid input" })
             .TapOnFailure(error => errorMessages.Add("First handler"))
             .TapOnFailure(error => errorMessages.Add("Second handler"))
             .TapOnFailure(error => errorMessages.Add("Third handler"));

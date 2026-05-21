@@ -51,7 +51,7 @@ public class SlugTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Slug is required.");
     }
 
@@ -68,7 +68,7 @@ public class SlugTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Slug must contain lower-case letters, numbers, and hyphens, without leading/trailing hyphens.");
     }
 
@@ -83,7 +83,7 @@ public class SlugTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Slug must contain lower-case letters, numbers, and hyphens, without leading/trailing hyphens.");
     }
 
@@ -99,7 +99,7 @@ public class SlugTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Slug must contain lower-case letters, numbers, and hyphens, without leading/trailing hyphens.");
     }
 
@@ -117,7 +117,7 @@ public class SlugTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Slug must contain lower-case letters, numbers, and hyphens, without leading/trailing hyphens.");
     }
 
@@ -129,7 +129,7 @@ public class SlugTests
 
         // Assert
         result.IsFailure.Should().BeTrue();
-        var validation = (Error.UnprocessableContent)result.UnwrapError();
+        var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/articleSlug");
     }
 

@@ -40,7 +40,7 @@ public class Order : Aggregate<OrderId>
     /// </summary>
     public static Result<Order> TryCreate(CustomerId customerId) =>
         customerId.ToResult()
-            .Ensure(id => id != null, Error.UnprocessableContent.ForField(nameof(customerId), "validation.error", "Customer ID is required"))
+            .Ensure(id => id != null, Error.InvalidInput.ForField(nameof(customerId), "validation.error", "Customer ID is required"))
             .Map(_ => new Order(customerId));
 
     /// <summary>
@@ -50,8 +50,8 @@ public class Order : Aggregate<OrderId>
     public Result<Order> AddLine(Product product, int quantity) =>
         this.ToResult()
             // RequiredEnum provides the CanModify property
-            .Ensure(_ => State.CanModify, Error.UnprocessableContent.ForRule("order.not-modifiable", $"Cannot modify order in '{State}' state"))
-            .Ensure(_ => quantity > 0, Error.UnprocessableContent.ForField(nameof(quantity), "validation.error", "Quantity must be positive"))
+            .Ensure(_ => State.CanModify, Error.InvalidInput.ForRule("order.not-modifiable", $"Cannot modify order in '{State}' state"))
+            .Ensure(_ => quantity > 0, Error.InvalidInput.ForField(nameof(quantity), "validation.error", "Quantity must be positive"))
             .Tap(_ => _lines.Add(new OrderLine(Id, product, quantity)));
 
     /// <summary>
@@ -60,7 +60,7 @@ public class Order : Aggregate<OrderId>
     /// </summary>
     public Result<Order> Confirm() =>
         this.ToResult()
-            .Ensure(_ => _lines.Count > 0, Error.UnprocessableContent.ForRule("order.empty", "Order must have at least one item"))
+            .Ensure(_ => _lines.Count > 0, Error.InvalidInput.ForRule("order.empty", "Order must have at least one item"))
             // RequiredEnum validates the transition
             .Bind(_ => State.TryTransitionTo(OrderState.Confirmed))
             .Tap(newState =>
@@ -103,7 +103,7 @@ public class Order : Aggregate<OrderId>
     public Result<Order> Cancel() =>
         this.ToResult()
             // RequiredEnum provides the CanCancel property
-            .Ensure(_ => State.CanCancel, Error.UnprocessableContent.ForRule("order.not-cancellable", $"Cannot cancel order in '{State}' state"))
+            .Ensure(_ => State.CanCancel, Error.InvalidInput.ForRule("order.not-cancellable", $"Cannot cancel order in '{State}' state"))
             .Bind(_ => State.TryTransitionTo(OrderState.Cancelled))
             .Tap(newState =>
             {

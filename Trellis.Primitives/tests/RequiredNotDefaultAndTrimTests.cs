@@ -103,7 +103,7 @@ public class RequiredNotDefaultAndTrimTests
     {
         var result = StrictGuid.TryCreate(Guid.Empty);
         result.IsFailure.Should().BeTrue();
-        var ve = (Error.UnprocessableContent)result.UnwrapError();
+        var ve = (Error.InvalidInput)result.UnwrapError();
         ve.Fields[0].Detail.Should().Be("Strict Guid cannot be Guid.Empty.");
     }
 
@@ -116,7 +116,7 @@ public class RequiredNotDefaultAndTrimTests
         // "Guid should contain 32 digits..." message.
         var result = StrictGuid.TryCreate("00000000-0000-0000-0000-000000000000");
         result.IsFailure.Should().BeTrue();
-        var ve = (Error.UnprocessableContent)result.UnwrapError();
+        var ve = (Error.InvalidInput)result.UnwrapError();
         ve.Fields[0].Detail.Should().Be("Strict Guid cannot be Guid.Empty.");
     }
 
@@ -125,7 +125,7 @@ public class RequiredNotDefaultAndTrimTests
     {
         var result = StrictDateTime.TryCreate(DateTime.MinValue);
         result.IsFailure.Should().BeTrue();
-        var ve = (Error.UnprocessableContent)result.UnwrapError();
+        var ve = (Error.InvalidInput)result.UnwrapError();
         ve.Fields[0].Detail.Should().Be("Strict Date Time cannot be DateTime.MinValue.");
     }
 
@@ -134,7 +134,7 @@ public class RequiredNotDefaultAndTrimTests
     {
         var result = StrictInt.TryCreate(0);
         result.IsFailure.Should().BeTrue();
-        var ve = (Error.UnprocessableContent)result.UnwrapError();
+        var ve = (Error.InvalidInput)result.UnwrapError();
         ve.Fields[0].Detail.Should().Be("Strict Int cannot be zero.");
     }
 
@@ -143,7 +143,7 @@ public class RequiredNotDefaultAndTrimTests
     {
         var result = StrictLong.TryCreate(0L);
         result.IsFailure.Should().BeTrue();
-        var ve = (Error.UnprocessableContent)result.UnwrapError();
+        var ve = (Error.InvalidInput)result.UnwrapError();
         ve.Fields[0].Detail.Should().Be("Strict Long cannot be zero.");
     }
 
@@ -152,7 +152,7 @@ public class RequiredNotDefaultAndTrimTests
     {
         var result = StrictDecimal.TryCreate(0m);
         result.IsFailure.Should().BeTrue();
-        var ve = (Error.UnprocessableContent)result.UnwrapError();
+        var ve = (Error.InvalidInput)result.UnwrapError();
         ve.Fields[0].Detail.Should().Be("Strict Decimal cannot be zero.");
     }
 
@@ -164,7 +164,7 @@ public class RequiredNotDefaultAndTrimTests
         // Without correct ordering the Range(1,100) check fires first ("must be at least 1.").
         var result = StrictRangedInt.TryCreate(0);
         result.IsFailure.Should().BeTrue();
-        var ve = (Error.UnprocessableContent)result.UnwrapError();
+        var ve = (Error.InvalidInput)result.UnwrapError();
         ve.Fields[0].Detail.Should().Be("Strict Ranged Int cannot be zero.");
     }
 
@@ -173,7 +173,7 @@ public class RequiredNotDefaultAndTrimTests
     {
         var result = StrictRangedInt.TryCreate((int?)0);
         result.IsFailure.Should().BeTrue();
-        var ve = (Error.UnprocessableContent)result.UnwrapError();
+        var ve = (Error.InvalidInput)result.UnwrapError();
         ve.Fields[0].Detail.Should().Be("Strict Ranged Int cannot be zero.");
     }
 
@@ -182,7 +182,7 @@ public class RequiredNotDefaultAndTrimTests
     {
         var result = StrictRangedInt.TryCreate("0");
         result.IsFailure.Should().BeTrue();
-        var ve = (Error.UnprocessableContent)result.UnwrapError();
+        var ve = (Error.InvalidInput)result.UnwrapError();
         ve.Fields[0].Detail.Should().Be("Strict Ranged Int cannot be zero.");
     }
 
@@ -191,7 +191,7 @@ public class RequiredNotDefaultAndTrimTests
     {
         var result = StrictRangedLong.TryCreate(0L);
         result.IsFailure.Should().BeTrue();
-        var ve = (Error.UnprocessableContent)result.UnwrapError();
+        var ve = (Error.InvalidInput)result.UnwrapError();
         ve.Fields[0].Detail.Should().Be("Strict Ranged Long cannot be zero.");
     }
 
@@ -200,7 +200,7 @@ public class RequiredNotDefaultAndTrimTests
     {
         var result = StrictRangedDecimal.TryCreate(0m);
         result.IsFailure.Should().BeTrue();
-        var ve = (Error.UnprocessableContent)result.UnwrapError();
+        var ve = (Error.InvalidInput)result.UnwrapError();
         ve.Fields[0].Detail.Should().Be("Strict Ranged Decimal cannot be zero.");
     }
 
@@ -210,7 +210,7 @@ public class RequiredNotDefaultAndTrimTests
         // Negative input is not the zero sentinel, so the Range check is the right one to fire.
         var result = StrictRangedInt.TryCreate(-5);
         result.IsFailure.Should().BeTrue();
-        var ve = (Error.UnprocessableContent)result.UnwrapError();
+        var ve = (Error.InvalidInput)result.UnwrapError();
         ve.Fields[0].Detail.Should().Be("Strict Ranged Int must be at least 1.");
     }
 

@@ -5,7 +5,7 @@ using Trellis;
 
 /// <summary>
 /// Configuration options for Trellis ASP.NET Core integration.
-/// Controls how domain error types are mapped to HTTP status codes.
+/// Controls how domain error types and wrapped HTTP transport faults are mapped to status codes.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -15,18 +15,17 @@ using Trellis;
 ///         <term>Error Type</term>
 ///         <description>Default HTTP Status</description>
 ///     </listheader>
-///     <item><term><see cref="Error.UnprocessableContent"/></term><description>422 Unprocessable Entity</description></item>
-///     <item><term><see cref="Error.BadRequest"/></term><description>400 Bad Request</description></item>
-///     <item><term><see cref="Error.Unauthorized"/></term><description>401 Unauthorized</description></item>
+///     <item><term><see cref="Error.InvalidInput"/></term><description>422 Unprocessable Entity</description></item>
+///     <item><term><see cref="Error.InvariantViolation"/></term><description>422 Unprocessable Entity</description></item>
+///     <item><term><see cref="Error.AuthenticationRequired"/></term><description>401 Unauthorized</description></item>
 ///     <item><term><see cref="Error.Forbidden"/></term><description>403 Forbidden</description></item>
 ///     <item><term><see cref="Error.NotFound"/></term><description>404 Not Found</description></item>
 ///     <item><term><see cref="Error.Conflict"/></term><description>409 Conflict</description></item>
-///     <item><term><see cref="Error.PreconditionFailed"/></term><description>412 Precondition Failed</description></item>
-///     <item><term><see cref="Error.PreconditionRequired"/></term><description>428 Precondition Required</description></item>
-///     <item><term><see cref="Error.TooManyRequests"/></term><description>429 Too Many Requests</description></item>
-///     <item><term><see cref="Error.InternalServerError"/></term><description>500 Internal Server Error</description></item>
+///     <item><term><see cref="Error.Gone"/></term><description>410 Gone</description></item>
+///     <item><term><see cref="Error.TransportFault"/></term><description>Wrapped <see cref="HttpError"/> cases map by inner HTTP fault (405/406/412/413/415/416/428).</description></item>
+///     <item><term><see cref="Error.RateLimited"/></term><description>429 Too Many Requests</description></item>
 ///     <item><term><see cref="Error.Unexpected"/></term><description>500 Internal Server Error</description></item>
-///     <item><term><see cref="Error.ServiceUnavailable"/></term><description>503 Service Unavailable</description></item>
+///     <item><term><see cref="Error.Unavailable"/></term><description>503 Service Unavailable</description></item>
 /// </list>
 /// </para>
 /// <para>
@@ -67,27 +66,29 @@ public sealed class TrellisAspOptions
     /// </remarks>
     internal static TrellisAspOptions SystemDefault { get; } = new();
 
+    private static readonly Dictionary<Type, int> s_httpTransportMappings = new()
+    {
+        [typeof(HttpError.MethodNotAllowed)] = StatusCodes.Status405MethodNotAllowed,
+        [typeof(HttpError.NotAcceptable)] = StatusCodes.Status406NotAcceptable,
+        [typeof(HttpError.PreconditionFailed)] = StatusCodes.Status412PreconditionFailed,
+        [typeof(HttpError.ContentTooLarge)] = StatusCodes.Status413RequestEntityTooLarge,
+        [typeof(HttpError.UnsupportedMediaType)] = StatusCodes.Status415UnsupportedMediaType,
+        [typeof(HttpError.RangeNotSatisfiable)] = StatusCodes.Status416RangeNotSatisfiable,
+        [typeof(HttpError.PreconditionRequired)] = StatusCodes.Status428PreconditionRequired,
+    };
+
     private readonly Dictionary<Type, int> _errorMappings = new()
     {
-        [typeof(Error.UnprocessableContent)] = StatusCodes.Status422UnprocessableEntity,
-        [typeof(Error.BadRequest)] = StatusCodes.Status400BadRequest,
-        [typeof(Error.Unauthorized)] = StatusCodes.Status401Unauthorized,
+        [typeof(Error.InvalidInput)] = StatusCodes.Status422UnprocessableEntity,
+        [typeof(Error.InvariantViolation)] = StatusCodes.Status422UnprocessableEntity,
+        [typeof(Error.AuthenticationRequired)] = StatusCodes.Status401Unauthorized,
         [typeof(Error.Forbidden)] = StatusCodes.Status403Forbidden,
         [typeof(Error.NotFound)] = StatusCodes.Status404NotFound,
-        [typeof(Error.MethodNotAllowed)] = StatusCodes.Status405MethodNotAllowed,
-        [typeof(Error.NotAcceptable)] = StatusCodes.Status406NotAcceptable,
         [typeof(Error.Conflict)] = StatusCodes.Status409Conflict,
         [typeof(Error.Gone)] = StatusCodes.Status410Gone,
-        [typeof(Error.PreconditionFailed)] = StatusCodes.Status412PreconditionFailed,
-        [typeof(Error.ContentTooLarge)] = StatusCodes.Status413RequestEntityTooLarge,
-        [typeof(Error.UnsupportedMediaType)] = StatusCodes.Status415UnsupportedMediaType,
-        [typeof(Error.RangeNotSatisfiable)] = StatusCodes.Status416RangeNotSatisfiable,
-        [typeof(Error.PreconditionRequired)] = StatusCodes.Status428PreconditionRequired,
-        [typeof(Error.TooManyRequests)] = StatusCodes.Status429TooManyRequests,
-        [typeof(Error.InternalServerError)] = StatusCodes.Status500InternalServerError,
+        [typeof(Error.RateLimited)] = StatusCodes.Status429TooManyRequests,
         [typeof(Error.Unexpected)] = StatusCodes.Status500InternalServerError,
-        [typeof(Error.NotImplemented)] = StatusCodes.Status501NotImplemented,
-        [typeof(Error.ServiceUnavailable)] = StatusCodes.Status503ServiceUnavailable,
+        [typeof(Error.Unavailable)] = StatusCodes.Status503ServiceUnavailable,
     };
 
     /// <summary>
@@ -99,7 +100,7 @@ public sealed class TrellisAspOptions
     /// <example>
     /// <code>
     /// options.MapError&lt;Error.Conflict&gt;(StatusCodes.Status400BadRequest)
-    ///        .MapError&lt;Error.UnprocessableContent&gt;(StatusCodes.Status422UnprocessableEntity);
+    ///        .MapError&lt;Error.InvalidInput&gt;(StatusCodes.Status422UnprocessableEntity);
     /// </code>
     /// </example>
     public TrellisAspOptions MapError<TError>(int statusCode) where TError : Error
@@ -109,20 +110,65 @@ public sealed class TrellisAspOptions
     }
 
     /// <summary>
-    /// Resolves the HTTP status code for the given error by walking up the type hierarchy.
+    /// Resolves the HTTP status code for the given error by walking up the error type hierarchy.
+    /// For <see cref="Error.TransportFault"/>, explicit outer-type overrides win first; otherwise
+    /// wrapped <see cref="HttpError"/> cases are mapped by their inner subtype.
     /// Returns 500 Internal Server Error if no mapping is found.
     /// </summary>
     internal int GetStatusCode(Error error)
     {
-        var type = error.GetType();
-        while (type is not null && type != typeof(object))
+        if (error is Error.Aggregate agg)
+            return ComputeWorstStatus(agg, this);
+
+        // Error.Unexpected carries an open-ended ReasonCode; "not_implemented" is the one
+        // legacy code that historically mapped to 501 rather than 500. Checked before the
+        // type-based lookup so an Unexpected mapping override doesn't shadow it.
+        if (error is Error.Unexpected { ReasonCode: "not_implemented" })
+            return StatusCodes.Status501NotImplemented;
+
+        var mappedStatus = TryResolveMapping(_errorMappings, error.GetType());
+        if (mappedStatus.HasValue)
+            return mappedStatus.Value;
+
+        if (error is Error.TransportFault { Fault: HttpError httpError })
         {
-            if (_errorMappings.TryGetValue(type, out var statusCode))
-                return statusCode;
-            type = type.BaseType;
+            mappedStatus = TryResolveMapping(s_httpTransportMappings, httpError.GetType());
+            if (mappedStatus.HasValue)
+                return mappedStatus.Value;
         }
 
         return StatusCodes.Status500InternalServerError;
+    }
+
+    // Aggregate worst-status rule: 5xx beats any 4xx; 4xx beats 1xx-3xx; tie-break by highest numeric.
+    private static int ComputeWorstStatus(Error.Aggregate aggregate, TrellisAspOptions options)
+    {
+        var worst = 0;
+        var worstClass = 0;
+        foreach (var child in aggregate.Errors.Items)
+        {
+            var s = options.GetStatusCode(child);
+            var cls = s / 100;
+            if (cls > worstClass || (cls == worstClass && s > worst))
+            {
+                worst = s;
+                worstClass = cls;
+            }
+        }
+
+        return worst == 0 ? StatusCodes.Status500InternalServerError : worst;
+    }
+
+    private static int? TryResolveMapping(Dictionary<Type, int> mappings, Type type)
+    {
+        while (type != typeof(object))
+        {
+            if (mappings.TryGetValue(type, out var statusCode))
+                return statusCode;
+            type = type.BaseType!;
+        }
+
+        return null;
     }
 
 }

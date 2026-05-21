@@ -352,7 +352,7 @@ For full signatures of every built-in (`Add`, `Multiply`, `Allocate`, `Sum`, `Fr
 Scalar primitives bind from route / query / body once you call `AddTrellisAsp()` or `AddScalarValueValidation()` from `Trellis.Asp`:
 
 - Model binders read the raw value, call `TValue.TryCreate`, and add validation errors to `ModelState` on failure.
-- JSON converters write the underlying primitive on `Write`, read with `TryCreate` on `Read`, and route failures into the `Error.UnprocessableContent` aggregator.
+- JSON converters write the underlying primitive on `Write`, read with `TryCreate` on `Read`, and route failures into the `Error.InvalidInput` aggregator.
 - `Maybe<TValue>` wrappers pass `null` through as `Maybe.None`.
 
 Composite VOs need the explicit `[JsonConverter(typeof(CompositeValueObjectJsonConverter<...>))]` shown above — `AddScalarValueValidation` only wires scalar converters.
@@ -415,7 +415,7 @@ public static Result<PlaceOrderCommand> ParseCommand(string email, string produc
         .Map(((EmailAddress e, ProductName p) ep, Quantity q) => new PlaceOrderCommand(ep.e, ep.p, q));
 ```
 
-`Combine` aggregates field-level failures into one `Error.UnprocessableContent` so every invalid field is reported in a single response. See [trellis-api-core.md](../api_reference/trellis-api-core.md) for the full ROP surface.
+`Combine` aggregates field-level failures into one `Error.InvalidInput` so every invalid field is reported in a single response. See [trellis-api-core.md](../api_reference/trellis-api-core.md) for the full ROP surface.
 
 ## Practical guidance
 

@@ -1,4 +1,4 @@
-# TRLS023 — `CreatedAtRoute` / `CreatedAtAction` / `WithLocation` is missing the `api-version` route value
+﻿# TRLS023 — `CreatedAtRoute` / `CreatedAtAction` / `WithLocation` is missing the `api-version` route value
 
 - **Severity:** Warning
 - **Category:** Trellis

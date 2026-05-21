@@ -293,17 +293,17 @@ public class ErrorAssertions : ReferenceTypeAssertions<Error, ErrorAssertions>
 ```csharp
 public static class ValidationErrorAssertionsExtensions
 {
-    // Bound to Error.UnprocessableContent (the replacement for the previous validation error class).
+    // Bound to Error.InvalidInput (the replacement for the previous validation error class).
     // Method names preserved for source-compat at test sites.
-    public static ValidationErrorAssertions Should(this Error.UnprocessableContent error);
+    public static ValidationErrorAssertions Should(this Error.InvalidInput error);
 }
 ```
 
 #### `ValidationErrorAssertions`
 ```csharp
-public class ValidationErrorAssertions : ReferenceTypeAssertions<Error.UnprocessableContent, ValidationErrorAssertions>
+public class ValidationErrorAssertions : ReferenceTypeAssertions<Error.InvalidInput, ValidationErrorAssertions>
 {
-    public ValidationErrorAssertions(Error.UnprocessableContent error);
+    public ValidationErrorAssertions(Error.InvalidInput error);
 
     public AndConstraint<ValidationErrorAssertions> HaveFieldError(
         string fieldName,                              // accepted as either "email" or "/email" — normalized via InputPointer.ForProperty
@@ -475,7 +475,7 @@ public sealed class TestActorScope : IAsyncDisposable, IDisposable
 
 - Synchronous assertions start from `Result<T>` or `Maybe<T>`:
   - `result.Should().BeSuccess()`
-  - `result.Should().BeFailureOfType<Error.UnprocessableContent>()`
+  - `result.Should().BeFailureOfType<Error.InvalidInput>()`
   - `maybe.Should().HaveValue()`
 - **Async assertions are extension methods on `Task<Result<T>>` and `ValueTask<Result<T>>`, not on `ResultAssertions<T>`.**
   - Correct: `await resultTask.BeSuccessAsync();`

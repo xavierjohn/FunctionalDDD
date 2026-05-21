@@ -54,13 +54,13 @@ using Trellis;
 /// 
 /// // Invalid email addresses
 /// var invalid1 = EmailAddress.TryCreate("not-an-email");
-/// // Returns: Failure(Error.UnprocessableContent with detail "Email address is not valid.")
+/// // Returns: Failure(Error.InvalidInput with detail "Email address is not valid.")
 /// 
 /// var invalid2 = EmailAddress.TryCreate("@example.com");
-/// // Returns: Failure(Error.UnprocessableContent with detail "Email address is not valid.")
+/// // Returns: Failure(Error.InvalidInput with detail "Email address is not valid.")
 /// 
 /// var invalid3 = EmailAddress.TryCreate(null);
-/// // Returns: Failure(Error.UnprocessableContent with detail "Email address is not valid.")
+/// // Returns: Failure(Error.InvalidInput with detail "Email address is not valid.")
 /// </code>
 /// </example>
 /// <example>
@@ -95,7 +95,7 @@ using Trellis;
 /// <code>
 /// // Specify field name for better error messages
 /// var result = EmailAddress.TryCreate("invalid", "userEmail");
-/// // Returns: Failure(Error.UnprocessableContent with field "userEmail")
+/// // Returns: Failure(Error.InvalidInput with field "userEmail")
 /// 
 /// // In API validation
 /// public record RegisterUserRequest(string Email, string Password);
@@ -175,7 +175,7 @@ public partial class EmailAddress : ScalarValueObject<EmailAddress, string>, ISc
     /// <returns>
     /// <list type="bullet">
     /// <item>Success with the EmailAddress if the string is a valid email</item>
-    /// <item>Failure with an <see cref="Error.UnprocessableContent"/> if the email is invalid or null</item>
+    /// <item>Failure with an <see cref="Error.InvalidInput"/> if the email is invalid or null</item>
     /// </list>
     /// </returns>
     /// <remarks>
@@ -221,7 +221,7 @@ public partial class EmailAddress : ScalarValueObject<EmailAddress, string>, ISc
             }
         }
 
-        return Result.Fail<EmailAddress>(Error.UnprocessableContent.ForField(fieldName.NormalizeFieldName("email"), "validation.error", "Email address is not valid."));
+        return Result.Fail<EmailAddress>(Error.InvalidInput.ForField(fieldName.NormalizeFieldName("email"), "validation.error", "Email address is not valid."));
     }
 
     /// <summary>

@@ -54,7 +54,7 @@ public class TapTupleTests : TestBase
     public void Tap_2Tuple_Failure_DoesNotExecute()
     {
         // Arrange
-        var result = Result.Fail<(int, string)>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Validation failed" });
+        var result = Result.Fail<(int, string)>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Validation failed" });
 
         // Act
         var actual = result.Tap((a, b) => _actionExecuted = true);
@@ -62,7 +62,7 @@ public class TapTupleTests : TestBase
         // Assert
         _actionExecuted.Should().BeFalse();
         actual.Should().BeFailure();
-        actual.Error!.Should().BeOfType<Error.UnprocessableContent>();
+        actual.Error!.Should().BeOfType<Error.InvalidInput>();
     }
 
     [Fact]
@@ -215,7 +215,7 @@ public class TapTupleTests : TestBase
     public async Task TapAsync_2Tuple_WithFuncTask_Failure_DoesNotExecute()
     {
         // Arrange
-        var result = Result.Fail<(int, string)>(new Error.InternalServerError("test") { Detail = "Error" });
+        var result = Result.Fail<(int, string)>(new Error.Unexpected("test") { Detail = "Error" });
 
         // Act
         var actual = await result.TapAsync((a, b) =>
@@ -404,7 +404,7 @@ public class TapTupleTests : TestBase
     public void Tap_9Tuple_Failure_DoesNotExecute()
     {
         // Arrange
-        var result = Result.Fail<(int, int, int, int, int, int, int, int, int)>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid" });
+        var result = Result.Fail<(int, int, int, int, int, int, int, int, int)>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid" });
 
         // Act
         var actual = result.Tap((a, b, c, d, e, f, g, h, i) => _actionExecuted = true);
@@ -516,7 +516,7 @@ public class TapTupleTests : TestBase
 
         // Act
         var result = Result.Ok("valid")
-            .Combine(Result.Fail<string>(new Error.UnprocessableContent(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid" }))
+            .Combine(Result.Fail<string>(new Error.InvalidInput(EquatableArray<FieldViolation>.Empty) { Detail = "Invalid" }))
             .Tap((a, b) => loggedMessages.Add("Should not execute"));
 
         // Assert

@@ -7,7 +7,7 @@ using Trellis.Testing;
 
 public class HandleUnauthorizedAsyncTests
 {
-    readonly Error.Unauthorized _unauth = new() { Detail = "token expired" };
+    readonly Error.AuthenticationRequired _unauth = new() { Detail = "token expired" };
 
     [Fact]
     public async Task Matching_401_returns_failure_and_disposes_response()
@@ -17,7 +17,7 @@ public class HandleUnauthorizedAsyncTests
 
         var result = await task.HandleUnauthorizedAsync(_unauth);
 
-        result.Should().BeFailureOfType<Error.Unauthorized>()
+        result.Should().BeFailureOfType<Error.AuthenticationRequired>()
             .Which.Should().HaveDetail("token expired");
         tracker.Disposed.Should().BeTrue();
     }

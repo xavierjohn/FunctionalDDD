@@ -1,9 +1,9 @@
-﻿namespace Trellis.Asp;
+﻿﻿namespace Trellis.Asp;
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
@@ -13,118 +13,158 @@ using Trellis;
 
 /// <summary>
 /// Internal helper that writes failure responses (ProblemDetails / ValidationProblem) and emits
-/// RFC-required companion headers (<c>Allow</c>, <c>Retry-After</c>, <c>Content-Range</c>,
+/// RFC-required companion headers (<c>Allow</c>, <c>Content-Range</c>, <c>Retry-After</c>,
 /// <c>WWW-Authenticate</c>) using the supplied per-call status code.
 /// </summary>
 internal static class ResponseFailureWriter
 {
     public static async Task WriteAsync(HttpContext httpContext, Error error, int statusCode)
     {
-        EmitCompanionHeaders(httpContext.Response, error, statusCode);
+        EmitCompanionHeaders(httpContext.Response, error);
 
-        // The only async companion-header path: synthesize WWW-Authenticate when the mediator
-        // emitted Error.Unauthorized with no Challenges and the response doesn't already carry
-        // the header. EmitCompanionHeaders has already written explicit-Challenges challenges
-        // synchronously, so reaching here means the synthesis branch is the only one left.
-        if (error is Error.Unauthorized unauth
-            && statusCode == 401
-            && unauth.Challenges.Items.Length == 0
+        // Conflict + concurrent_modification + If-Match → 412 / precondition-failed.
+        // Applied locally here (not in GetStatusCode) because the override depends on the
+        // request's If-Match header, which TrellisAspOptions has no access to.
+        var overriden = TryConcurrentModificationOverride(httpContext, error);
+        var effectiveStatus = overriden?.Status ?? statusCode;
+        var wireKindOverride = overriden?.WireKind;
+
+        // The only async companion-header path: synthesize WWW-Authenticate when a 401 error
+        // reaches the writer and the response doesn't already carry the header.
+        if (error is Error.AuthenticationRequired authRequired
+            && effectiveStatus == 401
             && !httpContext.Response.Headers.ContainsKey("WWW-Authenticate"))
         {
-            await SynthesizeWwwAuthenticateAsync(httpContext).ConfigureAwait(false);
+            await SynthesizeWwwAuthenticateAsync(httpContext, authRequired.Scheme).ConfigureAwait(false);
         }
 
         // RFC 9457 §3.1: "instance" identifies the specific occurrence of the problem.
         // Emitting the server-relative path+query (rather than the absolute URL) avoids host
         // disclosure while still letting clients correlate the response with the request that
-        // produced it. Matches what public APIs and the System.Net.Http.Json ProblemDetails
-        // round-trip convention expect.
+        // produced it.
         var instance = httpContext.Request.GetEncodedPathAndQuery();
 
         Microsoft.AspNetCore.Http.IResult inner;
-        if (error is Error.UnprocessableContent unprocessable
+
+        if (error is Error.Aggregate aggregate)
+        {
+            var options = httpContext.RequestServices?.GetService<TrellisAspOptions>() ?? TrellisAspOptions.SystemDefault;
+            var detail = effectiveStatus >= 500 ? "An internal error occurred." : GetPublicDetail(error);
+            var extensions = BuildExtensions(error, default, wireKindOverride);
+            extensions["errors"] = aggregate.Errors.Items
+                .Select(child =>
+                {
+                    var (childCode, childKind) = GetCodeAndKind(child);
+                    return (object?)new Dictionary<string, object?>(StringComparer.Ordinal)
+                    {
+                        ["type"] = childKind,
+                        ["status"] = options.GetStatusCode(child),
+                        ["code"] = childCode,
+                        ["kind"] = childKind,
+                        ["detail"] = GetPublicDetail(child),
+                    };
+                })
+                .ToArray();
+
+            inner = Microsoft.AspNetCore.Http.Results.Problem(
+                detail,
+                instance,
+                effectiveStatus,
+                extensions: extensions);
+        }
+        else if (error is Error.InvalidInput unprocessable
             && (unprocessable.Fields.Items.Length > 0 || unprocessable.Rules.Items.Length > 0))
         {
             var errors = unprocessable.Fields.Items
                 .GroupBy(fv => JsonPointerToMvc.Translate(fv.Field.Path))
                 .ToDictionary(g => g.Key, g => g.Select(fv => fv.Detail ?? fv.ReasonCode).ToArray());
 
-            var validationDetail = statusCode >= 500 ? "An internal error occurred." : unprocessable.Detail;
+            var validationDetail = effectiveStatus >= 500 ? "An internal error occurred." : unprocessable.Detail;
             inner = Microsoft.AspNetCore.Http.Results.ValidationProblem(
                 errors,
                 validationDetail,
                 instance,
-                statusCode,
-                extensions: BuildExtensions(error, unprocessable.Rules));
+                effectiveStatus,
+                extensions: BuildExtensions(error, unprocessable.Rules, wireKindOverride));
         }
         else
         {
-            var detail = statusCode >= 500 ? "An internal error occurred." : error.Detail;
-            var rules = error is Error.UnprocessableContent uc ? uc.Rules : default;
+            var detail = effectiveStatus >= 500 ? "An internal error occurred." : GetPublicDetail(error);
+            var rules = error is Error.InvalidInput uc ? uc.Rules : default;
             inner = Microsoft.AspNetCore.Http.Results.Problem(
                 detail,
                 instance,
-                statusCode,
-                extensions: BuildExtensions(error, rules));
+                effectiveStatus,
+                extensions: BuildExtensions(error, rules, wireKindOverride));
         }
 
         await inner.ExecuteAsync(httpContext).ConfigureAwait(false);
     }
 
-    private static void EmitCompanionHeaders(HttpResponse response, Error error, int statusCode)
+    private static void EmitCompanionHeaders(HttpResponse response, Error error)
     {
         switch (error)
         {
-            case Error.MethodNotAllowed mae:
+            case Error.TransportFault { Fault: HttpError.MethodNotAllowed mae }:
                 response.Headers["Allow"] = string.Join(", ", mae.Allow.Items);
                 break;
 
-            case Error.TooManyRequests { RetryAfter: not null } tmr:
-                response.Headers["Retry-After"] = tmr.RetryAfter.ToHeaderValue();
-                break;
-
-            case Error.ServiceUnavailable { RetryAfter: not null } sue:
-                response.Headers["Retry-After"] = sue.RetryAfter.ToHeaderValue();
-                break;
-
-            case Error.RangeNotSatisfiable rnse:
+            case Error.TransportFault { Fault: HttpError.RangeNotSatisfiable rnse }:
                 response.Headers["Content-Range"] = $"{rnse.Unit} */{rnse.CompleteLength}";
                 break;
 
-            // Explicit challenges are emitted verbatim, synchronously. Synthesis (when
-            // Challenges is empty) needs IAuthenticationSchemeProvider and runs in
-            // SynthesizeWwwAuthenticateAsync from WriteAsync.
-            //
-            // Gated on the resolved status code: WWW-Authenticate is RFC 9110 §11.6.1
-            // tied specifically to 401. If WithErrorMapping promotes Error.Unauthorized
-            // to a non-401 status, suppress the header rather than mislead clients into
-            // attempting re-authentication. Mirrors the m-13 status-aware design used
-            // by ValidationProblem detail scrubbing.
-            case Error.Unauthorized unauth when statusCode == 401 && unauth.Challenges.Items.Length > 0:
-                foreach (var challenge in unauth.Challenges.Items)
-                    response.Headers.Append("WWW-Authenticate", FormatChallenge(challenge));
+            case Error.RateLimited { Retry: { } rl }:
+                EmitRetryAfter(response, rl);
+                break;
+
+            case Error.Unavailable { Retry: { } uv }:
+                EmitRetryAfter(response, uv);
                 break;
         }
     }
 
-    /// <summary>
-    /// Synthesizes a scheme-only <c>WWW-Authenticate</c> challenge from the registered
-    /// default-challenge scheme via <see cref="IAuthenticationSchemeProvider"/>. This is the
-    /// RFC 9110 §11.6.1 compliance path for the mediator-emitted <c>Error.Unauthorized</c>
-    /// with empty <see cref="Error.Unauthorized.Challenges"/> on anonymous-tolerant routes
-    /// where the ASP.NET Core auth handler is never invoked. If no auth scheme is configured
-    /// (<see cref="IAuthenticationSchemeProvider"/> unavailable or no default challenge),
-    /// emits nothing — synthesizing "Bearer" for a service that does not use Bearer would
-    /// mislead clients.
-    /// </summary>
-    /// <remarks>
-    /// Caller (<see cref="WriteAsync"/>) is responsible for the precondition checks
-    /// (<see cref="Error.Unauthorized.Challenges"/> empty, no existing
-    /// <c>WWW-Authenticate</c> header, status code 401). This method only does the async
-    /// scheme lookup and header append.
-    /// </remarks>
-    private static async Task SynthesizeWwwAuthenticateAsync(HttpContext httpContext)
+    private static void EmitRetryAfter(HttpResponse response, RetryAdvice retry)
     {
+        // RFC 9110 §10.2.3: prefer delta-seconds when both are set — simpler for clients and
+        // not subject to clock skew.
+        if (retry.After is { } delta)
+        {
+            var seconds = Math.Max(0L, (long)Math.Ceiling(delta.TotalSeconds));
+            response.Headers["Retry-After"] = seconds.ToString(CultureInfo.InvariantCulture);
+        }
+        else if (retry.At is { } at)
+        {
+            // RFC 7231 §7.1.1.1 IMF-fixdate form, e.g. "Sun, 06 Nov 1994 08:49:37 GMT".
+            response.Headers["Retry-After"] = at.UtcDateTime.ToString("r", CultureInfo.InvariantCulture);
+        }
+    }
+
+    private static (int Status, string WireKind)? TryConcurrentModificationOverride(HttpContext httpContext, Error error)
+    {
+        if (error is Error.Conflict { ReasonCode: "concurrent_modification" }
+            && httpContext.Request.Headers.ContainsKey("If-Match"))
+        {
+            return (StatusCodes.Status412PreconditionFailed, "precondition-failed");
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Synthesizes a <c>WWW-Authenticate</c> challenge. When the domain error carries an explicit
+    /// scheme string, it is emitted verbatim (RFC 9110 §11.6.1 challenge syntax is the caller's
+    /// responsibility). Otherwise the registered default-challenge scheme is resolved via
+    /// <see cref="IAuthenticationSchemeProvider"/>. If no auth scheme is configured, emits
+    /// nothing — synthesizing "Bearer" for a service that does not use Bearer would mislead clients.
+    /// </summary>
+    private static async Task SynthesizeWwwAuthenticateAsync(HttpContext httpContext, string? explicitScheme)
+    {
+        if (!string.IsNullOrWhiteSpace(explicitScheme))
+        {
+            httpContext.Response.Headers.Append("WWW-Authenticate", explicitScheme);
+            return;
+        }
+
         var schemeProvider = httpContext.RequestServices?.GetService<IAuthenticationSchemeProvider>();
         if (schemeProvider is null)
             return;
@@ -137,50 +177,34 @@ internal static class ResponseFailureWriter
         httpContext.Response.Headers.Append("WWW-Authenticate", scheme.Name);
     }
 
-    /// <summary>
-    /// Formats a single <see cref="AuthChallenge"/> as a <c>WWW-Authenticate</c> header value
-    /// per RFC 9110 §11.6.1. Parameter values are always emitted as quoted-strings (RFC 9110
-    /// §5.6.4); embedded <c>"</c> and <c>\</c> are backslash-escaped.
-    /// </summary>
-    private static string FormatChallenge(AuthChallenge challenge)
+    private static string? GetPublicDetail(Error error) =>
+        error.Detail
+        ?? (error is Error.TransportFault { Fault: HttpError httpError } ? httpError.Detail : null);
+
+    private static (string Code, string Kind) GetCodeAndKind(Error error) =>
+        error is Error.TransportFault { Fault: HttpError httpError }
+            ? (httpError.Code, httpError.Kind)
+            : (error.Code, ToWireKind(error));
+
+    private static Dictionary<string, object?> BuildExtensions(Error error, EquatableArray<RuleViolation> rules, string? wireKindOverride = null)
     {
-        if (challenge.Params is null || challenge.Params.Count == 0)
-            return challenge.Scheme;
+        var (code, kind) = GetCodeAndKind(error);
+        if (wireKindOverride is not null)
+            kind = wireKindOverride;
 
-        var sb = new StringBuilder(challenge.Scheme);
-        sb.Append(' ');
-        var first = true;
-        foreach (var kv in challenge.Params)
-        {
-            if (!first) sb.Append(", ");
-            first = false;
-            sb.Append(kv.Key).Append('=').Append('"');
-            AppendQuotedString(sb, kv.Value);
-            sb.Append('"');
-        }
-
-        return sb.ToString();
-    }
-
-    private static void AppendQuotedString(StringBuilder sb, string value)
-    {
-        foreach (var ch in value)
-        {
-            if (ch is '"' or '\\') sb.Append('\\');
-            sb.Append(ch);
-        }
-    }
-
-    private static Dictionary<string, object?> BuildExtensions(Error error, EquatableArray<RuleViolation> rules)
-    {
         var ext = new Dictionary<string, object?>(StringComparer.Ordinal)
         {
-            ["code"] = error.Code,
-            ["kind"] = error.Kind,
+            ["code"] = code,
+            ["kind"] = kind,
         };
 
-        if (error is Error.InternalServerError ise)
+        if (error is Error.Unexpected ise && ise.FaultId is not null)
             ext["faultId"] = ise.FaultId;
+
+        if (error is Error.TransportFault { Fault: HttpError fault })
+        {
+            ProjectHttpErrorPayload(ext, fault);
+        }
 
         if (rules.Items.Length > 0)
         {
@@ -194,6 +218,48 @@ internal static class ResponseFailureWriter
 
         return ext;
     }
+
+    private static void ProjectHttpErrorPayload(Dictionary<string, object?> ext, HttpError fault)
+    {
+        switch (fault)
+        {
+            case HttpError.MethodNotAllowed { Allow: var allow }:
+                ext["allow"] = allow.Items.ToArray();
+                break;
+            case HttpError.NotAcceptable { Available: var avail }:
+                ext["available"] = avail.Items.ToArray();
+                break;
+            case HttpError.UnsupportedMediaType { Supported: var sup }:
+                ext["supported"] = sup.Items.ToArray();
+                break;
+            case HttpError.RangeNotSatisfiable rnse:
+                ext["completeLength"] = rnse.CompleteLength;
+                ext["unit"] = rnse.Unit;
+                break;
+            case HttpError.ContentTooLarge { MaxBytes: { } max }:
+                ext["maxBytes"] = max;
+                break;
+            case HttpError.PreconditionFailed pf:
+                ext["preconditionKind"] = pf.Condition.ToString();
+                break;
+            case HttpError.PreconditionRequired pr:
+                ext["preconditionKind"] = pr.Condition.ToString();
+                break;
+        }
+    }
+
+    private static string ToWireKind(Error error) => error switch
+    {
+        Error.InvalidInput => "unprocessable-content",
+        Error.InvariantViolation => "unprocessable-content",
+        Error.AuthenticationRequired => "unauthorized",
+        Error.RateLimited => "too-many-requests",
+        Error.Unavailable => "service-unavailable",
+        Error.Unexpected u when u.ReasonCode == "not_implemented" => "not-implemented",
+        Error.Unexpected => "internal-server-error",
+        Error.Aggregate => "multi",
+        _ => error.Kind,
+    };
 }
 
 /// <summary>JSON shape used for rule violations in ProblemDetails extensions.</summary>

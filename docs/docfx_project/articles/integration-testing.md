@@ -42,7 +42,7 @@ audience: [developer]
 | `ResultAssertionsAsyncExtensions` | `Trellis.Testing` | `BeSuccessAsync` / `BeFailureAsync` / `BeFailureOfTypeAsync` on `Task<Result<T>>` and `ValueTask<Result<T>>`. |
 | `MaybeAssertions<T>` | `Trellis.Testing` | `HaveValue` / `BeNone` / `HaveValueEqualTo` / `HaveValueMatching`. |
 | `ErrorAssertions` | `Trellis.Testing` | `HaveCode` / `HaveDetail(Containing)` / `BeOfType<TError>` against the closed `Error` ADT. |
-| `ValidationErrorAssertions` | `Trellis.Testing` | Field-shape assertions over `Error.UnprocessableContent`. |
+| `ValidationErrorAssertions` | `Trellis.Testing` | Field-shape assertions over `Error.InvalidInput`. |
 | `UnwrapExtensions` | `Trellis.Testing` | Test-only `Unwrap()` / `UnwrapError()` (sync, async, `Result<Unit>`, `Maybe<T>`). |
 | `FakeRepository<TAggregate, TId>` | `Trellis.Testing` | In-memory repository with unique-constraint, not-found, and domain-event capture. |
 | `FakeSharedResourceLoader<TResource, TId>` | `Trellis.Testing` | Test double over `SharedResourceLoaderById<TResource, TId>` backed by `FakeRepository`. |
@@ -185,14 +185,14 @@ error.Should().HaveDetailContaining("123");
 
 ### Validation error assertions
 
-`Error.UnprocessableContent` carries an `EquatableArray<FieldViolation>`. Use the dedicated assertions instead of pattern-matching the array yourself.
+`Error.InvalidInput` carries an `EquatableArray<FieldViolation>`. Use the dedicated assertions instead of pattern-matching the array yourself.
 
 ```csharp
 using FluentAssertions;
 using Trellis;
 using Trellis.Testing;
 
-var error = new Error.UnprocessableContent(EquatableArray.Create(
+var error = new Error.InvalidInput(EquatableArray.Create(
     new FieldViolation(InputPointer.ForProperty("email"), "validation.error")
     {
         Detail = "Email is required.",
@@ -403,7 +403,7 @@ public sealed class PlaceOrderHandler(FakeRepository<Order, OrderId> repo, TestA
     {
         var maybeActor = await actors.GetCurrentActorAsync(ct);
         if (!maybeActor.TryGetValue(out var actor))
-            return Result.Fail<OrderId>(new Error.Unauthorized { Detail = "Authentication required." });
+            return Result.Fail<OrderId>(new Error.AuthenticationRequired { Detail = "Authentication required." });
         if (!actor.HasPermission("Orders.Write"))
             return Result.Fail<OrderId>(new Error.Forbidden("Orders.Write"));
 

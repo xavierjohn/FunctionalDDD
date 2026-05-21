@@ -1,8 +1,6 @@
 ﻿namespace Trellis.Http;
 
 using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Net;
 using System.Net.Http;
 using System.Text.Json;
@@ -168,40 +166,39 @@ public static class HttpResponseExtensions
 
         Error error = statusCode switch
         {
-            HttpStatusCode.BadRequest => new Error.BadRequest("http.bad_request"),
-            HttpStatusCode.Unauthorized => new Error.Unauthorized(ExtractAuthChallenges(response)),
+            HttpStatusCode.BadRequest => Error.InvalidInput.ForRule("http.bad_request"),
+            HttpStatusCode.Unauthorized => new Error.AuthenticationRequired(),
             HttpStatusCode.Forbidden => new Error.Forbidden("http.forbidden"),
             HttpStatusCode.NotFound => new Error.NotFound(resource),
             // RFC 9110 §15.5.6 says a 405 response MUST include the Allow header. When the
             // upstream is non-conforming and omits it, fall through to InternalServerError
-            // rather than synthesizing a `new Error.MethodNotAllowed(empty)` — that empty-array
-            // shape would produce a misleading wire-level `Allow:` header on round-trip
-            // through ASP.
+            // rather than synthesizing a transport fault with an empty Allow set — that would
+            // produce a misleading wire-level `Allow:` header on round-trip through ASP.
             HttpStatusCode.MethodNotAllowed when ExtractAllow(response) is { IsEmpty: false } allow
-                => new Error.MethodNotAllowed(allow),
-            HttpStatusCode.NotAcceptable => new Error.NotAcceptable(EquatableArray<string>.Empty),
+                => new Error.TransportFault(new HttpError.MethodNotAllowed(allow)),
+            HttpStatusCode.NotAcceptable => new Error.TransportFault(new HttpError.NotAcceptable(EquatableArray<string>.Empty)),
             HttpStatusCode.Conflict => new Error.Conflict(null, "http.conflict"),
             HttpStatusCode.Gone => new Error.Gone(resource),
-            HttpStatusCode.PreconditionFailed => new Error.PreconditionFailed(resource, PreconditionKind.IfMatch),
-            HttpStatusCode.RequestEntityTooLarge => new Error.ContentTooLarge(),
-            HttpStatusCode.UnsupportedMediaType => new Error.UnsupportedMediaType(EquatableArray<string>.Empty),
+            HttpStatusCode.PreconditionFailed => new Error.TransportFault(new HttpError.PreconditionFailed(resource, PreconditionKind.IfMatch)),
+            HttpStatusCode.RequestEntityTooLarge => new Error.TransportFault(new HttpError.ContentTooLarge()),
+            HttpStatusCode.UnsupportedMediaType => new Error.TransportFault(new HttpError.UnsupportedMediaType(EquatableArray<string>.Empty)),
             // RFC 9110 §15.5.17 says a 416 response SHOULD include Content-Range. Key the
             // typed-error mapping on header *presence* with a known length, not on
             // Length > 0: `bytes */0` is a legitimate response for an empty resource and
-            // must round-trip as a typed `new Error.RangeNotSatisfiable(0, "bytes")`. Also
-            // require Length non-null: `bytes 0-99/*` (Length unspecified) is itself an
+            // must round-trip as a transport fault with `new HttpError.RangeNotSatisfiable(0, "bytes")`.
+            // Also require Length non-null: `bytes 0-99/*` (Length unspecified) is itself an
             // unusual 416 form and we can't honestly synthesize a typed error from it.
             // Falls through to InternalServerError when Content-Range is absent or has no
             // Length component.
             HttpStatusCode.RequestedRangeNotSatisfiable
                 when response.Content?.Headers.ContentRange is { Length: { } length } cr
-                => new Error.RangeNotSatisfiable(length, cr.Unit ?? "bytes"),
-            HttpStatusCode.UnprocessableEntity => Error.UnprocessableContent.ForRule("http.unprocessable_content"),
-            (HttpStatusCode)428 => new Error.PreconditionRequired(PreconditionKind.IfMatch),
-            (HttpStatusCode)429 => new Error.TooManyRequests(ExtractRetryAfter(response)),
-            HttpStatusCode.NotImplemented => new Error.NotImplemented("http.not_implemented"),
-            HttpStatusCode.ServiceUnavailable => new Error.ServiceUnavailable(ExtractRetryAfter(response)),
-            _ => new Error.InternalServerError(Guid.NewGuid().ToString("N")),
+                => new Error.TransportFault(new HttpError.RangeNotSatisfiable(length, cr.Unit ?? "bytes")),
+            HttpStatusCode.UnprocessableEntity => Error.InvalidInput.ForRule("http.unprocessable_content"),
+            (HttpStatusCode)428 => new Error.TransportFault(new HttpError.PreconditionRequired(PreconditionKind.IfMatch)),
+            (HttpStatusCode)429 => new Error.RateLimited(ExtractRetryAdvice(response)),
+            HttpStatusCode.NotImplemented => new Error.Unexpected("not_implemented"),
+            HttpStatusCode.ServiceUnavailable => new Error.Unavailable(Retry: ExtractRetryAdvice(response)),
+            _ => new Error.Unexpected(Guid.NewGuid().ToString("N")),
         };
 
         return error with { Detail = detail };
@@ -220,126 +217,20 @@ public static class HttpResponseExtensions
     }
 
     /// <summary>
-    /// Maps the response's <c>Retry-After</c> header to a <see cref="RetryAfterValue"/>, preserving
-    /// the seconds-vs-date distinction. Returns <see langword="null"/> when the header is absent
-    /// or when the upstream sends a malformed (negative) delta — treating malformed input as
-    /// absent rather than throwing keeps <see cref="MapStatusToError"/> exception-free even
-    /// with adversarial upstreams. The <c>seconds &gt; int.MaxValue</c> branch is defensive:
-    /// .NET's <see cref="System.Net.Http.Headers.HttpResponseHeaders"/> parser already rejects
-    /// out-of-range <c>delay-seconds</c> at the wire-parsing layer (<c>Headers.RetryAfter</c>
-    /// returns <see langword="null"/>), so this code path is unreachable today — but the guard
-    /// pins the contract in case a future .NET change starts surfacing larger deltas.
+    /// Extracts the response's <c>Retry-After</c> header into a transport-neutral
+    /// <see cref="RetryAdvice"/>. RFC 9110 §10.2.3 lets the header carry either a delta-seconds
+    /// value or an HTTP-date; .NET surfaces them as <see cref="System.Net.Http.Headers.RetryConditionHeaderValue.Delta"/>
+    /// and <see cref="System.Net.Http.Headers.RetryConditionHeaderValue.Date"/> respectively.
+    /// Returns <see langword="null"/> when the header is absent or unparsable so the resulting
+    /// <see cref="Error.RateLimited"/> / <see cref="Error.Unavailable"/> simply omits retry advice.
     /// </summary>
-    private static RetryAfterValue? ExtractRetryAfter(HttpResponseMessage response)
+    private static RetryAdvice? ExtractRetryAdvice(HttpResponseMessage response)
     {
-        var retryAfter = response.Headers.RetryAfter;
-        if (retryAfter is null)
+        var header = response.Headers.RetryAfter;
+        if (header is null)
             return null;
 
-        if (retryAfter.Delta is { } delta)
-        {
-            var seconds = (long)delta.TotalSeconds;
-            if (seconds is < 0 or > int.MaxValue)
-                return null;
-            return RetryAfterValue.FromSeconds((int)seconds);
-        }
-
-        if (retryAfter.Date is { } date)
-            return RetryAfterValue.FromDate(date);
-
-        return null;
-    }
-
-    /// <summary>
-    /// Extracts the <c>WWW-Authenticate</c> challenges from a 401 response into a typed
-    /// <see cref="EquatableArray{T}"/> of <see cref="AuthChallenge"/>. Each challenge captures
-    /// its scheme (e.g. <c>Bearer</c>) plus a best-effort parse of its auth parameters
-    /// (<c>realm</c>, <c>error</c>, etc.) into an <c>ImmutableDictionary</c>. If the parameter
-    /// string fails to parse, the challenge falls back to scheme-only rather than throwing.
-    /// </summary>
-    private static EquatableArray<AuthChallenge> ExtractAuthChallenges(HttpResponseMessage response)
-    {
-        var headers = response.Headers.WwwAuthenticate;
-        if (headers.Count == 0)
-            return EquatableArray<AuthChallenge>.Empty;
-
-        var challenges = new List<AuthChallenge>(headers.Count);
-        foreach (var header in headers)
-            challenges.Add(BuildChallenge(header));
-
-        return new EquatableArray<AuthChallenge>([.. challenges]);
-    }
-
-    /// <summary>
-    /// Builds a single <see cref="AuthChallenge"/> from an
-    /// <see cref="System.Net.Http.Headers.AuthenticationHeaderValue"/>, parsing the parameter
-    /// string when present so <c>realm</c> / <c>error</c> / etc. round-trip into
-    /// <see cref="AuthChallenge.Params"/>. Falls back to scheme-only when the parameter string
-    /// is empty or no recognizable auth-params are found.
-    /// </summary>
-    /// <remarks>
-    /// <b>Token68 limitation.</b> RFC 7235 also defines a <c>token68</c> form
-    /// (<c>WWW-Authenticate: Negotiate &lt;base64-token&gt;</c>) used by SPNEGO/Negotiate/NTLM
-    /// for multi-step authentication. <see cref="AuthChallenge"/> has no slot for the bare
-    /// token, so when an upstream sends a token68-form challenge this method captures only
-    /// the scheme and the token is dropped on round-trip. Callers needing token68 support can
-    /// either (a) use <c>ToResultAsync(statusMap)</c> and have the map return <see langword="null"/>
-    /// for 401 — that yields <see cref="Result.Ok{T}(T)"/> carrying the original
-    /// <see cref="HttpResponseMessage"/> with the raw <see cref="HttpResponseMessage.Headers"/>
-    /// intact for direct inspection — or (b) use the body-aware
-    /// <c>ToResultAsync(mapper, ct)</c> overload, which receives the
-    /// <see cref="HttpResponseMessage"/> directly inside the mapper.
-    /// </remarks>
-    private static AuthChallenge BuildChallenge(System.Net.Http.Headers.AuthenticationHeaderValue header)
-    {
-        if (string.IsNullOrEmpty(header.Parameter))
-            return new AuthChallenge(header.Scheme);
-
-        var builder = ImmutableDictionary.CreateBuilder<string, string>(StringComparer.OrdinalIgnoreCase);
-        // RFC 7235 auth-param: token "=" ( token / quoted-string ); comma-separated.
-        // Capture groups: 1 = key (token), 2 = quoted-value-with-escapes, 3 = unquoted-token-value.
-        foreach (System.Text.RegularExpressions.Match match in s_authParamRegex.Matches(header.Parameter))
-        {
-            var key = match.Groups[1].Value;
-            if (string.IsNullOrEmpty(key))
-                continue;
-            var quoted = match.Groups[2];
-            var token = match.Groups[3];
-            var value = quoted.Success
-                ? UnescapeQuotedPair(quoted.Value)
-                : token.Value;
-            builder[key] = value;
-        }
-
-        return builder.Count == 0
-            ? new AuthChallenge(header.Scheme)
-            : new AuthChallenge(header.Scheme, builder.ToImmutable());
-    }
-
-    // RFC 9110 §5.6.2 token + quoted-string; comma-separated auth-params.
-    private static readonly System.Text.RegularExpressions.Regex s_authParamRegex =
-        new(@"([A-Za-z0-9!#$%&'*+\-.^_`|~]+)\s*=\s*(?:""((?:[^""\\]|\\.)*)""|([A-Za-z0-9!#$%&'*+\-.^_`|~]+))",
-            System.Text.RegularExpressions.RegexOptions.Compiled);
-
-    /// <summary>
-    /// Unescapes RFC 9110 §5.6.4 quoted-pair forms: <c>\X</c> becomes <c>X</c> for any visible
-    /// character. Leaves characters that aren't part of an escape sequence unchanged.
-    /// </summary>
-    private static string UnescapeQuotedPair(string inner)
-    {
-        if (!inner.Contains('\\'))
-            return inner;
-
-        var sb = new System.Text.StringBuilder(inner.Length);
-        for (var i = 0; i < inner.Length; i++)
-        {
-            if (inner[i] == '\\' && i + 1 < inner.Length)
-                sb.Append(inner[++i]);
-            else
-                sb.Append(inner[i]);
-        }
-
-        return sb.ToString();
+        return new RetryAdvice(After: header.Delta, At: header.Date);
     }
 
     /// <summary>
@@ -485,7 +376,7 @@ public static class HttpResponseExtensions
     /// status code passes through as <see cref="Result.Ok{T}(T)"/>.
     /// </summary>
     /// <param name="response">The pending HTTP response.</param>
-    /// <param name="error">The <see cref="Error.Unauthorized"/> to surface on a 401 match.</param>
+    /// <param name="error">The <see cref="Error.AuthenticationRequired"/> to surface on a 401 match.</param>
     /// <returns>A <see cref="Task{T}"/> producing the mapped <see cref="Result{T}"/>.</returns>
     /// <remarks>
     /// On a matched 401 the underlying <see cref="HttpResponseMessage"/> is disposed
@@ -493,7 +384,7 @@ public static class HttpResponseExtensions
     /// </remarks>
     public static async Task<Result<HttpResponseMessage>> HandleUnauthorizedAsync(
         this Task<HttpResponseMessage> response,
-        Error.Unauthorized error)
+        Error.AuthenticationRequired error)
     {
         ArgumentNullException.ThrowIfNull(response);
 
@@ -527,7 +418,7 @@ public static class HttpResponseExtensions
     /// On success status with a deserializable body: <see cref="Result.Ok{T}(T)"/>.
     /// On non-success status, empty/null body, <see cref="HttpStatusCode.NoContent"/>,
     /// <see cref="HttpStatusCode.ResetContent"/>, or invalid JSON (<see cref="JsonException"/>):
-    /// <see cref="Result.Fail{T}(Error)"/> wrapping <see cref="Error.InternalServerError"/>.
+    /// <see cref="Result.Fail{T}(Error)"/> wrapping <see cref="Error.Unexpected"/>.
     /// </returns>
     /// <remarks>
     /// Whenever a response is read (success or failure), it is disposed before returning.
@@ -554,26 +445,26 @@ public static class HttpResponseExtensions
             ct.ThrowIfCancellationRequested();
 
             if (!message.IsSuccessStatusCode)
-                return Result.Fail<T>(new Error.InternalServerError(Guid.NewGuid().ToString("N"))
+                return Result.Fail<T>(new Error.Unexpected(Guid.NewGuid().ToString("N"))
                 {
                     Detail = $"HTTP response is in a failed state for value {typeof(T).Name}. Status code: {message.StatusCode}.",
                 });
 
             if (message.StatusCode is HttpStatusCode.NoContent or HttpStatusCode.ResetContent)
-                return Result.Fail<T>(new Error.InternalServerError(Guid.NewGuid().ToString("N"))
+                return Result.Fail<T>(new Error.Unexpected(Guid.NewGuid().ToString("N"))
                 {
                     Detail = $"HTTP response had no body for value {typeof(T).Name}.",
                 });
 
             if (message.Content is null)
-                return Result.Fail<T>(new Error.InternalServerError(Guid.NewGuid().ToString("N"))
+                return Result.Fail<T>(new Error.Unexpected(Guid.NewGuid().ToString("N"))
                 {
                     Detail = $"HTTP response body was null for value {typeof(T).Name}.",
                 });
 
             var bytes = await message.Content.ReadAsByteArrayAsync(ct).ConfigureAwait(false);
             if (bytes.Length == 0)
-                return Result.Fail<T>(new Error.InternalServerError(Guid.NewGuid().ToString("N"))
+                return Result.Fail<T>(new Error.Unexpected(Guid.NewGuid().ToString("N"))
                 {
                     Detail = $"HTTP response body was empty for value {typeof(T).Name}.",
                 });
@@ -594,14 +485,14 @@ public static class HttpResponseExtensions
                     ? $" at line {ex.LineNumber}, byte {ex.BytePositionInLine ?? 0}"
                     : string.Empty;
 
-                return Result.Fail<T>(new Error.InternalServerError(Guid.NewGuid().ToString("N"))
+                return Result.Fail<T>(new Error.Unexpected(Guid.NewGuid().ToString("N"))
                 {
                     Detail = $"Failed to deserialize HTTP response to {typeof(T).Name}{location}.",
                 });
             }
 
             return value is null
-                ? Result.Fail<T>(new Error.InternalServerError(Guid.NewGuid().ToString("N"))
+                ? Result.Fail<T>(new Error.Unexpected(Guid.NewGuid().ToString("N"))
                 {
                     Detail = $"HTTP response deserialized to null for value {typeof(T).Name}.",
                 })
@@ -626,7 +517,7 @@ public static class HttpResponseExtensions
     /// <returns>
     /// On already-failed input: short-circuits with the upstream error (no response to dispose).
     /// On non-success status: <see cref="Result.Fail{T}(Error)"/> with
-    /// <see cref="Error.InternalServerError"/>. On success status with a parseable
+    /// <see cref="Error.Unexpected"/>. On success status with a parseable
     /// payload: <see cref="Result.Ok{T}(T)"/> wrapping
     /// <see cref="Maybe.From{T}(T)"/> or <see cref="Maybe{T}.None"/>.
     /// </returns>
@@ -657,7 +548,7 @@ public static class HttpResponseExtensions
             ct.ThrowIfCancellationRequested();
 
             if (!message.IsSuccessStatusCode)
-                return Result.Fail<Maybe<T>>(new Error.InternalServerError(Guid.NewGuid().ToString("N"))
+                return Result.Fail<Maybe<T>>(new Error.Unexpected(Guid.NewGuid().ToString("N"))
                 {
                     Detail = $"HTTP response is in a failed state for value {typeof(T).Name}. Status code: {message.StatusCode}.",
                 });

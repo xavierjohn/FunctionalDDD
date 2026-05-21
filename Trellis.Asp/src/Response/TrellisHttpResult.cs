@@ -126,7 +126,7 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
 
                     if (decision == ConditionalDecision.PreconditionFailed)
                     {
-                        var pf = new Error.PreconditionFailed(ResourceRef.For<TDomain>(), failedKind ?? PreconditionKind.IfMatch)
+                        var pf = new Error.TransportFault(new HttpError.PreconditionFailed(ResourceRef.For<TDomain>(), failedKind ?? PreconditionKind.IfMatch))
                         { Detail = "A conditional request header evaluated to false." };
 
                         return ResponseFailureWriter.WriteAsync(httpContext, pf, ResolveErrorStatusCode(httpContext, pf, _options));
@@ -152,7 +152,7 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
             var location = ResolveLocation(httpContext, domain!);
             if (location is null)
             {
-                var error = new Error.InternalServerError(Guid.NewGuid().ToString("N"))
+                var error = new Error.Unexpected(Guid.NewGuid().ToString("N"))
                 { Detail = "Could not generate Location URI for the response." };
 
                 return ResponseFailureWriter.WriteAsync(httpContext, error, ResolveErrorStatusCode(httpContext, error, _options));

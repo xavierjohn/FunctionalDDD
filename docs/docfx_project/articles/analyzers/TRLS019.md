@@ -44,7 +44,7 @@ public Maybe<int> First() => default(Maybe<int>);   // TRLS019
 public Result<User> Lookup(Guid id)
 {
     if (id == Guid.Empty)
-        return Result.Fail<User>(new Error.BadRequest("id-empty") { Detail = "id is required" });
+        return Result.Fail<User>(Error.InvalidInput.ForField("id", "id-empty", "id is required"));
     return _repo.Get(id);
 }
 

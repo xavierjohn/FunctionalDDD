@@ -94,7 +94,7 @@ public class ReadJsonOrNoneOn404AsyncTests
 
         var result = await task.ReadJsonOrNoneOn404Async(SourceGenerationContext.Default.camelcasePerson, CancellationToken.None);
 
-        result.Should().BeFailureOfType<Error.InternalServerError>()
+        result.Should().BeFailureOfType<Error.Unexpected>()
             .Which.Detail.Should().Contain("599");
         tracker.Disposed.Should().BeTrue();
     }

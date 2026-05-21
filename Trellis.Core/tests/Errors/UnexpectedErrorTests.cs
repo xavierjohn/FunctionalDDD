@@ -4,81 +4,65 @@ using Trellis.Testing;
 
 /// <summary>
 /// Tests for <see cref="Error.Unexpected"/>, the closed-ADT case used for "this shouldn't have happened"
-/// situations. Most prominent use: the sentinel error returned by <c>default(Result)</c> /
-/// <c>default(Result&lt;T&gt;)</c> per ADR-002 §3.5.1.
+/// situations: default-initialized <c>Result</c>/<c>Result&lt;T&gt;</c>, unhandled exceptions captured by
+/// the mediator pipeline, and other internal invariant violations. <see cref="Error.Unexpected.FaultId"/>
+/// optionally correlates the case to deeper diagnostics.
 /// </summary>
-/// <remarks>
-/// Distinct from <see cref="Error.InternalServerError"/>:
-/// <list type="bullet">
-///   <item><description><see cref="Error.InternalServerError"/> = a documented server-side fault with a tracking <c>FaultId</c>.</description></item>
-///   <item><description><see cref="Error.Unexpected"/> = a "shouldn't happen" condition (default-init, exhausted match, internal invariant violation) carrying a stable <c>ReasonCode</c>.</description></item>
-/// </list>
-/// Both map to HTTP 500 at the ASP boundary, but only <see cref="Error.InternalServerError"/> attaches a <c>faultId</c> extension.
-/// </remarks>
 public class UnexpectedErrorTests
 {
     [Fact]
-    public void Construct_with_ReasonCode_sets_ReasonCode_property()
+    public void Kind_is_unexpected() =>
+        new Error.Unexpected("default_initialized").Kind.Should().Be("unexpected");
+
+    [Fact]
+    public void Code_overrides_to_ReasonCode() =>
+        new Error.Unexpected("internal_invariant_violated").Code.Should().Be("internal_invariant_violated");
+
+    [Fact]
+    public void Construct_with_ReasonCode_only_leaves_FaultId_null()
     {
         var error = new Error.Unexpected("default_initialized");
 
         error.ReasonCode.Should().Be("default_initialized");
+        error.FaultId.Should().BeNull();
     }
 
     [Fact]
-    public void Kind_is_unexpected()
+    public void Construct_with_ReasonCode_and_FaultId_preserves_both()
     {
-        var error = new Error.Unexpected("default_initialized");
+        var error = new Error.Unexpected("unhandled_exception", "fault-7");
 
-        error.Kind.Should().Be("unexpected");
-    }
-
-    [Fact]
-    public void Code_overrides_to_ReasonCode()
-    {
-        var error = new Error.Unexpected("internal_invariant_violated");
-
-        error.Code.Should().Be("internal_invariant_violated");
+        error.ReasonCode.Should().Be("unhandled_exception");
+        error.FaultId.Should().Be("fault-7");
     }
 
     [Fact]
     public void Detail_init_property_inherited_from_base()
     {
-        var error = new Error.Unexpected("default_initialized")
-        {
-            Detail = "Result was default-initialized; use Result.Ok(...) or Result.Fail<T>(...).",
-        };
+        var error = new Error.Unexpected("default_initialized") { Detail = "Result was default-initialized." };
 
-        error.Detail.Should().Be("Result was default-initialized; use Result.Ok(...) or Result.Fail<T>(...).");
+        error.Detail.Should().Be("Result was default-initialized.");
     }
 
     [Fact]
     public void GetDisplayMessage_prefers_Detail_when_set()
     {
-        var error = new Error.Unexpected("default_initialized")
-        {
-            Detail = "human-readable detail",
-        };
+        var error = new Error.Unexpected("default_initialized") { Detail = "human-readable detail" };
 
         error.GetDisplayMessage().Should().Be("human-readable detail");
     }
 
     [Fact]
-    public void GetDisplayMessage_falls_back_to_Code_when_Detail_null()
-    {
-        var error = new Error.Unexpected("invariant_violation");
-
-        error.GetDisplayMessage().Should().Be("invariant_violation");
-    }
+    public void GetDisplayMessage_falls_back_to_Code_when_Detail_null() =>
+        new Error.Unexpected("invariant_violation").GetDisplayMessage().Should().Be("invariant_violation");
 
     [Fact]
-    public void Two_Unexpected_with_same_ReasonCode_are_equal()
+    public void Two_Unexpected_with_same_payload_are_equal()
     {
         var a = new Error.Unexpected("default_initialized");
         var b = new Error.Unexpected("default_initialized");
 
         a.Should().Be(b);
-        (a == b).Should().BeTrue();
         a.GetHashCode().Should().Be(b.GetHashCode());
     }
 
@@ -89,16 +73,24 @@ public class UnexpectedErrorTests
         var b = new Error.Unexpected("invariant_violation");
 
         a.Equals(b).Should().BeFalse();
-        (a == b).Should().BeFalse();
     }
 
     [Fact]
-    public void Unexpected_does_not_equal_InternalServerError_with_matching_payload()
+    public void Two_Unexpected_with_different_FaultId_are_not_equal()
     {
-        var unexpected = new Error.Unexpected("fault-123");
-        var ise = new Error.InternalServerError("fault-123");
+        var a = new Error.Unexpected("unhandled_exception", "fault-1");
+        var b = new Error.Unexpected("unhandled_exception", "fault-2");
 
-        ((Error)unexpected).Equals((Error)ise).Should().BeFalse();
+        a.Equals(b).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Unexpected_with_null_vs_set_FaultId_are_not_equal()
+    {
+        var a = new Error.Unexpected("unhandled_exception");
+        var b = new Error.Unexpected("unhandled_exception", "fault-1");
+
+        a.Equals(b).Should().BeFalse();
     }
 
     [Fact]
@@ -117,7 +109,6 @@ public class UnexpectedErrorTests
 
         var matched = error switch
         {
-            Error.InternalServerError => "ise",
             Error.Unexpected u => $"unexpected:{u.ReasonCode}",
             _ => "other",
         };

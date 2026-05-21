@@ -54,7 +54,7 @@ using Trellis;
 /// // Returns: Success(PhoneNumber("+14155551234"))
 /// 
 /// var invalid = PhoneNumber.TryCreate("555-1234");
-/// // Returns: Failure(Error.UnprocessableContent with detail "Phone number must be in E.164 format (e.g., +14155551234).")
+/// // Returns: Failure(Error.InvalidInput with detail "Phone number must be in E.164 format (e.g., +14155551234).")
 /// </code>
 /// </example>
 [JsonConverter(typeof(ParsableJsonConverter<PhoneNumber>))]
@@ -101,7 +101,7 @@ public partial class PhoneNumber : ScalarValueObject<PhoneNumber, string>, IScal
     /// <param name="value">The phone number string to validate.</param>
     /// <param name="fieldName">Optional field name to use in validation error messages.</param>
     /// <returns>
-    /// Success with the PhoneNumber if the string is in E.164 format; otherwise Failure with <see cref="Error.UnprocessableContent"/>.
+    /// Success with the PhoneNumber if the string is in E.164 format; otherwise Failure with <see cref="Error.InvalidInput"/>.
     /// </returns>
     public static Result<PhoneNumber> TryCreate(string? value, string? fieldName = null)
     {
@@ -110,14 +110,14 @@ public partial class PhoneNumber : ScalarValueObject<PhoneNumber, string>, IScal
         var field = fieldName.NormalizeFieldName("phoneNumber");
 
         if (string.IsNullOrWhiteSpace(value))
-            return Result.Fail<PhoneNumber>(Error.UnprocessableContent.ForField(field, "validation.error", "Phone number is required."));
+            return Result.Fail<PhoneNumber>(Error.InvalidInput.ForField(field, "validation.error", "Phone number is required."));
 
         // Normalize: remove spaces, dashes, and parentheses for validation
         var normalized = NormalizeRegex().Replace(value.Trim(), "");
 
         // Validate E.164 format
         if (!E164Regex().IsMatch(normalized))
-            return Result.Fail<PhoneNumber>(Error.UnprocessableContent.ForField(field, "validation.error", "Phone number must be in E.164 format (e.g., +14155551234)."));
+            return Result.Fail<PhoneNumber>(Error.InvalidInput.ForField(field, "validation.error", "Phone number must be in E.164 format (e.g., +14155551234)."));
 
         return Result.Ok(new PhoneNumber(normalized));
     }
