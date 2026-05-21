@@ -200,7 +200,7 @@ All three operators have `Async` variants on `Task<Result<T>>` and `ValueTask<Re
 
 ## Capturing exceptions
 
-Expected failures should be regular `Error` values. For code that genuinely throws, `Result.Try` and `Result.TryAsync` bridge the gap. Without a custom map, the default mapping wraps the exception as `Error.Unexpected("unhandled_exception", faultId)` with a generated `FaultId`.
+Expected failures should be regular `Error` values. For code that genuinely throws, `Result.Try` and `Result.TryAsync` bridge the gap. Without a custom map, the default mapping wraps the exception as `new Error.Unexpected("unhandled_exception", faultId)` with a generated `FaultId`.
 
 ```csharp
 using System.IO;

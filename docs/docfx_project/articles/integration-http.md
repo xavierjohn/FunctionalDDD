@@ -107,13 +107,13 @@ Bare `ToResultAsync()` uses the built-in mapper from `Trellis.Http/src/HttpRespo
 | `503` | `new Error.Unavailable()` |
 | other / default | `new Error.Unexpected(Guid.NewGuid().ToString("N"))` |
 
-A `405` without `Allow`, a `416` without a known `Content-Range` length, and all unmapped 3xx/5xx statuses fall through to `Error.Unexpected(Guid.NewGuid().ToString("N"))`. The strict default does **not** parse `WWW-Authenticate` or `Retry-After` into `Error.AuthenticationRequired`, `Error.RateLimited`, or `Error.Unavailable`; those core cases stay transport-neutral. Use a custom status map or the body-aware overload when an endpoint-specific contract needs richer header detail.
+A `405` without `Allow`, a `416` without a known `Content-Range` length, and all unmapped 3xx/5xx statuses fall through to `new Error.Unexpected(Guid.NewGuid().ToString("N"))`. The strict default does **not** parse `WWW-Authenticate` or `Retry-After` into `Error.AuthenticationRequired`, `Error.RateLimited`, or `Error.Unavailable`; those core cases stay transport-neutral. Use a custom status map or the body-aware overload when an endpoint-specific contract needs richer header detail.
 
 > [!IMPORTANT]
 > **3xx redirects under the strict default fold into `Error.Unexpected`.** `HttpClient` follows redirects automatically by default, so this is mostly relevant only when `AllowAutoRedirect = false` (for example, SSO landing-page detection).
 
 > [!NOTE]
-> **Exception propagation.** `Trellis.Http` does not swallow non-Result-shaped exceptions. `HttpRequestException` and `OperationCanceledException` / `TaskCanceledException` propagate. `ReadJsonAsync<T>` is the only JSON helper that catches `JsonException`; it converts it to `Error.Unexpected(Guid.NewGuid().ToString("N"))` with sanitized line/byte detail only. `ReadJsonMaybeAsync<T>` and `ReadJsonOrNoneOn404Async<T>` let `JsonException` propagate after disposing the response.
+> **Exception propagation.** `Trellis.Http` does not swallow non-Result-shaped exceptions. `HttpRequestException` and `OperationCanceledException` / `TaskCanceledException` propagate. `ReadJsonAsync<T>` is the only JSON helper that catches `JsonException`; it converts it to `new Error.Unexpected(Guid.NewGuid().ToString("N"))` with sanitized line/byte detail only. `ReadJsonMaybeAsync<T>` and `ReadJsonOrNoneOn404Async<T>` let `JsonException` propagate after disposing the response.
 
 ### Single-status handlers
 
