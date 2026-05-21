@@ -50,8 +50,9 @@ public abstract record Error
 
     /// <summary>
     /// Gets the stable domain slug for this case (e.g. <c>"not-found"</c>,
-    /// <c>"invalid-input"</c>). Suitable for telemetry, problem-details
-    /// <c>type</c> URI synthesis, and wire serialization.
+    /// <c>"invalid-input"</c>). Suitable for telemetry, observability dimensions, and as
+    /// the durable identifier that boundary layers translate into transport-specific
+    /// type identifiers.
     /// </summary>
     public abstract string Kind { get; }
 
@@ -361,10 +362,12 @@ public abstract record Error
     }
 
     /// <summary>
-    /// Opaque envelope for transport-specific lower-layer failures produced outside
-    /// <c>Trellis.Core</c>. The wrapped payload must implement <see cref="ITransportFault"/>.
+    /// Opaque envelope for transport-specific lower-layer failure payloads produced outside
+    /// <c>Trellis.Core</c>. Domain code does not inspect the payload; the boundary layer that
+    /// understands the transport is responsible for translation. The wrapped payload must
+    /// implement <see cref="ITransportFault"/>.
     /// </summary>
-    /// <param name="Fault">Transport-layer fault payload (for example an HTTP fault object).</param>
+    /// <param name="Fault">Transport-layer fault payload defined in a transport-specific package.</param>
     public sealed record TransportFault(ITransportFault Fault) : Error
     {
         /// <inheritdoc />
@@ -377,14 +380,10 @@ public abstract record Error
 
     /// <summary>
     /// Composition of multiple independent errors. Used when several failures occur
-    /// together (e.g. parallel operations, batch validation). On the wire this typically
-    /// renders as a problem-details <c>extensions.errors</c> array; <c>207 Multi-Status</c>
-    /// is reserved for explicit batch endpoints.
+    /// together (e.g. parallel operations, batch validation). Nested <see cref="Aggregate"/>
+    /// values are flattened at construction. The constructor accepts at least one error.
+    /// Boundary layers decide how to render the collection on their own wire.
     /// </summary>
-    /// <remarks>
-    /// Nested <see cref="Aggregate"/> values are flattened at construction. The constructor
-    /// accepts at least one error.
-    /// </remarks>
     public sealed record Aggregate : Error
     {
         /// <summary>Gets the flattened list of errors composing this aggregate.</summary>
