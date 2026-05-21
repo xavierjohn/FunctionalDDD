@@ -117,6 +117,15 @@ public sealed class TrellisAspOptions
     /// </summary>
     internal int GetStatusCode(Error error)
     {
+        if (error is Error.Aggregate agg)
+            return ComputeWorstStatus(agg, this);
+
+        // Error.Unexpected carries an open-ended ReasonCode; "not_implemented" is the one
+        // legacy code that historically mapped to 501 rather than 500. Checked before the
+        // type-based lookup so an Unexpected mapping override doesn't shadow it.
+        if (error is Error.Unexpected { ReasonCode: "not_implemented" })
+            return StatusCodes.Status501NotImplemented;
+
         var mappedStatus = TryResolveMapping(_errorMappings, error.GetType());
         if (mappedStatus.HasValue)
             return mappedStatus.Value;
@@ -129,6 +138,25 @@ public sealed class TrellisAspOptions
         }
 
         return StatusCodes.Status500InternalServerError;
+    }
+
+    // Aggregate worst-status rule: 5xx beats any 4xx; 4xx beats 1xx-3xx; tie-break by highest numeric.
+    private static int ComputeWorstStatus(Error.Aggregate aggregate, TrellisAspOptions options)
+    {
+        var worst = 0;
+        var worstClass = 0;
+        foreach (var child in aggregate.Errors.Items)
+        {
+            var s = options.GetStatusCode(child);
+            var cls = s / 100;
+            if (cls > worstClass || (cls == worstClass && s > worst))
+            {
+                worst = s;
+                worstClass = cls;
+            }
+        }
+
+        return worst == 0 ? StatusCodes.Status500InternalServerError : worst;
     }
 
     private static int? TryResolveMapping(Dictionary<Type, int> mappings, Type type)
