@@ -432,7 +432,7 @@ public class MaybeExpressionRewriterTests : IDisposable
             .ToListAsync(ct);
 
         var results = await act.Should().NotThrowAsync();
-        results.Subject.Should().BeEmpty();
+        results.Which.Should().BeEmpty();
     }
 
     [Fact]

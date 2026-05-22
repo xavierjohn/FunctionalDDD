@@ -627,7 +627,7 @@ public override Expression<Func<Order, bool>> ToExpression() =>
          && o.SubmittedAt.HasValueWhere(t => t < _threshold);
 ```
 
-**Sharing the spec with `FakeRepository`.**Pass the same `Specification<T>` instance through `QueryAsync` — never duplicate the predicate by hand in a fake adapter. Duplicating the predicate is the most expensive class of test bug to catch in code review (the fake passes while the real query silently returns the wrong rows).
+**Sharing the spec with `FakeRepository`.** Pass the same `Specification<T>` instance through `QueryAsync` — never duplicate the predicate by hand in a fake adapter. Duplicating the predicate is the most expensive class of test bug to catch in code review (the fake passes while the real query silently returns the wrong rows).
 
 ```csharp
 public Task<IReadOnlyList<Order>> FindOverdueAsync(DateTime asOf, CancellationToken ct) =>
