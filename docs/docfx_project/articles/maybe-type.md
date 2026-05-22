@@ -47,6 +47,7 @@ For ordinary nullable primitives on a DTO or for plain nullable interop, prefer 
 | `implicit operator Maybe<T>(T value)` | conversion | Lets a bare `T` flow into a `Maybe<T>` slot. |
 | `HasValue` / `HasNoValue` | properties | Presence flags. |
 | `Value` | property | Throws on `None`. Hidden from IntelliSense; analyzer **TRLS003** flags unguarded reads. Use `Match`/`TryGetValue`/`GetValueOrDefault`. |
+| `HasValueWhere(Func<T, bool> predicate)` | method | `HasValue && predicate(Value)` as a single call. Predicate is not invoked on `None`. `MaybeQueryInterceptor` rewrites inline-lambda forms to SQL — see [EF Core integration](#ef-core-integration). |
 | `GetValueOrThrow(string?)` | method | Throwing extractor with optional message. |
 | `GetValueOrDefault(T)` / `GetValueOrDefault(Func<T>)` | methods | Non-throwing extractors (eager / deferred). |
 | `TryGetValue(out T)` | method | TryParse-style extractor. |

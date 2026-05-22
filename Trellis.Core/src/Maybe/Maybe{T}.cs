@@ -307,6 +307,44 @@ public readonly struct Maybe<T> :
     }
 
     /// <summary>
+    /// Tests whether this instance has a value <em>and</em> that value satisfies the predicate.
+    /// </summary>
+    /// <param name="predicate">The condition to test the value against.</param>
+    /// <returns>
+    /// <see langword="true"/> when <see cref="HasValue"/> is <see langword="true"/> and
+    /// <paramref name="predicate"/> returns <see langword="true"/> for the value;
+    /// otherwise <see langword="false"/>.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="predicate"/> is null.</exception>
+    /// <remarks>
+    /// <para>
+    /// Equivalent to <c>HasValue &amp;&amp; predicate(Value)</c>, but composes more naturally in
+    /// specifications and inline predicates. <c>MaybeQueryInterceptor</c> in
+    /// <c>Trellis.EntityFrameworkCore</c> rewrites <c>entity.MaybeProperty.HasValueWhere(t =&gt; …body…)</c>
+    /// in EF Core expression trees to
+    /// <c>EF.Property&lt;T?&gt;(entity, &quot;_field&quot;) != null AND …body…</c>, so the same
+    /// natural shape translates to SQL when the interceptor is registered.
+    /// </para>
+    /// <para>
+    /// The predicate is not invoked when this instance has no value, matching the standard
+    /// short-circuit semantic of <c>HasValue &amp;&amp; predicate(Value)</c>.
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// // Specification: overdue orders (SubmittedAt is Maybe&lt;DateTime&gt;).
+    /// public override Expression&lt;Func&lt;Order, bool&gt;&gt; ToExpression() =&gt;
+    ///     order =&gt; order.SubmittedAt.HasValueWhere(t =&gt; t &lt; _cutoff);
+    /// </code>
+    /// </example>
+    public bool HasValueWhere(Func<T, bool> predicate)
+    {
+        ArgumentNullException.ThrowIfNull(predicate);
+
+        return _isValueSet && predicate(_value!);
+    }
+
+    /// <summary>
     /// Executes a side effect on the value if present, then returns this <see cref="Maybe{T}"/> unchanged.
     /// </summary>
     /// <param name="action">The action to execute on the value.</param>

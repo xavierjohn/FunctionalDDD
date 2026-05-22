@@ -382,4 +382,93 @@ public class MaybeMethodTests
     }
 
     #endregion
+
+    #region HasValueWhere (predicate)
+
+    [Fact]
+    public void HasValueWhere_WhenHasValueAndPredicatePasses_ShouldReturnTrue()
+    {
+        var sut = Maybe.From(5);
+
+        var result = sut.HasValueWhere(v => v > 0);
+
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public void HasValueWhere_WhenHasValueAndPredicateFails_ShouldReturnFalse()
+    {
+        var sut = Maybe.From(5);
+
+        var result = sut.HasValueWhere(v => v > 100);
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void HasValueWhere_WhenNone_ShouldReturnFalse()
+    {
+        var sut = Maybe<int>.None;
+
+        var result = sut.HasValueWhere(_ => true);
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public void HasValueWhere_WhenNone_ShouldNotEvaluatePredicate()
+    {
+        var sut = Maybe<int>.None;
+        var invocations = 0;
+
+        sut.HasValueWhere(_ => { invocations++; return true; });
+
+        invocations.Should().Be(0);
+    }
+
+    [Fact]
+    public void HasValueWhere_WhenPredicateIsNull_ShouldThrowArgumentNullException()
+    {
+        var sut = Maybe.From(5);
+
+        var act = () => sut.HasValueWhere(null!);
+
+        act.Should().Throw<ArgumentNullException>()
+            .Where(ex => ex.ParamName == "predicate");
+    }
+
+    [Fact]
+    public void HasValueWhere_WhenNoneAndPredicateIsNull_ShouldThrowArgumentNullException()
+    {
+        // ArgumentNullException check runs before the HasValue branch, matching the rest
+        // of the Maybe<T> instance surface (Map, Match, Bind, Where, Tap, Or).
+        var sut = Maybe<int>.None;
+
+        var act = () => sut.HasValueWhere(null!);
+
+        act.Should().Throw<ArgumentNullException>()
+            .Where(ex => ex.ParamName == "predicate");
+    }
+
+    [Fact]
+    public void HasValueWhere_WhenPredicateThrows_ShouldPropagate()
+    {
+        var sut = Maybe.From(5);
+
+        var act = () => sut.HasValueWhere(_ => throw new InvalidOperationException("boom"));
+
+        act.Should().Throw<InvalidOperationException>().WithMessage("boom");
+    }
+
+    [Fact]
+    public void HasValueWhere_ReferenceType_WhenHasValueAndPredicatePasses_ShouldReturnTrue()
+    {
+        var sut = Maybe.From("hello");
+
+        var result = sut.HasValueWhere(s => s.Length > 3);
+
+        result.Should().BeTrue();
+    }
+
+    #endregion
 }

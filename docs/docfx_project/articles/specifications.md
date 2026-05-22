@@ -185,7 +185,7 @@ public interface IOrderRepository
 
 Composed specifications combine sub-expressions using `Expression.Invoke`. EF Core 8+ translates these reliably; older versions may not.
 
-If your specification reads `Maybe<T>` members (`HasValue`, `Value`, `GetValueOrDefault(d)`, `== Maybe<T>.None`), register the Trellis interceptors so the `MaybeQueryInterceptor` rewrites the access into the underlying storage member:
+If your specification reads `Maybe<T>` members (`HasValue`, `Value`, `GetValueOrDefault(d)`, `HasValueWhere(predicate)`, `== Maybe<T>.None`), register the Trellis interceptors so the `MaybeQueryInterceptor` rewrites the access into the underlying storage member:
 
 ```csharp
 using Microsoft.EntityFrameworkCore;

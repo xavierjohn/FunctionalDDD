@@ -23,6 +23,11 @@ public class MaybeExpressionRewriterTests : IDisposable
         var options = new DbContextOptionsBuilder<InterceptorTestDbContext>()
             .UseSqlite(_connection)
             .AddInterceptors(new MaybeQueryInterceptor())
+            // Each test in this class constructs a fresh DbContext (xUnit per-test
+            // instantiation), so the test class can produce more than 20 internal EF service
+            // providers in one assembly run. Silence the warning — it is purely a test-host
+            // signal here, not a production concern.
+            .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.CoreEventId.ManyServiceProvidersCreatedWarning))
             .Options;
 
         _context = new InterceptorTestDbContext(options);
@@ -367,6 +372,223 @@ public class MaybeExpressionRewriterTests : IDisposable
 
     #endregion
 
+    #region HasValueWhere (predicate)
+
+    [Fact]
+    public async Task HasValueWhere_ValueType_FiltersByPredicate_ExcludingNone()
+    {
+        // The canonical Maybe-with-predicate shape:
+        //   o.SubmittedAt.HasValueWhere(t => t < cutoff)
+        //
+        // The rewriter must translate this to
+        //   _submittedAt IS NOT NULL AND _submittedAt < @cutoff
+        // so that None rows are excluded without evaluating the predicate.
+        var ct = TestContext.Current.CancellationToken;
+        var customer = CreateCustomer("Alice");
+        _context.Customers.Add(customer);
+        await _context.SaveChangesAsync(ct);
+
+        var early = CreateOrder(customer.Id);
+        early.SubmittedAt = Maybe.From(new DateTime(2026, 1, 10, 0, 0, 0, DateTimeKind.Utc));
+        var late = CreateOrder(customer.Id);
+        late.SubmittedAt = Maybe.From(new DateTime(2026, 6, 15, 0, 0, 0, DateTimeKind.Utc));
+        var noDate = CreateOrder(customer.Id);
+
+        _context.Orders.AddRange(early, late, noDate);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        var cutoff = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc);
+
+        var results = await _context.Orders
+            .Where(o => o.SubmittedAt.HasValueWhere(t => t < cutoff))
+            .ToListAsync(ct);
+
+        results.Should().ContainSingle()
+            .Which.Id.Should().Be(early.Id);
+    }
+
+    [Fact]
+    public async Task HasValueWhere_NoneRow_ExcludedWithoutThrowing()
+    {
+        // Pin the short-circuit semantic: a None row in the result set must NOT cause
+        // a NullReferenceException when the predicate dereferences the inner value.
+        // The rewriter's leading `IS NOT NULL` check, combined with SQL three-valued logic,
+        // means the predicate is only evaluated against non-NULL storage values.
+        var ct = TestContext.Current.CancellationToken;
+        var customer = CreateCustomer("Alice");
+        _context.Customers.Add(customer);
+        await _context.SaveChangesAsync(ct);
+
+        var noDate = CreateOrder(customer.Id);
+        _context.Orders.Add(noDate);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        // Predicate that would NPE in C# if invoked on a None — provider must short-circuit.
+        var cutoff = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        var act = async () => await _context.Orders
+            .Where(o => o.SubmittedAt.HasValueWhere(t => t < cutoff))
+            .ToListAsync(ct);
+
+        var results = await act.Should().NotThrowAsync();
+        results.Subject.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task HasValueWhere_PredicateReferencesAnotherMaybeOnSameEntity_RewritesNestedAccess()
+    {
+        // Recursive Visit(rewrittenBody) is required so that nested Maybe accesses inside
+        // the predicate body are also translated. Here the predicate body references
+        // o.OptionalStatus.HasValue (another Maybe on the same entity).
+        var ct = TestContext.Current.CancellationToken;
+        var customer = CreateCustomer("Alice");
+        _context.Customers.Add(customer);
+        await _context.SaveChangesAsync(ct);
+
+        var submittedAndOptionalSet = CreateOrder(customer.Id);
+        submittedAndOptionalSet.SubmittedAt = Maybe.From(new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+        submittedAndOptionalSet.OptionalStatus = Maybe.From(TestOrderStatus.Confirmed);
+
+        var submittedOnly = CreateOrder(customer.Id);
+        submittedOnly.SubmittedAt = Maybe.From(new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+
+        var optionalOnly = CreateOrder(customer.Id);
+        optionalOnly.OptionalStatus = Maybe.From(TestOrderStatus.Confirmed);
+
+        _context.Orders.AddRange(submittedAndOptionalSet, submittedOnly, optionalOnly);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        var results = await _context.Orders
+            .Where(o => o.SubmittedAt.HasValueWhere(_ => o.OptionalStatus.HasValue))
+            .ToListAsync(ct);
+
+        results.Should().ContainSingle()
+            .Which.Id.Should().Be(submittedAndOptionalSet.Id);
+    }
+
+    [Fact]
+    public async Task HasValueWhere_PredicateReferencesOuterEntityField_Works()
+    {
+        // Rubber-duck-suggested case: the predicate body references the outer entity
+        // parameter (not just the inner Maybe value). Verifies that ParameterReplacer
+        // only touches the inner lambda's parameter, leaving the outer entity reference
+        // intact for EF to translate normally.
+        var ct = TestContext.Current.CancellationToken;
+        var customer = CreateCustomer("Alice");
+        _context.Customers.Add(customer);
+        await _context.SaveChangesAsync(ct);
+
+        var matchAmount = CreateOrder(customer.Id);
+        matchAmount.Amount = 5m;
+        matchAmount.SubmittedAt = Maybe.From(new DateTime(2026, 1, 10, 0, 0, 0, DateTimeKind.Utc));
+
+        var noMatch = CreateOrder(customer.Id);
+        noMatch.Amount = 500m;
+        noMatch.SubmittedAt = Maybe.From(new DateTime(2026, 1, 10, 0, 0, 0, DateTimeKind.Utc));
+
+        _context.Orders.AddRange(matchAmount, noMatch);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        // Predicate body: `t.Day > o.Amount` — references both the inner t and outer o.
+        // Day of 2026-01-10 is 10; matchAmount has Amount=5 (10>5 true), noMatch has Amount=500 (10>500 false).
+        var results = await _context.Orders
+            .Where(o => o.SubmittedAt.HasValueWhere(t => t.Day > o.Amount))
+            .ToListAsync(ct);
+
+        results.Should().ContainSingle()
+            .Which.Id.Should().Be(matchAmount.Id);
+    }
+
+    [Fact]
+    public async Task HasValueWhere_ReferenceType_FiltersByPredicate()
+    {
+        // PhoneNumber is a scalar value object — the Maybe<PhoneNumber> storage member
+        // is a nullable PhoneNumber reference, so the predicate substitution path differs
+        // (Convert vs Nullable<>.Value). Pin this case so the value/reference branch in
+        // the rewriter stays correct.
+        var ct = TestContext.Current.CancellationToken;
+        var targetPhone = PhoneNumber.Create("+1-555-0500");
+        var alice = CreateCustomer("Alice", "+1-555-0500");
+        var bob = CreateCustomer("Bob", "+1-555-9999");
+        var noPhone = CreateCustomer("NoPhone");
+        _context.Customers.AddRange(alice, bob, noPhone);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        var results = await _context.Customers
+            .Where(c => c.Phone.HasValueWhere(p => p == targetPhone))
+            .ToListAsync(ct);
+
+        results.Should().ContainSingle()
+            .Which.Id.Should().Be(alice.Id);
+    }
+
+    [Fact]
+    public async Task HasValueWhere_OnSpecificationPredicate_TranslatesEquivalentToHasValueAndValuePattern()
+    {
+        // The whole point of HasValueWhere is to make specifications more natural. Confirm that
+        // a Specification using HasValueWhere behaves identically to the HasValue && Value form.
+        var ct = TestContext.Current.CancellationToken;
+        var customer = CreateCustomer("Alice");
+        _context.Customers.Add(customer);
+        await _context.SaveChangesAsync(ct);
+
+        var early = CreateOrder(customer.Id, TestOrderStatus.Confirmed);
+        early.SubmittedAt = Maybe.From(new DateTime(2026, 1, 10, 0, 0, 0, DateTimeKind.Utc));
+        var late = CreateOrder(customer.Id, TestOrderStatus.Confirmed);
+        late.SubmittedAt = Maybe.From(new DateTime(2026, 6, 15, 0, 0, 0, DateTimeKind.Utc));
+        var noDate = CreateOrder(customer.Id, TestOrderStatus.Confirmed);
+
+        _context.Orders.AddRange(early, late, noDate);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        var threshold = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc);
+        var spec = new OverdueOrderHasValueWhereSpecification(threshold);
+
+        var results = await _context.Orders
+            .Where(spec.ToExpression())
+            .ToListAsync(ct);
+
+        results.Should().ContainSingle()
+            .Which.Id.Should().Be(early.Id);
+    }
+
+    [Fact]
+    public async Task HasValueWhere_NonInlineLambda_CapturedDelegate_FallsThroughAndThrowsAtTranslation()
+    {
+        // Documented limitation: the rewriter only handles an inline LambdaExpression as
+        // the HasValueWhere predicate. When the predicate is a captured Func<T,bool> variable,
+        // the expression-tree representation is a ConstantExpression holding an opaque
+        // delegate — the rewriter cannot inspect it. The branch falls through to the base
+        // visitor and EF Core's query translation reports the failure.
+        var ct = TestContext.Current.CancellationToken;
+        var customer = CreateCustomer("Alice");
+        _context.Customers.Add(customer);
+        await _context.SaveChangesAsync(ct);
+
+        var any = CreateOrder(customer.Id);
+        any.SubmittedAt = Maybe.From(new DateTime(2026, 1, 10, 0, 0, 0, DateTimeKind.Utc));
+        _context.Orders.Add(any);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        var cutoff = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc);
+        Func<DateTime, bool> predicate = t => t < cutoff;
+
+        var act = async () => await _context.Orders
+            .Where(o => o.SubmittedAt.HasValueWhere(predicate))
+            .ToListAsync(ct);
+
+        // Throw kind is provider-specific; assert only that the limitation surfaces, not the exception type.
+        await act.Should().ThrowAsync<Exception>();
+    }
+
+    #endregion
+
     #region Helpers
 
     private static TestCustomer CreateCustomer(string name, string? phone = null)
@@ -418,6 +640,18 @@ public class MaybeExpressionRewriterTests : IDisposable
             o => o.Status == TestOrderStatus.Confirmed
                  && o.SubmittedAt.HasValue
                  && o.SubmittedAt.Value < threshold;
+    }
+
+    /// <summary>
+    /// Test specification using the <c>HasValueWhere(predicate)</c> shape — exactly the natural
+    /// form the rewriter is added to support. Must produce identical results to
+    /// <see cref="OverdueOrderTestSpecification"/> when interpreted by EF Core.
+    /// </summary>
+    private sealed class OverdueOrderHasValueWhereSpecification(DateTime threshold) : Specification<TestOrder>
+    {
+        public override System.Linq.Expressions.Expression<Func<TestOrder, bool>> ToExpression() =>
+            o => o.Status == TestOrderStatus.Confirmed
+                 && o.SubmittedAt.HasValueWhere(t => t < threshold);
     }
 
     /// <summary>
@@ -515,6 +749,66 @@ public class AddTrellisInterceptorsTests : IDisposable
 
         results.Should().ContainSingle()
             .Which.Id.Should().Be(withPhone.Id);
+    }
+
+    [Fact]
+    public async Task HasValueWhere_Works_WithAddTrellisInterceptors()
+    {
+        // End-to-end smoke test through the supported registration path:
+        //   AddTrellisInterceptors() → MaybeQueryInterceptor singleton
+        //   → MaybeExpressionRewriter sees the IsSome/HasValueWhere call
+        //   → produces `_phone IS NOT NULL AND _phone = @target`
+        //   → SQLite executes, returns the matching row.
+        // Captures the generated SQL to confirm the IS NOT NULL guard is present in the
+        // emitted query (not just that the predicate happens to produce the right rows
+        // by chance — the IS NOT NULL is what prevents NRE on None rows in stricter
+        // providers and matches the rewriter's documented contract).
+        var ct = TestContext.Current.CancellationToken;
+        var targetPhone = PhoneNumber.Create("+1-555-0500");
+        var match = new TestCustomer
+        {
+            Id = TestCustomerId.NewUniqueV7(),
+            Name = TestCustomerName.Create("Match"),
+            Email = EmailAddress.Create("match@test.com"),
+            CreatedAt = DateTime.UtcNow,
+            Phone = Maybe.From(targetPhone),
+        };
+        var otherPhone = new TestCustomer
+        {
+            Id = TestCustomerId.NewUniqueV7(),
+            Name = TestCustomerName.Create("OtherPhone"),
+            Email = EmailAddress.Create("other@test.com"),
+            CreatedAt = DateTime.UtcNow,
+            Phone = Maybe.From(PhoneNumber.Create("+1-555-9999")),
+        };
+        var noPhone = new TestCustomer
+        {
+            Id = TestCustomerId.NewUniqueV7(),
+            Name = TestCustomerName.Create("NoPhone"),
+            Email = EmailAddress.Create("nophone@test.com"),
+            CreatedAt = DateTime.UtcNow,
+        };
+
+        _context.Set<TestCustomer>().AddRange(match, otherPhone, noPhone);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        // Capture the SQL EF Core actually emits, so the smoke test asserts on the
+        // rewriter's observable output, not just on result-set correctness.
+        var queryable = _context.Set<TestCustomer>()
+            .Where(c => c.Phone.HasValueWhere(p => p == targetPhone));
+        var generatedSql = queryable.ToQueryString();
+
+        var results = await queryable.ToListAsync(ct);
+
+        results.Should().ContainSingle().Which.Id.Should().Be(match.Id);
+
+        // The rewriter is contractually obliged to emit a NULL guard before evaluating
+        // the predicate body. SQLite three-valued logic would mask the absence of the
+        // guard for `=` predicates, but the guard remains required for correctness on
+        // predicates that would otherwise materialise NULL into a non-nullable comparand.
+        generatedSql.Should().MatchRegex(@"""Phone""\s+IS\s+NOT\s+NULL",
+            "the MaybeExpressionRewriter must wrap HasValueWhere(predicate) with `_storage IS NOT NULL AND …`");
     }
 
     [Fact]

@@ -382,6 +382,7 @@ Optional value container for domain optionality.
 | `public Maybe<T> Or(Maybe<T> fallback)` | Fallback maybe |
 | `public Maybe<T> Or(Func<Maybe<T>> fallbackFactory)` | Deferred fallback maybe |
 | `public Maybe<T> Where(Func<T, bool> predicate)` | Keeps value only when predicate passes |
+| `public bool HasValueWhere(Func<T, bool> predicate)` | `HasValue && predicate(Value)`. The predicate is not invoked when this instance is `None`. `MaybeQueryInterceptor` in `Trellis.EntityFrameworkCore` rewrites this to `EF.Property<T?>(entity, "_field") != null AND predicate-body` for inline expression-bodied lambdas, so the same shape translates to SQL. Method-group conversions and captured `Func<T,bool>` variables are not translatable — only inline lambdas. |
 | `public Maybe<T> Tap(Action<T> action)` | Side effect on value |
 | `public override bool Equals(object? obj)` | Equality |
 | `public bool Equals(Maybe<T> other)` | Equality |

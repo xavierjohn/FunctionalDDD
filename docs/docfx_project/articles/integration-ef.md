@@ -236,7 +236,7 @@ var dueSoon = await db.Tasks
 
 For projections that unwrap `Maybe<T>`, filter with `WhereHasValue` (or `.Where(x => x.M.HasValue)` — `TRLS013` recognises that exact prior shape) **before** the projection.
 
-The `MaybeQueryInterceptor` (registered by `AddTrellisInterceptors()`) also rewrites natural patterns inside `Where` / `Select` / `Specification.ToExpression()`: `o.X.HasValue`, `o.X.HasNoValue`, `o.X.Value`, `o.X.GetValueOrDefault(d)`, `o.X == Maybe<T>.None`. The helpers above are still preferred when they exist.
+The `MaybeQueryInterceptor` (registered by `AddTrellisInterceptors()`) also rewrites natural patterns inside `Where` / `Select` / `Specification.ToExpression()`: `o.X.HasValue`, `o.X.HasNoValue`, `o.X.Value`, `o.X.GetValueOrDefault(d)`, `o.X.HasValueWhere(t => ...)` (inline expression-bodied lambdas only — captured `Func<T,bool>` variables and method-group conversions are not translatable), `o.X == Maybe<T>.None`. The helpers above are still preferred when they exist.
 
 ### Indexing Maybe properties
 

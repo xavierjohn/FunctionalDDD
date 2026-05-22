@@ -479,7 +479,7 @@ public sealed class MaybeQueryInterceptor : IQueryExpressionInterceptor
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public Expression QueryCompilationStarting(Expression queryExpression, QueryExpressionEventData eventData)` | `Expression` | Rewrites query expressions so natural `Maybe<T>` access translates to mapped storage members. Supported patterns inside `Where`/`Select`/`Specification.ToExpression()`: `o.X.HasValue`, `o.X.HasNoValue`, `o.X.Value`, `o.X.GetValueOrDefault(d)`, `o.X == Maybe<T>.None`. See cookbook [Recipe 8](trellis-api-cookbook.md#recipe-8--ef-core-maybepropertymapping-for-nullable-value-objects) for the Specification walkthrough. |
+| `public Expression QueryCompilationStarting(Expression queryExpression, QueryExpressionEventData eventData)` | `Expression` | Rewrites query expressions so natural `Maybe<T>` access translates to mapped storage members. Supported patterns inside `Where`/`Select`/`Specification.ToExpression()`: `o.X.HasValue`, `o.X.HasNoValue`, `o.X.Value`, `o.X.GetValueOrDefault(d)`, `o.X == Maybe<T>.None`, and `o.X.HasValueWhere(t => ...predicate-body-on-t...)`. `HasValueWhere` requires an inline expression-bodied lambda; captured `Func<T,bool>` variables and method-group conversions fall through and EF Core reports the translation failure. See cookbook [Recipe 8](trellis-api-cookbook.md#recipe-8--ef-core-maybepropertymapping-for-nullable-value-objects) for the Specification walkthrough. |
 
 ### `ScalarValueQueryInterceptor`
 
