@@ -107,7 +107,8 @@ internal sealed class MaybeExpressionRewriter : ExpressionVisitor
 
     /// <summary>
     /// Intercepts method calls to detect <see cref="Maybe{T}.GetValueOrDefault(T)"/>
-    /// and rewrite to <c>EF.Property ?? defaultValue</c>.
+    /// and rewrite to <c>EF.Property ?? defaultValue</c>, and <see cref="Maybe{T}.HasValueWhere(Func{T, bool})"/>
+    /// and rewrite to <c>EF.Property != null AND predicate-body-with-parameter-replaced</c>.
     /// </summary>
     protected override Expression VisitMethodCall(MethodCallExpression node)
     {
@@ -123,6 +124,75 @@ internal sealed class MaybeExpressionRewriter : ExpressionVisitor
             {
                 var defaultValue = Visit(node.Arguments[0]);
                 return Expression.Coalesce(efPropertyAccess, defaultValue);
+            }
+        }
+
+        // Pattern: entity.MaybeProperty.HasValueWhere(t => predicateBody(t))
+        //       → EF.Property<T?>(entity, "_field") != null AND predicateBody(replacement)
+        //  where replacement is `EF.Property.Value` for value-type T (unwrapping Nullable<T>)
+        //  or `EF.Property` cast to T for reference-type T.
+        //
+        // Only inline LambdaExpression arguments are supported. Captured delegate variables
+        // and method-group conversions appear as ConstantExpression / opaque shapes in the
+        // outer expression tree — the rewriter cannot inspect their bodies and falls
+        // through, letting EF Core's query translator report the failure.
+        if (node.Method.Name == nameof(Maybe<object>.HasValueWhere)
+            && node.Object is MemberExpression isSomeMember
+            && isSomeMember.Member is PropertyInfo isSomeProp
+            && IsMaybeType(isSomeProp.PropertyType))
+        {
+            var efPropertyAccess = BuildEfPropertyAccess(isSomeMember);
+            if (efPropertyAccess is not null && node.Arguments.Count == 1)
+            {
+                // The C# compiler emits inline `Func<T,bool>` lambdas as LambdaExpression
+                // nodes when the surrounding outer lambda is an Expression<>. The Quote
+                // branch covers cases where the compiler additionally wraps the inner
+                // lambda in a UnaryExpression with NodeType=Quote.
+                var lambda = node.Arguments[0] switch
+                {
+                    LambdaExpression lam => lam,
+                    UnaryExpression { NodeType: ExpressionType.Quote, Operand: LambdaExpression lam } => lam,
+                    _ => null
+                };
+
+                if (lambda is { Parameters.Count: 1 })
+                {
+                    var param = lambda.Parameters[0];
+                    var innerType = isSomeProp.PropertyType.GetGenericArguments()[0];
+
+                    // Storage member type is Nullable<T> for value types, T for reference types.
+                    // Substitute the inner lambda's parameter with the storage access so the
+                    // predicate body operates on the same expression EF will translate.
+                    Expression replacement;
+                    if (innerType.IsValueType)
+                    {
+                        // Storage is Nullable<T>; .Value unwraps to T. The leading IS NOT NULL
+                        // check, combined with SQL three-valued logic, ensures we never
+                        // materialize the .Value on a NULL row.
+                        replacement = Expression.Property(efPropertyAccess, "Value");
+                    }
+                    else
+                    {
+                        // Storage is T?. The convert is a no-op when the types already match,
+                        // skipped to avoid emitting unnecessary nodes that some EF translators
+                        // are sensitive to.
+                        replacement = efPropertyAccess.Type == innerType
+                            ? efPropertyAccess
+                            : Expression.Convert(efPropertyAccess, innerType);
+                    }
+
+                    var rewrittenBody = new ParameterReplacer(param, replacement).Visit(lambda.Body)!;
+
+                    // Recurse so nested Maybe access inside the predicate body
+                    // (e.g., `t => o.OtherMaybe.HasValue`) is also rewritten.
+                    rewrittenBody = Visit(rewrittenBody);
+
+                    var notNullCheck = Expression.NotEqual(
+                        efPropertyAccess,
+                        Expression.Constant(null, efPropertyAccess.Type));
+
+                    return Expression.AndAlso(notNullCheck, rewrittenBody);
+                }
             }
         }
 
@@ -233,5 +303,22 @@ internal sealed class MaybeExpressionRewriter : ExpressionVisitor
             : innerType;
 
         return Expression.Constant(null, storeType);
+    }
+
+    /// <summary>
+    /// Substitutes a single <see cref="ParameterExpression"/> with a replacement expression
+    /// throughout an expression tree. Used to inline an <c>HasValueWhere</c> predicate's lambda
+    /// parameter with the storage-member access expression so the predicate body operates
+    /// on the same expression EF Core will translate.
+    /// </summary>
+    /// <remarks>
+    /// Parameter identity is compared by reference because each <see cref="ParameterExpression"/>
+    /// is a distinct instance even when names collide. Nested lambdas inside the body keep
+    /// their own distinct parameter instances and are not affected by this visitor.
+    /// </remarks>
+    private sealed class ParameterReplacer(ParameterExpression target, Expression replacement) : ExpressionVisitor
+    {
+        protected override Expression VisitParameter(ParameterExpression node) =>
+            node == target ? replacement : node;
     }
 }

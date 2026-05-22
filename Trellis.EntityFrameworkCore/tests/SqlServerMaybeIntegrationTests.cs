@@ -300,6 +300,121 @@ public class SqlServerMaybeIntegrationTests : IAsyncLifetime
 
     #endregion
 
+    #region HasValueWhere — rewriter + SQL Server query translation
+
+    [Fact]
+    public async Task HasValueWhere_ValueType_GeneratesNullGuard_AndFiltersRealServer()
+    {
+        // End-to-end smoke against real SQL Server: HasValueWhere(predicate) must
+        // (1) translate through MaybeQueryInterceptor, (2) emit `[_submittedAt] IS NOT NULL
+        // AND [_submittedAt] < @cutoff`, (3) execute against SQL Server, (4) return only
+        // rows that satisfy both clauses. The SQL-shape assertion is what makes this a
+        // smoke test rather than a result-set assertion — the SQL itself proves the
+        // rewriter's contract held all the way down to the wire.
+        var ct = TestContext.Current.CancellationToken;
+        var customer = new TestCustomer
+        {
+            Id = TestCustomerId.NewUniqueV4(),
+            Name = TestCustomerName.Create("SqlHelen"),
+            Email = EmailAddress.Create("sqlhelen@example.com"),
+            CreatedAt = DateTime.UtcNow,
+        };
+        _context.Customers.Add(customer);
+        await _context.SaveChangesAsync(ct);
+
+        var early = new TestOrder
+        {
+            Id = TestOrderId.NewUniqueV4(),
+            CustomerId = customer.Id,
+            Amount = 50m,
+            Status = TestOrderStatus.Confirmed,
+            SubmittedAt = Maybe.From(new DateTime(2026, 1, 10, 0, 0, 0, DateTimeKind.Utc)),
+        };
+        var late = new TestOrder
+        {
+            Id = TestOrderId.NewUniqueV4(),
+            CustomerId = customer.Id,
+            Amount = 75m,
+            Status = TestOrderStatus.Confirmed,
+            SubmittedAt = Maybe.From(new DateTime(2026, 6, 15, 0, 0, 0, DateTimeKind.Utc)),
+        };
+        var noDate = new TestOrder
+        {
+            Id = TestOrderId.NewUniqueV4(),
+            CustomerId = customer.Id,
+            Amount = 30m,
+            Status = TestOrderStatus.Confirmed,
+        };
+        _context.Orders.AddRange(early, late, noDate);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        var cutoff = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc);
+        var queryable = _context.Orders
+            .Where(o => o.SubmittedAt.HasValueWhere(t => t < cutoff));
+        var generatedSql = queryable.ToQueryString();
+
+        var results = await queryable.ToListAsync(ct);
+
+        results.Should().ContainSingle().Which.Id.Should().Be(early.Id);
+
+        generatedSql.Should().MatchRegex(@"\[?SubmittedAt\]?\s+IS\s+NOT\s+NULL",
+            "the MaybeExpressionRewriter must wrap HasValueWhere(predicate) with `_storage IS NOT NULL AND …`");
+        generatedSql.Should().NotContain("HasValueWhere",
+            "the method call itself must be translated away — leaving HasValueWhere in the SQL means the rewriter never ran");
+    }
+
+    [Fact]
+    public async Task HasValueWhere_ReferenceType_GeneratesNullGuard_AndFiltersRealServer()
+    {
+        // Parallel smoke against the reference-type branch of the rewriter. The storage
+        // type for `Maybe<PhoneNumber>` is a nullable scalar-value-object reference; the
+        // rewriter's substitution path differs from the Nullable<T>.Value branch used
+        // for value-type T. Pinning the reference-type path against real SQL Server is
+        // the strongest signal that both branches generate executable SQL.
+        var ct = TestContext.Current.CancellationToken;
+        var targetPhone = PhoneNumber.Create("+1-555-0100");
+        var match = new TestCustomer
+        {
+            Id = TestCustomerId.NewUniqueV4(),
+            Name = TestCustomerName.Create("SqlMatch"),
+            Email = EmailAddress.Create("sqlmatch@example.com"),
+            CreatedAt = DateTime.UtcNow,
+            Phone = Maybe.From(targetPhone),
+        };
+        var otherPhone = new TestCustomer
+        {
+            Id = TestCustomerId.NewUniqueV4(),
+            Name = TestCustomerName.Create("SqlOther"),
+            Email = EmailAddress.Create("sqlother@example.com"),
+            CreatedAt = DateTime.UtcNow,
+            Phone = Maybe.From(PhoneNumber.Create("+1-555-9999")),
+        };
+        var noPhone = new TestCustomer
+        {
+            Id = TestCustomerId.NewUniqueV4(),
+            Name = TestCustomerName.Create("SqlNoPhone"),
+            Email = EmailAddress.Create("sqlnophone@example.com"),
+            CreatedAt = DateTime.UtcNow,
+        };
+        _context.Customers.AddRange(match, otherPhone, noPhone);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        var queryable = _context.Customers
+            .Where(c => c.Phone.HasValueWhere(p => p == targetPhone));
+        var generatedSql = queryable.ToQueryString();
+
+        var results = await queryable.ToListAsync(ct);
+
+        results.Should().ContainSingle().Which.Id.Should().Be(match.Id);
+
+        generatedSql.Should().MatchRegex(@"\[?Phone\]?\s+IS\s+NOT\s+NULL",
+            "the MaybeExpressionRewriter must wrap HasValueWhere(predicate) with `_storage IS NOT NULL AND …`");
+    }
+
+    #endregion
+
     /// <summary>
     /// SQL Server DbContext reusing the same entity types and conventions as the SQLite tests.
     /// </summary>
@@ -311,6 +426,7 @@ public class SqlServerMaybeIntegrationTests : IAsyncLifetime
         public SqlServerTestDbContext(string connectionString)
             : base(new DbContextOptionsBuilder<SqlServerTestDbContext>()
                 .UseSqlServer(connectionString)
+                .AddTrellisInterceptors()
                 .Options)
         {
         }
