@@ -360,6 +360,12 @@ public class Money : ValueObject
     /// <returns>
     /// Success with the total, or failure if the collection is empty, contains mixed currencies, or overflows.
     /// </returns>
+    /// <remarks>
+    /// Empty input fails because <see cref="Money"/> carries currency and there is no canonical
+    /// "zero currency". Callers that have a meaningful currency for the empty case should use
+    /// <see cref="Sum(IEnumerable{Money}, Money)"/> and pass a zero-amount <see cref="Money"/>
+    /// in the desired currency as <c>fallback</c>.
+    /// </remarks>
     public static Result<Money> Sum(IEnumerable<Money> values)
     {
         ArgumentNullException.ThrowIfNull(values);
@@ -369,9 +375,60 @@ public class Money : ValueObject
         if (!enumerator.MoveNext())
             return Result.Fail<Money>(Error.InvalidInput.ForField(nameof(values), "validation.error", "Cannot sum an empty collection."));
 
+        return SumNonEmpty(enumerator);
+    }
+
+    /// <summary>
+    /// Sums a collection of <see cref="Money"/> values, returning <paramref name="fallback"/>
+    /// when the collection is empty.
+    /// </summary>
+    /// <param name="values">The monetary values to sum.</param>
+    /// <param name="fallback">The value to return when <paramref name="values"/> is empty.</param>
+    /// <returns>
+    /// Success with the total when <paramref name="values"/> is non-empty. Success with
+    /// <paramref name="fallback"/> when <paramref name="values"/> is empty. Failure if the
+    /// non-empty values contain mixed currencies or the addition overflows.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// <paramref name="fallback"/> is consulted only when <paramref name="values"/> is empty.
+    /// When <paramref name="values"/> is non-empty the result currency is inferred from the
+    /// first element, exactly as in <see cref="Sum(IEnumerable{Money})"/> — the fallback's
+    /// currency is irrelevant in that case. This mirrors <see cref="MonetaryAmount.Sum"/>'s
+    /// empty-collection-yields-zero ergonomic for currencies that <see cref="Money"/> can
+    /// represent.
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// // Empty line items return USD 0 instead of failing.
+    /// var total = Money.Sum(order.LineItems.Select(li => li.Subtotal), Money.Zero("USD").Unwrap());
+    /// </code>
+    /// </example>
+    public static Result<Money> Sum(IEnumerable<Money> values, Money fallback)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        ArgumentNullException.ThrowIfNull(fallback);
+
+        using var enumerator = values.GetEnumerator();
+
+        if (!enumerator.MoveNext())
+            return Result.Ok(fallback);
+
+        return SumNonEmpty(enumerator);
+    }
+
+    // Sums the remaining elements of an enumerator that has already been advanced to its first
+    // element. The current value of <paramref name="enumerator"/> seeds the result currency.
+    // Callers are responsible for the empty-collection branch before invoking this helper.
+    // The hard-coded "values" paramName matches both public overloads' parameter name.
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("Usage", "CA2208:Instantiate argument exceptions correctly",
+        Justification = "Continuation of Sum(values) / Sum(values, fallback); 'values' is the matching parameter name in both public callers.")]
+    private static Result<Money> SumNonEmpty(IEnumerator<Money> enumerator)
+    {
         var first = enumerator.Current;
         if (first is null)
-            throw new ArgumentException("Collection contains a null element.", nameof(values));
+            throw new ArgumentException("Collection contains a null element.", "values");
 
         var currency = first.Currency;
         var totalAmount = first.Amount;
@@ -382,7 +439,7 @@ public class Money : ValueObject
             {
                 var current = enumerator.Current;
                 if (current is null)
-                    throw new ArgumentException("Collection contains a null element.", nameof(values));
+                    throw new ArgumentException("Collection contains a null element.", "values");
 
                 if (!currency.Equals(current.Currency))
                     return Result.Fail<Money>(

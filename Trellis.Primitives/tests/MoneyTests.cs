@@ -737,6 +737,137 @@ public class MoneyTests
             .Where(ex => ex.ParamName == "values");
     }
 
+    [Fact]
+    public void Sum_WithFallback_EmptyCollection_ReturnsFallback()
+    {
+        var fallback = Money.Create(0m, "USD");
+
+        var result = Money.Sum(Array.Empty<Money>(), fallback);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Unwrap().Should().Be(fallback);
+    }
+
+    [Fact]
+    public void Sum_WithFallback_EmptyCollection_NonZeroFallback_ReturnsFallback()
+    {
+        var fallback = Money.Create(42.50m, "EUR");
+
+        var result = Money.Sum(Array.Empty<Money>(), fallback);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Unwrap().Amount.Should().Be(42.50m);
+        result.Unwrap().Currency.Value.Should().Be("EUR");
+    }
+
+    [Fact]
+    public void Sum_WithFallback_NonEmpty_IgnoresFallbackCurrency()
+    {
+        // When non-empty, fallback is ignored entirely; values determine the result currency.
+        // This mirrors MonetaryAmount.Sum's behaviour where the empty-collection sentinel
+        // is the ONLY effect of the fallback / Zero — non-empty input behaves identically
+        // to the existing Sum(IEnumerable<Money>) overload.
+        var items = new[]
+        {
+            Money.Create(10.00m, "EUR"),
+            Money.Create(20.50m, "EUR"),
+        };
+        var fallback = Money.Create(0m, "USD"); // different currency from values
+
+        var result = Money.Sum(items, fallback);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Unwrap().Amount.Should().Be(30.50m);
+        result.Unwrap().Currency.Value.Should().Be("EUR");
+    }
+
+    [Fact]
+    public void Sum_WithFallback_NonEmpty_SameCurrency_ReturnsSum()
+    {
+        var items = new[]
+        {
+            Money.Create(10.00m, "USD"),
+            Money.Create(20.50m, "USD"),
+            Money.Create(5.25m, "USD"),
+        };
+        var fallback = Money.Create(0m, "USD");
+
+        var result = Money.Sum(items, fallback);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Unwrap().Amount.Should().Be(35.75m);
+        result.Unwrap().Currency.Value.Should().Be("USD");
+    }
+
+    [Fact]
+    public void Sum_WithFallback_MixedCurrenciesInValues_ReturnsFailure()
+    {
+        var items = new[]
+        {
+            Money.Create(10.00m, "USD"),
+            Money.Create(20.00m, "EUR"),
+        };
+        var fallback = Money.Create(0m, "USD");
+
+        var result = Money.Sum(items, fallback);
+
+        result.IsFailure.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Sum_WithFallback_NullCollection_ThrowsArgumentNull()
+    {
+        var fallback = Money.Create(0m, "USD");
+
+        var act = () => Money.Sum(null!, fallback);
+
+        act.Should().Throw<ArgumentNullException>()
+            .Where(ex => ex.ParamName == "values");
+    }
+
+    [Fact]
+    public void Sum_WithFallback_NullFallback_ThrowsArgumentNull()
+    {
+        var items = new[] { Money.Create(10m, "USD") };
+
+        var act = () => Money.Sum(items, null!);
+
+        act.Should().Throw<ArgumentNullException>()
+            .Where(ex => ex.ParamName == "fallback");
+    }
+
+    [Fact]
+    public void Sum_WithFallback_CollectionWithNullElement_ThrowsArgumentException()
+    {
+        var fallback = Money.Create(0m, "USD");
+        var items = new[]
+        {
+            Money.Create(10m, "USD"),
+            null!,
+            Money.Create(5m, "USD"),
+        };
+
+        var act = () => Money.Sum(items, fallback);
+
+        act.Should().Throw<ArgumentException>()
+            .Where(ex => ex.ParamName == "values");
+    }
+
+    [Fact]
+    public void Sum_WithFallback_Overflow_ReturnsFailure()
+    {
+        var fallback = Money.Create(0m, "USD");
+        var items = new[]
+        {
+            Money.Create(decimal.MaxValue, "USD"),
+            Money.Create(decimal.MaxValue, "USD"),
+        };
+
+        var result = Money.Sum(items, fallback);
+
+        result.IsFailure.Should().BeTrue();
+    }
+
     #endregion
 
     #region Inspection regression tests (Trellis.Primitives M-1, M-3, i-6, New-1)

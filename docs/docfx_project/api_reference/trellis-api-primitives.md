@@ -278,6 +278,7 @@ public class Money : ValueObject
 | `public static Result<Money> Zero(string currencyCode = "USD")` | `Result<Money>` | Currency-aware zero instance. |
 | `public override string ToString()` | `string` | Invariant amount plus currency code. |
 | `public static Result<Money> Sum(IEnumerable<Money> values)` | `Result<Money>` | Fails for empty or mixed-currency collections. Throws `ArgumentNullException` when `values` is null and `ArgumentException` when any element is null. |
+| `public static Result<Money> Sum(IEnumerable<Money> values, Money fallback)` | `Result<Money>` | Returns `fallback` when `values` is empty. When `values` is non-empty the result currency is inferred from the first element exactly as `Sum(values)` — `fallback`'s currency is ignored. Mirrors `MonetaryAmount.Sum`'s empty-yields-zero ergonomic when the caller has a meaningful currency for the empty case. Throws `ArgumentNullException` when `values` or `fallback` is null and `ArgumentException` when any element is null. |
 
 ### `Percentage`
 
