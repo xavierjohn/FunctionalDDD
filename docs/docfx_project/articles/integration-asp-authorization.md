@@ -745,7 +745,7 @@ For Native AOT / trimming-strict deployments the cookbook walks through hand-bui
 
 ### Cache partitioning across actors (`VaryForActor()`)
 
-Cacheable responses (200, 206, 304, paginated lists) must include `Vary: <actor-header>` so intermediate HTTP caches partition by actor — without it, actor A's response can be served to actor B. The manual approach is `o.Vary("Authorization")` on every cache-eligible endpoint, kept in sync with whichever `IActorProvider` is registered. `VaryForActor()` removes the bookkeeping:
+Cacheable responses (200, 304, paginated lists) must include `Vary: <actor-header>` so intermediate HTTP caches partition by actor — without it, actor A's response can be served to actor B. The manual approach is `o.Vary("Authorization")` on every cache-eligible endpoint, kept in sync with whichever `IActorProvider` is registered. `VaryForActor()` removes the bookkeeping:
 
 ```csharp
 return result.ToHttpResponse(MyResponse.From, o => o
