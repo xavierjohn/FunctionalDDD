@@ -33,6 +33,7 @@ public readonly record struct Page<T>
 
     /// <summary>Constructs a validated page. Use <see cref="Page.Empty{T}(int, int)"/> for empty pages.</summary>
     /// <exception cref="ArgumentNullException"><paramref name="Items"/> is <c>null</c>.</exception>
+    /// <exception cref="ArgumentException">A supplied cursor equals <c>default(Cursor)</c> (which has no token).</exception>
     /// <exception cref="ArgumentOutOfRangeException">A limit is non-positive, or <paramref name="AppliedLimit"/> exceeds <paramref name="RequestedLimit"/>.</exception>
     public Page(
         IReadOnlyList<T> Items,
@@ -42,6 +43,10 @@ public readonly record struct Page<T>
         int AppliedLimit)
     {
         ArgumentNullException.ThrowIfNull(Items);
+        if (Next is { } nextValue && nextValue.Equals(default(Cursor)))
+            throw new ArgumentException("Next cursor must not be default(Cursor) — use null to signal absence.", nameof(Next));
+        if (Previous is { } previousValue && previousValue.Equals(default(Cursor)))
+            throw new ArgumentException("Previous cursor must not be default(Cursor) — use null to signal absence.", nameof(Previous));
         if (RequestedLimit <= 0)
             throw new ArgumentOutOfRangeException(nameof(RequestedLimit), "Limit must be positive.");
         if (AppliedLimit <= 0)

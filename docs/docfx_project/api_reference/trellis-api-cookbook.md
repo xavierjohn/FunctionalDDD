@@ -334,9 +334,9 @@ public sealed class ListOrdersHandler(AppDbContext db)
         {
             if (cursorToken.Length == 0)
                 return Result.Fail<Page<OrderListItem>>(
-                    Error.InvalidInput.ForField(nameof(q.Cursor), "cursor.malformed", "Cursor must not be empty."));
+                    Error.InvalidInput.ForField("cursor", "cursor.malformed", "Cursor must not be empty."));
 
-            var decoded = CursorCodec.TryDecode<Guid>(new Cursor(cursorToken), fieldName: nameof(q.Cursor));
+            var decoded = CursorCodec.TryDecode<Guid>(new Cursor(cursorToken), fieldName: "cursor");
             if (decoded.IsFailure)
                 return Result.Fail<Page<OrderListItem>>(decoded.Error!);
             decoded.TryGetValue(out var id);

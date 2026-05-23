@@ -54,12 +54,16 @@ public static class CursorCodec
     /// <see cref="long"/>, <see cref="int"/>, and <see cref="string"/> are supported.</typeparam>
     /// <param name="id">The Id of the boundary item.</param>
     /// <returns>An opaque <see cref="Cursor"/> token.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="id"/> is <c>null</c>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="id"/> formats to an empty invariant-culture string (for example, an empty <see cref="string"/> key).</exception>
     public static Cursor Encode<TKey>(TKey id)
         where TKey : notnull
     {
         ArgumentNullException.ThrowIfNull(id);
 
         var payload = FormatInvariant(id);
+        if (payload.Length == 0)
+            throw new ArgumentException("Cursor key formatted to an empty payload; supply a non-empty key.", nameof(id));
         return new Cursor(ToBase64Url(payload));
     }
 

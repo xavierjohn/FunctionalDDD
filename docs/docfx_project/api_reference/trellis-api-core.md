@@ -1,7 +1,7 @@
 ﻿---
 package: Trellis.Core
 namespaces: [Trellis]
-types: [Result, "Result<T>", IResult, "IResult<TValue>", "IFailureFactory<TSelf>", "Maybe<T>", Maybe, MaybeInvariant, Error, ITransportFault, RetryAdvice, Unit, "Page<T>", Page, Cursor, "EquatableArray<T>", EquatableArray, ResourceRef, InputPointer, FieldViolation, RuleViolation, IAggregate, "Aggregate<TId>", IEntity, "Entity<TId>", IDomainEvent, ValueObject, "ScalarValueObject<TSelf,T>", "IScalarValue<TSelf,TPrimitive>", "IFormattableScalarValue<TSelf,TPrimitive>", "RequiredString<TSelf>", "RequiredInt<TSelf>", "RequiredLong<TSelf>", "RequiredDecimal<TSelf>", "RequiredBool<TSelf>", "RequiredGuid<TSelf>", "RequiredDateTime<TSelf>", "RequiredEnum<TSelf>", "RequiredEnumJsonConverter<T>", "ParsableJsonConverter<T>", ResultRequiresExplicitHttpMappingConverter, PrimitiveValueObjectTrace, "Specification<T>", TrellisJsonValidationException, RangeAttribute, StringLengthAttribute, NotDefaultAttribute, TrimAttribute, RailwayTrackAttribute, TrackBehavior, EnumValueAttribute, ResultDebugSettings]
+types: [Result, "Result<T>", IResult, "IResult<TValue>", "IFailureFactory<TSelf>", "Maybe<T>", Maybe, MaybeInvariant, Error, ITransportFault, RetryAdvice, Unit, "Page<T>", Page, Cursor, PageSize, CursorCodec, PageBuilder, "EquatableArray<T>", EquatableArray, ResourceRef, InputPointer, FieldViolation, RuleViolation, IAggregate, "Aggregate<TId>", IEntity, "Entity<TId>", IDomainEvent, ValueObject, "ScalarValueObject<TSelf,T>", "IScalarValue<TSelf,TPrimitive>", "IFormattableScalarValue<TSelf,TPrimitive>", "RequiredString<TSelf>", "RequiredInt<TSelf>", "RequiredLong<TSelf>", "RequiredDecimal<TSelf>", "RequiredBool<TSelf>", "RequiredGuid<TSelf>", "RequiredDateTime<TSelf>", "RequiredEnum<TSelf>", "RequiredEnumJsonConverter<T>", "ParsableJsonConverter<T>", ResultRequiresExplicitHttpMappingConverter, PrimitiveValueObjectTrace, "Specification<T>", TrellisJsonValidationException, RangeAttribute, StringLengthAttribute, NotDefaultAttribute, TrimAttribute, RailwayTrackAttribute, TrackBehavior, EnumValueAttribute, ResultDebugSettings]
 version: v3
 last_verified: 2026-05-06
 audience: [llm]
@@ -1268,7 +1268,7 @@ public readonly record struct PageSize
 | `PageSize(int, int)` | Validated constructor. Throws `ArgumentOutOfRangeException` when either limit is non-positive or when `applied > requested`. |
 | `Requested` / `Applied` | The pair the caller asked for and the value the server actually used. Composes directly with `Page<T>` so `WasCapped` round-trips through the wire envelope. |
 | `WasCapped` | `true` when `Applied < Requested`. |
-| `FromRequested(int?, int)` | Lenient parser. Returns `Default` when `requested` is `null` or non-positive; clamps `Applied` to `max` but **preserves `Requested` verbatim** so cap visibility survives. |
+| `FromRequested(int?, int)` | Lenient parser. When `requested` is `null` or non-positive, returns `Requested = Default` and `Applied = min(Default, max)` (so a custom `max < Default` still clamps `Applied` and surfaces as `WasCapped`). When `requested` is positive, preserves it verbatim and clamps `Applied` to `max`. |
 | `TryCreate(int?, int, string?)` | Strict parser. Returns `Result.Fail<PageSize>` with `Error.InvalidInput` on a non-positive or out-of-range value; uses `fieldName ?? "pageSize"` for the field violation. |
 
 ### `public static class CursorCodec`

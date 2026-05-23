@@ -112,6 +112,18 @@ public class CursorCodecTests
     }
 
     [Fact]
+    public void Single_key_rejects_empty_string_id()
+    {
+        // FormatInvariant("") yields an empty payload, which would in turn cause
+        // the Cursor ctor to throw with a confusing "token" message. The codec
+        // should reject the input up front against the right parameter name.
+        var act = () => CursorCodec.Encode("");
+
+        act.Should().Throw<ArgumentException>()
+            .Which.ParamName.Should().Be("id");
+    }
+
+    [Fact]
     public void Single_key_rejects_default_cursor_without_throwing()
     {
         // default(Cursor) bypasses the validated constructor; reading Token throws

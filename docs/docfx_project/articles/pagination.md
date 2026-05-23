@@ -125,17 +125,20 @@ Pagination parameters arrive at the transport seam; they are not domain
 invariants. `PageSize.FromRequested` is the lenient parser used in the example
 above:
 
-* `null` or a non-positive value collapses to `PageSize.Default` (50).
+* `null` or a non-positive value collapses to `Requested = PageSize.Default`
+  (50). `Applied` is `min(Default, max)`, so when a custom `max < Default` is
+  supplied, `Applied` is clamped down further and `WasCapped` is observable.
 * Values larger than `max` (defaults to `PageSize.Max` = 100) are clamped:
   `Applied` becomes `max`, but `Requested` is preserved **verbatim** so the
   caller's `WasCapped` observation survives the round-trip.
 
 ```csharp
-PageSize.FromRequested(null);        // (Default, Default)  — WasCapped = false
-PageSize.FromRequested(0);           // (Default, Default)  — WasCapped = false
-PageSize.FromRequested(20);          // (20, 20)            — WasCapped = false
-PageSize.FromRequested(1000);        // (1000, 100)         — WasCapped = true
-PageSize.FromRequested(20, max: 5);  // (20, 5)             — WasCapped = true
+PageSize.FromRequested(null);            // (Default, Default)  — WasCapped = false
+PageSize.FromRequested(null, max: 5);    // (Default, 5)        — WasCapped = true
+PageSize.FromRequested(0);               // (Default, Default)  — WasCapped = false
+PageSize.FromRequested(20);              // (20, 20)            — WasCapped = false
+PageSize.FromRequested(1000);            // (1000, 100)         — WasCapped = true
+PageSize.FromRequested(20, max: 5);      // (20, 5)             — WasCapped = true
 ```
 
 When a request must be **rejected** rather than silently clamped, use
@@ -144,8 +147,8 @@ When a request must be **rejected** rather than silently clamped, use
 ```csharp
 PageSize.TryCreate(1000)
     .Match(
-        ok: size => /* ... */,
-        fail: err => Result.Fail<Page<Order>>(err));
+        onSuccess: size => /* ... */,
+        onFailure: err => Result.Fail<Page<Order>>(err));
 ```
 
 `TryCreate` returns `Result.Fail<PageSize>` with `Error.InvalidInput` (field =
@@ -190,7 +193,7 @@ CursorCodec.Encode(order.Id.Value)            // .Value : Guid
 var decoded = CursorCodec.TryDecode<Guid>(cursor);
 return decoded.Bind(g =>
     OrderId.TryCreate(g)
-        .MapError(_ => Error.InvalidInput.ForField("cursor", "cursor.malformed",
+        .MapOnFailure(_ => Error.InvalidInput.ForField("cursor", "cursor.malformed",
                                                     "Cursor payload is not a valid OrderId.")));
 ```
 
