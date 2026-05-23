@@ -77,7 +77,6 @@ Trellis targets general business web services, not media servers. The server-sid
 - `Trellis.Asp.PartialContentResult` (MVC `ObjectResult`)
 - `Trellis.Asp.RangeRequestEvaluator` and the `RangeOutcome` closed union (`FullRepresentation` / `PartialContent` / `NotSatisfiable`)
 - `HttpResponseOptionsBuilder<T>.WithRange(Func<T, ContentRangeHeaderValue>)`, `WithRange(long, long, long)`, `WithAcceptRanges(string)`
-- `HttpResponseOptions<T>.RangeSelector`, `StaticRange`, `AcceptRanges`
 - `RepresentationMetadata.AcceptRanges` and `RepresentationMetadata.Builder.SetAcceptRanges(string)` (the constructor and builder still accept every other parameter unchanged)
 - The `Status206PartialContent` `ProducesResponseTypeMetadata` entry from `TrellisHttpResult<TDomain, TBody>.PopulateMetadata` (OpenAPI no longer advertises `206` for Trellis-mapped endpoints)
 

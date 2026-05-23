@@ -4,7 +4,7 @@
 /// Carries HTTP representation metadata (RFC 9110 §8) through Trellis response mappers.
 /// Used to emit <c>ETag</c>, <c>Last-Modified</c>, <c>Vary</c>, <c>Content-Language</c>,
 /// and <c>Content-Location</c> response headers consistently
-/// across MVC and Minimal API responses (200, 201, 304).
+/// across MVC and Minimal API responses (200, 201, 204, 304).
 /// </summary>
 public sealed class RepresentationMetadata
 {

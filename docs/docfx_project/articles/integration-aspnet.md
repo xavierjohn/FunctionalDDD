@@ -8,7 +8,7 @@ audience: [developer]
 ---
 # ASP.NET Core Integration
 
-`Trellis.Asp` maps `Result`, `Result<T>`, `Result<WriteOutcome<T>>`, and `Result<Page<T>>` to ASP.NET Core HTTP responses (status codes, Problem Details, ETags, `Prefer`, ranges, paginated envelopes) using the single verb `ToHttpResponse(...)`.
+`Trellis.Asp` maps `Result`, `Result<T>`, `Result<WriteOutcome<T>>`, and `Result<Page<T>>` to ASP.NET Core HTTP responses (status codes, Problem Details, ETags, `Prefer`, paginated envelopes) using the single verb `ToHttpResponse(...)`.
 
 ## Patterns Index
 
@@ -32,7 +32,7 @@ audience: [developer]
 
 - Your application returns `Result<T>` and you need predictable HTTP status, Problem Details, and conditional-request behavior at the boundary.
 - You are wiring Minimal API endpoints or MVC controllers and want one verb (`ToHttpResponse`) instead of a `switch`-per-endpoint.
-- You need ETag, `If-Match` / `If-None-Match`, `Prefer`, or `Range` semantics that match RFC 9110 / 7240 / 8288 without hand-rolling header parsing.
+- You need ETag, `If-Match` / `If-None-Match`, `Prefer`, or paginated-list semantics that match RFC 9110 / 7240 / 8288 without hand-rolling header parsing.
 - You bind scalar value objects (`IScalarValue<TSelf, TPrimitive>`) from routes, queries, or JSON bodies and want validation collected as `Error.InvalidInput`.
 - You hydrate the current `Actor` from JWT/OIDC claims for downstream authorization checks.
 

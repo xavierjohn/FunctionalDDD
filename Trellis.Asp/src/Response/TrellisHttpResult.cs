@@ -216,8 +216,8 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
     {
         // Result.Ok<TValue>(...) carries no null guard on the value (Trellis.Core/src/Result.cs:29),
         // so reference-type TDomain on the success path may arrive here with domain = null.
-        // Domain-dependent selectors (ETag / Last-Modified / Content-Location / Cache-Control)
-        // must short-circuit in that case — invoking them with null would NPE on the first
+        // Domain-dependent selectors (ETag / Last-Modified / Content-Location) must short-circuit
+        // in that case — invoking them with a null domain would NPE on the first member access.
         // Non-domain headers (Vary / ContentLanguage) still apply.
         var hasDomain = domain is not null;
 
