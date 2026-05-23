@@ -20,7 +20,6 @@ This document provides detailed examples and advanced patterns for using the ASP
   - [Async Operations](#async-operations)
   - [Complex Validation Scenarios](#complex-validation-scenarios)
   - [Custom Status Codes](#custom-status-codes)
-  - [Pagination Support](#pagination-support)
 - [Minimal API](#minimal-api)
   - [Basic Endpoints](#basic-endpoints)
   - [Async Operations](#async-operations-1)
