@@ -184,7 +184,6 @@ public sealed class TrellisWriteOutcomeResultTests
             .AddVary("Accept")
             .AddContentLanguage("en")
             .SetContentLocation("/items/1")
-            .SetAcceptRanges("bytes")
             .Build();
         var outcome = new WriteOutcome<Item>.UpdatedNoContent(meta);
 
@@ -195,7 +194,6 @@ public sealed class TrellisWriteOutcomeResultTests
         ctx.Response.Headers.Vary.ToString().Should().Contain("Accept");
         ctx.Response.Headers.ContentLanguage.ToString().Should().Be("en");
         ctx.Response.Headers["Content-Location"].ToString().Should().Be("/items/1");
-        ctx.Response.Headers["Accept-Ranges"].ToString().Should().Be("bytes");
     }
 
     [Fact]
@@ -264,8 +262,7 @@ public sealed class TrellisWriteOutcomeResultTests
             .WithLastModified(i => i.Modified)
             .Vary("Accept")
             .WithContentLanguage("en")
-            .WithContentLocation(i => $"/items/{i.Id}")
-            .WithAcceptRanges("bytes"))
+            .WithContentLocation(i => $"/items/{i.Id}"))
             .ExecuteAsync(ctx);
 
         ctx.Response.Headers.ETag.ToString().Should().Be("\"abc\"");
@@ -273,7 +270,6 @@ public sealed class TrellisWriteOutcomeResultTests
         ctx.Response.Headers.Vary.ToString().Should().Contain("Accept");
         ctx.Response.Headers.ContentLanguage.ToString().Should().Be("en");
         ctx.Response.Headers["Content-Location"].ToString().Should().Be("/items/1");
-        ctx.Response.Headers["Accept-Ranges"].ToString().Should().Be("bytes");
     }
 
     [Fact]

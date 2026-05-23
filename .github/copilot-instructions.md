@@ -35,7 +35,7 @@ For any non-trivial Trellis work, load these **before** writing the first line o
 |---|---|
 | Result, Maybe, Error, ROP operations, aggregates, entities, specifications | `docs/docfx_project/api_reference/trellis-api-core.md` |
 | Ready-to-use value objects and primitive attributes | `docs/docfx_project/api_reference/trellis-api-primitives.md` |
-| ASP.NET Core response mapping, validation, ETags, Prefer, range handling | `docs/docfx_project/api_reference/trellis-api-asp.md` |
+| ASP.NET Core response mapping, validation, ETags, Prefer handling | `docs/docfx_project/api_reference/trellis-api-asp.md` |
 | EF Core integration | `docs/docfx_project/api_reference/trellis-api-efcore.md` |
 | Authorization | `docs/docfx_project/api_reference/trellis-api-authorization.md` |
 | FluentValidation integration | `docs/docfx_project/api_reference/trellis-api-fluentvalidation.md` |

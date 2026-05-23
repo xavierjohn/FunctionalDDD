@@ -135,18 +135,6 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
             }
         }
 
-        var rangeOutcome = TryEvaluateRange(domain!);
-        if (rangeOutcome is not null)
-        {
-            var (from, to, total, error) = rangeOutcome.Value;
-            if (error is not null)
-                return ResponseFailureWriter.WriteAsync(httpContext, error, ResolveErrorStatusCode(httpContext, error, _options));
-
-            ApplyCacheControlSelector(response, domain!);
-            var bodyValue = _bodyProjector is not null ? (object?)_bodyProjector(domain!) : domain;
-            return new PartialContentHttpResult(from, to, total, Results.Ok(bodyValue)).ExecuteAsync(httpContext);
-        }
-
         if (_options.LocationKind != LocationKind.None)
         {
             var location = ResolveLocation(httpContext, domain!);
@@ -172,8 +160,8 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
         return Results.Ok(payload).ExecuteAsync(httpContext);
     }
 
-    // Selector-derived Cache-Control is applied only at the success-emit points (200/201/204/206/304)
-    // so a mid-flow failure (412 PreconditionFailed, 416 / range-error, 500 / location-missing) does
+    // Selector-derived Cache-Control is applied only at the success-emit points (200/201/204/304)
+    // so a mid-flow failure (412 PreconditionFailed, 500 / location-missing) does
     // NOT inherit a `public, max-age=N` selector value. That would otherwise turn a transient client
     // error into a cached negative response. The static-value overload remains in place across both
     // success and failure paths because it's written in ExecuteAsync before the branch. Also gates
@@ -228,9 +216,9 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
     {
         // Result.Ok<TValue>(...) carries no null guard on the value (Trellis.Core/src/Result.cs:29),
         // so reference-type TDomain on the success path may arrive here with domain = null.
-        // Domain-dependent selectors (ETag / Last-Modified / Content-Location / Cache-Control)
-        // must short-circuit in that case — invoking them with null would NPE on the first
-        // member access. Non-domain headers (Vary / ContentLanguage / AcceptRanges) still apply.
+        // Domain-dependent selectors (ETag / Last-Modified / Content-Location) must short-circuit
+        // in that case — invoking them with a null domain would NPE on the first member access.
+        // Non-domain headers (Vary / ContentLanguage) still apply.
         var hasDomain = domain is not null;
 
         if (hasDomain && _options.ETagSelector is { } et)
@@ -269,9 +257,6 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
             if (!string.IsNullOrEmpty(v))
                 response.Headers["Content-Location"] = v;
         }
-
-        if (!string.IsNullOrEmpty(_options.AcceptRanges))
-            response.Headers["Accept-Ranges"] = _options.AcceptRanges;
     }
 
     internal static void AppendVaryUnique(HttpResponse response, string headerName)
@@ -361,38 +346,6 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
 
         foreach (var h in headers)
             AppendVaryUnique(httpContext.Response, h);
-    }
-
-    private (long From, long To, long Total, Error? Error)? TryEvaluateRange(TDomain domain)
-    {
-        if (_options.RangeSelector is { } rs)
-        {
-            var cr = rs(domain);
-            if (cr.From is null || cr.To is null || cr.Length is null)
-                return null;
-
-            var from = cr.From.Value;
-            var to = cr.To.Value;
-            var total = cr.Length.Value;
-            if (from == 0 && to == total - 1)
-                return null;
-
-            return (from, to, total, null);
-        }
-
-        if (_options.StaticRange is { } sr)
-        {
-            if (sr.From < 0 || sr.To < sr.From || sr.Total <= 0 || sr.From >= sr.Total)
-                return null;
-
-            var clampedTo = Math.Min(sr.To, sr.Total - 1);
-            if (sr.From == 0 && clampedTo == sr.Total - 1)
-                return null;
-
-            return (sr.From, clampedTo, sr.Total, null);
-        }
-
-        return null;
     }
 
     [System.Diagnostics.CodeAnalysis.UnconditionalSuppressMessage("Trimming", "IL2026",
@@ -485,14 +438,13 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
     /// <list type="bullet">
     ///   <item><description>200 OK — default success path with body.</description></item>
     ///   <item><description>201 Created — when <c>Created</c>, <c>CreatedAtRoute</c>, or <c>CreatedAtAction</c> set the builder's MarkAsCreated flag. Bare <c>WithLocation</c> emits a 200 OK + Location instead.</description></item>
-    ///   <item><description>206 Partial Content — when a Range selector is configured and the request asked for a sub-range.</description></item>
     ///   <item><description>304 Not Modified — when conditional-request evaluation matches an If-None-Match / If-Modified-Since precondition.</description></item>
     ///   <item><description>400, 404, 412, 500 — error envelopes (problem+json) for the most common failure mappings.</description></item>
     /// </list>
     /// <para>
     /// <b>Result&lt;Unit&gt; specialization.</b> When <typeparamref name="TDomain"/> is
     /// <see cref="Unit"/>, the success path short-circuits to 204 No Content (see
-    /// <c>ExecuteSuccessAsync</c>) before any body / location / range / preconditions branch
+    /// <c>ExecuteSuccessAsync</c>) before any body / location / preconditions branch
     /// runs. The metadata declared here matches that contract: 204 with no body and no JSON
     /// content type, plus the same problem-envelope error responses (400 / 404 / 500). 412 is
     /// omitted because preconditions are skipped for the Unit path.
@@ -505,7 +457,7 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
         if (s_isUnit)
         {
             // 204 No Content — Result<Unit> success short-circuits before any body / location /
-            // range / preconditions branch can apply, so the metadata is much smaller than the
+            // preconditions branch can apply, so the metadata is much smaller than the
             // general case below. Error envelopes still apply because failures flow through the
             // same ProblemDetails writer regardless of TDomain.
             builder.Metadata.Add(new ProducesResponseTypeMetadata(StatusCodes.Status204NoContent, typeof(void)));
@@ -517,7 +469,6 @@ internal sealed class TrellisHttpResult<TDomain, TBody> :
 
         builder.Metadata.Add(new ProducesResponseTypeMetadata(StatusCodes.Status200OK, typeof(TBody), ["application/json"]));
         builder.Metadata.Add(new ProducesResponseTypeMetadata(StatusCodes.Status201Created, typeof(TBody), ["application/json"]));
-        builder.Metadata.Add(new ProducesResponseTypeMetadata(StatusCodes.Status206PartialContent, typeof(TBody), ["application/json"]));
         builder.Metadata.Add(new ProducesResponseTypeMetadata(StatusCodes.Status304NotModified, typeof(void)));
         builder.Metadata.Add(new ProducesResponseTypeMetadata(StatusCodes.Status400BadRequest, typeof(ProblemDetails), ["application/problem+json"]));
         builder.Metadata.Add(new ProducesResponseTypeMetadata(StatusCodes.Status404NotFound, typeof(ProblemDetails), ["application/problem+json"]));

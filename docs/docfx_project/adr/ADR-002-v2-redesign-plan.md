@@ -33,7 +33,7 @@ Async is one rule: returns Task<Result<T>>, awaited normally         → no Left
 Optionality is one type: Maybe<T>; null and Maybe never coexist      → Maybe<T>
 Entities have identity; aggregates have ETags + events; VOs equal-by-components
 Persistence stages, the pipeline commits                              → Repo.Add(...), CommitAsync handled by host
-HTTP: result.ToHttpResponse(opts) (one verb; opts carry write-outcome, ETag, Location, Vary, ranges, etc.)
+HTTP: result.ToHttpResponse(opts) (one verb; opts carry write-outcome, ETag, Location, Vary, etc.)
 Authorization: [Authorize(Permission = ...)] on the message; resource auth via IAuthorizeResource<T>
 ```
 
@@ -250,7 +250,6 @@ own type system:
 | ETag / Last-Modified / Vary / Content-Language emission | `RepresentationMetadata` + `EntityTagValue` |
 | Conditional request evaluation (If-Match / If-None-Match / If-Modified-Since) | `ConditionalRequestEvaluator` |
 | Prefer header parsing + `return=minimal` honoring + `Preference-Applied` + `Vary: Prefer` | `PreferHeader` + write mappers |
-| Range request evaluation (RFC 9110 §14, byte units) | `RangeRequestEvaluator` |
 | Problem Details (`application/problem+json`) emission with extension members | `Error.ToHttpResult` + `HttpResultExtensions` |
 | `WWW-Authenticate` emission when an `Error.Unauthorized` short-circuits the auth pipeline | `AuthChallenge` (wiring is a Phase 2 gap) |
 | OpenAPI schema *contributions* (transformers/operation filters) for Trellis types | `Trellis.Asp.OpenApi` (proposed) |
@@ -277,7 +276,7 @@ edge caching, and protocol-stack work that the BCL already does well.
 
 ### 0.7.4 Pagination is a first-class Trellis concern (business APIs ≠ media APIs)
 
-> **Spike status (PR #400, merged):** the design below has been validated end-to-end in `Trellis.Results` + `Trellis.Asp` + Showcase. `Page<T>`, `Cursor`, the wire envelope, the `Link` header co-emission, and **parity across Minimal API + MVC** are shipped. The full PR-PAGE deliverable (rename to `Trellis.Core`, `[Obsolete]` the byte-range overloads, OpenAPI transformer, recipe doc) is still open — see "Remaining work" below.
+> **Status (PR #400 spike; PR #521 ergonomics; byte-range removal PR):** Trellis ships `Page<T>` + `Cursor` + `Link` co-emission in `Trellis.Core` / `Trellis.Asp` with parity across Minimal API and MVC. The original plan to *demote* the byte-range collection overloads has been **broadened**: the server-side byte-range *emission* surface (`PartialContentHttpResult`, `PartialContentResult`, `RangeRequestEvaluator`, `RangeOutcome`, `HttpResponseOptionsBuilder<T>.WithRange` / `.WithAcceptRanges`, `RepresentationMetadata.AcceptRanges`) has been deleted outright. **Rationale:** Trellis targets general business web services, not media servers. Byte-range responses duplicate `Microsoft.AspNetCore.Http.Results.File(enableRangeProcessing: true)` and add no Trellis-specific value. Consumers who need byte-range responses should call ASP.NET Core directly. The client-side typed-error vocabulary stays — `HttpError.RangeNotSatisfiable` continues to surface inbound 416s, and `ResponseFailureWriter` still writes a `416` + `Content-Range: bytes */N` companion header when such a fault propagates up through a `Result` chain.
 
 Trellis serves business APIs, not media-transfer APIs. **Bytes / Range / 206 Partial Content** are the wrong primitives for paging collections of business records — RFC 9110 §14 was designed for partial transfer of an octet stream (resume a download, request a video segment), and the only universally-understood range unit is `bytes`. Custom range units (`items`, `pages`) are *syntactically* allowed by the RFC but have zero ecosystem interoperability: CDNs, proxies, HTTP clients, and OpenAPI tooling do not understand them.
 
@@ -285,7 +284,7 @@ The decision:
 
 | Use case | Primitive | RFC |
 |---|---|---|
-| Partial transfer of a binary resource (file download, blob, video segment) | `Range` request → `206 Partial Content` + `Content-Range` (bytes only) | RFC 9110 §14 |
+| Partial transfer of a binary resource (file download, blob, video segment) | Call `Microsoft.AspNetCore.Http.Results.File(stream, enableRangeProcessing: true)` directly | RFC 9110 §14 |
 | Server-driven pagination of a business collection | `200 OK` + body envelope (`Page<T>`) + `Link` header (RFC 8288) | RFC 8288 |
 
 **Trellis adopts a body-envelope-with-cursor model as primary, co-emits `Link` header for free.** Rationale:
@@ -341,13 +340,13 @@ Notes:
 - `requestedLimit` vs `appliedLimit` makes server-side caps observable to the client; `wasCapped` is a derived convenience flag. RFC 7240 `Preference-Applied: handling=lenient` may co-emit when the server clamped the request.
 - Cursor stays opaque — server-internal serialization (signed/encrypted JSON, base64url). Clients MUST treat it as a black box.
 - `Page<T>` is a struct (allocation-cheap) but `Items` is a heap list — that is fine; the envelope is allocated once per response.
-- The existing `PartialContentResult` / `PartialContentHttpResult` is **demoted to byte-range only** in PR-PAGE; the collection-pagination overloads will receive `[Obsolete]` pointing to `Page<T>`. RFC 7233/9110 byte semantics remain fully supported for media endpoints.
+- The existing `PartialContentResult` / `PartialContentHttpResult` / `RangeRequestEvaluator` and the related options-builder methods (`WithRange`, `WithAcceptRanges`) are **deleted**. Use `Microsoft.AspNetCore.Http.Results.File(stream, enableRangeProcessing: true)` for media downloads — ASP.NET Core implements RFC 9110 §14 byte semantics natively.
 
 Phase 2 deliverable PR (`PR-PAGE`) — status:
 
 1. ✅ `Page<T>`, `Cursor` shipped (in `Trellis.Results`; move to `Trellis.Core` lands with PR-A rename).
 2. ✅ `Trellis.Asp.PageHttpResultExtensions.ToPagedHttpResult` (Minimal API) and `Trellis.Asp.PageActionResultExtensions.ToPagedActionResult` (MVC) — both delegate to a single internal `PagedResponseBuilder` for byte-identical envelope + `Link` header across hosting styles. Verb names follow §3.3 / Axiom B.
-3. ⬜ Demote `PartialContentResult` collection overloads to `[Obsolete]`.
+3. ✅ Server-side byte-range emission surface deleted (`PartialContent*`, `RangeRequestEvaluator`, `RangeOutcome`, `WithRange`, `WithAcceptRanges`, `RepresentationMetadata.AcceptRanges`). Use `Results.File(enableRangeProcessing: true)` for media endpoints.
 4. ✅ Showcase paginates `GET /api/accounts/` end-to-end on both Minimal API and MVC hosts (server cap of 5; client requests 10; follow `Link rel="next"` / body cursor to drain). Integration tests cover both hosts.
 5. ⬜ OpenAPI schema transformer that surfaces the `Link` response header for any operation returning `Page<T>`.
 6. ✅ Recipe doc: `docs/docfx_project/articles/pagination.md`.
@@ -927,7 +926,7 @@ For write operations, `WriteOutcome<T>` (defined in core, §3.1) drives status s
 - `AcceptedNoContent` → 202 with no body, `Location: <MonitorUri>` (when present), `Retry-After` (when present)
 - `PreconditionFailed` (returned when `If-Match` evaluation fails before mutation) → 412
 
-`PartialContentHttpResult`, `Page<T>`, and `RepresentationMetadata` **stay as public types** in `Trellis.Asp` (constructed only in controllers per template usage — see §12.2). `EntityTagValue` and `RetryAfterValue` **stay in `Trellis.Core`** because the template's commands carry them as properties (`UpdateTodoCommand.IfMatchETags : EntityTagValue[]?`); `Trellis.Asp` provides only the HTTP-binding extensions (`ETagHelper.ParseIfMatch`, `RetryAfterValue.ToHttpHeaderValue()`).
+`Page<T>` lives in `Trellis.Core` (pure data, no HTTP dependency); `RepresentationMetadata` lives in `Trellis.Http.Abstractions` (the HTTP-headers carrier consumed by `Trellis.Asp`). Both are public and constructed in controllers / minimal-API handlers per template usage (see §12.2). `EntityTagValue` and `RetryAfterValue` **stay in `Trellis.Core`** because the template's commands carry them as properties (`UpdateTodoCommand.IfMatchETags : EntityTagValue[]?`); `Trellis.Asp` provides only the HTTP-binding extensions (`ETagHelper.ParseIfMatch`, `RetryAfterValue.ToHttpHeaderValue()`).
 
 ### 6.3 What disappears
 
@@ -1201,7 +1200,7 @@ Three perennial debates closed off so the template (Phase 6) and framework (Phas
 | `Result.*` factory methods | ~14 | **3** (`Ok`, `Fail<T>`, `Ok()`) + `Try`, `TryAsync` for boundary code |
 | Error catalog | 19 types (open hierarchy) | **17 cases** (closed-by-convention; analyzer-enforced; no compiler-exhaustiveness overclaim — `AggregateError` removed, see §3.6) |
 | Packages | 17 | **12** (11 runtime + 1 tooling) — `Trellis.AspTemplate` continues to ship from its own repo |
-| ASP entry points for happy-path response | `ToActionResult` / `ToHttpResult` / `ToCreatedHttpResult` / `ToUpdatedHttpResult` / `WriteOutcome.ToHttpResult` / `PartialContentHttpResult` × sync/async | **1** (`ToHttpResponse` with options) |
+| ASP entry points for happy-path response | `ToActionResult` / `ToHttpResult` / `ToCreatedHttpResult` / `ToUpdatedHttpResult` / `WriteOutcome.ToHttpResult` × sync/async | **1** (`ToHttpResponse` with options) |
 | HTTP-client status helpers | ~16 method names × 4 input shapes (~60 overloads) | **5 named methods**, single `statusMap` parameter on the generic one |
 | Combine arity ceiling | 9 (hard error TRLS014) | **`Validate` builder: no ceiling** for validation aggregation; **`Combine<T1..T9>`: T1..T9 retained** for heterogeneous combination (first-failure-wins); TRLS014 stays at T10 with clearer message |
 | VO base classes the AI must distinguish | scalar / symbolic / composite / optionality wrapper | **2** (`Scalar`, `Composite`) — symbolic is `Scalar<T,Enum>`; optionality is `Maybe<T>` |

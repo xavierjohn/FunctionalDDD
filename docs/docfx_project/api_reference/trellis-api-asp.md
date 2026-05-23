@@ -10,16 +10,16 @@ audience: [llm]
 
 **Package:** `Trellis.Asp` (bundles the AOT-friendly `Trellis.AspSourceGenerator.dll` at `analyzers/dotnet/cs/` — installing `Trellis.Asp` attaches the generator automatically — and contains the ASP.NET actor providers formerly published as `Trellis.Asp.Authorization`).
 **Namespaces:** `Trellis.Asp`, `Trellis.Asp.Authorization`, `Trellis.Asp.ModelBinding`, `Trellis.Asp.Routing`, `Trellis.Asp.Validation`
-**Purpose:** ASP.NET Core integration for mapping Trellis `Result`/`Result<T>`/`WriteOutcome<T>`/`Page<T>` values to HTTP responses, evaluating HTTP preconditions / ranges / `Prefer` preferences, hydrating actors from JWT claims, validating scalar value objects in MVC and Minimal APIs, and emitting AOT-friendly `JsonConverter`s for Trellis scalar values.
+**Purpose:** ASP.NET Core integration for mapping Trellis `Result`/`Result<T>`/`WriteOutcome<T>`/`Page<T>` values to HTTP responses, evaluating HTTP preconditions and `Prefer` preferences, hydrating actors from JWT claims, validating scalar value objects in MVC and Minimal APIs, and emitting AOT-friendly `JsonConverter`s for Trellis scalar values.
 
-The single supported response verb is `result.ToHttpResponse(...)`. It returns `Microsoft.AspNetCore.Http.IResult` and works in both Minimal API and MVC hosts (.NET 7+ executes `IResult` natively in MVC). For typed `ActionResult<T>` signatures, chain `.AsActionResult<T>()`. Configure protocol semantics via the fluent `HttpResponseOptionsBuilder<T>` (`WithETag`, `WithLastModified`, `Vary`, `WithCacheControl`, `Created`/`CreatedAtRoute`/`CreatedAtAction`, `EvaluatePreconditions`, `HonorPrefer`, `WithRange`, `WithErrorMapping`, …).
+The single supported response verb is `result.ToHttpResponse(...)`. It returns `Microsoft.AspNetCore.Http.IResult` and works in both Minimal API and MVC hosts (.NET 7+ executes `IResult` natively in MVC). For typed `ActionResult<T>` signatures, chain `.AsActionResult<T>()`. Configure protocol semantics via the fluent `HttpResponseOptionsBuilder<T>` (`WithETag`, `WithLastModified`, `Vary`, `WithCacheControl`, `Created`/`CreatedAtRoute`/`CreatedAtAction`, `EvaluatePreconditions`, `HonorPrefer`, `WithErrorMapping`, …).
 
 See also: [trellis-api-cookbook.md](trellis-api-cookbook.md) — recipes using this package.
 
 ## Use this file when
 
 - You are wiring ASP.NET Core endpoints/controllers that return Trellis `Result`, `Result<T>`, `WriteOutcome<T>`, or `Page<T>`.
-- You need the exact response-mapping verb, status-code behavior, Problem Details mapping, ETag/range/preference handling, actor-provider setup, scalar value-object binding, or route constraints.
+- You need the exact response-mapping verb, status-code behavior, Problem Details mapping, ETag / preference handling, actor-provider setup, scalar value-object binding, or route constraints.
 - You are implementing API surface polish: failure response metadata, versioned `Location` headers, or tests proving `Error.InvalidInput` maps to 422.
 
 ## Patterns Index
@@ -103,8 +103,7 @@ Fluent options builder used by every generic `ToHttpResponse` overload. Selector
 | `VaryForActor()` | `HttpResponseOptionsBuilder<TDomain>` | Appends the request header(s) that contribute to actor identity for the registered `IActorProvider` to the response `Vary` header. The provider must implement `IProvideActorVaryHeaders` (the bundled `ClaimsActorProvider` returns `["Authorization"]`, `DevelopmentActorProvider` returns `[X-Test-Actor]`, `CachingActorProvider` delegates to its inner). Throws `InvalidOperationException` at apply time when no provider is registered, the registered provider does not implement the capability, or the implementation returns an empty collection (fail-closed against silent cache-poisoning across actors). Decorating providers (e.g. `CachingActorProvider`) are unwrapped via the internal `IDecoratingActorProvider` so the diagnostic names the underlying provider that needs the implementation. Applies to success, failure, `WriteOutcome`, and paginated paths uniformly. |
 | `WithContentLanguage(params string[] languages)` | `HttpResponseOptionsBuilder<TDomain>` | Joins values into `Content-Language`. |
 | `WithContentLocation(Func<TDomain, string> selector)` | `HttpResponseOptionsBuilder<TDomain>` | Sets the `Content-Location` header. |
-| `WithAcceptRanges(string acceptRanges)` | `HttpResponseOptionsBuilder<TDomain>` | Sets `Accept-Ranges` (e.g. `"bytes"` or `"none"`). |
-| `WithCacheControl(CacheControlHeaderValue value)` | `HttpResponseOptionsBuilder<TDomain>` | Sets the `Cache-Control` response header to the supplied directive. Applies to success responses (200 / 201 / 204 / 206 / 304), `WriteOutcome` (Created / Updated / Accepted), paged responses, AND failure responses — so `WithCacheControl(CacheControl.NoStore())` protects 404 / 403 / 412 / 422 from intermediate-cache leakage just as much as the 200. Throws `ArgumentNullException` on null. Use the [`CacheControl`](#cachecontrol) presets (`NoStore()`, `NoCache()`, `Public(TimeSpan)`, `Private(TimeSpan)`, `Immutable(TimeSpan)`) for common shapes; each call returns a fresh `CacheControlHeaderValue` so mutation cannot leak across responses. |
+| `WithCacheControl(CacheControlHeaderValue value)` | `HttpResponseOptionsBuilder<TDomain>` | Sets the `Cache-Control` response header to the supplied directive. Applies to success responses (200 / 201 / 204 / 304), `WriteOutcome` (Created / Updated / Accepted), paged responses, AND failure responses — so `WithCacheControl(CacheControl.NoStore())` protects 404 / 403 / 412 / 422 from intermediate-cache leakage just as much as the 200. Throws `ArgumentNullException` on null. Use the [`CacheControl`](#cachecontrol) presets (`NoStore()`, `NoCache()`, `Public(TimeSpan)`, `Private(TimeSpan)`, `Immutable(TimeSpan)`) for common shapes; each call returns a fresh `CacheControlHeaderValue` so mutation cannot leak across responses. |
 | `WithCacheControl(Func<TDomain, CacheControlHeaderValue?> selector)` | `HttpResponseOptionsBuilder<TDomain>` | Sets `Cache-Control` from a selector run against the success-path domain value. Applies to the success path only (failures carry no domain value). Returning `null` from the selector omits the header on that response (falls back to the static-value overload if both are configured; otherwise no header is emitted). |
 | `Created(string locationLiteral)` | `HttpResponseOptionsBuilder<TDomain>` | Returns `201 Created` with a literal `Location` header. |
 | `Created(Func<TDomain, string> selector)` | `HttpResponseOptionsBuilder<TDomain>` | Returns `201 Created` with a `Location` derived from the value. |
@@ -116,10 +115,10 @@ Fluent options builder used by every generic `ToHttpResponse` overload. Selector
 | `WithRouteValueResolver(string key, Func<HttpContext, string?> resolver)` | `HttpResponseOptionsBuilder<TDomain>` | Registers a per-request resolver that injects an additional route value into the `Location`-generation dictionary at execute time, after the `routeValues` selector has run. The resolver is called with the request `HttpContext`; returning `null` skips injection (the existing entry, if any, is preserved). The runtime clones the user-supplied dictionary defensively the first time a resolver writes a non-null value, so selectors that return shared instances cannot leak across requests. The mechanism is the foundation for [Trellis.Asp.ApiVersioning](trellis-api-asp-apiversioning.md)'s `WithVersionedRoute()` and is also useful for cross-cutting route-value injection (tenant id, request culture, etc.). |
 | `EvaluatePreconditions()` | `HttpResponseOptionsBuilder<TDomain>` | On `GET`/`HEAD`, evaluates RFC 9110 conditional headers (`If-Match`, `If-Unmodified-Since`, `If-None-Match`, `If-Modified-Since`) using the configured ETag/LastModified selectors and writes `304 Not Modified` or `412 Precondition Failed` accordingly. On unsafe methods the precondition must be evaluated *before* the mutation. |
 | `HonorPrefer()` | `HttpResponseOptionsBuilder<TDomain>` | Opt in to RFC 7240 `Prefer: return=minimal` / `return=representation` handling on `WriteOutcome.Updated`. When **not** called, the `Prefer` request header is completely ignored: the writer never emits `Vary: Prefer` or `Preference-Applied`, and `return=minimal` does **not** short-circuit the body. When called, always emits `Vary: Prefer`; emits `Preference-Applied` only when an honored preference was sent. |
-| `WithRange(Func<TDomain, ContentRangeHeaderValue> selector)` | `HttpResponseOptionsBuilder<TDomain>` | Returns `206 Partial Content` with a `Content-Range` header from the selector (returns `200` when the range covers the whole representation). |
-| `WithRange(long from, long to, long totalLength)` | `HttpResponseOptionsBuilder<TDomain>` | Static range variant. Clamps `to` to `totalLength - 1`; returns `200` when the range covers the whole resource. |
 | `WithErrorMapping(Func<Error, int> mapper)` | `HttpResponseOptionsBuilder<TDomain>` | Per-call mapper for failure responses. Highest precedence. |
 | `WithErrorMapping<TError>(int statusCode) where TError : Error` | `HttpResponseOptionsBuilder<TDomain>` | Per-call override for a single error type. Higher precedence than `TrellisAspOptions`. |
+
+> **Byte ranges are not in Trellis's scope.** Trellis does not expose `WithRange` / `WithAcceptRanges`. For binary downloads with RFC 9110 §14 byte-range semantics, call `Microsoft.AspNetCore.Http.Results.File(stream, enableRangeProcessing: true)` from ASP.NET Core directly; for custom advisory headers like `Accept-Ranges: none`, write the header on `HttpContext.Response.Headers` from middleware or the endpoint handler. The client-side typed-error vocabulary still surfaces inbound 416 as `Error.TransportFault(new HttpError.RangeNotSatisfiable(...))` with the upstream `Content-Range` companion header preserved.
 
 ### `HttpResponseOptionsBuilder`
 
@@ -305,77 +304,6 @@ Parses the RFC 7240 `Prefer` request header. Per RFC 7240 §2 unrecognized or ma
 | Signature | Returns | Description |
 | --- | --- | --- |
 | `public static PreferHeader Parse(HttpRequest request)` | `PreferHeader` | Parses the header from the request. |
-
-### `RangeOutcome`
-
-**Declaration**
-
-```csharp
-public abstract record RangeOutcome
-{
-    public sealed record FullRepresentation : RangeOutcome;
-    public sealed record PartialContent(long From, long To, long CompleteLength) : RangeOutcome;
-    public sealed record NotSatisfiable(long CompleteLength) : RangeOutcome;
-}
-```
-
-Result of evaluating an RFC 9110 `Range` request.
-
-| Variant | Description |
-| --- | --- |
-| `FullRepresentation` | No Range header, non-`bytes` unit, multi-range request, malformed range, or non-`GET` method — serve the full representation (`200 OK`). |
-| `PartialContent(From, To, CompleteLength)` | Satisfiable single byte range — serve `206 Partial Content` with `Content-Range`. |
-| `NotSatisfiable(CompleteLength)` | `from >= completeLength` or `from > to` — serve `416 Range Not Satisfiable` with `Content-Range: bytes */{CompleteLength}`. |
-
-### `RangeRequestEvaluator`
-
-**Declaration**
-
-```csharp
-public static class RangeRequestEvaluator
-```
-
-| Signature | Returns | Description |
-| --- | --- | --- |
-| `public static RangeOutcome Evaluate(HttpRequest request, long completeLength)` | `RangeOutcome` | Evaluates the `Range` header per RFC 9110 §14. Only supports `bytes`. Non-`GET`, missing header, multi-range, or malformed → `FullRepresentation`. Suffix ranges (`-N`) supported. Throws `ArgumentOutOfRangeException` for negative `completeLength`. |
-
-### `PartialContentHttpResult`
-
-**Declaration**
-
-```csharp
-public sealed class PartialContentHttpResult : IResult
-```
-
-| Name | Type | Description |
-| --- | --- | --- |
-| `ContentRangeHeaderValue` | `ContentRangeHeaderValue` | The `Content-Range` header written by the result. |
-
-| Signature | Returns | Description |
-| --- | --- | --- |
-| `public PartialContentHttpResult(long rangeStart, long rangeEnd, long? totalLength, IResult inner)` | — | Builds a `206 Partial Content` result using unit `"items"`, delegating body serialization to `inner`. |
-| `public PartialContentHttpResult(ContentRangeHeaderValue contentRangeHeaderValue, IResult inner)` | — | Variant with a caller-built `Content-Range`. |
-| `public Task ExecuteAsync(HttpContext httpContext)` | `Task` | Writes `Content-Range`, forces status `206`, then executes `inner`. |
-
-### `PartialContentResult`
-
-**Declaration**
-
-```csharp
-public class PartialContentResult : ObjectResult
-```
-
-MVC `ObjectResult` companion to `PartialContentHttpResult`.
-
-| Name | Type | Description |
-| --- | --- | --- |
-| `ContentRangeHeaderValue` | `ContentRangeHeaderValue` | The `Content-Range` header written during formatting. |
-
-| Signature | Returns | Description |
-| --- | --- | --- |
-| `public PartialContentResult(long rangeStart, long rangeEnd, long? totalLength, object? value)` | — | `206 Partial Content` MVC result using unit `"items"`. |
-| `public PartialContentResult(ContentRangeHeaderValue contentRangeHeaderValue, object? value)` | — | Variant with a caller-built `Content-Range`. |
-| `public override void OnFormatting(ActionContext context)` | `void` | Writes the `Content-Range` response header before object body formatting. |
 
 ### `PagedResponse<TResponse>`
 
@@ -925,13 +853,12 @@ public static class ValidationErrorsContext
 
 ## Behavioral notes
 
-- **One verb, every shape.** `ToHttpResponse` is the only supported response mapper. The internal result types it constructs (`TrellisHttpResult<TDomain, TBody>`, `TrellisWriteOutcomeResult<TDomain, TBody>`, `TrellisErrorOnlyResult`, `TrellisEmptyResult`) implement `IResult`, the `IStatusCodeHttpResult` / `IValueHttpResult<T>` / `IContentTypeHttpResult` metadata interfaces, and `IEndpointMetadataProvider` so OpenAPI/ApiExplorer surfaces the success status, body type, and the union of error envelopes the writer can emit (`200`, `201`, `206`, `304`, `400`, `404`, `412`, `500`). Layer your own `[ProducesResponseType]` / `Produces<T>` on top.
+- **One verb, every shape.** `ToHttpResponse` is the only supported response mapper. The internal result types it constructs (`TrellisHttpResult<TDomain, TBody>`, `TrellisWriteOutcomeResult<TDomain, TBody>`, `TrellisErrorOnlyResult`, `TrellisEmptyResult`) implement `IResult`, the `IStatusCodeHttpResult` / `IValueHttpResult<T>` / `IContentTypeHttpResult` metadata interfaces, and `IEndpointMetadataProvider` so OpenAPI/ApiExplorer surfaces the success status, body type, and the union of error envelopes the writer can emit (`200`, `201`, `304`, `400`, `404`, `412`, `500`). Layer your own `[ProducesResponseType]` / `Produces<T>` on top.
 - **Failures use Problem Details.** A failure runs through `ResponseFailureWriter` (internal). `Error.InvalidInput` with field violations uses `Results.ValidationProblem(...)`; everything else uses `Results.Problem(...)`. The `errors` dictionary keys are the violation `Field.Path` translated from RFC 6901 JSON Pointer to ASP.NET Core MVC dot+bracket convention, and raw JSON Pointer values are preserved per rule under `extensions["rules"][n].fields[]`. Companion headers are emitted automatically: `Allow` for `Error.TransportFault(new HttpError.MethodNotAllowed(...))`, `Content-Range: {Unit} */{CompleteLength}` for `Error.TransportFault(new HttpError.RangeNotSatisfiable(...))`, `Retry-After` from `RetryAdvice` on `Error.RateLimited` / `Error.Unavailable`, and `WWW-Authenticate` from `Error.AuthenticationRequired.Scheme` or the registered `IAuthenticationSchemeProvider` fallback when the resolved status is `401`. For `Error.TransportFault`, Problem Details `extensions.code` / `extensions.kind` come from the wrapped `HttpError`, not the outer `transport-fault` envelope. Extensions always carry `code` and `kind`; `Error.Unexpected` adds `faultId` when set; rule violations are surfaced under `rules`; `Error.Aggregate` adds `errors`; every response also carries `instance`. For `5xx` responses the public `detail` is always `"An internal error occurred."`.
 - **Status code resolution precedence.** `WithErrorMapping(Func<Error, int>)` (per call) → `WithErrorMapping<TError>(int)` (per call, walks the type hierarchy) → `TrellisAspOptions` resolved from `HttpContext.RequestServices` (or `TrellisAspOptions.SystemDefault` if none registered) → `500 Internal Server Error`.
 - **Conditional requests.** `EvaluatePreconditions()` runs only on `GET` / `HEAD` and only when at least one of `WithETag` / `WithLastModified` is configured. The internal `ConditionalRequestEvaluator` evaluates RFC 9110 preconditions in this order: `If-Match` (strong); else `If-Unmodified-Since`; then `If-None-Match` (weak); else `If-Modified-Since` for safe methods. Failed `If-Match` / `If-Unmodified-Since` → `412`; failed `If-None-Match` / `If-Modified-Since` on `GET`/`HEAD` → `304`.
 - **`Vary` is append-only.** Both the `HonorPrefer()` switch and `Vary(...)` use `AppendVaryUnique` — they preserve any pre-existing `Vary` values added by other middleware and skip duplicates (case-insensitive).
 - **`HonorPrefer()` semantics on `WriteOutcome.Updated`.** `HonorPrefer()` is opt-in. Without it, `Prefer` request headers are ignored entirely: no `Vary: Prefer`, no `Preference-Applied`, and `return=minimal` does **not** suppress the body. When `HonorPrefer()` is configured, `Prefer: return=minimal` short-circuits to `204 No Content` and emits `Preference-Applied: return=minimal`; `return=representation` returns `200 OK` with the body and emits `Preference-Applied: return=representation`. `Vary: Prefer` is always emitted under `HonorPrefer()`, regardless of which preference was sent.
-- **Range mapping.** `WithRange` returns `200 OK` (full body) when the configured range covers the whole representation; otherwise `206 Partial Content` with `Content-Range`. The static-range overload clamps `to` to `totalLength - 1`; the selector overload trusts the provided `ContentRangeHeaderValue`.
 - **`CreatedAtAction` is not AOT-safe.** It depends on MVC's `ControllerLinkGeneratorExtensions`. The builder method, the writer's `ResolveActionLocation` private, and the `LocationKind.Action` branch are annotated `[RequiresUnreferencedCode]` / `[RequiresDynamicCode]`. Use `CreatedAtRoute` with a named route for trim/AOT scenarios; `ResolveActionLocation` throws `NotSupportedException` when `RuntimeFeature.IsDynamicCodeSupported` is `false`.
 - **Pagination.** The `Result<Page<T>>` overload always emits the `PagedResponse<TBody>` envelope; the RFC 8288 `Link` header is added only when `Page.Next` and/or `Page.Previous` cursors are present. Failure on the page result short-circuits through the standard error pipeline.
 - **Validation collection scope.** `ScalarValueValidationMiddleware` opens a `ValidationErrorsContext` scope per request. Both `ValidatingJsonConverter<,>` and `MaybeScalarValueJsonConverter<,>` collect errors into this scope; `ScalarValueValidationFilter` (MVC) and `ScalarValueValidationEndpointFilter` (Minimal API) short-circuit with a validation problem when the scope is non-empty at action/handler entry.

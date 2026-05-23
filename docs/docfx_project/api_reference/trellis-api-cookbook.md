@@ -435,38 +435,26 @@ public sealed record OrderDto(Guid Id, decimal Amount, string Currency);
 
 ---
 
-## Recipe 6 — Conditional GET with `EntityTagValue` and byte-range with `RangeOutcome`
+## Recipe 6 — Conditional GET with `EntityTagValue`
 
-**Problem.** Serve a binary blob with strong-ETag conditional GET *and* RFC 9110 byte-range support.
+**Problem.** Serve a resource with strong-ETag conditional GET so clients can revalidate cheaply.
 
 ```csharp
-using Microsoft.AspNetCore.Http;
 using Trellis;
 using Trellis.Asp;
 
-app.MapGet("/blobs/{id:guid}", async (Guid id, HttpRequest req, IBlobRepository repo, CancellationToken ct) =>
+app.MapGet("/blobs/{id:guid}", async (Guid id, IBlobRepository repo, CancellationToken ct) =>
 {
     Result<BlobContent> result = await repo.FindAsync(new BlobId(id), ct);
 
     return result.ToHttpResponse(opts => opts
         .WithETag(b => EntityTagValue.Strong(b.Sha256Hex))
         .WithLastModified(b => b.UploadedAt)
-        .Vary("Range")
-        .WithAcceptRanges("bytes")
-        .WithRange(b =>
-        {
-            var outcome = RangeRequestEvaluator.Evaluate(req, b.Length);
-            return outcome switch
-            {
-                RangeOutcome.PartialContent pc => new System.Net.Http.Headers.ContentRangeHeaderValue(pc.From, pc.To, pc.CompleteLength),
-                _                              => new System.Net.Http.Headers.ContentRangeHeaderValue(b.Length),
-            };
-        })
         .EvaluatePreconditions());
 });
 ```
 
-**What it shows.** `EntityTagValue.Strong(...)` and `EntityTagValue.Weak(...)` build typed ETags; `WithETag` accepts either a `string` (always strong) or an `EntityTagValue`. `RangeRequestEvaluator.Evaluate(...)` (in `Trellis.Asp`) returns the closed-ADT `RangeOutcome`: `FullRepresentation`, `PartialContent(From, To, CompleteLength)`, or `NotSatisfiable(CompleteLength)`. `.EvaluatePreconditions()` honors `If-Match`/`If-None-Match`/`If-Modified-Since`/`If-Unmodified-Since` against the configured ETag and `Last-Modified` selectors.
+**What it shows.** `EntityTagValue.Strong(...)` and `EntityTagValue.Weak(...)` build typed ETags; `WithETag` accepts either a `string` (always strong) or an `EntityTagValue`. `.EvaluatePreconditions()` honors `If-Match`/`If-None-Match`/`If-Modified-Since`/`If-Unmodified-Since` against the configured ETag and `Last-Modified` selectors, returning `304 Not Modified` or `412 Precondition Failed` as appropriate. For byte-range responses, call ASP.NET Core's `Results.File(stream, enableRangeProcessing: true)` directly — Trellis does not wrap that surface.
 
 ---
 

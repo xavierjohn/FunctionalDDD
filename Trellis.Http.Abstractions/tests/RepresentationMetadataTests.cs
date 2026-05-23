@@ -16,7 +16,6 @@ public class RepresentationMetadataTests
         metadata.Vary.Should().BeNull();
         metadata.ContentLanguage.Should().BeNull();
         metadata.ContentLocation.Should().BeNull();
-        metadata.AcceptRanges.Should().BeNull();
     }
 
     [Fact]
@@ -44,7 +43,6 @@ public class RepresentationMetadataTests
         metadata.Vary.Should().BeNull();
         metadata.ContentLanguage.Should().BeNull();
         metadata.ContentLocation.Should().BeNull();
-        metadata.AcceptRanges.Should().BeNull();
     }
 
     [Fact]
@@ -59,7 +57,6 @@ public class RepresentationMetadataTests
             .AddVary("Accept", "Accept-Encoding")
             .AddContentLanguage("en", "fr")
             .SetContentLocation("/api/items/42")
-            .SetAcceptRanges("bytes")
             .Build();
 
         metadata.ETag.Should().Be(etag);
@@ -67,7 +64,6 @@ public class RepresentationMetadataTests
         metadata.Vary.Should().Equal(["Accept", "Accept-Encoding"]);
         metadata.ContentLanguage.Should().Equal(["en", "fr"]);
         metadata.ContentLocation.Should().Be("/api/items/42");
-        metadata.AcceptRanges.Should().Be("bytes");
     }
 
     [Fact]
@@ -124,7 +120,6 @@ public class RepresentationMetadataTests
         metadata.Vary.Should().BeNull();
         metadata.ContentLanguage.Should().BeNull();
         metadata.ContentLocation.Should().BeNull();
-        metadata.AcceptRanges.Should().BeNull();
     }
 
     [Fact]

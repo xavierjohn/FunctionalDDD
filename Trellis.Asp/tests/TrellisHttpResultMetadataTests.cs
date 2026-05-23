@@ -118,7 +118,7 @@ public sealed class TrellisHttpResultMetadataTests
 
         var statuses = builder.Metadata.OfType<IProducesResponseTypeMetadata>()
             .Select(m => m.StatusCode).ToHashSet();
-        statuses.Should().Contain([200, 201, 206, 304, 400, 404, 412, 500]);
+        statuses.Should().Contain([200, 201, 304, 400, 404, 412, 500]);
     }
 
     [Fact]

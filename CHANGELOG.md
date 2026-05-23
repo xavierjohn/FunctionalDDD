@@ -67,6 +67,28 @@ See [`MIGRATION_v3.md`](MIGRATION_v3.md#error-union-ddd-realignment) for code-le
 
 - **`Trellis.EntityFrameworkCore`** — `ApplyTrellisConventions(...)` now includes the `Trellis.Authorization` assembly in its default scan set. After the v3 typed-`ActorId` change, an aggregate carrying a `CreatedByActorId : ActorId` audit field silently failed EF mapping because the convention previously only included `Trellis.Core` and `Trellis.Primitives` by default; consumers had to pass `typeof(ActorId).Assembly` explicitly to get the scalar converter. The default scan set now mirrors the `Trellis.Primitives` precedent so `ApplyTrellisConventions(typeof(MyDomainId).Assembly)` is sufficient. `Trellis.EntityFrameworkCore` gains a project reference on `Trellis.Authorization` — a lightweight dependency (its only reference is `Trellis.Core`) that ASP consumers already receive transitively via `Trellis.Asp`.
 
+### Breaking changes — server-side byte-range emission removed
+
+Trellis targets general business web services, not media servers. The server-side byte-range emission surface duplicated `Microsoft.AspNetCore.Http.Results.File(stream, enableRangeProcessing: true)` and added no Trellis-specific value, so it has been removed.
+
+**Removed public API**
+
+- `Trellis.Asp.PartialContentHttpResult` (Minimal API `IResult`)
+- `Trellis.Asp.PartialContentResult` (MVC `ObjectResult`)
+- `Trellis.Asp.RangeRequestEvaluator` and the `RangeOutcome` closed union (`FullRepresentation` / `PartialContent` / `NotSatisfiable`)
+- `HttpResponseOptionsBuilder<T>.WithRange(Func<T, ContentRangeHeaderValue>)`, `WithRange(long, long, long)`, `WithAcceptRanges(string)`
+- `RepresentationMetadata.AcceptRanges` and `RepresentationMetadata.Builder.SetAcceptRanges(string)` (every other `RepresentationMetadata` member is unchanged)
+- The `Status206PartialContent` `ProducesResponseTypeMetadata` entry from `TrellisHttpResult<TDomain, TBody>.PopulateMetadata` (OpenAPI no longer advertises `206` for Trellis-mapped endpoints)
+
+**Migration**
+
+- For binary downloads with RFC 9110 §14 byte-range semantics, call `Microsoft.AspNetCore.Http.Results.File(stream, enableRangeProcessing: true)` directly — ASP.NET Core implements byte semantics natively.
+- For advisory headers such as `Accept-Ranges: none`, write the header on `HttpContext.Response.Headers` from middleware or the endpoint handler.
+
+**Preserved (client-side typed-error round-trip)**
+
+`HttpError.RangeNotSatisfiable(long CompleteLength, string Unit = "bytes")` still exists in `Trellis.Http.Abstractions`. Inbound `416` responses on the HTTP client continue to surface as `Error.TransportFault(new HttpError.RangeNotSatisfiable(...))` with the upstream `Content-Range` length and unit preserved, and `Trellis.Asp.ResponseFailureWriter` still emits `416` plus `Content-Range: {Unit} */{CompleteLength}` when such a fault propagates up through a `Result` chain.
+
 ## [3.0.0]
 
 The first GA release under the **Trellis** name. This release supersedes
