@@ -23,7 +23,7 @@ using System.Text;
 /// <para>
 /// <b>AOT-friendly:</b> No JSON, no reflection. Encoding uses <see cref="Convert.ToBase64String(byte[])"/>
 /// followed by URL-safe substitution; decoding inverts the substitution and parses with
-/// <see cref="IParsable{TSelf}.Parse(string, IFormatProvider?)"/>.
+/// <see cref="IParsable{TSelf}.TryParse(string, IFormatProvider, out TSelf)"/>.
 /// </para>
 /// <para>
 /// <b>Opacity, not anti-tamper:</b> Cursors are server-opaque to discourage clients from
@@ -75,6 +75,9 @@ public static class CursorCodec
     public static Result<TKey> TryDecode<TKey>(Cursor cursor, string? fieldName = null)
         where TKey : IParsable<TKey>
     {
+        if (cursor.Equals(default(Cursor)))
+            return Fail<TKey>(fieldName, "cursor.malformed", "Cursor is default-constructed and has no token.");
+
         if (!TryFromBase64Url(cursor.Token, out var payload))
             return Fail<TKey>(fieldName, "cursor.malformed", "Cursor is not a valid URL-safe base64 token.");
 
@@ -119,6 +122,9 @@ public static class CursorCodec
         Cursor cursor, string? fieldName = null)
         where TKey : IParsable<TKey>
     {
+        if (cursor.Equals(default(Cursor)))
+            return Fail<(DateTimeOffset, TKey)>(fieldName, "cursor.malformed", "Cursor is default-constructed and has no token.");
+
         if (!TryFromBase64Url(cursor.Token, out var payload))
             return Fail<(DateTimeOffset, TKey)>(fieldName, "cursor.malformed", "Cursor is not a valid URL-safe base64 token.");
 

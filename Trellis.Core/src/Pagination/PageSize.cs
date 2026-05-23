@@ -60,13 +60,15 @@ public readonly record struct PageSize
     }
 
     /// <summary>
-    /// Lenient factory: returns <see cref="Default"/> when <paramref name="requested"/> is
-    /// <c>null</c> or non-positive; otherwise preserves <paramref name="requested"/> verbatim
-    /// and clamps <see cref="Applied"/> to <paramref name="max"/>. Cap visibility survives.
+    /// Lenient factory: when <paramref name="requested"/> is <c>null</c> or non-positive,
+    /// returns a <see cref="PageSize"/> with <see cref="Requested"/> = <see cref="Default"/>
+    /// and <see cref="Applied"/> = <c>min(Default, max)</c>. Otherwise preserves
+    /// <paramref name="requested"/> verbatim and clamps <see cref="Applied"/> to
+    /// <paramref name="max"/>. Cap visibility (<see cref="WasCapped"/>) survives in both branches.
     /// </summary>
     /// <param name="requested">The client-requested limit (e.g. from a query string).</param>
     /// <param name="max">The server-side maximum. Defaults to <see cref="Max"/>.</param>
-    /// <returns>A <see cref="PageSize"/> with <c>Requested</c> kept verbatim and <c>Applied = min(Requested, max)</c>.</returns>
+    /// <returns>A <see cref="PageSize"/> with <c>Requested</c> kept verbatim (or <see cref="Default"/> for null/non-positive input) and <c>Applied = min(Requested, max)</c>.</returns>
     public static PageSize FromRequested(int? requested, int max = Max)
     {
         if (max <= 0)

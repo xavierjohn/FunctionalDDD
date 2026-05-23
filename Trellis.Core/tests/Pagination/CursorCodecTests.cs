@@ -111,6 +111,18 @@ public class CursorCodecTests
         act.Should().Throw<NotSupportedException>();
     }
 
+    [Fact]
+    public void Single_key_rejects_default_cursor_without_throwing()
+    {
+        // default(Cursor) bypasses the validated constructor; reading Token throws
+        // InvalidOperationException. The Try* contract says no exceptions reach the
+        // caller, so the codec must surface this as Error.InvalidInput.
+        var decoded = CursorCodec.TryDecode<Guid>(default);
+
+        decoded.IsFailure.Should().BeTrue();
+        decoded.Error.Should().BeOfType<Error.InvalidInput>();
+    }
+
     private sealed class NonFormattableKey
     {
         public override string ToString() => "anything";
@@ -230,6 +242,18 @@ public class CursorCodecTests
         decoded.TryGetValue(out var pair).Should().BeTrue();
         pair.CreatedAt.Should().Be(createdAt);
         pair.Id.Should().Be("abc|def");
+    }
+
+    [Fact]
+    public void Composite_rejects_default_cursor_without_throwing()
+    {
+        // Mirror of Single_key_rejects_default_cursor_without_throwing for the
+        // composite overload — the Try* contract must never let a default(Cursor)
+        // turn into an InvalidOperationException from Cursor.Token.
+        var decoded = CursorCodec.TryDecodeComposite<Guid>(default);
+
+        decoded.IsFailure.Should().BeTrue();
+        decoded.Error.Should().BeOfType<Error.InvalidInput>();
     }
 
     [Fact]

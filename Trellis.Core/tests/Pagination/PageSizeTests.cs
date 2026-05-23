@@ -233,6 +233,19 @@ public class PageSizeTests
     }
 
     [Fact]
+    public void FromRequested_with_null_clamps_default_to_smaller_max()
+    {
+        // When max < Default, FromRequested(null) returns Requested=Default but
+        // Applied is clamped down to max so WasCapped is observable. Documented
+        // shape that TryCreate(null, max) mirrors.
+        var size = PageSize.FromRequested(null, max: 10);
+
+        size.Requested.Should().Be(PageSize.Default);
+        size.Applied.Should().Be(10);
+        size.WasCapped.Should().BeTrue();
+    }
+
+    [Fact]
     public void TryCreate_with_null_clamps_default_to_smaller_max()
     {
         // When max < Default, TryCreate(null) returns Requested=Default but Applied=max.

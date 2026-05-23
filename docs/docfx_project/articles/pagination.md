@@ -155,8 +155,11 @@ contract; both compose cleanly with `Page<T>`.
 
 ## Cursors — opaque by design, not anti-tamper
 
-`Cursor` is just a wrapper over a string token. The encoding is `CursorCodec`'s
-business and is intentionally **not** part of the public surface:
+`Cursor` is just a wrapper over a string token. The encoding format is
+`CursorCodec`'s business: clients must treat the token as opaque and never
+parse it. The codec itself is part of the public API so services can wrap or
+replace it (for example, to add HMAC signing) without changing the wire
+shape clients echo back:
 
 * **Single-key:** URL-safe base64 of the key's invariant-culture string form.
 * **Composite:** URL-safe base64 of `"{createdAt:O}|{id}"` in invariant culture.
