@@ -1293,7 +1293,7 @@ public static class CursorCodec
 
 | Member | Description |
 | --- | --- |
-| `Encode<TKey>(TKey)` | Single-key cursor: URL-safe base64 of the key's invariant-culture string form. Supported keys include `Guid`, `long`, `int`, and `string` (without embedded `&#124;` for composite use). Project Trellis value-object IDs to their underlying primitive (`.Value`) before calling. |
+| `Encode<TKey>(TKey)` | Single-key cursor: URL-safe base64 of the key's invariant-culture string form. Supported keys include `Guid`, `long`, `int`, and `string`. Project Trellis value-object IDs to their underlying primitive (`.Value`) before calling. |
 | `TryDecode<TKey>(Cursor, string?)` | Inverse of the single-key `Encode`. Returns `Error.InvalidInput` (reason code `cursor.malformed`, field `fieldName ?? "cursor"`) on malformed base64 or unparseable payload. |
 | `Encode<TKey>(DateTimeOffset, TKey)` | Composite cursor for stable time-ordered seek: URL-safe base64 of `"{createdAt:O}&#124;{id}"` in invariant culture. |
 | `TryDecodeComposite<TKey>` | Inverse of the composite `Encode`. Splits at the **first** `&#124;` only, so an Id that happens to contain a pipe is still unambiguous. |
@@ -1336,9 +1336,13 @@ public async Task<Result<Page<OrderListItem>>> Handle(ListOrdersQuery query, Can
     var pageSize = PageSize.FromRequested(query.Limit);
 
     Guid? afterId = null;
-    if (query.Cursor is not null)
+    if (query.Cursor is { } cursorToken)
     {
-        var decoded = CursorCodec.TryDecode<Guid>(new Cursor(query.Cursor), fieldName: nameof(query.Cursor));
+        if (cursorToken.Length == 0)
+            return Result.Fail<Page<OrderListItem>>(
+                Error.InvalidInput.ForField(nameof(query.Cursor), "cursor.malformed", "Cursor must not be empty."));
+
+        var decoded = CursorCodec.TryDecode<Guid>(new Cursor(cursorToken), fieldName: nameof(query.Cursor));
         if (decoded.IsFailure)
             return Result.Fail<Page<OrderListItem>>(decoded.Error!);
         decoded.TryGetValue(out var id);
