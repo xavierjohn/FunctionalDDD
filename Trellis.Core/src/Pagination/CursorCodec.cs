@@ -43,6 +43,7 @@ public static class CursorCodec
 {
     private const string DateFormat = "O";
     private const char Separator = '|';
+    private const string SeparatorString = "|";
 
     // ───── Single-key ──────────────────────────────────────────────────────────
 
@@ -104,7 +105,7 @@ public static class CursorCodec
 
         var datePart = createdAt.ToString(DateFormat, CultureInfo.InvariantCulture);
         var idPart = FormatInvariant(id);
-        var payload = string.Concat(datePart, Separator.ToString(), idPart);
+        var payload = string.Concat(datePart, SeparatorString, idPart);
         return new Cursor(ToBase64Url(payload));
     }
 

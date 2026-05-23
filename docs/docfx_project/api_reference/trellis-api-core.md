@@ -1340,20 +1340,21 @@ public async Task<Result<Page<OrderListItem>>> Handle(ListOrdersQuery query, Can
     {
         if (cursorToken.Length == 0)
             return Result.Fail<Page<OrderListItem>>(
-                Error.InvalidInput.ForField(nameof(query.Cursor), "cursor.malformed", "Cursor must not be empty."));
+                Error.InvalidInput.ForField("cursor", "cursor.malformed", "Cursor must not be empty."));
 
-        var decoded = CursorCodec.TryDecode<Guid>(new Cursor(cursorToken), fieldName: nameof(query.Cursor));
+        var decoded = CursorCodec.TryDecode<Guid>(new Cursor(cursorToken), fieldName: "cursor");
         if (decoded.IsFailure)
             return Result.Fail<Page<OrderListItem>>(decoded.Error!);
         decoded.TryGetValue(out var id);
         afterId = id;
     }
 
-    var rows = await db.Orders.AsNoTracking()
-        .OrderBy(o => o.Id)
-        .Where(o => afterId == null || o.Id.Value > afterId)
-        .Take(pageSize.Applied + 1)
-        .ToListAsync(ct);
+    var ordered = db.Orders.AsNoTracking().OrderBy(o => o.Id);
+    var filtered = afterId is { } cursorId
+        ? ordered.Where(o => o.Id.Value > cursorId)
+        : (IQueryable<Order>)ordered;
+
+    var rows = await filtered.Take(pageSize.Applied + 1).ToListAsync(ct);
 
     return Result.Ok(
         PageBuilder.FromOverFetch(rows, pageSize, o => o.Id.Value)
