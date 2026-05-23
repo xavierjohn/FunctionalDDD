@@ -292,4 +292,3 @@ No throw on any cursor or limit input — every failure surfaces as
 
 * API reference: [Trellis.Core pagination types](../api_reference/trellis-api-core.md#pagination)
 * Cookbook: [Recipe 3 — Query handler returning Page<T>](../api_reference/trellis-api-cookbook.md#recipe-3--query-handler-returning-paget-paginated-list-with-cursor)
-* ADR-002 §0.7.4 — Pagination wire shape (RFC 8288 over RFC 9110 §14)
