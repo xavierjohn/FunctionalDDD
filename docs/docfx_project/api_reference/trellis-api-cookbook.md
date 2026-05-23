@@ -440,7 +440,6 @@ public sealed record OrderDto(Guid Id, decimal Amount, string Currency);
 **Problem.** Serve a resource with strong-ETag conditional GET so clients can revalidate cheaply.
 
 ```csharp
-using Microsoft.AspNetCore.Http;
 using Trellis;
 using Trellis.Asp;
 
