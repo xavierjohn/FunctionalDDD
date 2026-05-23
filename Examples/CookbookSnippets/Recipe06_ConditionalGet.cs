@@ -4,7 +4,6 @@ namespace CookbookSnippets.Recipe06;
 using System.Threading;
 using CookbookSnippets.Stubs;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Trellis;
 using Trellis.Asp;
