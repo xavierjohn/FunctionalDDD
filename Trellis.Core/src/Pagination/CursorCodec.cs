@@ -32,11 +32,28 @@ using System.Text;
 /// payload; authorization filtering must always apply to the underlying query.
 /// </para>
 /// <para>
-/// <b>Supported TKey:</b> primitives such as <see cref="Guid"/>, <see cref="long"/>,
-/// <see cref="int"/>, and any <see cref="string"/> that survives the URL-safe base64
-/// round-trip. For Trellis value-object IDs (e.g. <c>RequiredGuid&lt;TSelf&gt;</c>),
-/// project to the underlying primitive (<c>.Value</c>) — the wrapper does not
-/// satisfy <see cref="ISpanFormattable"/>.
+/// <b>Supported TKey:</b>
+/// </para>
+/// <list type="bullet">
+///   <item><description>
+///     <b>Encode</b> accepts any <c>TKey</c> that implements
+///     <see cref="IFormattable"/> (so it can be formatted in
+///     <see cref="System.Globalization.CultureInfo.InvariantCulture"/>) or that is a
+///     <see cref="string"/>.
+///   </description></item>
+///   <item><description>
+///     <b>TryDecode</b> additionally requires <c>TKey</c> to
+///     implement <see cref="IParsable{TSelf}"/>.
+///   </description></item>
+/// </list>
+/// <para>
+/// .NET primitives such as <see cref="Guid"/>, <see cref="long"/>, <see cref="int"/>,
+/// and <see cref="string"/> satisfy both. Trellis source-generated value-object wrappers
+/// (e.g. <c>partial class CustomerId : RequiredGuid&lt;CustomerId&gt;</c>) inherit
+/// <see cref="IFormattable"/> from <c>ScalarValueObject</c> and gain <see cref="IParsable{TSelf}"/>
+/// from the source generator, so they round-trip through the codec directly. Hand-written
+/// value objects that do not implement <see cref="IParsable{TSelf}"/> must project to the
+/// underlying primitive (<c>.Value</c>) for cursors.
 /// </para>
 /// </remarks>
 public static class CursorCodec
@@ -102,6 +119,8 @@ public static class CursorCodec
     /// <param name="createdAt">The creation timestamp of the boundary item.</param>
     /// <param name="id">The Id of the boundary item, used as the secondary sort key.</param>
     /// <returns>An opaque <see cref="Cursor"/> token.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="id"/> is <c>null</c>.</exception>
+    /// <exception cref="ArgumentException"><paramref name="id"/> formats to an empty invariant-culture string (for example, an empty <see cref="string"/> key).</exception>
     public static Cursor Encode<TKey>(DateTimeOffset createdAt, TKey id)
         where TKey : notnull
     {
@@ -109,6 +128,8 @@ public static class CursorCodec
 
         var datePart = createdAt.ToString(DateFormat, CultureInfo.InvariantCulture);
         var idPart = FormatInvariant(id);
+        if (idPart.Length == 0)
+            throw new ArgumentException("Cursor key formatted to an empty payload; supply a non-empty key.", nameof(id));
         var payload = string.Concat(datePart, SeparatorString, idPart);
         return new Cursor(ToBase64Url(payload));
     }

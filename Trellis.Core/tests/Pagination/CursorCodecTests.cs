@@ -143,6 +143,17 @@ public class CursorCodecTests
     // ───── Composite (CreatedAt, Id) encode/decode ─────────────────────────────
 
     [Fact]
+    public void Composite_rejects_empty_string_id()
+    {
+        // Symmetric with single-key Encode("") — composite must not silently produce
+        // a "{date}|" payload that round-trips to an unparseable id for most TKey.
+        var act = () => CursorCodec.Encode(DateTimeOffset.UtcNow, "");
+
+        act.Should().Throw<ArgumentException>()
+            .Which.ParamName.Should().Be("id");
+    }
+
+    [Fact]
     public void Composite_round_trips_datetimeoffset_and_guid()
     {
         var createdAt = new DateTimeOffset(2026, 5, 22, 14, 30, 12, TimeSpan.FromHours(-7))
