@@ -84,6 +84,27 @@ public readonly record struct Page<T>
 
     /// <summary>True when the server applied a smaller limit than the client requested.</summary>
     public bool WasCapped => AppliedLimit < RequestedLimit;
+
+    /// <summary>
+    /// Projects each item to a new type, preserving cursors and limits. Useful when a
+    /// repository wants to return <c>Page&lt;Dto&gt;</c> instead of <c>Page&lt;Entity&gt;</c>
+    /// without re-running the cursor/limit ceremony.
+    /// </summary>
+    /// <typeparam name="TOut">The projected item type.</typeparam>
+    /// <param name="selector">The projection. Required.</param>
+    /// <returns>A new <see cref="Page{TOut}"/> with the same cursors and limits.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="selector"/> is <c>null</c>.</exception>
+    public Page<TOut> Map<TOut>(Func<T, TOut> selector)
+    {
+        ArgumentNullException.ThrowIfNull(selector);
+
+        var sourceItems = Items;
+        var projected = new TOut[sourceItems.Count];
+        for (var i = 0; i < sourceItems.Count; i++)
+            projected[i] = selector(sourceItems[i]);
+
+        return new Page<TOut>(projected, Next, Previous, RequestedLimit, AppliedLimit);
+    }
 }
 
 /// <summary>

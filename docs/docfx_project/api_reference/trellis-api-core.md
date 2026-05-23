@@ -1234,17 +1234,127 @@ Non-generic factory companion (mirrors the `Result` / `Result<T>` split — keep
 | --- | --- | --- |
 | `public static Page<T> Empty<T>(int requestedLimit, int appliedLimit)` | `Page<T>` | An empty page (no items, no cursors) for the supplied limits. |
 
+### `Page<T>.Map<TOut>`
+
+```csharp
+public Page<TOut> Map<TOut>(Func<T, TOut> selector);
+```
+
+| Member | Description |
+| --- | --- |
+| `Map<TOut>(Func<T, TOut>)` | Projects each item to a new type, preserving `Next`, `Previous`, `RequestedLimit`, and `AppliedLimit`. Throws `ArgumentNullException` when `selector` is null. Use to return `Page<Dto>` from a repository call that yielded `Page<Entity>` without re-running the cursor/limit ceremony. |
+
+### `public readonly record struct PageSize`
+
+```csharp
+public readonly record struct PageSize
+{
+    public const int Default = 50;
+    public const int Max = 100;
+
+    public PageSize(int requested, int applied);   // validates: requested > 0, applied > 0, applied <= requested
+    public int  Requested { get; }
+    public int  Applied   { get; }
+    public bool WasCapped { get; }
+
+    public static PageSize FromRequested(int? requested, int max = Max);
+    public static Result<PageSize> TryCreate(int? requested, int max = Max, string? fieldName = null);
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `Default` / `Max` | Convention constants. `Default = 50` is used when the client doesn't supply a limit; `Max = 100` is the server-side ceiling. |
+| `PageSize(int, int)` | Validated constructor. Throws `ArgumentOutOfRangeException` when either limit is non-positive or when `applied > requested`. |
+| `Requested` / `Applied` | The pair the caller asked for and the value the server actually used. Composes directly with `Page<T>` so `WasCapped` round-trips through the wire envelope. |
+| `WasCapped` | `true` when `Applied < Requested`. |
+| `FromRequested(int?, int)` | Lenient parser. Returns `Default` when `requested` is `null` or non-positive; clamps `Applied` to `max` but **preserves `Requested` verbatim** so cap visibility survives. |
+| `TryCreate(int?, int, string?)` | Strict parser. Returns `Result.Fail<PageSize>` with `Error.InvalidInput` on a non-positive or out-of-range value; uses `fieldName ?? "pageSize"` for the field violation. |
+
+### `public static class CursorCodec`
+
+```csharp
+public static class CursorCodec
+{
+    public static Cursor Encode<TKey>(TKey id)
+        where TKey : notnull;
+
+    public static Result<TKey> TryDecode<TKey>(Cursor cursor, string? fieldName = null)
+        where TKey : IParsable<TKey>;
+
+    public static Cursor Encode<TKey>(DateTimeOffset createdAt, TKey id)
+        where TKey : notnull;
+
+    public static Result<(DateTimeOffset CreatedAt, TKey Id)> TryDecodeComposite<TKey>(
+        Cursor cursor, string? fieldName = null)
+        where TKey : IParsable<TKey>;
+}
+```
+
+| Member | Description |
+| --- | --- |
+| `Encode<TKey>(TKey)` | Single-key cursor: URL-safe base64 of the key's invariant-culture string form. Supported keys include `Guid`, `long`, `int`, and `string` (without embedded `&#124;` for composite use). Project Trellis value-object IDs to their underlying primitive (`.Value`) before calling. |
+| `TryDecode<TKey>(Cursor, string?)` | Inverse of the single-key `Encode`. Returns `Error.InvalidInput` (reason code `cursor.malformed`, field `fieldName ?? "cursor"`) on malformed base64 or unparseable payload. |
+| `Encode<TKey>(DateTimeOffset, TKey)` | Composite cursor for stable time-ordered seek: URL-safe base64 of `"{createdAt:O}&#124;{id}"` in invariant culture. |
+| `TryDecodeComposite<TKey>` | Inverse of the composite `Encode`. Splits at the **first** `&#124;` only, so an Id that happens to contain a pipe is still unambiguous. |
+
+**Opacity, not anti-tamper.** Cursors are server-opaque so that clients don't reverse-engineer the sort key, but the encoding is **not** signed. Services that need to defend against tampering must wrap or replace this codec with a signed variant; authorization filtering must always apply to the underlying query.
+
+**AOT-friendly.** No JSON, no reflection. The codec only uses `Convert.ToBase64String`, URL-safe substitution, and `IParsable<TKey>.TryParse` with `CultureInfo.InvariantCulture`.
+
+### `public static class PageBuilder`
+
+```csharp
+public static class PageBuilder
+{
+    public static Page<T> FromOverFetch<T, TKey>(
+        IReadOnlyList<T> overFetched,
+        PageSize pageSize,
+        Func<T, TKey> idSelector)
+        where TKey : notnull;
+
+    public static Page<T> FromOverFetch<T, TKey>(
+        IReadOnlyList<T> overFetched,
+        PageSize pageSize,
+        Func<T, DateTimeOffset> createdAtSelector,
+        Func<T, TKey> idSelector)
+        where TKey : notnull;
+}
+```
+
+Storage-agnostic over-fetch slicer. The caller asks the data source for `pageSize.Applied + 1` rows ordered by the same key(s) returned by the selectors; `FromOverFetch` keeps the first `pageSize.Applied` rows, emits a `Next` cursor from the **last kept** item via `CursorCodec`, and returns a validated `Page<T>`. Works with EF Core, Dapper, Cosmos, gRPC, or in-memory sources alike.
+
+**Forward-only.** `Previous` is always `null`. Trellis does not yet ship a reverse-seek API; emitting a previous cursor that the forward URL builder would walk would re-fetch the current page rather than the page before it.
+
+**Selector contract.** The selectors passed to `FromOverFetch` MUST match the sort keys used in the upstream query. Mismatched selectors produce semantically wrong cursors — the boundary item the cursor points at will not be the one the next query would seek past.
+
 **Wire shape.** `Trellis.Asp` projects `Page<T>` to `200 OK` with a JSON body envelope and a co-emitted `Link` header (RFC 8288). See `HttpResponseExtensions.ToHttpResponse` for the `Result<Page<T>>` overload. Trellis intentionally does **not** use `206 Partial Content` for collection pagination — RFC 9110 §14 was designed for byte-range transfer and lacks proxy/CDN support for collection ranges.
 
 ```csharp
-public Task<Result<Page<Order>>> List(string? cursorToken, int limit, CancellationToken ct) =>
-    repo.ListAsync(cursorToken is null ? null : new Cursor(cursorToken), limit, ct)
-        .MapAsync(rows => new Page<Order>(
-            Items: rows.Items,
-            Next: rows.HasMore ? new Cursor(rows.NextToken!) : null,
-            Previous: rows.PrevToken is null ? null : new Cursor(rows.PrevToken),
-            RequestedLimit: limit,
-            AppliedLimit: Math.Min(limit, MaxLimit)));
+public async Task<Result<Page<OrderListItem>>> Handle(ListOrdersQuery query, CancellationToken ct)
+{
+    var pageSize = PageSize.FromRequested(query.Limit);
+
+    Guid? afterId = null;
+    if (query.Cursor is not null)
+    {
+        var decoded = CursorCodec.TryDecode<Guid>(new Cursor(query.Cursor), fieldName: nameof(query.Cursor));
+        if (decoded.IsFailure)
+            return Result.Fail<Page<OrderListItem>>(decoded.Error!);
+        decoded.TryGetValue(out var id);
+        afterId = id;
+    }
+
+    var rows = await db.Orders.AsNoTracking()
+        .OrderBy(o => o.Id)
+        .Where(o => afterId == null || o.Id.Value > afterId)
+        .Take(pageSize.Applied + 1)
+        .ToListAsync(ct);
+
+    return Result.Ok(
+        PageBuilder.FromOverFetch(rows, pageSize, o => o.Id.Value)
+            .Map(o => new OrderListItem(o.Id.Value, o.Total.Amount, o.Total.Currency.Value)));
+}
 ```
 
 ---
