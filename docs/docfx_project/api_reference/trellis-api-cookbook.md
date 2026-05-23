@@ -318,48 +318,48 @@ public static class OrdersDi
 using Trellis;
 
 // Paging cursor and limit are protocol/query-string controls validated at the transport seam.
-public sealed record ListOrdersQuery(string? Cursor, int Limit) : IQuery<Result<Page<OrderListItem>>>;
+public sealed record ListOrdersQuery(string? Cursor, int? Limit) : IQuery<Result<Page<OrderListItem>>>;
 
 public sealed record OrderListItem(Guid Id, decimal Amount, string Currency);
 
 public sealed class ListOrdersHandler(AppDbContext db)
     : IQueryHandler<ListOrdersQuery, Result<Page<OrderListItem>>>
 {
-    private const int MaxLimit = 100;
-
     public async ValueTask<Result<Page<OrderListItem>>> Handle(ListOrdersQuery q, CancellationToken ct)
     {
-        var requested = q.Limit;
-        var applied   = Math.Clamp(requested, 1, MaxLimit);
+        var pageSize = PageSize.FromRequested(q.Limit);
 
-        Guid afterId = Guid.Empty;
-        if (q.Cursor is not null && !Guid.TryParseExact(q.Cursor, "N", out afterId))
-            return Result.Fail<Page<OrderListItem>>(
-                Error.InvalidInput.ForField("cursor", "cursor.malformed", "Cursor is not a valid opaque token."));
+        Guid? afterId = null;
+        if (q.Cursor is { } cursorToken)
+        {
+            if (cursorToken.Length == 0)
+                return Result.Fail<Page<OrderListItem>>(
+                    Error.InvalidInput.ForField("cursor", "cursor.malformed", "Cursor must not be empty."));
+
+            var decoded = CursorCodec.TryDecode<Guid>(new Cursor(cursorToken), fieldName: "cursor");
+            if (decoded.IsFailure)
+                return Result.Fail<Page<OrderListItem>>(decoded.Error!);
+            decoded.TryGetValue(out var id);
+            afterId = id;
+        }
 
         var query = db.Orders.AsNoTracking().OrderBy(o => o.Id);
-        if (q.Cursor is not null)
-            query = query.Where(o => o.Id.Value > afterId);
+        var filtered = afterId is { } cursorId
+            ? query.Where(o => o.Id.Value > cursorId)
+            : (IQueryable<Order>)query;
 
-        var rows = await query.Take(applied + 1).ToListAsync(ct);
-        var hasNext = rows.Count > applied;
-        var items   = rows.Take(applied)
-                          .Select(o => new OrderListItem(o.Id.Value, o.Total.Amount, o.Total.Currency.Value))
-                          .ToList();
+        var rows = await filtered.Take(pageSize.Applied + 1).ToListAsync(ct);
 
-        return Result.Ok(new Page<OrderListItem>(
-            Items: items,
-            Next: hasNext ? new Cursor(items[^1].Id.ToString("N")) : null,
-            Previous: q.Cursor is null ? null : new Cursor(q.Cursor),
-            RequestedLimit: requested,
-            AppliedLimit: applied));
+        return Result.Ok(
+            PageBuilder.FromOverFetch(rows, pageSize, o => o.Id.Value)
+                .Map(o => new OrderListItem(o.Id.Value, o.Total.Amount, o.Total.Currency.Value)));
     }
 }
 ```
 
-**What it shows.** `Page<T>` is a `readonly record struct`; instances always carry positive limits and a non-null `Items`. `WasCapped` becomes `true` automatically when the server clamped the limit. Use `Page.Empty<T>(req, app)` for the empty case rather than `default(Page<T>)`.
+**What it shows.** `PageSize.FromRequested` is the canonical lenient parser: `null` or non-positive limits collapse to `PageSize.Default`, and `Applied` is clamped to `PageSize.Max` while `Requested` is preserved verbatim so `WasCapped` round-trips through the wire envelope. `CursorCodec.TryDecode<TKey>` parses an opaque token into a typed key (returning `Error.InvalidInput` on a malformed cursor) — value-object IDs are accommodated by projecting to the underlying primitive (`.Value`). `PageBuilder.FromOverFetch` slices the over-fetched list and emits the next cursor from the last kept row; `Previous` is always `null` (forward-only) until Trellis ships a reverse-seek API. `Page<T>.Map` projects to a DTO without re-running the cursor or limit ceremony.
 
-> **Cursor parsing must be ROP, not throwing.** `Guid.Parse(q.Cursor)` would throw on malformed input and escape the handler as a 500. Use `Guid.TryParseExact(..., "N", out var)` and return `Result.Fail<T>(Error.InvalidInput.ForField("cursor", ...))` so a bad cursor surfaces as a clean 422, not a stack trace. Apply the same shape (TryParse -> `Result` failure) for any opaque-token format you adopt.
+> **Cursor parsing must be ROP, not throwing.** Hand-rolling `Guid.Parse(cursor)` would throw on malformed input and escape the handler as a 500. `CursorCodec.TryDecode<TKey>` returns `Result.Fail` with `Error.InvalidInput` (reason code `cursor.malformed`) so a bad cursor surfaces as a clean 422, not a stack trace.
 
 ---
 

@@ -9,42 +9,41 @@ using global::Mediator;
 using Microsoft.EntityFrameworkCore;
 using Trellis;
 
-public sealed record ListOrdersQuery(string? Cursor, int Limit) : IQuery<Result<Page<OrderListItem>>>;
+public sealed record ListOrdersQuery(string? Cursor, int? Limit) : IQuery<Result<Page<OrderListItem>>>;
 
 public sealed record OrderListItem(System.Guid Id, decimal Amount, string Currency);
 
 public sealed class ListOrdersHandler(AppDbContext db)
     : IQueryHandler<ListOrdersQuery, Result<Page<OrderListItem>>>
 {
-    private const int MaxLimit = 100;
-
     public async ValueTask<Result<Page<OrderListItem>>> Handle(ListOrdersQuery query, CancellationToken cancellationToken)
     {
-        var requested = query.Limit;
-        var applied = System.Math.Clamp(requested, 1, MaxLimit);
+        var pageSize = PageSize.FromRequested(query.Limit);
 
-        var orders = db.Orders.AsNoTracking().OrderBy(o => o.Id);
-        if (query.Cursor is not null)
+        System.Guid? afterId = null;
+        if (query.Cursor is { } cursorToken)
         {
-            if (!System.Guid.TryParseExact(query.Cursor, "N", out var cursorId))
+            if (cursorToken.Length == 0)
                 return Result.Fail<Page<OrderListItem>>(
-                    Error.InvalidInput.ForField(nameof(query.Cursor), "Cursor is not a valid pagination token."));
+                    Error.InvalidInput.ForField("cursor", "cursor.malformed", "Cursor must not be empty."));
 
-            orders = orders.Where(o => o.Id.Value > cursorId).OrderBy(o => o.Id);
+            var decoded = CursorCodec.TryDecode<System.Guid>(new Cursor(cursorToken), fieldName: "cursor");
+            if (decoded.IsFailure)
+                return Result.Fail<Page<OrderListItem>>(decoded.Error!);
+            decoded.TryGetValue(out var id);
+            afterId = id;
         }
 
-        var rows = await orders.Take(applied + 1).ToListAsync(cancellationToken);
-        var hasNext = rows.Count > applied;
-        var items = rows.Take(applied)
-                          .Select(o => new OrderListItem(o.Id.Value, o.Total.Amount, o.Total.Currency.Value))
-                          .ToList();
+        var ordered = db.Orders.AsNoTracking().OrderBy(o => o.Id);
+        var filtered = afterId is { } cursorId
+            ? ordered.Where(o => o.Id.Value > cursorId)
+            : (IQueryable<CookbookSnippets.Recipe01.Order>)ordered;
 
-        return Result.Ok(new Page<OrderListItem>(
-            Items: items,
-            Next: hasNext ? new Cursor(items[^1].Id.ToString("N")) : null,
-            Previous: query.Cursor is null ? null : new Cursor(query.Cursor),
-            RequestedLimit: requested,
-            AppliedLimit: applied));
+        var rows = await filtered.Take(pageSize.Applied + 1).ToListAsync(cancellationToken);
+
+        return Result.Ok(
+            PageBuilder.FromOverFetch(rows, pageSize, o => o.Id.Value)
+                .Map(o => new OrderListItem(o.Id.Value, o.Total.Amount, o.Total.Currency.Value)));
     }
 }
 internal static class Recipe3PageSurface

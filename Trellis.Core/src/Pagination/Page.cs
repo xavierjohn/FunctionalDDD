@@ -33,6 +33,7 @@ public readonly record struct Page<T>
 
     /// <summary>Constructs a validated page. Use <see cref="Page.Empty{T}(int, int)"/> for empty pages.</summary>
     /// <exception cref="ArgumentNullException"><paramref name="Items"/> is <c>null</c>.</exception>
+    /// <exception cref="ArgumentException">A supplied cursor equals <c>default(Cursor)</c> (which has no token).</exception>
     /// <exception cref="ArgumentOutOfRangeException">A limit is non-positive, or <paramref name="AppliedLimit"/> exceeds <paramref name="RequestedLimit"/>.</exception>
     public Page(
         IReadOnlyList<T> Items,
@@ -42,6 +43,10 @@ public readonly record struct Page<T>
         int AppliedLimit)
     {
         ArgumentNullException.ThrowIfNull(Items);
+        if (Next is { } nextValue && nextValue.Equals(default(Cursor)))
+            throw new ArgumentException("Next cursor must not be default(Cursor) — use null to signal absence.", nameof(Next));
+        if (Previous is { } previousValue && previousValue.Equals(default(Cursor)))
+            throw new ArgumentException("Previous cursor must not be default(Cursor) — use null to signal absence.", nameof(Previous));
         if (RequestedLimit <= 0)
             throw new ArgumentOutOfRangeException(nameof(RequestedLimit), "Limit must be positive.");
         if (AppliedLimit <= 0)
@@ -84,6 +89,27 @@ public readonly record struct Page<T>
 
     /// <summary>True when the server applied a smaller limit than the client requested.</summary>
     public bool WasCapped => AppliedLimit < RequestedLimit;
+
+    /// <summary>
+    /// Projects each item to a new type, preserving cursors and limits. Useful when a
+    /// repository wants to return <c>Page&lt;Dto&gt;</c> instead of <c>Page&lt;Entity&gt;</c>
+    /// without re-running the cursor/limit ceremony.
+    /// </summary>
+    /// <typeparam name="TOut">The projected item type.</typeparam>
+    /// <param name="selector">The projection. Required.</param>
+    /// <returns>A new <see cref="Page{TOut}"/> with the same cursors and limits.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="selector"/> is <c>null</c>.</exception>
+    public Page<TOut> Map<TOut>(Func<T, TOut> selector)
+    {
+        ArgumentNullException.ThrowIfNull(selector);
+
+        var sourceItems = Items;
+        var builder = ImmutableArray.CreateBuilder<TOut>(sourceItems.Count);
+        for (var i = 0; i < sourceItems.Count; i++)
+            builder.Add(selector(sourceItems[i]));
+
+        return new Page<TOut>(builder.MoveToImmutable(), Next, Previous, RequestedLimit, AppliedLimit);
+    }
 }
 
 /// <summary>

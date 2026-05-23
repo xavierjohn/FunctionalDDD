@@ -350,7 +350,7 @@ Phase 2 deliverable PR (`PR-PAGE`) — status:
 3. ⬜ Demote `PartialContentResult` collection overloads to `[Obsolete]`.
 4. ✅ Showcase paginates `GET /api/accounts/` end-to-end on both Minimal API and MVC hosts (server cap of 5; client requests 10; follow `Link rel="next"` / body cursor to drain). Integration tests cover both hosts.
 5. ⬜ OpenAPI schema transformer that surfaces the `Link` response header for any operation returning `Page<T>`.
-6. ⬜ Recipe doc: `docs/docfx_project/articles/pagination.md`.
+6. ✅ Recipe doc: `docs/docfx_project/articles/pagination.md`.
 
 ### 0.7.5 Implication for §0.6 (non-web consumers)
 
