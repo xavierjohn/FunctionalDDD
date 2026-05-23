@@ -6,7 +6,7 @@ using System.Text;
 
 /// <summary>
 /// Helpers that encode and decode opaque <see cref="Cursor"/> tokens for seek-style
-/// pagination. Two overloads pairs are provided: a single-key form for pure <c>Id</c>-keyed
+/// pagination. Two overload pairs are provided: a single-key form for pure <c>Id</c>-keyed
 /// pagination (the simplest, matches single-column indexes), and a composite
 /// <c>(CreatedAt, Id)</c> form for stable time-ordered seeks across non-unique
 /// primary sort keys.
@@ -142,7 +142,14 @@ public static class CursorCodec
 
     private static string FormatInvariant<TKey>(TKey id)
         where TKey : notnull =>
-        id is IFormattable f ? f.ToString(null, CultureInfo.InvariantCulture) : id.ToString()!;
+        id switch
+        {
+            IFormattable f => f.ToString(null, CultureInfo.InvariantCulture),
+            string s => s,
+            _ => throw new NotSupportedException(
+                $"Cursor key type '{typeof(TKey).FullName}' must implement IFormattable or be string; " +
+                "a culture-sensitive ToString would break cursor round-trip.")
+        };
 
     private static string ToBase64Url(string payload)
     {

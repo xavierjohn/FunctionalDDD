@@ -45,6 +45,7 @@ public static class PageBuilder
     {
         ArgumentNullException.ThrowIfNull(overFetched);
         ArgumentNullException.ThrowIfNull(idSelector);
+        EnsureValidated(pageSize);
 
         if (overFetched.Count <= pageSize.Applied)
             return new Page<T>(MaterializeAll(overFetched), Next: null, Previous: null, pageSize.Requested, pageSize.Applied);
@@ -77,6 +78,7 @@ public static class PageBuilder
         ArgumentNullException.ThrowIfNull(overFetched);
         ArgumentNullException.ThrowIfNull(createdAtSelector);
         ArgumentNullException.ThrowIfNull(idSelector);
+        EnsureValidated(pageSize);
 
         if (overFetched.Count <= pageSize.Applied)
             return new Page<T>(MaterializeAll(overFetched), Next: null, Previous: null, pageSize.Requested, pageSize.Applied);
@@ -85,6 +87,17 @@ public static class PageBuilder
         var lastKept = kept[pageSize.Applied - 1];
         var next = CursorCodec.Encode(createdAtSelector(lastKept), idSelector(lastKept));
         return new Page<T>(kept, next, Previous: null, pageSize.Requested, pageSize.Applied);
+    }
+
+    private static void EnsureValidated(PageSize pageSize)
+    {
+        // PageSize is a struct, so callers can sidestep its constructor with default(PageSize).
+        // Refuse the zero-shape so the next-cursor logic (which indexes kept[Applied - 1])
+        // cannot reach a negative index.
+        if (pageSize.Requested <= 0 || pageSize.Applied <= 0 || pageSize.Applied > pageSize.Requested)
+            throw new ArgumentOutOfRangeException(
+                nameof(pageSize),
+                "PageSize must be a validated instance with Requested > 0, Applied > 0, and Applied <= Requested.");
     }
 
     private static ImmutableArray<T> MaterializeAll<T>(IReadOnlyList<T> source)

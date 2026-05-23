@@ -182,4 +182,26 @@ public sealed class PageBuilderTests
         single.Previous.Should().BeNull();
         composite.Previous.Should().BeNull();
     }
+
+    // ───── Defensive validation ────────────────────────────────────────────────
+
+    [Fact]
+    public void Single_key_rejects_default_pageSize()
+    {
+        var fetched = new List<Row> { new(Guid.NewGuid(), DateTimeOffset.UtcNow, "a") };
+
+        var act = () => PageBuilder.FromOverFetch(fetched, default(PageSize), r => r.Id);
+
+        act.Should().Throw<ArgumentOutOfRangeException>().WithParameterName("pageSize");
+    }
+
+    [Fact]
+    public void Composite_rejects_default_pageSize()
+    {
+        var fetched = new List<Row> { new(Guid.NewGuid(), DateTimeOffset.UtcNow, "a") };
+
+        var act = () => PageBuilder.FromOverFetch(fetched, default(PageSize), r => r.CreatedAt, r => r.Id);
+
+        act.Should().Throw<ArgumentOutOfRangeException>().WithParameterName("pageSize");
+    }
 }

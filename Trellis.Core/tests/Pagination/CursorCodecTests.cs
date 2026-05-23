@@ -98,6 +98,24 @@ public class CursorCodecTests
         invalid.Fields.Items.Should().Contain(f => f.Field.ToString().Contains("after"));
     }
 
+    [Fact]
+    public void Single_key_encode_rejects_non_formattable_non_string_key()
+    {
+        // A custom type that is neither IFormattable nor string. Without an invariant-culture
+        // formatting contract, encoding could emit a culture-sensitive token that decode then
+        // fails to parse — we want a clear, immediate NotSupportedException instead.
+        var key = new NonFormattableKey();
+
+        var act = () => CursorCodec.Encode(key);
+
+        act.Should().Throw<NotSupportedException>();
+    }
+
+    private sealed class NonFormattableKey
+    {
+        public override string ToString() => "anything";
+    }
+
     // ───── Composite (CreatedAt, Id) encode/decode ─────────────────────────────
 
     [Fact]
