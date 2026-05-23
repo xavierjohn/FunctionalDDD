@@ -293,26 +293,6 @@ public sealed class WithCacheControlTests
     }
 
     [Fact]
-    public async Task Selector_emits_on_206_PartialContent()
-    {
-        // Range-success path runs PartialContentHttpResult — selector must apply before
-        // delegation so the 206 carries the directive.
-        var ctx = NewContext();
-        ctx.Request.Method = HttpMethods.Get;
-        ctx.Request.Headers.Range = "bytes=0-9";
-        var r = Result.Ok(new Todo(13, "hi", "abc"));
-
-        await r.ToHttpResponse(t => t, o => o
-                .WithRange(0, 9, 100)
-                .WithCacheControl(t => CacheControl.Public(TimeSpan.FromSeconds(t.Id))))
-            .ExecuteAsync(ctx);
-
-        ctx.Response.StatusCode.Should().Be(206);
-        var cc = ctx.Response.Headers.CacheControl.ToString();
-        cc.Should().Contain("public").And.Contain("max-age=13");
-    }
-
-    [Fact]
     public async Task Selector_does_not_emit_on_500_LocationMissing()
     {
         // CreatedAtRoute with a route name that LinkGenerator can't resolve → 500

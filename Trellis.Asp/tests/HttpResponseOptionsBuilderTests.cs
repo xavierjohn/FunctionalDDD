@@ -121,22 +121,6 @@ public sealed class HttpResponseOptionsBuilderTests
     }
 
     [Fact]
-    public void WithRange_selector_throws_on_null()
-    {
-        var b = new HttpResponseOptionsBuilder<Thing>();
-        FluentActions.Invoking(() => b.WithRange((Func<Thing, ContentRangeHeaderValue>)null!))
-            .Should().Throw<ArgumentNullException>();
-    }
-
-    [Fact]
-    public void Both_WithRange_overloads_are_chainable()
-    {
-        var b = new HttpResponseOptionsBuilder<Thing>();
-        b.WithRange(0, 1, 2).WithRange(_ => new ContentRangeHeaderValue(10))
-            .WithRange(0, 5, 10).Should().BeSameAs(b);
-    }
-
-    [Fact]
     public void Builder_chain_returns_same_builder_for_fluent_use()
     {
         var b = new HttpResponseOptionsBuilder<Thing>();
@@ -145,7 +129,6 @@ public sealed class HttpResponseOptionsBuilderTests
             .Vary("Accept")
             .WithContentLanguage("en")
             .WithContentLocation(_ => "/x")
-            .WithAcceptRanges("bytes")
             .Created("/x")
             .EvaluatePreconditions()
             .HonorPrefer()

@@ -137,8 +137,6 @@ internal sealed class TrellisWriteOutcomeResult<TDomain, TBody> :
             response.Headers.ContentLanguage = string.Join(", ", metadata.ContentLanguage);
         if (metadata.ContentLocation is not null)
             response.Headers["Content-Location"] = metadata.ContentLocation;
-        if (metadata.AcceptRanges is not null)
-            response.Headers["Accept-Ranges"] = metadata.AcceptRanges;
     }
 
     private void ApplyBuilderMetadata(HttpResponse response, WriteOutcome<TDomain> outcome)
@@ -206,9 +204,6 @@ internal sealed class TrellisWriteOutcomeResult<TDomain, TBody> :
             if (!string.IsNullOrEmpty(v))
                 response.Headers["Content-Location"] = v;
         }
-
-        if (!string.IsNullOrEmpty(_options.AcceptRanges))
-            response.Headers["Accept-Ranges"] = _options.AcceptRanges;
 
         if (_options.CacheControlSelector is { } ccSel)
         {

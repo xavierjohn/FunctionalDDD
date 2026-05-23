@@ -12,7 +12,7 @@ using Trellis.Asp;
 
 /// <summary>
 /// Outcome-level coverage for <c>ToHttpResponse</c> branches not exercised by the higher-level
-/// <c>ToHttpResponseTests</c>: metadata headers, range handling, conditional-request decisions,
+/// <c>ToHttpResponseTests</c>: metadata headers, conditional-request decisions,
 /// location resolution, and per-call error-mapping overrides. Every test drives the public
 /// extension and asserts on what a caller observes (status code, headers, body bytes).
 /// </summary>
@@ -45,7 +45,7 @@ public sealed class TrellisHttpResultExtraTests
     }
 
     [Fact]
-    public async Task Response_includes_LastModified_ContentLanguage_ContentLocation_and_AcceptRanges_headers()
+    public async Task Response_includes_LastModified_ContentLanguage_and_ContentLocation_headers()
     {
         var ctx = NewContext();
         var when = new DateTimeOffset(2024, 1, 2, 3, 4, 5, TimeSpan.Zero);
@@ -54,14 +54,12 @@ public sealed class TrellisHttpResultExtraTests
         await r.ToHttpResponse(TodoBody.From, o => o
             .WithLastModified(t => t.Modified)
             .WithContentLanguage("en-US", "en")
-            .WithContentLocation(t => $"/todos/{t.Id}")
-            .WithAcceptRanges("bytes"))
+            .WithContentLocation(t => $"/todos/{t.Id}"))
             .ExecuteAsync(ctx);
 
         ctx.Response.Headers["Last-Modified"].ToString().Should().Be(when.ToString("R"));
         ctx.Response.Headers.ContentLanguage.ToString().Should().Be("en-US, en");
         ctx.Response.Headers["Content-Location"].ToString().Should().Be("/todos/1");
-        ctx.Response.Headers["Accept-Ranges"].ToString().Should().Be("bytes");
     }
 
     [Fact]
@@ -184,85 +182,6 @@ public sealed class TrellisHttpResultExtraTests
             .ExecuteAsync(ctx);
 
         ctx.Response.StatusCode.Should().Be(304);
-    }
-
-    [Fact]
-    public async Task Partial_static_range_returns_206_with_Content_Range_header()
-    {
-        var ctx = NewContext();
-        var r = Result.Ok(new Todo(1, "x", "abc", default));
-
-        await r.ToHttpResponse(TodoBody.From, o => o.WithRange(0, 9, 100)).ExecuteAsync(ctx);
-
-        ctx.Response.StatusCode.Should().Be(206);
-        ctx.Response.Headers["Content-Range"].ToString().Should().Be("items 0-9/100");
-    }
-
-    [Fact]
-    public async Task Full_static_range_returns_200_instead_of_206()
-    {
-        var ctx = NewContext();
-        var r = Result.Ok(new Todo(1, "x", "abc", default));
-
-        await r.ToHttpResponse(TodoBody.From, o => o.WithRange(0, 99, 100)).ExecuteAsync(ctx);
-
-        ctx.Response.StatusCode.Should().Be(200);
-    }
-
-    [Theory]
-    [InlineData(-1, 5, 100)]   // From < 0
-    [InlineData(5, 4, 100)]    // To < From
-    [InlineData(0, 0, 0)]      // Total <= 0
-    [InlineData(100, 105, 100)] // From >= Total
-    public async Task Invalid_static_range_returns_200_instead_of_206(long from, long to, long total)
-    {
-        var ctx = NewContext();
-        var r = Result.Ok(new Todo(1, "x", "abc", default));
-
-        await r.ToHttpResponse(TodoBody.From, o => o.WithRange(from, to, total)).ExecuteAsync(ctx);
-
-        ctx.Response.StatusCode.Should().Be(200);
-    }
-
-    [Fact]
-    public async Task Range_selector_returning_partial_range_returns_206_with_Content_Range_header()
-    {
-        var ctx = NewContext();
-        var r = Result.Ok(new Todo(1, "x", "abc", default));
-
-        await r.ToHttpResponse(TodoBody.From, o => o.WithRange(_ =>
-                ContentRangeHeaderValue.Parse("bytes 5-9/50")))
-            .ExecuteAsync(ctx);
-
-        ctx.Response.StatusCode.Should().Be(206);
-        ctx.Response.Headers["Content-Range"].ToString().Should().Be("items 5-9/50");
-    }
-
-    [Fact]
-    public async Task Range_selector_returning_full_range_returns_200()
-    {
-        var ctx = NewContext();
-        var r = Result.Ok(new Todo(1, "x", "abc", default));
-
-        await r.ToHttpResponse(TodoBody.From, o => o.WithRange(_ =>
-                ContentRangeHeaderValue.Parse("bytes 0-9/10")))
-            .ExecuteAsync(ctx);
-
-        ctx.Response.StatusCode.Should().Be(200);
-    }
-
-    [Fact]
-    public async Task Range_selector_without_concrete_From_To_returns_200()
-    {
-        var ctx = NewContext();
-        var r = Result.Ok(new Todo(1, "x", "abc", default));
-
-        // ContentRangeHeaderValue("bytes */100") has no From/To -> selector returns null branch
-        await r.ToHttpResponse(TodoBody.From, o => o.WithRange(_ =>
-                new ContentRangeHeaderValue(100)))
-            .ExecuteAsync(ctx);
-
-        ctx.Response.StatusCode.Should().Be(200);
     }
 
     [Fact]

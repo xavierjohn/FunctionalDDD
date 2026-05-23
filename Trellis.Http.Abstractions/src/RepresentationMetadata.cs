@@ -3,8 +3,8 @@
 /// <summary>
 /// Carries HTTP representation metadata (RFC 9110 §8) through Trellis response mappers.
 /// Used to emit <c>ETag</c>, <c>Last-Modified</c>, <c>Vary</c>, <c>Content-Language</c>,
-/// <c>Content-Location</c>, and <c>Accept-Ranges</c> response headers consistently
-/// across MVC and Minimal API responses (200, 201, 206, 304).
+/// and <c>Content-Location</c> response headers consistently
+/// across MVC and Minimal API responses (200, 201, 304).
 /// </summary>
 public sealed class RepresentationMetadata
 {
@@ -23,16 +23,12 @@ public sealed class RepresentationMetadata
     /// <summary>Gets the Content-Location URI for the selected representation.</summary>
     public string? ContentLocation { get; }
 
-    /// <summary>Gets the Accept-Ranges value (e.g., "bytes" or "none").</summary>
-    public string? AcceptRanges { get; }
-
     private RepresentationMetadata(
         EntityTagValue? eTag,
         DateTimeOffset? lastModified,
         IReadOnlyList<string>? vary,
         IReadOnlyList<string>? contentLanguage,
-        string? contentLocation,
-        string? acceptRanges)
+        string? contentLocation)
     {
         if (eTag is { IsWildcard: true })
             throw new ArgumentException("Wildcard entity tags cannot be used in representation metadata. Use a specific ETag value.", nameof(eTag));
@@ -41,7 +37,6 @@ public sealed class RepresentationMetadata
         Vary = vary;
         ContentLanguage = contentLanguage;
         ContentLocation = contentLocation;
-        AcceptRanges = acceptRanges;
     }
 
     /// <summary>Creates a new <see cref="Builder"/> for constructing <see cref="RepresentationMetadata"/>.</summary>
@@ -51,13 +46,13 @@ public sealed class RepresentationMetadata
     /// <param name="eTag">The entity tag value.</param>
     /// <returns>A new <see cref="RepresentationMetadata"/> containing only the specified ETag.</returns>
     public static RepresentationMetadata WithETag(EntityTagValue eTag) =>
-        new(eTag, null, null, null, null, null);
+        new(eTag, null, null, null, null);
 
     /// <summary>Creates metadata with just a strong ETag from an opaque tag string.</summary>
     /// <param name="opaqueTag">The opaque tag string for a strong entity tag.</param>
     /// <returns>A new <see cref="RepresentationMetadata"/> containing only a strong ETag.</returns>
     public static RepresentationMetadata WithStrongETag(string opaqueTag) =>
-        new(EntityTagValue.Strong(opaqueTag), null, null, null, null, null);
+        new(EntityTagValue.Strong(opaqueTag), null, null, null, null);
 
     /// <summary>
     /// Fluent builder for constructing <see cref="RepresentationMetadata"/> instances.
@@ -69,7 +64,6 @@ public sealed class RepresentationMetadata
         private List<string>? _vary;
         private List<string>? _contentLanguage;
         private string? _contentLocation;
-        private string? _acceptRanges;
 
         /// <summary>Sets the entity tag value.</summary>
         /// <param name="eTag">The entity tag.</param>
@@ -140,15 +134,6 @@ public sealed class RepresentationMetadata
             return this;
         }
 
-        /// <summary>Sets the Accept-Ranges value.</summary>
-        /// <param name="value">The accept-ranges value (e.g., "bytes" or "none").</param>
-        /// <returns>This builder instance for method chaining.</returns>
-        public Builder SetAcceptRanges(string value)
-        {
-            _acceptRanges = value;
-            return this;
-        }
-
         /// <summary>Builds the <see cref="RepresentationMetadata"/> instance from the current builder state.</summary>
         /// <returns>A new <see cref="RepresentationMetadata"/> instance.</returns>
         public RepresentationMetadata Build() =>
@@ -157,7 +142,6 @@ public sealed class RepresentationMetadata
                 _lastModified,
                 _vary is { Count: > 0 } ? (IReadOnlyList<string>)[.. _vary] : null,
                 _contentLanguage is { Count: > 0 } ? (IReadOnlyList<string>)[.. _contentLanguage] : null,
-                _contentLocation,
-                _acceptRanges);
+                _contentLocation);
     }
 }

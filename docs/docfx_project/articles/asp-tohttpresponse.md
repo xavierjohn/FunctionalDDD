@@ -22,7 +22,6 @@ audience: [developer]
 | Add ETag / `Last-Modified` and honor conditional `GET`/`HEAD` | `opts.WithETag(...).WithLastModified(...).EvaluatePreconditions()` | [ETag and conditional requests](#etag-and-conditional-requests) |
 | Set per-endpoint `Cache-Control` | `opts.WithCacheControl(CacheControl.NoStore())` / `opts.WithCacheControl(CacheControl.Public(TimeSpan.FromMinutes(5)))` / `opts.WithCacheControl(t => …)` | [Cache-Control](#cache-control) |
 | Honor `Prefer: return=minimal` / `return=representation` | `opts.HonorPrefer()` | [Prefer header](#prefer-header) |
-| Return `206 Partial Content` for byte ranges | `opts.WithRange(from, to, total)` / `opts.WithRange(selector)` | [Range responses](#range-responses) |
 | Return paginated JSON with RFC 8288 `Link` header | `result.ToHttpResponse(nextUrlBuilder, body)` on `Result<Page<T>>` | [Pagination](#pagination) |
 | Override error → status mapping for one endpoint | `opts.WithErrorMapping<TError>(status)` / `opts.WithErrorMapping(err => ...)` | [Per-call error mapping](#per-call-error-mapping) |
 | Render a standalone `Error` (no `Result` pipeline) | `error.ToHttpResponse(...)` | [Standalone error](#standalone-error) |
@@ -58,7 +57,7 @@ Full signatures: [trellis-api-asp.md](../api_reference/trellis-api-asp.md).
 | `WithETag(Func<T, string>)` / `WithETag(Func<T, EntityTagValue>)` | Emits `ETag`; the string overload wraps as `EntityTagValue.Strong`. |
 | `WithLastModified(Func<T, DateTimeOffset>)` | Emits `Last-Modified` in RFC 1123 format. |
 | `Vary(params string[])` | Appends to `Vary` (preserves existing values; case-insensitive dedupe). |
-| `WithContentLanguage(params string[])` / `WithContentLocation(Func<T, string>)` / `WithAcceptRanges(string)` | Sets the matching response header. |
+| `WithContentLanguage(params string[])` / `WithContentLocation(Func<T, string>)` | Sets the matching response header. |
 | `WithCacheControl(CacheControlHeaderValue)` | Sets `Cache-Control` on success (200 / 201 / 204 / 206 / 304 / WriteOutcome / paged) **and on failure** responses, so a sensitive endpoint declaring `WithCacheControl(CacheControl.NoStore())` protects 404 / 403 / 412 / 422 from intermediate-cache leakage just as much as the 200. Throws `ArgumentNullException` on null. Use the [`CacheControl`](../api_reference/trellis-api-asp.md#cachecontrol) presets (`NoStore()`, `NoCache()`, `Public(TimeSpan)`, `Private(TimeSpan)`, `Immutable(TimeSpan)`) for common shapes. |
 | `WithCacheControl(Func<T, CacheControlHeaderValue?>)` | Per-domain selector — success path only (failures carry no domain value, and no-payload write outcomes like `UpdatedNoContent` / `AcceptedNoContent` also skip the selector since they carry no `T`). Returning `null` from the selector skips the per-domain header; when the static-value overload is also configured, the static value remains in place. |
 | `Created(string literal)` / `Created(Func<T, string>)` | `201 Created` with literal or value-derived `Location`. |
@@ -66,8 +65,6 @@ Full signatures: [trellis-api-asp.md](../api_reference/trellis-api-asp.md).
 | `CreatedAtAction(action, Func<T, RouteValueDictionary>, controller?)` | MVC `CreatedAtAction` equivalent. **Not trim/AOT-safe** — `RequiresUnreferencedCode` / `RequiresDynamicCode`. |
 | `EvaluatePreconditions()` | On `GET`/`HEAD`, evaluates `If-Match`, `If-Unmodified-Since`, `If-None-Match`, `If-Modified-Since` against the configured ETag/`Last-Modified`. **Not on by default.** |
 | `HonorPrefer()` | Honors RFC 7240 `Prefer: return=minimal` / `return=representation`. Always emits `Vary: Prefer`; emits `Preference-Applied` only when honored. **Not on by default.** |
-| `WithRange(Func<T, ContentRangeHeaderValue>)` | `206 Partial Content` with selector-driven `Content-Range` (or `200` if range covers the whole resource). |
-| `WithRange(long from, long to, long totalLength)` | Static range variant; clamps `to` to `totalLength - 1`. |
 | `WithErrorMapping(Func<Error, int>)` | Per-call error → status mapper. Highest precedence. |
 | `WithErrorMapping<TError>(int status)` | Per-call override for a single error type. |
 
@@ -150,7 +147,7 @@ app.MapGet("/todos/{id:guid}", async (Guid id, ITodoService svc, CancellationTok
         configure: opts => opts.WithETag(t => $""{t.Version}"")));
 ```
 
-Selectors (`WithETag`, `WithLastModified`, `Created(Func<T, string>)`, `WithRange(selector)`, etc.) always receive the **domain** value, not the projected body.
+Selectors (`WithETag`, `WithLastModified`, `Created(Func<T, string>)`, etc.) always receive the **domain** value, not the projected body.
 
 ## ETag and conditional requests
 
@@ -238,20 +235,6 @@ app.MapPost("/orders", async (CreateOrder cmd, IOrderService svc, CancellationTo
 ### `WriteOutcome<T>` variants
 
 When the receiver is `Result<WriteOutcome<T>>`, the outcome variant drives status and headers — `Created*` builder methods are **not** required (they are required for `Result<T>` create endpoints). See [`integration-aspnet.md → WriteOutcome<T>`](integration-aspnet.md#writeoutcomet) for the full mapping table and command examples.
-
-## Range responses
-
-| Overload | Behavior |
-|---|---|
-| `WithRange(Func<T, ContentRangeHeaderValue>)` | Returns `206` with selector-derived `Content-Range`. Returns `200` if the range covers the whole representation. |
-| `WithRange(long from, long to, long totalLength)` | Static variant. Clamps `to` to `totalLength - 1`. |
-
-```csharp
-app.MapGet("/blobs/{id:guid}", async (Guid id, IBlobService svc, CancellationToken ct) =>
-    await svc.GetAsync(id, ct).ToHttpResponseAsync(opts => opts
-        .WithAcceptRanges("bytes")
-        .WithRange(b => new System.Net.Http.Headers.ContentRangeHeaderValue(0, b.Length - 1, b.Length))));
-```
 
 ## Pagination
 

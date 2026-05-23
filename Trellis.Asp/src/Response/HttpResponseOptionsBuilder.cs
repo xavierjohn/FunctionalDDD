@@ -17,7 +17,6 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
     private bool _varyForActor;
     private List<string>? _contentLanguage;
     private Func<TDomain, string?>? _contentLocationSelector;
-    private string? _acceptRanges;
     private System.Net.Http.Headers.CacheControlHeaderValue? _cacheControl;
     private Func<TDomain, System.Net.Http.Headers.CacheControlHeaderValue?>? _cacheControlSelector;
 
@@ -33,9 +32,6 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
 
     private bool _evaluatePreconditions;
     private bool _honorPrefer;
-
-    private Func<TDomain, System.Net.Http.Headers.ContentRangeHeaderValue>? _rangeSelector;
-    private (long From, long To, long Total)? _staticRange;
 
     private Func<Error, int>? _errorMapper;
     private Dictionary<Type, int>? _errorOverrides;
@@ -112,14 +108,6 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
     {
         ArgumentNullException.ThrowIfNull(selector);
         _contentLocationSelector = v => selector(v);
-        return this;
-    }
-
-    /// <summary>Sets the <c>Accept-Ranges</c> response header (e.g. "bytes" or "none").</summary>
-    public HttpResponseOptionsBuilder<TDomain> WithAcceptRanges(string acceptRanges)
-    {
-        ArgumentException.ThrowIfNullOrWhiteSpace(acceptRanges);
-        _acceptRanges = acceptRanges;
         return this;
     }
 
@@ -350,23 +338,6 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
         return this;
     }
 
-    /// <summary>Returns 206 Partial Content with <c>Content-Range</c> header for partial ranges.</summary>
-    public HttpResponseOptionsBuilder<TDomain> WithRange(Func<TDomain, System.Net.Http.Headers.ContentRangeHeaderValue> selector)
-    {
-        ArgumentNullException.ThrowIfNull(selector);
-        _rangeSelector = selector;
-        _staticRange = null;
-        return this;
-    }
-
-    /// <summary>Returns 206 Partial Content for the given byte range, or 200 OK if it covers the whole resource.</summary>
-    public HttpResponseOptionsBuilder<TDomain> WithRange(long from, long to, long totalLength)
-    {
-        _staticRange = (from, to, totalLength);
-        _rangeSelector = null;
-        return this;
-    }
-
     /// <summary>Per-call override mapper for failure responses. Highest precedence.</summary>
     public HttpResponseOptionsBuilder<TDomain> WithErrorMapping(Func<Error, int> mapper)
     {
@@ -391,7 +362,6 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
         VaryForActor = _varyForActor,
         ContentLanguage = _contentLanguage,
         ContentLocationSelector = _contentLocationSelector,
-        AcceptRanges = _acceptRanges,
         CacheControl = _cacheControl,
         CacheControlSelector = _cacheControlSelector,
         LocationKind = _locationKind,
@@ -405,8 +375,6 @@ public sealed class HttpResponseOptionsBuilder<TDomain>
         MarkAsCreated = _markAsCreated,
         EvaluatePreconditions = _evaluatePreconditions,
         HonorPrefer = _honorPrefer,
-        RangeSelector = _rangeSelector,
-        StaticRange = _staticRange,
         ErrorMapper = _errorMapper,
         ErrorOverrides = _errorOverrides,
     };
@@ -422,7 +390,6 @@ internal sealed class HttpResponseOptions<TDomain>
     public bool VaryForActor { get; init; }
     public List<string>? ContentLanguage { get; init; }
     public Func<TDomain, string?>? ContentLocationSelector { get; init; }
-    public string? AcceptRanges { get; init; }
     public System.Net.Http.Headers.CacheControlHeaderValue? CacheControl { get; init; }
     public Func<TDomain, System.Net.Http.Headers.CacheControlHeaderValue?>? CacheControlSelector { get; init; }
 
@@ -438,9 +405,6 @@ internal sealed class HttpResponseOptions<TDomain>
 
     public bool EvaluatePreconditions { get; init; }
     public bool HonorPrefer { get; init; }
-
-    public Func<TDomain, System.Net.Http.Headers.ContentRangeHeaderValue>? RangeSelector { get; init; }
-    public (long From, long To, long Total)? StaticRange { get; init; }
 
     public Func<Error, int>? ErrorMapper { get; init; }
     public Dictionary<Type, int>? ErrorOverrides { get; init; }

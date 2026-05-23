@@ -24,7 +24,6 @@ audience: [developer]
 | Honor `Prefer: return=minimal` / `return=representation` | `opts.HonorPrefer()` on a `WriteOutcome` response | [Prefer header](#prefer-header) |
 | Emit `201 Created` with a `Location` header | `opts.CreatedAtRoute(name, values)` (AOT-safe) / `Created(...)` / `CreatedAtAction(...)` | [Created responses](#created-responses) |
 | Return paginated JSON + RFC 8288 `Link` header | `Result<Page<T>>.ToHttpResponse(nextUrlBuilder, body)` | [Pagination](#pagination) |
-| Return `206 Partial Content` for byte / item ranges | `opts.WithRange(from, to, total)` / `opts.WithRange(selector)` | [Range responses](#range-responses) |
 | Validate scalar value objects (route, query, JSON body) | `AddScalarValueValidation` + `UseScalarValueValidation` + `WithScalarValueValidation` | [Scalar value validation](#scalar-value-validation) |
 | Bind value objects in route segments | `AddTrellisRouteConstraint<T>("Name")` then `"/x/{id:Name}"` | [Route constraints](#route-constraints) |
 | Hydrate the current `Actor` from JWT claims | `AddClaimsActorProvider` / `AddEntraActorProvider` / `AddDevelopmentActorProvider` | [Actor providers](#actor-providers) |
@@ -42,15 +41,13 @@ audience: [developer]
 | Type | Purpose |
 |---|---|
 | `HttpResponseExtensions` | `ToHttpResponse` / `ToHttpResponseAsync` for `Error`, `Result<T>`, `Result<WriteOutcome<T>>`, `Result<Page<T>>` (with optional body projector). |
-| `HttpResponseOptionsBuilder<TDomain>` | Fluent options for the generic overloads (`WithETag`, `WithLastModified`, `Vary`, `Created`/`CreatedAtRoute`/`CreatedAtAction`, `EvaluatePreconditions`, `HonorPrefer`, `WithRange`, `WithErrorMapping`, …). |
+| `HttpResponseOptionsBuilder<TDomain>` | Fluent options for the generic overloads (`WithETag`, `WithLastModified`, `Vary`, `Created`/`CreatedAtRoute`/`CreatedAtAction`, `EvaluatePreconditions`, `HonorPrefer`, `WithErrorMapping`, …). |
 | `HttpResponseOptionsBuilder` | Non-generic builder for the `Error` overload (`Vary`, `HonorPrefer`, `WithErrorMapping`). |
 | `ActionResultAdapterExtensions` | `AsActionResult<T>` / `AsActionResultAsync<T>` to wrap an `IResult` for MVC. |
 | `TrellisAspOptions` | DI-registered error-type → status-code map; configure via `AddTrellisAsp(opts => opts.MapError<TError>(status))`. |
 | `ETagHelper` | `ParseIfMatch` / `ParseIfNoneMatch` returning `EntityTagValue[]?`; `IfMatchSatisfied` / `IfNoneMatchMatches` comparison helpers. |
 | `IfNoneMatchExtensions` | `EnforceIfNoneMatchPrecondition(EntityTagValue[]?)` — converts a successful result into `Error.TransportFault(new HttpError.PreconditionFailed(...))` when `If-None-Match: *` is sent and the resource exists. |
 | `PreferHeader` | `Parse(HttpRequest)` → `ReturnRepresentation`, `ReturnMinimal`, `RespondAsync`, `Wait`, `HandlingStrict`, `HandlingLenient`, `HasPreferences`. |
-| `RangeRequestEvaluator` / `RangeOutcome` | RFC 9110 §14 `Range` evaluation (`bytes` only) returning `FullRepresentation` / `PartialContent` / `NotSatisfiable`. |
-| `PartialContentHttpResult` / `PartialContentResult` | `IResult` and MVC `ObjectResult` companions that emit `206 Partial Content`. |
 | `PagedResponse<TResponse>` / `PageLink` | JSON envelope and `Link` header entries returned by the `Result<Page<T>>` overload. |
 | `Trellis.Asp.Authorization.*` | `AddClaimsActorProvider` / `AddEntraActorProvider` / `AddDevelopmentActorProvider` / `AddCachingActorProvider<T>`. |
 | `Trellis.Asp.ModelBinding.*` | `ScalarValueModelBinder<,>` / `MaybeModelBinder<,>` / `ScalarValueModelBinderProvider`. |
@@ -183,7 +180,7 @@ public interface IUserService
 
 ## Body projection
 
-Every generic `ToHttpResponse` overload accepts an optional `body: Func<TDomain, TBody>` projector. The selectors in the options builder (`WithETag`, `WithLastModified`, `Created(selector)`, `CreatedAtRoute(values)`, `WithContentLocation`, `WithRange(selector)`) **always run against the domain value**, not the projected body. This keeps response DTOs free of representation concerns:
+Every generic `ToHttpResponse` overload accepts an optional `body: Func<TDomain, TBody>` projector. The selectors in the options builder (`WithETag`, `WithLastModified`, `Created(selector)`, `CreatedAtRoute(values)`, `WithContentLocation`) **always run against the domain value**, not the projected body. This keeps response DTOs free of representation concerns:
 
 ```csharp
 return result.ToHttpResponse(
@@ -444,27 +441,6 @@ public interface IProductReader
 ```
 
 Failure on the page result short-circuits through the standard error pipeline (Problem Details, default mapping).
-
-## Range responses
-
-`WithRange(from, to, totalLength)` emits `200 OK` when the configured range covers the whole representation; otherwise `206 Partial Content` with `Content-Range`. The static-range overload clamps `to` to `totalLength - 1`.
-
-```csharp
-app.MapGet("/products", async (IProductReader reader, int? page, int? pageSize, CancellationToken ct) =>
-{
-    var size = Math.Clamp(pageSize ?? 25, 1, 100);
-    var number = Math.Max(page ?? 0, 0);
-    var from = number * size;
-
-    var (items, total) = await reader.ListWithCountAsync(from, size, ct);
-    if (items.Length == 0) return Result.Ok(items).ToHttpResponse();
-
-    var to = from + items.Length - 1;
-    return Result.Ok(items).ToHttpResponse(opts => opts.WithRange(from, to, total));
-});
-```
-
-For byte ranges with full RFC 9110 semantics, evaluate `Range` yourself with `RangeRequestEvaluator.Evaluate(request, completeLength)` and switch on `RangeOutcome`. `RangeRequestEvaluator` returns `FullRepresentation` for non-`GET`, missing `Range`, non-`bytes` units, multi-range, malformed, or empty ranges; only well-formed satisfiable single byte ranges produce `PartialContent`.
 
 ## Scalar value validation
 

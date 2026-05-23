@@ -18,8 +18,8 @@ using System.Collections.Immutable;
 /// <para>
 /// <b>Why not 206 Partial Content?</b> RFC 9110 §14 was designed for byte-range transfer
 /// of a single octet stream; collection pagination has no IANA-registered range unit and
-/// no proxy/CDN ecosystem support. Use <see cref="Page{T}"/> for collections; reserve
-/// <c>206</c> for actual byte-range GETs.
+/// no proxy/CDN ecosystem support. Use <see cref="Page{T}"/> for collections; for binary
+/// downloads, call ASP.NET Core's <c>Results.File(stream, enableRangeProcessing: true)</c> directly.
 /// </para>
 /// <para>
 /// <b>Cap visibility:</b> <see cref="RequestedLimit"/> records what the client asked for and
