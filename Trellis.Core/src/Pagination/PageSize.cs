@@ -33,10 +33,10 @@ public readonly record struct PageSize
     /// <summary>The framework-default maximum page size. Callers may override per call via <see cref="FromRequested(int?, int)"/> or <see cref="TryCreate(int?, int, string?)"/>.</summary>
     public const int Max = 100;
 
-    /// <summary>The limit the client requested. Always positive.</summary>
+    /// <summary>The limit the client requested. Positive for validated instances; <c>default(PageSize)</c> yields zero and should not be observed in well-formed code.</summary>
     public int Requested { get; }
 
-    /// <summary>The limit the server actually applied. Always positive and never greater than <see cref="Requested"/>.</summary>
+    /// <summary>The limit the server actually applied. Positive for validated instances and never greater than <see cref="Requested"/>; <c>default(PageSize)</c> yields zero.</summary>
     public int Applied { get; }
 
     /// <summary>True when the server applied a smaller limit than the client requested.</summary>
@@ -81,10 +81,13 @@ public readonly record struct PageSize
     }
 
     /// <summary>
-    /// Strict factory: returns <see cref="Default"/> when <paramref name="requested"/> is
-    /// <c>null</c>; returns <see cref="Error.InvalidInput"/> when <paramref name="requested"/>
-    /// is non-positive or exceeds <paramref name="max"/>. Use when the API contract treats
-    /// out-of-range as a client error rather than a soft cap.
+    /// Strict factory: when <paramref name="requested"/> is <c>null</c>, returns a
+    /// <see cref="PageSize"/> with <see cref="Requested"/> set to <see cref="Default"/> and
+    /// <see cref="Applied"/> clamped to <c>min(Default, max)</c> — the same shape
+    /// <see cref="FromRequested(int?, int)"/> uses for the null case. Returns
+    /// <see cref="Error.InvalidInput"/> when <paramref name="requested"/> is non-positive
+    /// or exceeds <paramref name="max"/>. Use when the API contract treats out-of-range as
+    /// a client error rather than a soft cap.
     /// </summary>
     /// <param name="requested">The client-requested limit.</param>
     /// <param name="max">The server-side maximum. Defaults to <see cref="Max"/>.</param>

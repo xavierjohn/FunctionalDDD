@@ -211,4 +211,38 @@ public class PageSizeTests
         page.AppliedLimit.Should().Be(PageSize.Max);
         page.WasCapped.Should().BeTrue();
     }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void FromRequested_throws_when_max_is_non_positive(int max)
+    {
+        var act = () => PageSize.FromRequested(10, max);
+
+        act.Should().Throw<ArgumentOutOfRangeException>().WithParameterName(nameof(max));
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void TryCreate_throws_when_max_is_non_positive(int max)
+    {
+        var act = () => PageSize.TryCreate(10, max);
+
+        act.Should().Throw<ArgumentOutOfRangeException>().WithParameterName(nameof(max));
+    }
+
+    [Fact]
+    public void TryCreate_with_null_clamps_default_to_smaller_max()
+    {
+        // When max < Default, TryCreate(null) returns Requested=Default but Applied=max.
+        // Documented behaviour: mirrors FromRequested(null, max).
+        var result = PageSize.TryCreate(null, max: 10);
+
+        result.IsSuccess.Should().BeTrue();
+        result.TryGetValue(out var size).Should().BeTrue();
+        size.Requested.Should().Be(PageSize.Default);
+        size.Applied.Should().Be(10);
+        size.WasCapped.Should().BeTrue();
+    }
 }

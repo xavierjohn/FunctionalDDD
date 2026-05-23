@@ -2,7 +2,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Collections.Immutable;
 
 /// <summary>
 /// Storage-agnostic helper that turns an over-fetched list into a <see cref="Page{T}"/>
@@ -47,12 +47,9 @@ public static class PageBuilder
         ArgumentNullException.ThrowIfNull(idSelector);
 
         if (overFetched.Count <= pageSize.Applied)
-            return new Page<T>(overFetched.ToArray(), Next: null, Previous: null, pageSize.Requested, pageSize.Applied);
+            return new Page<T>(MaterializeAll(overFetched), Next: null, Previous: null, pageSize.Requested, pageSize.Applied);
 
-        var kept = new T[pageSize.Applied];
-        for (var i = 0; i < pageSize.Applied; i++)
-            kept[i] = overFetched[i];
-
+        var kept = MaterializePrefix(overFetched, pageSize.Applied);
         var lastKept = kept[pageSize.Applied - 1];
         var next = CursorCodec.Encode(idSelector(lastKept));
         return new Page<T>(kept, next, Previous: null, pageSize.Requested, pageSize.Applied);
@@ -82,14 +79,27 @@ public static class PageBuilder
         ArgumentNullException.ThrowIfNull(idSelector);
 
         if (overFetched.Count <= pageSize.Applied)
-            return new Page<T>(overFetched.ToArray(), Next: null, Previous: null, pageSize.Requested, pageSize.Applied);
+            return new Page<T>(MaterializeAll(overFetched), Next: null, Previous: null, pageSize.Requested, pageSize.Applied);
 
-        var kept = new T[pageSize.Applied];
-        for (var i = 0; i < pageSize.Applied; i++)
-            kept[i] = overFetched[i];
-
+        var kept = MaterializePrefix(overFetched, pageSize.Applied);
         var lastKept = kept[pageSize.Applied - 1];
         var next = CursorCodec.Encode(createdAtSelector(lastKept), idSelector(lastKept));
         return new Page<T>(kept, next, Previous: null, pageSize.Requested, pageSize.Applied);
+    }
+
+    private static ImmutableArray<T> MaterializeAll<T>(IReadOnlyList<T> source)
+    {
+        var builder = ImmutableArray.CreateBuilder<T>(source.Count);
+        for (var i = 0; i < source.Count; i++)
+            builder.Add(source[i]);
+        return builder.MoveToImmutable();
+    }
+
+    private static ImmutableArray<T> MaterializePrefix<T>(IReadOnlyList<T> source, int count)
+    {
+        var builder = ImmutableArray.CreateBuilder<T>(count);
+        for (var i = 0; i < count; i++)
+            builder.Add(source[i]);
+        return builder.MoveToImmutable();
     }
 }

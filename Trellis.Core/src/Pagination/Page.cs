@@ -99,11 +99,11 @@ public readonly record struct Page<T>
         ArgumentNullException.ThrowIfNull(selector);
 
         var sourceItems = Items;
-        var projected = new TOut[sourceItems.Count];
+        var builder = ImmutableArray.CreateBuilder<TOut>(sourceItems.Count);
         for (var i = 0; i < sourceItems.Count; i++)
-            projected[i] = selector(sourceItems[i]);
+            builder.Add(selector(sourceItems[i]));
 
-        return new Page<TOut>(projected, Next, Previous, RequestedLimit, AppliedLimit);
+        return new Page<TOut>(builder.MoveToImmutable(), Next, Previous, RequestedLimit, AppliedLimit);
     }
 }
 

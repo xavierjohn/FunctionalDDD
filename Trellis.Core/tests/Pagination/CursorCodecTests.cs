@@ -2,7 +2,6 @@
 
 using System;
 using System.Globalization;
-using System.Threading;
 
 /// <summary>
 /// Unit tests for the <see cref="CursorCodec"/> helpers that encode and decode opaque
