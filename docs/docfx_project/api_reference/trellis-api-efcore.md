@@ -295,6 +295,8 @@ public sealed class EntityTimestampInterceptor : SaveChangesInterceptor
 | `public override InterceptionResult<int> SavingChanges(DbContextEventData eventData, InterceptionResult<int> result)` | `InterceptionResult<int>` | Sets `CreatedAt` and `LastModified` for added entities, sets `LastModified` for modified entities, and also updates `LastModified` on unchanged aggregate roots when loaded dependents are added, modified, or deleted. |
 | `public override ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData eventData, InterceptionResult<int> result, CancellationToken cancellationToken = default)` | `ValueTask<InterceptionResult<int>>` | Async equivalent of `SavingChanges`; includes unchanged aggregate-root promotion when loaded dependents change. |
 
+> **Note:** `EntityTimestampInterceptor` writes the CLR property values, but the column mapping for the stored representation is still the Acl's responsibility. See [Provider-specific column mapping](#provider-specific-column-mapping) when a provider cannot translate `DateTimeOffset` (or any other CLR type) on `CreatedAt` / `LastModified`.
+
 ### `MaybeQueryableExtensions`
 
 ```csharp
@@ -724,6 +726,48 @@ using Trellis.EntityFrameworkCore;
 IReadOnlyList<MaybePropertyMapping> mappings = db.GetMaybePropertyMappings();
 string debug = db.ToMaybeMappingDebugString();
 ```
+
+### Provider-specific column mapping
+
+The Acl layer owns storage-provider compatibility for every persisted column — **including columns Trellis writes via interceptors**, such as `CreatedAt`, `LastModified`, `ETag`, and any property inherited from `Aggregate<TId>` or `Entity<TId>`. `ApplyTrellisConventions(...)` (and its source-generated equivalent `ApplyTrellisConventionsFor<TContext>()`) defines the domain-to-EF shape for Trellis-known types, but it does not make every CLR type natively queryable, sortable, or projectable on every storage provider.
+
+When a provider rejects a translated operation on one of these properties — for example a runtime translation exception of the shape *"`<Provider>` does not support expressions of type 'X' in ORDER BY clauses"*, or a comparison/predicate translation failure — the layer-correct fix is to register a `ValueConverter` on the affected property in `DbContext.OnModelCreating(...)` **after** `base.OnModelCreating(modelBuilder)`. Trellis stays provider-agnostic on purpose; provider quirks are absorbed in the Acl.
+
+Manual `Property(...).HasConversion(...)` is **discouraged** when it duplicates Trellis-supported value-object conventions (those are handled by `ApplyTrellisConventions`), but **appropriate** when it adapts an already-mapped property to a provider-specific storage or query capability that Trellis intentionally leaves to the Acl. If the offending CLR type round-trips losslessly through a sortable/comparable scalar (`string`, `long`, `decimal`), use that as the converter target.
+
+```csharp
+using System;
+using System.Globalization;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
+// Example: SQLite cannot ORDER BY DateTimeOffset. Convert the framework-written
+// audit columns to ISO-8601 TEXT so server-side ordering on CreatedAt /
+// LastModified works without materializing the result set first.
+public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+{
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        var dtoConverter = new ValueConverter<DateTimeOffset, string>(
+            v => v.UtcDateTime.ToString("O", CultureInfo.InvariantCulture),
+            v => DateTimeOffset.Parse(v, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind));
+
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            foreach (var name in new[] { "CreatedAt", "LastModified" })
+            {
+                var property = entityType.FindProperty(name);
+                if (property?.ClrType == typeof(DateTimeOffset))
+                    property.SetValueConverter(dtoConverter);
+            }
+        }
+    }
+}
+```
+
+The same pattern applies to other CLR-type / provider mismatches — for example `decimal` on a provider that only supports `double`, or a value object on a document store that cannot project nested types. Identify a sortable/comparable scalar that preserves the value, register the converter in the Acl, and keep the repository query server-side rather than falling back to `ToListAsync()` + in-memory ordering.
 
 ## Cross-references
 
