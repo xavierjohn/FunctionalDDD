@@ -733,7 +733,7 @@ The Acl layer owns storage-provider compatibility for every persisted column —
 
 When a provider rejects a translated operation on one of these properties — for example a runtime translation exception of the shape *"`<Provider>` does not support expressions of type 'X' in ORDER BY clauses"*, or a comparison/predicate translation failure — the layer-correct fix is to register a `ValueConverter` on the affected property in `DbContext.OnModelCreating(...)` **after** `base.OnModelCreating(modelBuilder)`. Trellis stays provider-agnostic on purpose; provider quirks are absorbed in the Acl.
 
-Manual `Property(...).HasConversion(...)` is **discouraged** when it duplicates Trellis-supported value-object conventions (those are handled by `ApplyTrellisConventions`), but **appropriate** when it adapts an already-mapped property to a provider-specific storage or query capability that Trellis intentionally leaves to the Acl. If the offending CLR type round-trips losslessly through a sortable/comparable scalar (`string`, `long`, `decimal`), use that as the converter target.
+Manual `Property(...).HasConversion(...)` is **discouraged** when it duplicates Trellis-supported value-object conventions (those are handled by `ApplyTrellisConventions`), but **appropriate** when it adapts an already-mapped property to a provider-specific storage or query capability that Trellis intentionally leaves to the Acl. Choose a converter target that preserves the property's intended semantic and is sortable/comparable on the provider — for instant-only audit columns like `CreatedAt` / `LastModified`, a UTC-normalized scalar (ISO-8601 text or Unix-epoch `long`) preserves the instant and sorts correctly across rows written from different timezones; for columns where the original `DateTimeOffset.Offset` carries semantic meaning, that normalization is the wrong choice and you should pick a different storage shape (a side column for the offset, or a provider with native `datetimeoffset` support).
 
 ```csharp
 using System;
@@ -742,8 +742,16 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 // Example: SQLite cannot ORDER BY DateTimeOffset. Convert the framework-written
-// audit columns to ISO-8601 TEXT so server-side ordering on CreatedAt /
+// audit columns to UTC ISO-8601 TEXT so server-side ordering on CreatedAt /
 // LastModified works without materializing the result set first.
+//
+// NOTE: This converter normalizes every value to UTC on write. Round-trips
+// preserve the instant but read back with Offset == TimeSpan.Zero, not the
+// original offset. That trade-off is intentional for audit columns written by
+// EntityTimestampInterceptor (which always writes DateTimeOffset.UtcNow) and
+// is required for correct cross-row ordering when writes may come from clients
+// in different timezones. Do not reuse this converter for columns where the
+// original DateTimeOffset.Offset is semantically required.
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)
