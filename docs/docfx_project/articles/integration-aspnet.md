@@ -381,7 +381,7 @@ EntityTagValue[]? ifNoneMatch = ETagHelper.ParseIfNoneMatch(httpContext.Request)
 
 `ParseIfMatch` returns `null` (header absent), `[]` (present but empty / weak-only — strong-only enforcement), the wildcard, or the parsed strong tags. `ParseIfNoneMatch` returns `null`, `[]`, the wildcard, or the parsed strong/weak tags.
 
-The aggregate-side concurrency helpers `OptionalETag(...)` / `RequireETag(...)` consume `EntityTagValue[]?`. They live in `Trellis.Core` — see [`trellis-api-core.md`](../api_reference/trellis-api-core.md).
+The aggregate-side concurrency helpers `OptionalETag(...)` / `RequireETag(...)` consume `EntityTagValue[]?`. They live in `Trellis.Http.Abstractions` — see [`trellis-api-http-abstractions.md`](../api_reference/trellis-api-http-abstractions.md).
 
 For "create only if absent" flows (`PUT` / `POST` with `If-None-Match: *`), use `EnforceIfNoneMatchPrecondition`:
 
@@ -571,7 +571,8 @@ When you genuinely need a custom payload shape (non-Problem-Details body, endpoi
 ## Cross-references
 
 - API surface: [`trellis-api-asp.md`](../api_reference/trellis-api-asp.md)
-- `Result`, `Result<T>`, `Error`, `WriteOutcome<T>`, `Page<T>`, `EntityTagValue`, `OptionalETag` / `RequireETag`: [`trellis-api-core.md`](../api_reference/trellis-api-core.md)
+- `Result`, `Result<T>`, `Error`, `Page<T>`: [`trellis-api-core.md`](../api_reference/trellis-api-core.md)
+- `WriteOutcome<T>`, `EntityTagValue`, `OptionalETag` / `RequireETag`: [`trellis-api-http-abstractions.md`](../api_reference/trellis-api-http-abstractions.md)
 - `Actor`, `IActorProvider`, `IAuthorize`: [`trellis-api-authorization.md`](../api_reference/trellis-api-authorization.md)
 - `IScalarValue<TSelf, TPrimitive>`, `Maybe<T>`, ready-to-use value objects: [`trellis-api-primitives.md`](../api_reference/trellis-api-primitives.md)
 - Integration-test helpers (`CreateClientWithActor` for `X-Test-Actor`): [`trellis-api-testing-aspnetcore.md`](../api_reference/trellis-api-testing-aspnetcore.md)
