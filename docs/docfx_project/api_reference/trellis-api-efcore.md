@@ -748,10 +748,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 // NOTE: This converter normalizes every value to UTC on write. Round-trips
 // preserve the instant but read back with Offset == TimeSpan.Zero, not the
 // original offset. That trade-off is intentional for audit columns written by
-// EntityTimestampInterceptor (which always writes DateTimeOffset.UtcNow) and
-// is required for correct cross-row ordering when writes may come from clients
-// in different timezones. Do not reuse this converter for columns where the
-// original DateTimeOffset.Offset is semantically required.
+// EntityTimestampInterceptor (which always writes a UTC DateTimeOffset via
+// TimeProvider.GetUtcNow()) and is required for correct cross-row ordering
+// when writes may come from clients in different timezones. Do not reuse this
+// converter for columns where the original DateTimeOffset.Offset is
+// semantically required.
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)
