@@ -432,7 +432,7 @@ For non-pipeline scenarios, the equivalent is `await uow.CommitAsync(ct)` after 
 ## Cross-references
 
 - API surface: [`trellis-api-efcore.md`](../api_reference/trellis-api-efcore.md)
-- Acl-layer `ValueConverter` pattern for providers that cannot translate `DateTimeOffset` in `ORDER BY` on inherited audit columns: [Provider-specific column mapping](../api_reference/trellis-api-efcore.md#provider-specific-column-mapping)
+- Acl layer `ValueConverter` pattern for providers that cannot translate `DateTimeOffset` in `ORDER BY` on inherited audit columns: [Provider-specific column mapping](../api_reference/trellis-api-efcore.md#provider-specific-column-mapping)
 - `Result<T>`, `Maybe<T>`, `Error`, `Aggregate<TId>`, `Specification<T>`: [`trellis-api-core.md`](../api_reference/trellis-api-core.md)
 - Recipes (specifications with `Maybe<T>`, repository patterns, UoW): [`trellis-api-cookbook.md`](../api_reference/trellis-api-cookbook.md)
 - Mediator pipeline behaviors and registration order: [`trellis-api-mediator.md`](../api_reference/trellis-api-mediator.md)

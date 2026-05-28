@@ -360,7 +360,7 @@ public sealed class TestWebApplicationFactory : WebApplicationFactory<Program>
 > `ReplaceDbProvider<TContext>` re-registers the context via `AddDbContext<TContext>`. If your app uses `AddDbContextFactory` or `AddPooledDbContextFactory`, replace those registrations directly instead.
 
 > [!NOTE]
-> SQLite cannot translate `DateTimeOffset` in `ORDER BY` clauses. If your aggregate queries sort on inherited audit columns (`CreatedAt`, `LastModified`), register an Acl-layer `ValueConverter` per the canonical pattern in [Provider-specific column mapping](../api_reference/trellis-api-efcore.md#provider-specific-column-mapping). Without it, integration tests using the SQLite swap above will fail with a `DateTimeOffset` translation error at query time.
+> SQLite cannot translate `DateTimeOffset` in `ORDER BY` clauses. If your aggregate queries sort on inherited audit columns (`CreatedAt`, `LastModified`), register an Acl layer `ValueConverter` per the canonical pattern in [Provider-specific column mapping](../api_reference/trellis-api-efcore.md#provider-specific-column-mapping). Without it, integration tests using the SQLite swap above will fail with a `DateTimeOffset` translation error at query time.
 
 ### Deterministic time
 
