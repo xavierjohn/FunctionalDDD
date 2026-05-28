@@ -316,6 +316,7 @@ public static class OrdersDi
 
 ```csharp
 using Trellis;
+using Trellis.EntityFrameworkCore;
 
 // Paging cursor and limit are protocol/query-string controls validated at the transport seam.
 public sealed record ListOrdersQuery(string? Cursor, int? Limit) : IQuery<Result<Page<OrderListItem>>>;
@@ -328,38 +329,20 @@ public sealed class ListOrdersHandler(AppDbContext db)
     public async ValueTask<Result<Page<OrderListItem>>> Handle(ListOrdersQuery q, CancellationToken ct)
     {
         var pageSize = PageSize.FromRequested(q.Limit);
+        var cursor = q.Cursor is { Length: > 0 } token ? new Cursor(token) : (Cursor?)null;
 
-        Guid? afterId = null;
-        if (q.Cursor is { } cursorToken)
-        {
-            if (cursorToken.Length == 0)
-                return Result.Fail<Page<OrderListItem>>(
-                    Error.InvalidInput.ForField("cursor", "cursor.malformed", "Cursor must not be empty."));
+        var page = await db.Orders.AsNoTracking()
+            .ToPageAsync(pageSize, cursor, o => o.Id.Value, cursorFieldName: "cursor", ct);
 
-            var decoded = CursorCodec.TryDecode<Guid>(new Cursor(cursorToken), fieldName: "cursor");
-            if (decoded.IsFailure)
-                return Result.Fail<Page<OrderListItem>>(decoded.Error!);
-            decoded.TryGetValue(out var id);
-            afterId = id;
-        }
-
-        var query = db.Orders.AsNoTracking().OrderBy(o => o.Id);
-        var filtered = afterId is { } cursorId
-            ? query.Where(o => o.Id.Value > cursorId)
-            : (IQueryable<Order>)query;
-
-        var rows = await filtered.Take(pageSize.Applied + 1).ToListAsync(ct);
-
-        return Result.Ok(
-            PageBuilder.FromOverFetch(rows, pageSize, o => o.Id.Value)
-                .Map(o => new OrderListItem(o.Id.Value, o.Total.Amount, o.Total.Currency.Value)));
+        return page.Map(p => p.Map(o =>
+            new OrderListItem(o.Id.Value, o.Total.Amount, o.Total.Currency.Value)));
     }
 }
 ```
 
-**What it shows.** `PageSize.FromRequested` is the canonical lenient parser: `null` or non-positive limits collapse to `PageSize.Default`, and `Applied` is clamped to `PageSize.Max` while `Requested` is preserved verbatim so `WasCapped` round-trips through the wire envelope. `CursorCodec.TryDecode<TKey>` parses an opaque token into a typed key (returning `Error.InvalidInput` on a malformed cursor) — value-object IDs are accommodated by projecting to the underlying primitive (`.Value`). `PageBuilder.FromOverFetch` slices the over-fetched list and emits the next cursor from the last kept row; `Previous` is always `null` (forward-only) until Trellis ships a reverse-seek API. `Page<T>.Map` projects to a DTO without re-running the cursor or limit ceremony.
+**What it shows.** `PageSize.FromRequested` is the canonical lenient parser: `null` or non-positive limits collapse to `PageSize.Default`, and `Applied` is clamped to `PageSize.Max` while `Requested` is preserved verbatim so `WasCapped` round-trips through the wire envelope. `IQueryable<T>.ToPageAsync` (from `Trellis.EntityFrameworkCore`) owns the `OrderBy`, the cursor decoding (returning `Error.InvalidInput` with `cursor.malformed` on a bad token), the seek `WHERE` predicate, the `Take(Applied + 1)` over-fetch, and the slice via `PageBuilder.FromOverFetch`. `Result<T>.Map` then composes the entity-to-DTO projection (via `Page<T>.Map`) without unwrapping the railway; `Previous` is always `null` (forward-only) until Trellis ships a reverse-seek API.
 
-> **Cursor parsing must be ROP, not throwing.** Hand-rolling `Guid.Parse(cursor)` would throw on malformed input and escape the handler as a 500. `CursorCodec.TryDecode<TKey>` returns `Result.Fail` with `Error.InvalidInput` (reason code `cursor.malformed`) so a bad cursor surfaces as a clean 422, not a stack trace.
+> **Cursor parsing must be ROP, not throwing.** `ToPageAsync` decodes cursors via `CursorCodec.TryDecode<TKey>` internally and returns `Result.Fail` on malformed input, so a bad cursor surfaces as a clean 422 rather than a 500. Hand-rolling `Guid.Parse(cursor)` would throw on malformed input and escape the handler as a 500.
 
 ---
 

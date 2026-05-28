@@ -33,16 +33,18 @@ Graph, OData v4, GitHub, Stripe, and most other modern APIs.
 
 ## The building blocks
 
-All the pagination primitives live in the `Trellis` namespace under `Trellis.Core`.
+The storage-agnostic primitives live in the `Trellis` namespace under
+`Trellis.Core`. The EF Core helper lives in `Trellis.EntityFrameworkCore`.
 
-| Type | Purpose |
-| --- | --- |
-| `Cursor` | Opaque continuation token (a `readonly record struct` over a `string Token`). |
-| `Page<T>` | Validated `readonly record struct` carrying `Items`, `Next`, `Previous`, `RequestedLimit`, `AppliedLimit`. |
-| `PageSize` | Pair of `Requested` + `Applied` limits with `WasCapped`; canonical parser is `PageSize.FromRequested(int?, int max)`. |
-| `CursorCodec` | Static encoder/decoder for single-key (`Id`) and composite (`CreatedAt, Id`) cursors. |
-| `PageBuilder` | Storage-agnostic over-fetch slicer that turns `applied + 1` rows into a validated `Page<T>` with the correct `Next` cursor. |
-| `Page<T>.Map<TOut>` | Instance method that projects items while preserving cursors and limits. |
+| Type | Package | Purpose |
+| --- | --- | --- |
+| `Cursor` | `Trellis.Core` | Opaque continuation token (a `readonly record struct` over a `string Token`). |
+| `Page<T>` | `Trellis.Core` | Validated `readonly record struct` carrying `Items`, `Next`, `Previous`, `RequestedLimit`, `AppliedLimit`. |
+| `PageSize` | `Trellis.Core` | Pair of `Requested` + `Applied` limits with `WasCapped`; canonical parser is `PageSize.FromRequested(int?, int max)`. |
+| `CursorCodec` | `Trellis.Core` | Static encoder/decoder for single-key (`Id`) and composite (`CreatedAt, Id`) cursors. |
+| `PageBuilder` | `Trellis.Core` | Storage-agnostic over-fetch slicer that turns `applied + 1` rows into a validated `Page<T>` with the correct `Next` cursor. |
+| `Page<T>.Map<TOut>` | `Trellis.Core` | Instance method that projects items while preserving cursors and limits. |
+| `IQueryable<T>.ToPageAsync` | `Trellis.EntityFrameworkCore` | EF Core extension that owns `OrderBy`, cursor decoding, the seek `WHERE`, the over-fetch, and the slice. Composes with `Page<T>.Map` for DTO projection. |
 
 ## The canonical query-handler shape
 
@@ -52,6 +54,7 @@ and projects to a DTO — all without leaking exceptions:
 
 ```csharp
 using Trellis;
+using Trellis.EntityFrameworkCore;
 
 public sealed record ListOrdersQuery(string? Cursor, int? Limit)
     : IQuery<Result<Page<OrderListItem>>>;
@@ -65,36 +68,21 @@ public sealed class ListOrdersHandler(AppDbContext db)
         ListOrdersQuery query, CancellationToken ct)
     {
         var pageSize = PageSize.FromRequested(query.Limit);
+        var cursor = query.Cursor is { Length: > 0 } token ? new Cursor(token) : (Cursor?)null;
 
-        Guid? afterId = null;
-        if (query.Cursor is { } cursorToken)
-        {
-            if (cursorToken.Length == 0)
-                return Result.Fail<Page<OrderListItem>>(
-                    Error.InvalidInput.ForField("cursor", "cursor.malformed",
-                        "Cursor must not be empty."));
+        var page = await db.Orders.AsNoTracking()
+            .ToPageAsync(pageSize, cursor, o => o.Id.Value, cursorFieldName: "cursor", ct);
 
-            var decoded = CursorCodec.TryDecode<Guid>(
-                new Cursor(cursorToken), fieldName: "cursor");
-            if (decoded.IsFailure)
-                return Result.Fail<Page<OrderListItem>>(decoded.Error!);
-            decoded.TryGetValue(out var id);
-            afterId = id;
-        }
-
-        var ordered = db.Orders.AsNoTracking().OrderBy(o => o.Id);
-        var filtered = afterId is { } cursorId
-            ? ordered.Where(o => o.Id.Value > cursorId)
-            : (IQueryable<Order>)ordered;
-
-        var rows = await filtered.Take(pageSize.Applied + 1).ToListAsync(ct);
-
-        return Result.Ok(
-            PageBuilder.FromOverFetch(rows, pageSize, o => o.Id.Value)
-                .Map(o => new OrderListItem(o.Id.Value, o.Total.Amount, o.Total.Currency.Value)));
+        return page.Map(p => p.Map(o =>
+            new OrderListItem(o.Id.Value, o.Total.Amount, o.Total.Currency.Value)));
     }
 }
 ```
+
+`ToPageAsync` returns `Task<Result<Page<T>>>`; a malformed cursor surfaces as
+`Result.Fail<Page<T>>(Error.InvalidInput.ForField("cursor", "cursor.malformed", …))`
+without throwing. `Result<T>.Map(Func<T, TOut>)` then composes the
+`Page<Order> → Page<OrderListItem>` projection without unwrapping the railway.
 
 The endpoint then maps `Result<Page<T>>` to the HTTP wire:
 
@@ -212,20 +200,29 @@ fetched = 25    →  page has no Next  (under-fill; this is the last page)
 fetched = 0     →  empty page        (under-fill; both cursors null)
 ```
 
-`PageBuilder.FromOverFetch` encodes that logic once. The caller's only
-responsibility is to fetch `pageSize.Applied + 1` rows ordered by the same key
-the selector returns:
+`PageBuilder.FromOverFetch` encodes that logic once. EF Core consumers should
+reach for `IQueryable<T>.ToPageAsync` (in `Trellis.EntityFrameworkCore`) which
+wraps the over-fetch, the seek predicate, and the slice in one call. If you
+must work at the lower layer (a non-EF store, or a manual seek shape), the
+caller's responsibility is to fetch `pageSize.Applied + 1` rows ordered by the
+same key the selector returns:
 
 ```csharp
-var ordered = db.Orders.AsNoTracking().OrderBy(o => o.Id);
-var filtered = afterId is { } cursorId
-    ? ordered.Where(o => o.Id.Value > cursorId)
+var ordered = db.Orders.AsNoTracking().OrderBy(o => o.Amount);
+var filtered = afterAmount is { } cursorAmount
+    ? ordered.Where(o => o.Amount > cursorAmount)
     : (IQueryable<Order>)ordered;
 
 var rows = await filtered.Take(pageSize.Applied + 1).ToListAsync(ct);
 
-var page = PageBuilder.FromOverFetch(rows, pageSize, o => o.Id.Value);
+var page = PageBuilder.FromOverFetch(rows, pageSize, o => o.Amount);
 ```
+
+> **Guid / string keys.** `Guid` and `string` do not expose a C# `>` operator,
+> so a hand-rolled `Where(o => o.Id.Value > cursorId)` will not compile. Use
+> `ToPageAsync` (which routes through `IComparable<TKey>.CompareTo` for those
+> types and emits provider-translated SQL), or write the predicate as
+> `Where(o => o.Id.Value.CompareTo(cursorId) > 0)` in the manual shape.
 
 For stable time-ordered seek (rows with non-unique primary sort keys, e.g.
 events at the same millisecond), use the composite overload:
@@ -303,4 +300,6 @@ No throw on any cursor or limit input — every failure surfaces as
 ## See also
 
 * API reference: [Trellis.Core pagination types](../api_reference/trellis-api-core.md#pagination)
+* API reference: [`PaginationQueryableExtensions.ToPageAsync` (Trellis.EntityFrameworkCore)](../api_reference/trellis-api-efcore.md#paginationqueryableextensions)
 * Cookbook: [Recipe 3 — Query handler returning Page<T>](../api_reference/trellis-api-cookbook.md#recipe-3--query-handler-returning-paget-paginated-list-with-cursor)
+* EF Core provider quirks: [Provider-specific column mapping](../api_reference/trellis-api-efcore.md#provider-specific-column-mapping)

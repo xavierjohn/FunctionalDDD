@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — pagination ergonomics
+
+- **`Trellis.Core`** — first-class cursor pagination primitives shared by every storage adapter and transport: `PageSize` (with `FromRequested` lenient parser and `TryCreate` strict parser), `Cursor` (opaque `readonly record struct`), `CursorCodec` (URL-safe base64 encode / `TryDecode<TKey>` returning `Result<TKey>` with `Error.InvalidInput.ForField(..., "cursor.malformed", ...)` on bad input), `Page<T>` (`Items`, `Next`, `Previous`, `RequestedLimit`, `AppliedLimit`, `WasCapped`, `DeliveredCount`), `Page<T>.Map<TOut>` (preserves cursors and limits across DTO projection), and `PageBuilder.FromOverFetch` (storage-agnostic over-fetch slicer for single-key and composite `(CreatedAt, Id)` seek). All AOT-friendly — no JSON, no reflection, no `Expression.Compile`.
+- **`Trellis.EntityFrameworkCore`** — `PaginationQueryableExtensions.ToPageAsync<T, TKey>(this IQueryable<T>, PageSize, Cursor?, Expression<Func<T, TKey>>, string?, CancellationToken)`. The helper owns the `OrderBy(keySelector)`, the cursor decode (returns `Result.Fail<Page<T>>` with `cursor.malformed` on bad input — never throws), the seek `WHERE` predicate (`Expression.GreaterThan` for numeric / `DateTime` / `DateTimeOffset` keys; `IComparable<TKey>.CompareTo` for `Guid` and `string` keys), the `Take(Applied + 1)` over-fetch, and the slice via `PageBuilder.FromOverFetch`. The canonical EF query-handler shape collapses to one line: `await db.Orders.AsNoTracking().ToPageAsync(pageSize, cursor, o => o.Id.Value, "cursor", ct)`. Value-object Id projections (`c => c.Id.Value`) require `AddTrellisInterceptors()`. Single-key seek requires a stable, unique ascending key; a composite `(CreatedAt, Id)` overload is deferred to a follow-up release.
+- **`Trellis.Core`** — `Maybe<T>.HasValueWhere(Func<T, bool>)` for fluent presence-and-predicate checks; `Money.Sum` extension methods over `IEnumerable<Money>` with single-currency validation.
+
 ### Breaking changes — `Trellis.Core.Error` union DDD realignment
 
 The `Trellis.Core.Error` discriminated union no longer embeds HTTP/RFC transport vocabulary. The domain stays transport-neutral; HTTP-specific error types now live in a new `Trellis.Http.Abstractions` package and flow through `Result<T>` via the `Error.TransportFault(ITransportFault Fault)` envelope.

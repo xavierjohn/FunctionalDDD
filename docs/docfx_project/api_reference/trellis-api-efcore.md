@@ -35,6 +35,7 @@ Use this table to find the canonical Trellis API for the most common EF Core tas
 | Classify an EF/DB exception | `DbExceptionClassifier.IsDuplicateKey(ex)` / `IsForeignKeyViolation(ex)` / `ExtractConstraintDetail(ex)`. To map DB exceptions to a Trellis `Error` automatically, use `db.SaveChangesResultAsync()` / `SaveChangesResultUnitAsync()` instead of catching and classifying by hand. | [`DbExceptionClassifier`](#dbexceptionclassifier), [`DbContextExtensions`](#dbcontextextensions) |
 | Wrap an aggregate-store repository with `Result<T>` returns | Inherit `RepositoryBase<TAggregate, TId>` | [`RepositoryBase<TAggregate, TId>`](#repositorybasetaggregate-tid) |
 | Stage commands in a unit of work and flush once per request | `IUnitOfWork` + `EfUnitOfWork<TContext>` + `TransactionalCommandBehavior<,>` (registered via `AddTrellisUnitOfWork<TContext>()`) | [`IUnitOfWork`](#iunitofwork), [`EfUnitOfWork<TContext>`](#efunitofworktcontext), [`TransactionalCommandBehavior<TMessage, TResponse>`](#transactionalcommandbehaviortmessage-tresponse) |
+| Paginate an `IQueryable<T>` with forward-only cursor-based seek (decodes the cursor, applies the seek `WHERE`, over-fetches, and slices through `PageBuilder` in one call) | `IQueryable<T>.ToPageAsync(pageSize, cursor, keySelector, …)` | [`PaginationQueryableExtensions`](#paginationqueryableextensions) |
 
 ## Common traps
 
@@ -161,6 +162,26 @@ public static class QueryableExtensions
 | `public static Task<Result<T>> FirstOrDefaultResultAsync<T>(this IQueryable<T> query, Error notFoundError, CancellationToken cancellationToken = default) where T : class` | `Task<Result<T>>` | Returns the first match or **the exact `notFoundError` supplied by the caller**. |
 | `public static Task<Result<T>> FirstOrDefaultResultAsync<T>(this IQueryable<T> query, Expression<Func<T, bool>> predicate, Error notFoundError, CancellationToken cancellationToken = default) where T : class` | `Task<Result<T>>` | Returns the first predicate match or **the exact `notFoundError` supplied by the caller**. |
 | `public static IQueryable<T> Where<T>(this IQueryable<T> query, Specification<T> specification) where T : class` | `IQueryable<T>` | Applies a Trellis specification expression to the query. |
+
+### `PaginationQueryableExtensions`
+
+```csharp
+public static class PaginationQueryableExtensions
+```
+
+EF Core seek-pagination helper that composes with the storage-agnostic `Trellis.Core` primitives (`PageSize`, `Cursor`, `CursorCodec`, `PageBuilder`, `Page<T>`). The method owns the `OrderBy(keySelector)`, the cursor decoding, the seek `WHERE` predicate, the `Take(Applied + 1)` over-fetch, and the slice — callers supply a pre-filtered `IQueryable<T>` and the sort-key projection.
+
+| Name | Type | Description |
+| --- | --- | --- |
+| — | — | No public properties. |
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `public static Task<Result<Page<T>>> ToPageAsync<T, TKey>(this IQueryable<T> source, PageSize pageSize, Cursor? cursor, Expression<Func<T, TKey>> keySelector, string? cursorFieldName = null, CancellationToken cancellationToken = default) where T : class where TKey : notnull, IComparable<TKey>, IParsable<TKey>` | `Task<Result<Page<T>>>` | Materializes one forward-only seek page. Returns `Result.Fail<Page<T>>(Error.InvalidInput.ForField(cursorFieldName ?? "cursor", "cursor.malformed", …))` on a malformed cursor and never throws on a bad client input. Throws `ArgumentNullException` for `null` `source` or `keySelector`, and `ArgumentOutOfRangeException` for a non-validated `pageSize` (e.g. `default(PageSize)`) before any SQL round-trip. The seek predicate uses `Expression.GreaterThan` for numeric and `DateTime`/`DateTimeOffset` keys and routes through `IComparable<TKey>.CompareTo` for `Guid` and `string` keys; see the `PaginationQueryableExtensions` XML docs for the full provider-support note. |
+
+**Single-key seek requires a stable, unique ascending key.** With a non-unique key, rows that share the boundary value with the last item on the previous page are silently skipped on the next page — use a primary-key surrogate (or the upcoming composite `(CreatedAt, Id)` overload) when the natural sort key is not unique.
+
+**Value-object Id projection** (`c => c.Id.Value`) requires `AddTrellisInterceptors()` on the `DbContextOptionsBuilder` so the `ScalarValueQueryInterceptor` rewrites the projection for EF translation. See [`DbContextOptionsBuilderExtensions`](#dbcontextoptionsbuilderextensions) and [`ScalarValueQueryInterceptor`](#scalarvaluequeryinterceptor).
 
 ### `RepositoryBase<TAggregate, TId>`
 
@@ -535,6 +556,20 @@ public static Task<Result<T>> FirstOrDefaultResultAsync<T>(this IQueryable<T> qu
 public static IQueryable<T> Where<T>(this IQueryable<T> query, Specification<T> specification) where T : class
 ```
 
+### `PaginationQueryableExtensions`
+
+```csharp
+public static Task<Result<Page<T>>> ToPageAsync<T, TKey>(
+    this IQueryable<T> source,
+    PageSize pageSize,
+    Cursor? cursor,
+    Expression<Func<T, TKey>> keySelector,
+    string? cursorFieldName = null,
+    CancellationToken cancellationToken = default)
+    where T : class
+    where TKey : notnull, IComparable<TKey>, IParsable<TKey>
+```
+
 ### `MaybeQueryableExtensions`
 
 ```csharp
@@ -777,6 +812,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbCon
 ```
 
 The same pattern applies to other CLR-type / provider mismatches — for example `decimal` on a provider that only supports `double`, or a value object on a document store that cannot project nested types. Identify a sortable/comparable scalar that preserves the value, register the converter in the Acl, and keep the repository query server-side rather than falling back to `ToListAsync()` + in-memory ordering.
+
+The same Acl boundary applies to [`PaginationQueryableExtensions.ToPageAsync`](#paginationqueryableextensions). The helper emits `Expression.GreaterThan` for numeric and `DateTime`/`DateTimeOffset` keys (which translate natively on every common provider) and routes through `IComparable<TKey>.CompareTo` for `Guid` and `string` keys (which SQL Server translates to native `ORDER BY` / `>` semantics, and which other providers translate to their dialect equivalents). If a provider rejects the `CompareTo` shape for a particular key type, register a `ValueConverter` on the Id column that converts to a sortable scalar (e.g. `Guid` → `string` byte-canonical form on Postgres) so the seek predicate translates correctly.
 
 ## Cross-references
 
