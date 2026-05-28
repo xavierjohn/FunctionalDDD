@@ -781,7 +781,7 @@ public class MaybeQueryableExtensionsTests : IDisposable
 
         using var context = new InheritedMaybeQueryDbContext(
             new DbContextOptionsBuilder<InheritedMaybeQueryDbContext>()
-                .UseSqlite(connection)
+                .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
                 .Options);
         context.Database.EnsureCreated();
 
@@ -820,7 +820,7 @@ public class MaybeQueryableExtensionsTests : IDisposable
 
         using var context = new InheritedMaybeQueryDbContext(
             new DbContextOptionsBuilder<InheritedMaybeQueryDbContext>()
-                .UseSqlite(connection)
+                .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
                 .Options);
         context.Database.EnsureCreated();
 

@@ -176,7 +176,7 @@ public class ApplyTrellisConventionsForTests : IDisposable
     private class MisconfiguredDbContext : DbContext
     {
         public MisconfiguredDbContext(SqliteConnection connection)
-            : base(new DbContextOptionsBuilder<MisconfiguredDbContext>().UseSqlite(connection).Options)
+            : base(new DbContextOptionsBuilder<MisconfiguredDbContext>().UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning().Options)
         {
         }
 
@@ -196,7 +196,7 @@ internal class GeneratedConventionsTestDbContext : DbContext
 
     public GeneratedConventionsTestDbContext(SqliteConnection connection)
         : base(new DbContextOptionsBuilder<GeneratedConventionsTestDbContext>()
-            .UseSqlite(connection)
+            .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
             .Options)
     {
     }

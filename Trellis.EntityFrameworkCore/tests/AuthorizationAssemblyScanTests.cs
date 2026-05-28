@@ -1,4 +1,4 @@
-namespace Trellis.EntityFrameworkCore.Tests;
+﻿namespace Trellis.EntityFrameworkCore.Tests;
 
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
@@ -78,7 +78,7 @@ public class AuthorizationAssemblyScanTests : IDisposable
 
         public ActorIdTestDbContext(SqliteConnection connection)
             : base(new DbContextOptionsBuilder<ActorIdTestDbContext>()
-                .UseSqlite(connection)
+                .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
                 .Options)
         {
         }

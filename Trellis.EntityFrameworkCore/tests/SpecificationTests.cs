@@ -35,7 +35,7 @@ public class SpecificationTests : IAsyncLifetime
         await _sqliteConnection.OpenAsync();
 
         var sqliteOptions = new DbContextOptionsBuilder<ScalarValueTestDbContext>()
-            .UseSqlite(_sqliteConnection)
+            .UseSqlite(_sqliteConnection).IgnoreManyServiceProvidersCreatedWarning()
             .AddTrellisInterceptors()
             .Options;
 
@@ -48,7 +48,7 @@ public class SpecificationTests : IAsyncLifetime
             try
             {
                 var sqlServerOptions = new DbContextOptionsBuilder<ScalarValueTestDbContext>()
-                    .UseSqlServer(SqlServerConnectionString)
+                    .UseSqlServer(SqlServerConnectionString).IgnoreManyServiceProvidersCreatedWarning()
                     .AddTrellisInterceptors()
                     .Options;
 

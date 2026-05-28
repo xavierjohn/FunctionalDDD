@@ -30,7 +30,7 @@ public partial class MaybeMoneyTests : IDisposable
             _connection = new SqliteConnection("DataSource=:memory:");
             _connection.Open();
             var options = new DbContextOptionsBuilder<MaybeMoneyDbContext>()
-                .UseSqlite(_connection)
+                .UseSqlite(_connection).IgnoreManyServiceProvidersCreatedWarning()
                 .Options;
             _context = new MaybeMoneyDbContext(options);
             _context.Database.EnsureCreated();

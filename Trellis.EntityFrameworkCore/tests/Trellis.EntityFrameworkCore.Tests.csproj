@@ -2,6 +2,7 @@
 
 	<ItemGroup>
 	  <Using Include="Trellis.EntityFrameworkCore" />
+	  <Using Include="Trellis.EntityFrameworkCore.Tests.Helpers" />
 	</ItemGroup>
 
 	<ItemGroup>

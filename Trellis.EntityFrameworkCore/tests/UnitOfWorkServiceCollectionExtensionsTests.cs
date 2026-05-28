@@ -14,7 +14,7 @@ public class UnitOfWorkServiceCollectionExtensionsTests
         // (or composed twice in test setup) without producing duplicate IUnitOfWork
         // registrations or duplicate TransactionalCommandBehavior pipeline entries.
         var services = new ServiceCollection();
-        services.AddDbContext<RepoTestDbContext>(o => o.UseSqlite("DataSource=:memory:"));
+        services.AddDbContext<RepoTestDbContext>(o => o.UseSqlite("DataSource=:memory:").IgnoreManyServiceProvidersCreatedWarning());
 
         services.AddTrellisUnitOfWork<RepoTestDbContext>();
         services.AddTrellisUnitOfWork<RepoTestDbContext>();
@@ -31,7 +31,7 @@ public class UnitOfWorkServiceCollectionExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddDbContext<RepoTestDbContext>(o => o.UseSqlite("DataSource=:memory:"));
+        services.AddDbContext<RepoTestDbContext>(o => o.UseSqlite("DataSource=:memory:").IgnoreManyServiceProvidersCreatedWarning());
 
         // Act
         services.AddTrellisUnitOfWork<RepoTestDbContext>();
@@ -48,7 +48,7 @@ public class UnitOfWorkServiceCollectionExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddDbContext<RepoTestDbContext>(o => o.UseSqlite("DataSource=:memory:"));
+        services.AddDbContext<RepoTestDbContext>(o => o.UseSqlite("DataSource=:memory:").IgnoreManyServiceProvidersCreatedWarning());
 
         // Act
         services.AddTrellisUnitOfWorkWithoutBehavior<RepoTestDbContext>();
@@ -65,7 +65,7 @@ public class UnitOfWorkServiceCollectionExtensionsTests
     {
         // Arrange — register a fake behavior first (simulates AddTrellisBehaviors)
         var services = new ServiceCollection();
-        services.AddDbContext<RepoTestDbContext>(o => o.UseSqlite("DataSource=:memory:"));
+        services.AddDbContext<RepoTestDbContext>(o => o.UseSqlite("DataSource=:memory:").IgnoreManyServiceProvidersCreatedWarning());
         services.AddScoped(typeof(IPipelineBehavior<,>), typeof(FakeBehavior<,>));
 
         // Act
@@ -86,7 +86,7 @@ public class UnitOfWorkServiceCollectionExtensionsTests
     {
         // Arrange — UoW registered first, then "other" behaviors added later
         var services = new ServiceCollection();
-        services.AddDbContext<RepoTestDbContext>(o => o.UseSqlite("DataSource=:memory:"));
+        services.AddDbContext<RepoTestDbContext>(o => o.UseSqlite("DataSource=:memory:").IgnoreManyServiceProvidersCreatedWarning());
 
         // Act — register UoW first (no other behaviors yet), then add another behavior
         services.AddTrellisUnitOfWork<RepoTestDbContext>();
@@ -109,7 +109,7 @@ public class UnitOfWorkServiceCollectionExtensionsTests
     {
         // Arrange
         var services = new ServiceCollection();
-        services.AddDbContext<RepoTestDbContext>(o => o.UseSqlite("DataSource=:memory:"));
+        services.AddDbContext<RepoTestDbContext>(o => o.UseSqlite("DataSource=:memory:").IgnoreManyServiceProvidersCreatedWarning());
         services.AddTrellisUnitOfWork<RepoTestDbContext>();
         using var provider = services.BuildServiceProvider();
 

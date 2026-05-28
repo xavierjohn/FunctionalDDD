@@ -20,7 +20,7 @@ public class EntityIdInitSetterTests : IDisposable
         _connection.Open();
 
         var options = new DbContextOptionsBuilder<EntityTestDbContext>()
-            .UseSqlite(_connection)
+            .UseSqlite(_connection).IgnoreManyServiceProvidersCreatedWarning()
             .Options;
 
         _context = new EntityTestDbContext(options);

@@ -20,7 +20,7 @@ public class AggregateTransientPropertyTests : IDisposable
         _connection.Open();
 
         var options = new DbContextOptionsBuilder<TransientPropertyTestDbContext>()
-            .UseSqlite(_connection)
+            .UseSqlite(_connection).IgnoreManyServiceProvidersCreatedWarning()
             .AddTrellisInterceptors()
             .Options;
 

@@ -22,7 +22,7 @@ public sealed partial class RepositoryBaseFilterTests : IDisposable
         _connection.Open();
 
         var options = new DbContextOptionsBuilder<FilterTestDbContext>()
-            .UseSqlite(_connection)
+            .UseSqlite(_connection).IgnoreManyServiceProvidersCreatedWarning()
             .Options;
 
         _context = new FilterTestDbContext(options);

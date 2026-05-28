@@ -237,7 +237,7 @@ internal class TimestampTestDbContext : DbContext
         var interceptor = new EntityTimestampInterceptor(timeProvider);
 
         var options = new DbContextOptionsBuilder<TimestampTestDbContext>()
-            .UseSqlite(connection)
+            .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
             .AddInterceptors(interceptor)
             .Options;
 

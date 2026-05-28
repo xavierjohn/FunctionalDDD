@@ -16,10 +16,23 @@ internal class TestDbContext : DbContext
     }
 
     public TestDbContext(SqliteConnection connection)
-        : base(new DbContextOptionsBuilder<TestDbContext>()
-            .UseSqlite(connection)
-            .Options)
+        : base(BuildOptions(connection, withInterceptors: false))
     {
+    }
+
+    public TestDbContext(SqliteConnection connection, bool withInterceptors)
+        : base(BuildOptions(connection, withInterceptors))
+    {
+    }
+
+    private static DbContextOptions<TestDbContext> BuildOptions(SqliteConnection connection, bool withInterceptors)
+    {
+        var builder = new DbContextOptionsBuilder<TestDbContext>()
+            .UseSqlite(connection)
+            .IgnoreManyServiceProvidersCreatedWarning();
+        if (withInterceptors)
+            builder.AddTrellisInterceptors();
+        return builder.Options;
     }
 
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder) =>
@@ -52,12 +65,17 @@ internal class TestDbContext : DbContext
     /// The connection stays open for the lifetime of the returned context.
     /// Caller is responsible for disposing the connection.
     /// </summary>
-    public static (TestDbContext Context, SqliteConnection Connection) CreateInMemory()
+    /// <param name="withInterceptors">
+    /// When <c>true</c>, registers the Trellis EF Core interceptors so query expressions
+    /// like <c>c => c.Id.Value</c> (scalar value-object projections) translate to SQL.
+    /// Defaults to <c>false</c> to keep existing tests unaffected.
+    /// </param>
+    public static (TestDbContext Context, SqliteConnection Connection) CreateInMemory(bool withInterceptors = false)
     {
         var connection = new SqliteConnection("DataSource=:memory:");
         connection.Open();
 
-        var context = new TestDbContext(connection);
+        var context = new TestDbContext(connection, withInterceptors);
         context.Database.EnsureCreated();
 
         return (context, connection);

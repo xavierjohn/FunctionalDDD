@@ -35,7 +35,7 @@ public class MixedTypeCompositeVoTests : IDisposable
             _connection = new SqliteConnection("DataSource=:memory:");
             _connection.Open();
             var options = new DbContextOptionsBuilder<MixedTypeVoDbContext>()
-                .UseSqlite(_connection)
+                .UseSqlite(_connection).IgnoreManyServiceProvidersCreatedWarning()
                 .Options;
             _context = new MixedTypeVoDbContext(options);
             _context.Database.EnsureCreated();

@@ -221,7 +221,7 @@ public class ArgumentValidationTests
     private sealed class NullElementContext : DbContext
     {
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder) =>
-            optionsBuilder.UseSqlite(new Microsoft.Data.Sqlite.SqliteConnection("DataSource=:memory:"));
+            optionsBuilder.UseSqlite(new Microsoft.Data.Sqlite.SqliteConnection("DataSource=:memory:")).IgnoreManyServiceProvidersCreatedWarning();
 
         protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder) =>
             configurationBuilder.ApplyTrellisConventions(typeof(ArgumentValidationTests).Assembly, null!);

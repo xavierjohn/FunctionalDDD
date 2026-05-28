@@ -18,7 +18,7 @@ public partial class ValueObjectMappingGuardConventionTests
         using var connection = new SqliteConnection("DataSource=:memory:");
         connection.Open();
         var options = new DbContextOptionsBuilder<MisusedMoneyDbContext>()
-            .UseSqlite(connection)
+            .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
             .Options;
         using var ctx = new MisusedMoneyDbContext(options);
 
@@ -38,7 +38,7 @@ public partial class ValueObjectMappingGuardConventionTests
         using var connection = new SqliteConnection("DataSource=:memory:");
         connection.Open();
         var options = new DbContextOptionsBuilder<MisusedMaybeDbContext>()
-            .UseSqlite(connection)
+            .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
             .Options;
         using var ctx = new MisusedMaybeDbContext(options);
 
@@ -58,7 +58,7 @@ public partial class ValueObjectMappingGuardConventionTests
         using var connection = new SqliteConnection("DataSource=:memory:");
         connection.Open();
         var options = new DbContextOptionsBuilder<WellFormedMoneyDbContext>()
-            .UseSqlite(connection)
+            .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
             .Options;
         using var ctx = new WellFormedMoneyDbContext(options);
 
@@ -73,7 +73,7 @@ public partial class ValueObjectMappingGuardConventionTests
         using var connection = new SqliteConnection("DataSource=:memory:");
         connection.Open();
         var options = new DbContextOptionsBuilder<WellFormedMaybeDbContext>()
-            .UseSqlite(connection)
+            .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
             .Options;
         using var ctx = new WellFormedMaybeDbContext(options);
 
