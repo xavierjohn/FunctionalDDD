@@ -278,7 +278,7 @@ internal class ConcurrencyTestDbContext : DbContext
         connection.Open();
 
         var options = new DbContextOptionsBuilder<ConcurrencyTestDbContext>()
-            .UseSqlite(connection)
+            .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
             .AddTrellisInterceptors()
             .Options;
 
@@ -291,7 +291,7 @@ internal class ConcurrencyTestDbContext : DbContext
     public static (ConcurrencyTestDbContext Context, IDisposable Noop) CreateFromConnection(SqliteConnection connection)
     {
         var options = new DbContextOptionsBuilder<ConcurrencyTestDbContext>()
-            .UseSqlite(connection)
+            .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
             .AddTrellisInterceptors()
             .Options;
 

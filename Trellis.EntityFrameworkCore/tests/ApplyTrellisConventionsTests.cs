@@ -263,7 +263,7 @@ public class ApplyTrellisConventionsTests : IDisposable
         connection.Open();
 
         var options = new DbContextOptionsBuilder<ManualConverterDbContext>()
-            .UseSqlite(connection)
+            .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
             .Options;
 
         using var context = new ManualConverterDbContext(options);
@@ -451,7 +451,7 @@ public class ApplyTrellisConventionsTests : IDisposable
         connection.Open();
 
         var options = new DbContextOptionsBuilder<InternalValueObjectDbContext>()
-            .UseSqlite(connection)
+            .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
             .Options;
 
         await using var context = new InternalValueObjectDbContext(options);

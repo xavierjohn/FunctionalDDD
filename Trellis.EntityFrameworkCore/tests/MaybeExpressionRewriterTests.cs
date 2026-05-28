@@ -21,7 +21,7 @@ public class MaybeExpressionRewriterTests : IDisposable
         _connection.Open();
 
         var options = new DbContextOptionsBuilder<InterceptorTestDbContext>()
-            .UseSqlite(_connection)
+            .UseSqlite(_connection).IgnoreManyServiceProvidersCreatedWarning()
             .AddInterceptors(new MaybeQueryInterceptor())
             // Each test in this class constructs a fresh DbContext (xUnit per-test
             // instantiation), so the test class can produce more than 20 internal EF service
@@ -704,7 +704,7 @@ public class AddTrellisInterceptorsTests : IDisposable
         _connection.Open();
 
         var options = new DbContextOptionsBuilder<AddTrellisInterceptorsTestDbContext>()
-            .UseSqlite(_connection)
+            .UseSqlite(_connection).IgnoreManyServiceProvidersCreatedWarning()
             .AddTrellisInterceptors()
             .Options;
 
@@ -816,12 +816,12 @@ public class AddTrellisInterceptorsTests : IDisposable
     {
         // Should not throw ManyServiceProvidersCreatedWarning
         var options1 = new DbContextOptionsBuilder<AddTrellisInterceptorsTestDbContext>()
-            .UseSqlite(_connection)
+            .UseSqlite(_connection).IgnoreManyServiceProvidersCreatedWarning()
             .AddTrellisInterceptors()
             .Options;
 
         var options2 = new DbContextOptionsBuilder<AddTrellisInterceptorsTestDbContext>()
-            .UseSqlite(_connection)
+            .UseSqlite(_connection).IgnoreManyServiceProvidersCreatedWarning()
             .AddTrellisInterceptors()
             .Options;
 

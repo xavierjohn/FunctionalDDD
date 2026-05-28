@@ -26,7 +26,7 @@ public partial class CompositeValueObjectConventionTests : IDisposable
             _connection = new SqliteConnection("DataSource=:memory:");
             _connection.Open();
             var options = new DbContextOptionsBuilder<CompositeVoTestDbContext>()
-                .UseSqlite(_connection)
+                .UseSqlite(_connection).IgnoreManyServiceProvidersCreatedWarning()
                 .Options;
             _context = new CompositeVoTestDbContext(options);
             _context.Database.EnsureCreated();
@@ -431,7 +431,7 @@ public partial class CompositeValueObjectConventionTests : IDisposable
         connection.Open();
 
         var options = new DbContextOptionsBuilder<MixedOwnedDbContext>()
-            .UseSqlite(connection)
+            .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
             .Options;
 
         using var context = new MixedOwnedDbContext(options);
@@ -460,7 +460,7 @@ public partial class CompositeValueObjectConventionTests : IDisposable
         connection.Open();
 
         var options = new DbContextOptionsBuilder<DateRangeDbContext>()
-            .UseSqlite(connection)
+            .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
             .Options;
 
         using var context = new DateRangeDbContext(options);
@@ -479,7 +479,7 @@ public partial class CompositeValueObjectConventionTests : IDisposable
         connection.Open();
 
         var options = new DbContextOptionsBuilder<DateRangeDbContext>()
-            .UseSqlite(connection)
+            .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
             .Options;
 
         using var context = new DateRangeDbContext(options);
@@ -531,7 +531,7 @@ public partial class CompositeValueObjectConventionTests : IDisposable
         connection.Open();
 
         var options = new DbContextOptionsBuilder<ExplicitAddressDbContext>()
-            .UseSqlite(connection)
+            .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
             .Options;
 
         using var context = new ExplicitAddressDbContext(options);
@@ -716,7 +716,7 @@ public partial class CompositeValueObjectConventionTests : IDisposable
         connection.Open();
 
         var options = new DbContextOptionsBuilder<RequiredContactInfoDbContext>()
-            .UseSqlite(connection)
+            .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
             .Options;
 
         using var context = new RequiredContactInfoDbContext(options);
@@ -730,7 +730,7 @@ public partial class CompositeValueObjectConventionTests : IDisposable
         connection.Open();
 
         var options = new DbContextOptionsBuilder<RequiredContactInfoDbContext>()
-            .UseSqlite(connection)
+            .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
             .Options;
 
         using var context = new RequiredContactInfoDbContext(options);
@@ -762,7 +762,7 @@ public partial class CompositeValueObjectConventionTests : IDisposable
         connection.Open();
 
         var options = new DbContextOptionsBuilder<RequiredContactInfoDbContext>()
-            .UseSqlite(connection)
+            .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
             .Options;
 
         using var context = new RequiredContactInfoDbContext(options);
@@ -820,7 +820,7 @@ public partial class CompositeValueObjectConventionTests : IDisposable
         connection.Open();
 
         var options = new DbContextOptionsBuilder<MaybeContactInfoDbContext>()
-            .UseSqlite(connection)
+            .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
             .Options;
 
         using var context = new MaybeContactInfoDbContext(options);
@@ -834,7 +834,7 @@ public partial class CompositeValueObjectConventionTests : IDisposable
         connection.Open();
 
         var options = new DbContextOptionsBuilder<MaybeContactInfoDbContext>()
-            .UseSqlite(connection)
+            .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
             .Options;
 
         using var context = new MaybeContactInfoDbContext(options);
@@ -867,7 +867,7 @@ public partial class CompositeValueObjectConventionTests : IDisposable
         connection.Open();
 
         var options = new DbContextOptionsBuilder<MaybeContactInfoDbContext>()
-            .UseSqlite(connection)
+            .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
             .Options;
 
         using var context = new MaybeContactInfoDbContext(options);

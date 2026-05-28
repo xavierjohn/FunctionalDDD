@@ -1,4 +1,4 @@
-using Trellis.Testing;
+﻿using Trellis.Testing;
 namespace Trellis.EntityFrameworkCore.Tests.Pagination;
 
 using Microsoft.EntityFrameworkCore;
@@ -97,7 +97,7 @@ public class ToPageAsyncSqlServerIntegrationTests : IAsyncLifetime
 
         public SqlServerTestDbContext(string connectionString)
             : base(new DbContextOptionsBuilder<SqlServerTestDbContext>()
-                .UseSqlServer(connectionString)
+                .UseSqlServer(connectionString).IgnoreManyServiceProvidersCreatedWarning()
                 .AddTrellisInterceptors()
                 .Options)
         {

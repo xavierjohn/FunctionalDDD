@@ -353,7 +353,7 @@ public class MaybePropertyTests : IDisposable
 
         using var context = new IndexedMaybeDbContext(
             new DbContextOptionsBuilder<IndexedMaybeDbContext>()
-                .UseSqlite(connection)
+                .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
                 .Options);
 
         var customerType = context.Model.FindEntityType(typeof(TestCustomer))!;
@@ -371,7 +371,7 @@ public class MaybePropertyTests : IDisposable
 
         using var context = new IndexedMaybeDbContext(
             new DbContextOptionsBuilder<IndexedMaybeDbContext>()
-                .UseSqlite(connection)
+                .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
                 .Options);
 
         var orderType = context.Model.FindEntityType(typeof(TestOrder))!;
@@ -389,7 +389,7 @@ public class MaybePropertyTests : IDisposable
 
         using var context = new IndexedMaybeDbContext(
             new DbContextOptionsBuilder<IndexedMaybeDbContext>()
-                .UseSqlite(connection)
+                .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
                 .Options);
 
         var customerType = context.Model.FindEntityType(typeof(TestCustomer))!;
@@ -407,7 +407,7 @@ public class MaybePropertyTests : IDisposable
 
         using var context = new InheritedMaybeIndexedDbContext(
             new DbContextOptionsBuilder<InheritedMaybeIndexedDbContext>()
-                .UseSqlite(connection)
+                .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
                 .Options);
 
         var derivedType = context.Model.FindEntityType(typeof(DerivedTestCustomer))!;
@@ -429,7 +429,7 @@ public class MaybePropertyTests : IDisposable
 
         using var context = new InvalidSelectorIndexedDbContext(
             new DbContextOptionsBuilder<InvalidSelectorIndexedDbContext>()
-                .UseSqlite(connection)
+                .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
                 .Options);
 
         var act = () => context.Model;
@@ -446,7 +446,7 @@ public class MaybePropertyTests : IDisposable
 
         using var context = new NestedMaybeSelectorIndexedDbContext(
             new DbContextOptionsBuilder<NestedMaybeSelectorIndexedDbContext>()
-                .UseSqlite(connection)
+                .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
                 .Options);
 
         var act = () => context.Model;
@@ -606,7 +606,7 @@ public class MaybePropertyTests : IDisposable
         connection.Open();
 
         using var context = new NoStorageMemberDbContext(
-            new DbContextOptionsBuilder<NoStorageMemberDbContext>().UseSqlite(connection).Options);
+            new DbContextOptionsBuilder<NoStorageMemberDbContext>().UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning().Options);
 
         var act = () => context.Model;
 
@@ -621,7 +621,7 @@ public class MaybePropertyTests : IDisposable
         connection.Open();
 
         using var context = new NoStorageMemberIndexedDbContext(
-            new DbContextOptionsBuilder<NoStorageMemberIndexedDbContext>().UseSqlite(connection).Options);
+            new DbContextOptionsBuilder<NoStorageMemberIndexedDbContext>().UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning().Options);
 
         var act = () => context.Model;
 

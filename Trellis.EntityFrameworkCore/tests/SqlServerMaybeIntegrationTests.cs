@@ -425,7 +425,7 @@ public class SqlServerMaybeIntegrationTests : IAsyncLifetime
 
         public SqlServerTestDbContext(string connectionString)
             : base(new DbContextOptionsBuilder<SqlServerTestDbContext>()
-                .UseSqlServer(connectionString)
+                .UseSqlServer(connectionString).IgnoreManyServiceProvidersCreatedWarning()
                 .AddTrellisInterceptors()
                 .Options)
         {

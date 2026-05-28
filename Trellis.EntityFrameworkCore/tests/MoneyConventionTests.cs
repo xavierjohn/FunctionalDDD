@@ -25,7 +25,7 @@ public class MoneyConventionTests : IDisposable
             _connection = new SqliteConnection("DataSource=:memory:");
             _connection.Open();
             var options = new DbContextOptionsBuilder<MoneyTestDbContext>()
-                .UseSqlite(_connection)
+                .UseSqlite(_connection).IgnoreManyServiceProvidersCreatedWarning()
                 .Options;
             _context = new MoneyTestDbContext(options);
             _context.Database.EnsureCreated();
@@ -226,7 +226,7 @@ public class MoneyConventionTests : IDisposable
         connection.Open();
 
         var options = new DbContextOptionsBuilder<ExplicitMoneyDbContext>()
-            .UseSqlite(connection)
+            .UseSqlite(connection).IgnoreManyServiceProvidersCreatedWarning()
             .Options;
 
         using var context = new ExplicitMoneyDbContext(options);

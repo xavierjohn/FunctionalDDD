@@ -17,7 +17,7 @@ public class EfUnitOfWorkTests : IDisposable
         _connection.Open();
 
         var options = new DbContextOptionsBuilder<RepoTestDbContext>()
-            .UseSqlite(_connection)
+            .UseSqlite(_connection).IgnoreManyServiceProvidersCreatedWarning()
             .Options;
 
         _context = new RepoTestDbContext(options);

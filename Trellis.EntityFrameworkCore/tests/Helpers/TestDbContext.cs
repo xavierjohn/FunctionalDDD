@@ -27,7 +27,9 @@ internal class TestDbContext : DbContext
 
     private static DbContextOptions<TestDbContext> BuildOptions(SqliteConnection connection, bool withInterceptors)
     {
-        var builder = new DbContextOptionsBuilder<TestDbContext>().UseSqlite(connection);
+        var builder = new DbContextOptionsBuilder<TestDbContext>()
+            .UseSqlite(connection)
+            .IgnoreManyServiceProvidersCreatedWarning();
         if (withInterceptors)
             builder.AddTrellisInterceptors();
         return builder.Options;
