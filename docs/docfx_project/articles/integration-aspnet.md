@@ -381,7 +381,7 @@ EntityTagValue[]? ifNoneMatch = ETagHelper.ParseIfNoneMatch(httpContext.Request)
 
 `ParseIfMatch` returns `null` (header absent), `[]` (present but empty / weak-only — strong-only enforcement), the wildcard, or the parsed strong tags. `ParseIfNoneMatch` returns `null`, `[]`, the wildcard, or the parsed strong/weak tags.
 
-The aggregate-side concurrency helpers `OptionalETag(...)` / `RequireETag(...)` consume `EntityTagValue[]?`. They live in `Trellis.Core` — see [`trellis-api-core.md`](../api_reference/trellis-api-core.md).
+The aggregate-side concurrency helpers `OptionalETag(...)` / `RequireETag(...)` consume `EntityTagValue[]?`. They live in `Trellis.Http.Abstractions` — see [`trellis-api-http-abstractions.md`](../api_reference/trellis-api-http-abstractions.md).
 
 For "create only if absent" flows (`PUT` / `POST` with `If-None-Match: *`), use `EnforceIfNoneMatchPrecondition`:
 
@@ -562,7 +562,7 @@ When you genuinely need a custom payload shape (non-Problem-Details body, endpoi
 - **`AddTrellisAsp()` is the one-call setup.** It registers `TrellisAspOptions` and configures both the MVC and Minimal API JSON pipelines for scalar-value / `Maybe<T>` deserialization. You still need `UseScalarValueValidation()` middleware and (for Minimal APIs) `WithScalarValueValidation()` per endpoint.
 - **Document failure status codes.** Add `[ProducesResponseType<ProblemDetails>(...)]` for every spec-listed failure status (`422`, `409`, `403`, `404`, …). The `IEndpointMetadataProvider` on Trellis result types already declares the union of statuses the writer can emit (`200`, `201`, `304`, `400`, `404`, `412`, `500`); layer your spec-specific metadata on top.
 - **`Result<Unit>` for side-effect commands**. A successful `Result<Unit>` produces `204 No Content` with no body.
-- **Use typed ETag parsers.** `ETagHelper.ParseIfMatch` / `ParseIfNoneMatch` return `EntityTagValue[]?`, which feeds `OptionalETag` / `RequireETag` (Core) and `EnforceIfNoneMatchPrecondition` (Asp) directly.
+- **Use typed ETag parsers.** `ETagHelper.ParseIfMatch` / `ParseIfNoneMatch` return `EntityTagValue[]?`, which feeds `OptionalETag` / `RequireETag` (Http.Abstractions) and `EnforceIfNoneMatchPrecondition` (Asp) directly.
 - **Versioned `Location` headers.** Under query-string or header API versioning, every `CreatedAtRoute` / `CreatedAtAction` / `WithLocation` call must include `["api-version"] = ApiVersion` in the route values, otherwise the `Location` 404s on dereference and tests still pass. Prefer chaining `.WithVersionedRoute()` from [`Trellis.Asp.ApiVersioning`](#api-version-aware-location-headers) — it injects the version per request automatically. The [`TRLS023`](analyzers/TRLS023.md) analyzer flags bare `CreatedAtRoute` / `CreatedAtAction` / `WithLocation` inside `[ApiVersion]` controllers and the code fix appends `.WithVersionedRoute()`.
 - **Avoid controller-level `[Consumes("application/json")]`.** Trigger-style POSTs without bodies (e.g., `POST /orders/{id}/submission`) return `415` for any request without a `Content-Type`. Apply `[Consumes]` per body-bearing action.
 - **Prefer `CreatedAtRoute` over `CreatedAtAction`** for trim/AOT scenarios; `CreatedAtAction` is annotated `[RequiresUnreferencedCode]` / `[RequiresDynamicCode]`.
@@ -571,7 +571,8 @@ When you genuinely need a custom payload shape (non-Problem-Details body, endpoi
 ## Cross-references
 
 - API surface: [`trellis-api-asp.md`](../api_reference/trellis-api-asp.md)
-- `Result`, `Result<T>`, `Error`, `WriteOutcome<T>`, `Page<T>`, `EntityTagValue`, `OptionalETag` / `RequireETag`: [`trellis-api-core.md`](../api_reference/trellis-api-core.md)
+- `Result`, `Result<T>`, `Error`, `Page<T>`: [`trellis-api-core.md`](../api_reference/trellis-api-core.md)
+- `WriteOutcome<T>`, `EntityTagValue`, `OptionalETag` / `RequireETag`: [`trellis-api-http-abstractions.md`](../api_reference/trellis-api-http-abstractions.md)
 - `Actor`, `IActorProvider`, `IAuthorize`: [`trellis-api-authorization.md`](../api_reference/trellis-api-authorization.md)
 - `IScalarValue<TSelf, TPrimitive>`, `Maybe<T>`, ready-to-use value objects: [`trellis-api-primitives.md`](../api_reference/trellis-api-primitives.md)
 - Integration-test helpers (`CreateClientWithActor` for `X-Test-Actor`): [`trellis-api-testing-aspnetcore.md`](../api_reference/trellis-api-testing-aspnetcore.md)

@@ -287,12 +287,12 @@ public interface IProductRepository
 - **Don't fetch from repositories in a factory.** Lookups belong in handlers; the factory takes already-resolved primitives and returns a fresh aggregate.
 - **Pick `TryCreate` vs `Create` by audience.** Public API surfaces, command handlers, and parsers want `Result<TAgg>`. Test fixtures and inline seed data want `Create`.
 - **One `Validate` method, two callers.** If you need a third creation path, add another wrapper around the same `Validate` — never duplicate the rules.
-- **Use `RequireETagAsync` / `OptionalETagAsync` at the read-modify-write boundary**, not in the factory — see [`AggregateETagExtensions`](../api_reference/trellis-api-core.md#aggregateetagextensions).
+- **Use `RequireETagAsync` / `OptionalETagAsync` at the read-modify-write boundary**, not in the factory — see [`AggregateETagExtensions`](../api_reference/trellis-api-http-abstractions.md#aggregateetagextensions).
 
 ## Cross-references
 
 - API surface: [`trellis-api-core.md` → Domain-Driven Design](../api_reference/trellis-api-core.md#domain-driven-design)
 - Primitive value-object bases (`Required*<TSelf>`): [`trellis-api-core.md` → Primitive value object base classes](../api_reference/trellis-api-core.md#primitive-value-object-base-classes)
 - Built-in primitives (`EmailAddress`, `Money`, ...): [`trellis-api-primitives.md`](../api_reference/trellis-api-primitives.md)
-- ETag-based optimistic concurrency on aggregates: [`trellis-api-core.md` → AggregateETagExtensions](../api_reference/trellis-api-core.md#aggregateetagextensions)
+- ETag-based optimistic concurrency on aggregates: [`trellis-api-http-abstractions.md` → AggregateETagExtensions](../api_reference/trellis-api-http-abstractions.md#aggregateetagextensions)
 - EF Core conventions for aggregates and entities: [`trellis-api-efcore.md`](../api_reference/trellis-api-efcore.md)

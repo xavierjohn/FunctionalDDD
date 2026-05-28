@@ -92,7 +92,7 @@ public sealed record PublishDocumentCommand(string DocumentId)
 public sealed class PublishDocumentHandler : ICommandHandler<PublishDocumentCommand, Result<Unit>>
 {
     public ValueTask<Result<Unit>> Handle(PublishDocumentCommand command, CancellationToken cancellationToken) =>
-        ValueTask.FromResult(Result.Ok(Unit.Value));
+        ValueTask.FromResult(Result.Ok());
 }
 ```
 
@@ -296,7 +296,7 @@ public sealed record ArchiveDocumentCommand(string DocumentId, bool IsArchived)
 public sealed class ArchiveDocumentHandler : ICommandHandler<ArchiveDocumentCommand, Result<Unit>>
 {
     public ValueTask<Result<Unit>> Handle(ArchiveDocumentCommand command, CancellationToken cancellationToken) =>
-        ValueTask.FromResult(Result.Ok(Unit.Value));
+        ValueTask.FromResult(Result.Ok());
 }
 ```
 
