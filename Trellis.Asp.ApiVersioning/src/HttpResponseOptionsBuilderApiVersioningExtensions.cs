@@ -199,7 +199,7 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
     /// under <see cref="ApiVersionMapping.Explicit"/> while the primary appears under
     /// <see cref="ApiVersionMapping.Implicit"/>.
     /// </summary>
-    private static bool TargetDeclaresVersion(ApiVersionMetadata metadata, ApiVersion requested)
+    internal static bool TargetDeclaresVersion(ApiVersionMetadata metadata, ApiVersion requested)
     {
         var implicitVersions = metadata.Map(ApiVersionMapping.Implicit).DeclaredApiVersions;
         if (implicitVersions.Contains(requested))

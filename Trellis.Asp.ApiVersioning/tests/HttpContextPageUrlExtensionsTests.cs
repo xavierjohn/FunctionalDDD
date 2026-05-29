@@ -233,6 +233,28 @@ public sealed class HttpContextPageUrlExtensionsTests
             .And.Contain("PageUrl(routeName, routeValues)");
     }
 
+    [Fact]
+    public async Task Explicit_pin_of_version_not_declared_by_target_throws_with_guidance()
+    {
+        // Bug-regression: the explicit-pin overload used to inject the pinned version without
+        // validating it against the target endpoint's declared versions. Pinning v2 on the
+        // v1-only "Widgets_List" target would generate a URL the target rejects when followed
+        // (e.g., 400 from the versioning middleware). The per-request overload performs this
+        // validation via ResolveApiVersion's TargetDeclaresVersion check; the explicit overload
+        // must too. Surface the misconfiguration at emit time rather than letting clients chase
+        // a broken Location header.
+        using var host = CreateMultiVersionHost(defaultVersion: new ApiVersion(new DateOnly(2026, 11, 12)));
+        using var client = host.GetTestClient();
+
+        var ct = TestContext.Current.CancellationToken;
+        Func<Task> act = () => client.GetAsync($"/multi/widgets/pin-v2-on-v1-only?api-version={ApiVersionV1}", ct);
+        var assertion = await act.Should().ThrowAsync<InvalidOperationException>();
+        assertion.Which.Message
+            .Should().Contain("not declared")
+            .And.Contain($"api-version='{ApiVersionV2}'")
+            .And.Contain("Widgets_List");
+    }
+
     #endregion
 
     #region Edge cases
@@ -781,6 +803,24 @@ public sealed class MultiVersionPagedController : ControllerBase
         return result.ToHttpResponse(
             nextUrlBuilder: HttpContext.PageUrl(
                 "Widgets_List",
+                (c, applied) => new RouteValueDictionary { ["cursor"] = c.Token, ["limit"] = applied }),
+            body: WidgetResponse.From);
+    }
+
+    [HttpGet("pin-v2-on-v1-only", Name = "Multi_Widgets_PinV2OnV1Only")]
+    public HttpResult PinV2OnV1Only([FromQuery] string? cursor)
+    {
+        // Bug-regression: the explicit-pin overload used to inject the pinned version without
+        // validating it against the target endpoint's declared versions. Pinning v2 on the
+        // v1-only "Widgets_List" route would generate a URL the target rejects when followed.
+        // Must now throw with actionable guidance so the caller sees the misconfiguration at
+        // emit time, not when the client follows the bad link.
+        var (page, _) = PagedFixtures.NextPage(cursor);
+        var result = Trellis.Result.Ok(page);
+        return result.ToHttpResponse(
+            nextUrlBuilder: HttpContext.PageUrl(
+                "Widgets_List",
+                new ApiVersion(new DateOnly(2026, 12, 1)),
                 (c, applied) => new RouteValueDictionary { ["cursor"] = c.Token, ["limit"] = applied }),
             body: WidgetResponse.From);
     }

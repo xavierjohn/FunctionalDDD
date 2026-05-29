@@ -144,7 +144,10 @@ public static class HttpContextPageUrlExtensions
     /// belongs in the path segment, and silently dropping the pin would let <c>LinkGenerator</c>
     /// fill the segment from ambient route data and produce a URL with the wrong version; switch
     /// to the per-request overload <see cref="PageUrl(HttpContext, string, Func{Cursor, int, RouteValueDictionary})"/>,
-    /// or (c) <c>LinkGenerator</c> returns <c>null</c>.
+    /// (c) the target endpoint has <see cref="ApiVersionMetadata"/> but does not declare
+    /// <paramref name="version"/> among its implicit or explicit declared versions — emitting
+    /// the URL would produce a link the target rejects (e.g. <c>400</c> from the versioning
+    /// middleware) when the client follows it, or (d) <c>LinkGenerator</c> returns <c>null</c>.
     /// </exception>
     /// <remarks>
     /// The explicit version is still silently suppressed on version-neutral endpoints — emitting
@@ -206,6 +209,25 @@ public static class HttpContextPageUrlExtensions
             if (!values.ContainsKey(HttpResponseOptionsBuilderApiVersioningExtensions.DefaultRouteValueKey)
                 && !HttpResponseOptionsBuilderApiVersioningExtensions.ShouldSkipInjection(targetEndpoint))
             {
+                // Validate the pinned version is declared by the target endpoint before injection.
+                // The per-request overload performs this same check via ResolveApiVersion's
+                // TargetDeclaresVersion; without it here, a caller could pin v2 on a v1-only
+                // target and emit a URL the target rejects (e.g., 400 from the versioning
+                // middleware) when the client follows it. Skip when the target has no
+                // ApiVersionMetadata — there are no declared versions to validate against and
+                // the API-versioning middleware will simply ignore the query parameter.
+                var targetMetadata = targetEndpoint.Metadata.GetMetadata<ApiVersionMetadata>();
+                if (targetMetadata is not null
+                    && !HttpResponseOptionsBuilderApiVersioningExtensions.TargetDeclaresVersion(targetMetadata, version))
+                {
+                    throw new InvalidOperationException(
+                        $"PageUrl: api-version='{pinnedValue}' is not declared by the target endpoint " +
+                        $"for route '{routeName}'. The generated URL would be rejected by the target " +
+                        "when the client follows it. Pin a version the target declares, or use the " +
+                        "per-request overload PageUrl(routeName, routeValues) — it resolves the version " +
+                        "from ambient route data and validates target support automatically.");
+                }
+
                 values[HttpResponseOptionsBuilderApiVersioningExtensions.DefaultRouteValueKey] = pinnedValue;
             }
 
