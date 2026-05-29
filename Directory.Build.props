@@ -61,10 +61,11 @@
     <!-- Release hygiene (ga-07) -->
     <!-- DotNet.ReproducibleBuilds bundles Microsoft.SourceLink.GitHub and sets
          Deterministic, ContinuousIntegrationBuild (under CI), EmbedUntrackedSources.
-         The properties below cover what it does NOT enable by default. -->
+         The properties below cover what it does NOT enable by default.
+         DebugType=embedded puts the PDB inside the DLL, so symbols travel with
+         the binary and there is nothing left to ship in a .snupkg — symbol
+         packages are intentionally disabled. -->
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
-    <IncludeSymbols>true</IncludeSymbols>
-    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
   </PropertyGroup>
 
