@@ -1266,7 +1266,7 @@ Every framework `.nupkg` produced by Phases 1a–5a satisfies the following befo
 |---|---|---|
 | **Determinism** | `<Deterministic>true</Deterministic>` + `<ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>` set in `Directory.Build.props` | CI verifies bit-identical `.nupkg` across two clean builds of the same SHA |
 | **SourceLink** | `Microsoft.SourceLink.GitHub` referenced; `<PublishRepositoryUrl>true</PublishRepositoryUrl>`, `<EmbedUntrackedSources>true</EmbedUntrackedSources>` | CI fails if any package lacks SourceLink metadata |
-| **Symbols** | `<IncludeSymbols>true</IncludeSymbols>` + `<SymbolPackageFormat>snupkg</SymbolPackageFormat>` | `.snupkg` published to symbol server alongside `.nupkg` |
+| **Symbols** | `<DebugType>embedded</DebugType>` (default from `DotNet.ReproducibleBuilds`) embeds the PDB inside the DLL, which ships inside each `.nupkg`. No separate `.snupkg` is produced. | `dotnet pack` emits a `.nupkg` only; consumers get step-into debugging via the embedded PDB + SourceLink without a symbol-server roundtrip |
 | **Strong naming** | All runtime assemblies signed with the `Trellis.snk` key (already in repo for v1) | CI fails if any output assembly is unsigned |
 | **AOT / trim** | `<IsAotCompatible>true</IsAotCompatible>` + `<IsTrimmable>true</IsTrimmable>` per §12.6 | CI builds a trimmed/AOT test harness and fails on any IL2026/IL2070/IL3050 warning |
 | **Public API tracking** | `Microsoft.CodeAnalysis.PublicApiAnalyzers` with `PublicAPI.Shipped.txt` / `PublicAPI.Unshipped.txt` per package | CI fails on undocumented public-API additions/removals |
