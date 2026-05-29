@@ -2,17 +2,6 @@
 
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-      - 'docs/**'
-      - '**/*.cs'
-      - '.github/workflows/documentation.yml'
-  push:
-    branches: [main]
-    paths:
-      - 'docs/**'
-      - '**/*.cs'
-      - '.github/workflows/documentation.yml'
 
 jobs:
   publish-docs:
@@ -139,14 +128,10 @@ jobs:
         echo "Documentation build successful"
 
     - name: Deploy to GitHub Pages
-      # Manual-only publish to gh-pages, restricted to main:
-      #
-      # * The doc build above runs on every PR/push to main as the quality gate
-      #   (warnings-as-errors catches link/xref/bookmark drift).
-      # * Deployment happens ONLY when the workflow is dispatched manually
-      #   AND the dispatch ref is main — so a manual run on a topic branch
-      #   never publishes that branch's _site to gh-pages.
-      if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
+      # Branch guard: even though the workflow only runs on manual dispatch,
+      # restrict deployment to dispatches from main so dispatching the workflow
+      # against a topic branch never publishes that branch's _site to gh-pages.
+      if: github.ref == 'refs/heads/main'
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
