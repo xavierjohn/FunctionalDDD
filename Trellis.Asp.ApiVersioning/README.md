@@ -1,6 +1,9 @@
-# Trellis.Asp.ApiVersioning
+﻿# Trellis.Asp.ApiVersioning
 
-API-versioning helpers for [Trellis.Asp](../Trellis.Asp/README.md). Adds a `WithVersionedRoute(...)` extension on `HttpResponseOptionsBuilder<TDomain>` that auto-injects the `api-version` route value into `Location` headers, so responses round-trip the requested version under query/header API versioning. Chain after any builder method that emits a builder-generated `Location` header — `CreatedAtRoute(...)` / `CreatedAtAction(...)` for 201 Created, `WithLocation(...)` for state-transition 2xx responses on existing resources.
+API-versioning helpers for [Trellis.Asp](../Trellis.Asp/README.md). Auto-inject the `api-version` route value into builder-generated URLs so responses round-trip the requested version under query/header API versioning, without authors having to remember the parameter or hard-code the version literal.
+
+- **`HttpResponseOptionsBuilder<T>.WithVersionedRoute(...)`** — chains after `CreatedAtRoute(...)` / `CreatedAtAction(...)` (201 Created) or `WithLocation(...)` (200 OK on existing resources) to version the `Location` header.
+- **`HttpContext.PageUrl(routeName, ...)`** — returns a `Func<Cursor, int, string>` for the `nextUrlBuilder` parameter of `ToHttpResponse(Async)` on `Result<Page<T>>`, so paginated `next` URLs carry the version, honor URL-segment ambient route values, and skip injection on neutral endpoints — no manual URL encoding.
 
 ## Why this package exists
 
@@ -50,6 +53,35 @@ public class OrdersController : ControllerBase
 The resulting `Location` header is `/api/orders/42?api-version=2026-12-01` (or whatever version the client requested).
 
 To pin a specific version regardless of what the client requested (cross-version `Location` redirects on deprecated endpoints), use the explicit overload: `.WithVersionedRoute(new ApiVersion(new DateOnly(2026, 12, 1)))`. The neutral and URL-segment skip rules still apply: an explicit pin is never injected into a Location targeting a `[ApiVersionNeutral]` endpoint or a `v{version:apiVersion}` template.
+
+### Paginated lists — `HttpContext.PageUrl`
+
+For paginated `Result<Page<T>>` responses, supply the `nextUrlBuilder` parameter of `ToHttpResponse(Async)` from `HttpContext.PageUrl(...)`:
+
+```csharp
+[HttpGet("overdue", Name = "Orders_GetOverdue")]
+public async Task<IResult> GetOverdue(
+    [FromQuery] string? cursor,
+    [FromQuery] int? limit,
+    [FromServices] IMediator mediator,
+    CancellationToken ct)
+{
+    var result = await mediator.Send(new GetOverdueOrdersQuery(cursor, limit), ct);
+    return result.ToHttpResponse(
+        nextUrlBuilder: HttpContext.PageUrl(
+            "Orders_GetOverdue",
+            (c, applied) => new RouteValueDictionary
+            {
+                ["cursor"] = c.Token,
+                ["limit"] = applied,
+            }),
+        body: o => OrderListItemResponse.From(o));
+}
+```
+
+The emitted `next` URL is `/api/orders/overdue?cursor=<token>&limit=20&api-version=2026-12-01` for query/header versioning, `/api/v2026-12-01/orders/overdue?cursor=<token>&limit=20` for URL-segment versioning (no duplicate query parameter), and `/api/orders/overdue?cursor=<token>&limit=20` (no version) for `[ApiVersionNeutral]` controllers. The cursor token is URL-encoded automatically. `PathBase` is preserved for hosts mounted under a virtual directory.
+
+The target action must carry `Name = "..."` on the `[HttpGet(...)]` attribute — the helper resolves the endpoint by route name via `EndpointDataSource`. An explicit-version overload mirrors `WithVersionedRoute(ApiVersion)` for cross-version next-page URLs.
 
 ## Related diagnostics
 

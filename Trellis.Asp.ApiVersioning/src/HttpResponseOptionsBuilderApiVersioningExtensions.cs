@@ -1,6 +1,7 @@
 ﻿namespace Trellis.Asp.ApiVersioning;
 
 using System;
+using System.Collections.Generic;
 using global::Asp.Versioning;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
@@ -64,9 +65,11 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
         // Resolution happens per-request from HttpContext (inside the resolver delegate);
         // only the route-value key is fixed at registration time. The key is the constant
         // `DefaultRouteValueKey` ("api-version") — no IOptions lookup is involved for the key.
+        // For `WithVersionedRoute` the target endpoint IS the current endpoint (the response is
+        // a Location header pointing back into the same handler), so we pass `GetEndpoint()`.
         return builder.WithRouteValueResolver(
             DefaultRouteValueKey,
-            ResolveApiVersion);
+            httpContext => ResolveApiVersion(httpContext, httpContext.GetEndpoint()));
     }
 
     /// <summary>
@@ -97,7 +100,7 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
         var pinnedValue = explicitVersion.ToString();
         return builder.WithRouteValueResolver(
             DefaultRouteValueKey,
-            httpContext => ShouldSkipInjection(httpContext) ? null : pinnedValue);
+            httpContext => ShouldSkipInjection(httpContext.GetEndpoint()) ? null : pinnedValue);
     }
 
     /// <summary>
@@ -107,31 +110,73 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
     /// parameter name should bypass this helper and register a resolver via
     /// <see cref="HttpResponseOptionsBuilder{TDomain}.WithRouteValueResolver"/> directly.
     /// </summary>
-    private const string DefaultRouteValueKey = "api-version";
+    internal const string DefaultRouteValueKey = "api-version";
 
-    private static string? ResolveApiVersion(HttpContext httpContext)
+    /// <summary>
+    /// Resolves the api-version to inject into a route-value dictionary. Inspects the
+    /// <paramref name="targetEndpoint"/> for skip/declared-version checks, but reads the
+    /// per-request signals (<c>httpContext.GetRequestedApiVersion()</c>,
+    /// <c>ApiVersioningOptions.DefaultApiVersion</c>) from <paramref name="httpContext"/>.
+    /// </summary>
+    /// <remarks>
+    /// Resolution order (when not skipped):
+    /// (1) <c>httpContext.RequestedApiVersion</c> — primary signal, only echoed when the target
+    ///     endpoint declares that version. For same-route helpers (<c>WithVersionedRoute</c>)
+    ///     the target IS the current endpoint, so the requested version is always declared.
+    ///     For cross-route helpers (<c>PageUrl</c>) the requested version may not be in the
+    ///     target's declared set; echoing it would emit a URL the target immediately rejects.
+    /// (2) Single declared version on <paramref name="targetEndpoint"/> — unambiguous fallback.
+    /// (3) <c>ApiVersioningOptions.DefaultApiVersion</c> — host-level fallback.
+    /// (4) Throws <see cref="InvalidOperationException"/> — silent picking would resurrect the original 404 bug.
+    /// Returns <c>null</c> when the target endpoint is version-neutral or URL-segment-versioned —
+    /// callers must NOT inject a route value in either case.
+    /// </remarks>
+    /// <param name="httpContext">The current request context — supplies per-request signals.</param>
+    /// <param name="targetEndpoint">The endpoint whose URL is being built — supplies declared-version metadata and skip signals.</param>
+    /// <param name="callerLabel">
+    /// Caller-facing label inserted into the multi-version unresolvable error message
+    /// (e.g., <c>"the Location header"</c>, <c>"the next-page URL"</c>). Default matches
+    /// <see cref="WithVersionedRoute{TDomain}(HttpResponseOptionsBuilder{TDomain})"/>'s context.
+    /// </param>
+    /// <param name="explicitOverloadHint">
+    /// Caller-facing name of the explicit-version overload mentioned in the unresolvable error
+    /// message (e.g., <c>"WithVersionedRoute(explicitVersion)"</c>, <c>"PageUrl(routeName, ApiVersion, ...)"</c>).
+    /// Default matches <see cref="WithVersionedRoute{TDomain}(HttpResponseOptionsBuilder{TDomain})"/>'s context.
+    /// </param>
+    internal static string? ResolveApiVersion(
+        HttpContext httpContext,
+        Endpoint? targetEndpoint,
+        string callerLabel = "the Location header",
+        string explicitOverloadHint = "WithVersionedRoute(explicitVersion)")
     {
-        // Skip injection on version-neutral endpoints (the response Location shouldn't carry
+        // Skip injection on version-neutral endpoints (the response URL shouldn't carry
         // a parameter the target endpoint doesn't accept) and on URL-segment versioning (the
         // ambient route values already carry the version token; adding a query copy creates
         // a redundant/conflicting parameter).
-        if (ShouldSkipInjection(httpContext))
+        if (ShouldSkipInjection(targetEndpoint))
             return null;
 
-        var endpoint = httpContext.GetEndpoint();
-        var metadata = endpoint?.Metadata.GetMetadata<ApiVersionMetadata>();
+        var metadata = targetEndpoint?.Metadata.GetMetadata<ApiVersionMetadata>();
 
-        // 1. Echo the version the client requested — primary signal.
+        // 1. Echo the version the client requested — primary signal. Only echo when the target
+        //    actually declares the requested version. For same-route targets the requested
+        //    version is guaranteed to be declared (the route was selected on that basis), so
+        //    same-route behaviour is unchanged. For cross-route targets (PageUrl) this prevents
+        //    leaking a v2 request into a v1-only target URL.
         var requested = httpContext.RequestedApiVersion;
-        if (requested is not null)
+        if (requested is not null && (metadata is null || TargetDeclaresVersion(metadata, requested)))
             return requested.ToString();
 
         // 2. Single declared version on the endpoint metadata — unambiguous fallback.
+        //    Use the union of Implicit ∪ Explicit DeclaredApiVersions for the count, matching
+        //    TargetDeclaresVersion. Otherwise a controller with `[ApiVersion(v1)]` + an action
+        //    `[MapToApiVersion(v2)]` (1 implicit + 1 explicit) would look "single-declared" via
+        //    Implicit alone and silently echo v1, even though the target declares two versions.
         if (metadata is not null)
         {
-            var implicitVersions = metadata.Map(ApiVersionMapping.Implicit).DeclaredApiVersions;
-            if (implicitVersions.Count == 1)
-                return implicitVersions[0].ToString();
+            var declared = DistinctDeclaredVersions(metadata);
+            if (declared.Count == 1)
+                return declared[0].ToString();
         }
 
         // 3. ApiVersioningOptions.DefaultApiVersion — host-level fallback.
@@ -141,21 +186,64 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
 
         // 4. No way to resolve — fail loudly. Silent picking would resurrect the original 404 bug.
         throw new InvalidOperationException(
-            "Cannot determine the api-version for the Location header: the request did not specify a " +
+            $"Cannot determine the api-version for {callerLabel}: the request did not specify a " +
             "version, the endpoint declares more than one (or none), and no DefaultApiVersion is configured. " +
-            "Either configure ApiVersioningOptions.DefaultApiVersion or use the explicit-version " +
-            "WithVersionedRoute(explicitVersion) overload.");
+            $"Either configure ApiVersioningOptions.DefaultApiVersion or use the explicit-version " +
+            $"{explicitOverloadHint} overload.");
     }
 
     /// <summary>
-    /// Returns <c>true</c> when the configured api-version resolver must NOT inject a route
-    /// value, regardless of which resolution path produced the candidate. Centralised so the
-    /// per-request resolver and the explicit-pinning overload share identical skip semantics.
+    /// Returns <c>true</c> when <paramref name="metadata"/>'s union of implicit + explicit declared
+    /// versions contains <paramref name="requested"/>. The union is necessary because Asp.Versioning
+    /// splits declarations by mapping kind: a multi-version controller's secondary versions appear
+    /// under <see cref="ApiVersionMapping.Explicit"/> while the primary appears under
+    /// <see cref="ApiVersionMapping.Implicit"/>.
     /// </summary>
-    private static bool ShouldSkipInjection(HttpContext httpContext)
+    private static bool TargetDeclaresVersion(ApiVersionMetadata metadata, ApiVersion requested)
     {
-        var endpoint = httpContext.GetEndpoint();
+        var implicitVersions = metadata.Map(ApiVersionMapping.Implicit).DeclaredApiVersions;
+        if (implicitVersions.Contains(requested))
+            return true;
 
+        var explicitVersions = metadata.Map(ApiVersionMapping.Explicit).DeclaredApiVersions;
+        return explicitVersions.Contains(requested);
+    }
+
+    /// <summary>
+    /// Returns the distinct union of implicit + explicit <c>DeclaredApiVersions</c> for the given
+    /// metadata. Used by the single-declared fallback so a controller that splits its declarations
+    /// across mapping kinds (e.g., <c>[ApiVersion(v1)]</c> with action-level <c>[MapToApiVersion(v2)]</c>)
+    /// is correctly seen as multi-version instead of looking single-version through one mapping.
+    /// </summary>
+    private static IReadOnlyList<ApiVersion> DistinctDeclaredVersions(ApiVersionMetadata metadata)
+    {
+        var implicitVersions = metadata.Map(ApiVersionMapping.Implicit).DeclaredApiVersions;
+        var explicitVersions = metadata.Map(ApiVersionMapping.Explicit).DeclaredApiVersions;
+
+        if (explicitVersions.Count == 0)
+            return implicitVersions;
+        if (implicitVersions.Count == 0)
+            return explicitVersions;
+
+        var union = new List<ApiVersion>(implicitVersions.Count + explicitVersions.Count);
+        union.AddRange(implicitVersions);
+        foreach (var v in explicitVersions)
+        {
+            if (!union.Contains(v))
+                union.Add(v);
+        }
+
+        return union;
+    }
+
+    /// <summary>
+    /// Returns <c>true</c> when the api-version resolver must NOT inject a route value for the
+    /// given endpoint, regardless of which resolution path would otherwise produce a candidate.
+    /// Centralised so the per-request resolver, the explicit-pinning overload, and the
+    /// <c>PageUrl</c> helper share identical skip semantics.
+    /// </summary>
+    internal static bool ShouldSkipInjection(Endpoint? endpoint)
+    {
         // Version-neutral endpoints reject any api-version parameter; emitting one would
         // mislead clients into resending the same Location with an unsupported value.
         var metadata = endpoint?.Metadata.GetMetadata<ApiVersionMetadata>();
@@ -164,14 +252,21 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
 
         // URL-segment versioning embeds the version in the path; ambient routing fills the
         // segment from RouteData, and a query-string copy would create a redundant /
-        // conflicting parameter on the Location URI.
+        // conflicting parameter on the URI.
         if (RouteTemplateContainsVersionToken(endpoint))
             return true;
 
         return false;
     }
 
-    private static bool RouteTemplateContainsVersionToken(Microsoft.AspNetCore.Http.Endpoint? endpoint)
+    /// <summary>
+    /// Returns <c>true</c> when the endpoint's route template embeds the api-version as a path
+    /// segment via the <c>:apiVersion</c> route constraint (URL-segment versioning). Exposed
+    /// internally so cross-route helpers like <c>PageUrl</c> can distinguish "skip is correct"
+    /// (version-neutral) from "skip would silently drop a pin" (URL-segment), and react
+    /// accordingly.
+    /// </summary>
+    internal static bool RouteTemplateContainsVersionToken(Microsoft.AspNetCore.Http.Endpoint? endpoint)
     {
         if (endpoint is not Microsoft.AspNetCore.Routing.RouteEndpoint routeEndpoint)
             return false;
