@@ -7,11 +7,17 @@ using System.Threading.Tasks;
 using global::Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Trellis.Asp;
 using Trellis.Asp.Authorization;
 using Trellis.Authorization;
 using Trellis.EntityFrameworkCore;
 using Trellis.Mediator;
+using DefaultHttpContext = Microsoft.AspNetCore.Http.DefaultHttpContext;
+using ProblemDetails = Microsoft.AspNetCore.Mvc.ProblemDetails;
+using ProblemDetailsContext = Microsoft.AspNetCore.Http.ProblemDetailsContext;
+using ProblemDetailsOptions = Microsoft.AspNetCore.Http.ProblemDetailsOptions;
+using StatusCodes = Microsoft.AspNetCore.Http.StatusCodes;
 
 /// <summary>
 /// Tests for <see cref="TrellisServiceBuilder"/>.
@@ -170,6 +176,73 @@ public class TrellisServiceBuilderTests
         services.Count(d =>
             d.ServiceType == typeof(IActorProvider) &&
             d.ImplementationType?.Name == "ClaimsActorProvider").Should().Be(1);
+    }
+
+    [Fact]
+    public void UseProblemDetails_RegistersTrellisProblemDetailsCustomization()
+    {
+        // Run the registered CustomizeProblemDetails delegate and assert it carries the
+        // Trellis defaults (traceId, 405 Allow projection). Resolving through
+        // IOptions<ProblemDetailsOptions> proves the full PostConfigure chain is wired,
+        // not just that the boolean was set.
+        var services = new ServiceCollection();
+        services.AddTrellis(options => options.UseProblemDetails());
+
+        using var sp = services.BuildServiceProvider();
+        var customize = sp.GetRequiredService<IOptions<ProblemDetailsOptions>>().Value.CustomizeProblemDetails;
+        customize.Should().NotBeNull();
+
+        var http = new DefaultHttpContext();
+        http.Response.Headers["Allow"] = "GET, POST";
+        var ctx = new ProblemDetailsContext
+        {
+            HttpContext = http,
+            ProblemDetails = new ProblemDetails { Status = StatusCodes.Status405MethodNotAllowed },
+        };
+        customize!.Invoke(ctx);
+
+        ctx.ProblemDetails.Extensions["traceId"].Should().NotBeNull();
+        string[] expected = ["GET", "POST"];
+        ctx.ProblemDetails.Extensions["allow"].Should().BeEquivalentTo(expected);
+    }
+
+    [Fact]
+    public void UseProblemDetails_DoesNotImplyUseAsp()
+    {
+        // ProblemDetails customization is orthogonal to Trellis.Asp's MVC/result-mapping
+        // infrastructure. Consumers should be able to opt into ProblemDetails without
+        // pulling in TrellisAspOptions / scalar validation / response mapping.
+        var services = new ServiceCollection();
+        services.AddTrellis(options => options.UseProblemDetails());
+
+        services.Should().NotContain(d => d.ServiceType == typeof(TrellisAspOptions));
+    }
+
+    [Fact]
+    public void UseProblemDetails_MixedWithDirectAddCallStaysSingleLayer()
+    {
+        // The direct AddTrellisProblemDetails() and the builder slot share the same
+        // sentinel-based idempotency. A consumer that calls both (shared library +
+        // application composition root) must end up with exactly one Trellis
+        // post-configure layer wrapping CustomizeProblemDetails — not two layers
+        // doubling traceId/allow extensions.
+        var services = new ServiceCollection();
+        services.AddTrellisProblemDetails();
+        services.AddTrellis(options => options.UseProblemDetails());
+
+        // Run the customizer; if two layers were stacked, traceId would still be
+        // overwritten idempotently but `allow` projection would happen twice. We
+        // assert the post-configure count is exactly one Trellis-installed layer
+        // by counting IPostConfigureOptions<ProblemDetailsOptions> descriptors
+        // beyond what AddProblemDetails alone installs.
+        var trellisPostConfigureCount = services.Count(d =>
+            d.ServiceType == typeof(IPostConfigureOptions<ProblemDetailsOptions>));
+
+        // AddTrellisProblemDetails installs ONE PostConfigure<ProblemDetailsOptions>;
+        // AddProblemDetails installs none of that exact shape. So total Trellis
+        // post-configure registrations after two calls (direct + builder) must be 1.
+        trellisPostConfigureCount.Should().Be(1,
+            "the marker-sentinel idempotency must apply across builder + direct composition");
     }
 
     private sealed class TestDbContext : DbContext

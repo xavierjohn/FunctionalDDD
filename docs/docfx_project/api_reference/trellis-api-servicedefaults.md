@@ -25,6 +25,7 @@ See also: [trellis-api-cookbook.md](trellis-api-cookbook.md#recipe-12--di-wiring
 | Goal | Canonical API / pattern | See |
 |---|---|---|
 | Enable ASP Result-to-HTTP mapping | `services.AddTrellis(o => o.UseAsp())` | [`TrellisServiceBuilder`](#trellisservicebuilder), [ASP](trellis-api-asp.md) |
+| Enable Trellis ProblemDetails customization | `.UseProblemDetails()` | [`TrellisServiceBuilder`](#trellisservicebuilder), [ASP `AddTrellisProblemDetails`](trellis-api-asp.md#servicecollectionextensions) |
 | Add standard mediator behaviors | `.UseMediator()` | [`TrellisServiceBuilder`](#trellisservicebuilder), [Mediator](trellis-api-mediator.md) |
 | Add FluentValidation adapter/scanning | `.UseFluentValidation(typeof(Program).Assembly)` or `.UseFluentValidation()` | [`TrellisServiceBuilder`](#trellisservicebuilder), [FluentValidation](trellis-api-fluentvalidation.md) |
 | Add resource authorization | `.UseResourceAuthorization(...)` | [`TrellisServiceBuilder`](#trellisservicebuilder), [Mediator resource authorization](trellis-api-mediator.md) |
@@ -74,6 +75,7 @@ public sealed class TrellisServiceBuilder
 | Signature | Returns | Description |
 | --- | --- | --- |
 | `public TrellisServiceBuilder UseAsp(Action<TrellisAspOptions>? configure = null)` | `TrellisServiceBuilder` | Registers `Trellis.Asp` integration via `AddTrellisAsp(...)`. Repeated calls compose the configure delegates rather than overwriting. |
+| `public TrellisServiceBuilder UseProblemDetails()` | `TrellisServiceBuilder` | Registers Trellis ProblemDetails customization (`traceId` on every error, `405` `Allow` header projected as `extensions.allow`, `500` detail rewrite) via `AddTrellisProblemDetails()`. Independent of `UseAsp()` — does not pull in Trellis MVC/result-mapping infrastructure. Idempotent across direct + builder composition: a consumer that calls both `services.AddTrellisProblemDetails()` directly and `options.UseProblemDetails()` ends up with exactly one Trellis post-configure layer. |
 | `public TrellisServiceBuilder UseMediator(Action<TrellisMediatorTelemetryOptions>? configureTelemetry = null)` | `TrellisServiceBuilder` | Registers Trellis Mediator behaviors via `AddTrellisBehaviors(...)`. Repeated calls compose the configure delegates rather than overwriting. |
 | `public TrellisServiceBuilder UseFluentValidation(params Assembly[] assemblies)` | `TrellisServiceBuilder` | Registers the FluentValidation adapter. When assemblies are supplied, also scans them for validators (non-AOT). Implies `UseMediator()`. |
 | `public TrellisServiceBuilder UseResourceAuthorization(params Assembly[] assemblies)` | `TrellisServiceBuilder` | With assemblies: scans for `IAuthorizeResource<TResource>` commands and registers `ResourceAuthorizationBehavior<TMessage, TResource, TResponse>` for each (non-AOT). With no assemblies: relies on the static-permission `AuthorizationBehavior<,>` registered unconditionally by `UseMediator()`/`AddTrellisBehaviors()`, and on the consumer's explicit per-message `services.AddResourceAuthorization<TMessage, TResource, TResponse>()` calls. Implies `UseMediator()`. |
@@ -89,12 +91,13 @@ public sealed class TrellisServiceBuilder
 `AddTrellis(...)` records selected modules first and then applies them in this order:
 
 1. ASP integration.
-2. Actor provider (and the optional caching wrap that chains after it).
-3. Mediator behaviors.
-4. Resource authorization (assembly scanning, when assemblies are supplied).
-5. FluentValidation adapter/scanning when selected.
-6. Domain event dispatch (registers `DomainEventDispatchBehavior<,>`, the default `IDomainEventPublisher`, and any scanned handlers).
-7. EF Core Unit of Work.
+2. ProblemDetails customization (when `UseProblemDetails()` is selected).
+3. Actor provider (and the optional caching wrap that chains after it).
+4. Mediator behaviors.
+5. Resource authorization (assembly scanning, when assemblies are supplied).
+6. FluentValidation adapter/scanning when selected.
+7. Domain event dispatch (registers `DomainEventDispatchBehavior<,>`, the default `IDomainEventPublisher`, and any scanned handlers).
+8. EF Core Unit of Work.
 
 That order preserves the important pipeline invariant: `TransactionalCommandBehavior<,>` is the innermost behavior, closest to the handler, so commit failures remain visible to outer logging/tracing/exception behaviors.
 
