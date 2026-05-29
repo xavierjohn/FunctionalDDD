@@ -584,7 +584,7 @@ public static class ServiceCollectionExtensions
     /// <item><c>Extensions["traceId"]</c> from <c>Activity.Current?.Id</c>, falling back to
     /// <c>HttpContext.TraceIdentifier</c>.</item>
     /// <item><see cref="ProblemDetails.Detail"/> on 500 responses is replaced with
-    /// <c>"An error occurred in our API. Please refer the trace id with our support team."</c>
+    /// <c>"An error occurred in our API. Please share the trace id with our support team."</c>
     /// to avoid leaking raw exception detail.</item>
     /// <item><c>Extensions["allow"]</c> on 405 responses contains the methods listed in the
     /// outgoing <c>Allow</c> header (per RFC 9110 §15.5.6) as a structured string array.</item>
@@ -650,7 +650,7 @@ public static class ServiceCollectionExtensions
         if (ctx.ProblemDetails.Status == StatusCodes.Status500InternalServerError)
         {
             ctx.ProblemDetails.Detail =
-                "An error occurred in our API. Please refer the trace id with our support team.";
+                "An error occurred in our API. Please share the trace id with our support team.";
         }
 
         // RFC 9110 §15.5.6: 405 responses list permitted methods in the Allow header.

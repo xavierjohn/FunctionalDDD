@@ -230,18 +230,17 @@ public class TrellisServiceBuilderTests
         services.AddTrellisProblemDetails();
         services.AddTrellis(options => options.UseProblemDetails());
 
-        // Run the customizer; if two layers were stacked, traceId would still be
-        // overwritten idempotently but `allow` projection would happen twice. We
-        // assert the post-configure count is exactly one Trellis-installed layer
-        // by counting IPostConfigureOptions<ProblemDetailsOptions> descriptors
-        // beyond what AddProblemDetails alone installs.
-        var trellisPostConfigureCount = services.Count(d =>
-            d.ServiceType == typeof(IPostConfigureOptions<ProblemDetailsOptions>));
+        // The marker sentinel registered by AddTrellisProblemDetails IS the
+        // idempotency contract — its presence short-circuits the second call. Count
+        // marker registrations directly rather than IPostConfigureOptions descriptors,
+        // because the descriptor count is coupled to ASP.NET Core internals (a future
+        // AddProblemDetails() release adding its own PostConfigure would break the
+        // assertion even though Trellis idempotency is still correct). The marker is
+        // private to Trellis.Asp, so match by type name across the assembly boundary.
+        var markerRegistrationCount = services.Count(d =>
+            string.Equals(d.ServiceType.Name, "TrellisProblemDetailsMarker", StringComparison.Ordinal));
 
-        // AddTrellisProblemDetails installs ONE PostConfigure<ProblemDetailsOptions>;
-        // AddProblemDetails installs none of that exact shape. So total Trellis
-        // post-configure registrations after two calls (direct + builder) must be 1.
-        trellisPostConfigureCount.Should().Be(1,
+        markerRegistrationCount.Should().Be(1,
             "the marker-sentinel idempotency must apply across builder + direct composition");
     }
 

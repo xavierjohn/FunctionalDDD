@@ -62,7 +62,10 @@ public static class HttpContextPageUrlExtensions
     /// Cross-route caveat: when <paramref name="routeName"/> differs from the current endpoint's
     /// route name, the skip rules and declared-version fallback are evaluated against the
     /// TARGET endpoint, not the current one. The per-request <c>RequestedApiVersion</c>
-    /// (when the client supplied one) is still echoed first.
+    /// (when the client supplied one) is echoed only when the target endpoint declares it;
+    /// otherwise the resolver falls through to the target's single declared version or to
+    /// <c>DefaultApiVersion</c>. This prevents emitting a URL the target would reject when the
+    /// client follows it.
     /// </remarks>
     public static Func<Cursor, int, string> PageUrl(
         this HttpContext httpContext,
