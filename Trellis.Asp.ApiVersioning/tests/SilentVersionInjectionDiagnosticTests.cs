@@ -21,7 +21,7 @@ using Trellis;
 using Trellis.Asp;
 
 /// <summary>
-/// Pins the warn-on-first-skip diagnostic behaviour of
+/// Pins the warn-on-first-skip diagnostic behavior of
 /// <see cref="SilentVersionInjectionDiagnostic"/> as exercised through the two
 /// <c>.WithVersionedRoute()</c> overloads. Each test stands up a minimal ASP.NET Core
 /// host that captures logger output via an in-memory <see cref="ILoggerProvider"/>,
@@ -36,7 +36,17 @@ using Trellis.Asp;
 /// first-skip emission. Unique route templates per test minimise collision with
 /// sibling test classes (xUnit v3 runs classes in parallel by default).
 /// </para>
+/// <para>
+/// The class also opts into a dedicated non-parallelised xUnit collection so that any
+/// future test class touching the same diagnostic's static seen-set can be added to the
+/// collection (via <c>[Collection("SilentVersionInjectionDiagnosticState")]</c>) and
+/// share serialised execution; in-class tests run sequentially regardless. Without
+/// this, a parallel class that resets the seen-set could clear an entry another class
+/// was about to assert against.
+/// </para>
 /// </remarks>
+[Collection("SilentVersionInjectionDiagnosticState")]
+[CollectionDefinition("SilentVersionInjectionDiagnosticState", DisableParallelization = true)]
 public sealed class SilentVersionInjectionDiagnosticTests
 {
     public SilentVersionInjectionDiagnosticTests() => SilentVersionInjectionDiagnostic.ResetForTests();
@@ -82,6 +92,10 @@ public sealed class SilentVersionInjectionDiagnosticTests
         warnings[0].Should().Contain("ApiVersionMetadata");
         warnings[0].Should().Contain("AddApiVersioning");
         warnings[0].Should().Contain("FailFastOnSilentVersionInjection");
+        // The endpoint key MUST be interpolated into the message — a broken LoggerMessage
+        // placeholder ({EndpointKey} without its closing brace, etc.) would render as raw
+        // template text and the endpoint identifier would never reach the log line.
+        warnings[0].Should().Contain("DiagUnversionedPerRequestController.Post");
     }
 
     [Fact]

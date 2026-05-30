@@ -377,7 +377,7 @@ once per endpoint, configure TrellisAspOptions.FailFastOnSilentVersionInjection 
 To surface the misconfiguration as a hard failure during integration tests or non-production runs, opt into fail-fast on `TrellisAspOptions`:
 
 ```csharp
-services.AddTrellisAsp(o =>
+builder.Services.AddTrellisAsp(o =>
     o.FailFastOnSilentVersionInjection = builder.Environment.IsDevelopment());
 ```
 
