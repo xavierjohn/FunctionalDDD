@@ -169,6 +169,7 @@ Configuration registered via `AddTrellisAsp(...)` that maps domain `Error` types
 | Name | Type | Description |
 | --- | --- | --- |
 | `SystemDefault` | `static TrellisAspOptions` (internal) | Read-only default instance used when DI cannot resolve a configured `TrellisAspOptions` (e.g. the host did not call `AddTrellisAsp`). Internal — not callable from user code. Hosts customize the mappings by passing a configure delegate to `AddTrellisAsp(o => o.MapError<...>(...))`; raw `AddSingleton(new TrellisAspOptions())` is unsupported and will be replaced by the bridge factory the next time `AddTrellisAsp` runs. |
+| `FailFastOnSilentVersionInjection` | `bool` | When `true`, every `.WithVersionedRoute()` (or pinned overload) call that would silently skip `api-version` injection because the target endpoint has no `ApiVersionMetadata` throws `InvalidOperationException` instead of logging a single warning per endpoint. Defaults to `false` (warn-once-per-(endpoint, AppDomain) via the `Trellis.Asp.ApiVersioning` `ILogger` category). Intended for non-Production environments to surface mid-migration regressions where `AddApiVersioning(...)` was removed but `.WithVersionedRoute()` chains remain. |
 
 | Signature | Returns | Description |
 | --- | --- | --- |

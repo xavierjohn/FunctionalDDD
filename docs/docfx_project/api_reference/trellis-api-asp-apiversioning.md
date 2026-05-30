@@ -36,6 +36,7 @@ See also: [trellis-api-asp.md](trellis-api-asp.md) — the underlying `HttpRespo
 | Paginated list — pin next-page URL to a specific version | `HttpContext.PageUrl(routeName, new ApiVersion(new DateOnly(2026, 12, 1)), (c, applied) => …)` | [`PageUrl` explicit-version overload](#pageurl-explicit-version-overload) |
 | `[ApiVersionNeutral]` controller | Use `CreatedAtRoute` (no version injected); `.WithVersionedRoute()` short-circuits the resolver to a no-op when the endpoint is neutral | [Behavioral notes](#behavioral-notes) |
 | URL-segment versioning (`v{version:apiVersion}` in template) | Continue to use `CreatedAtRoute`; the segment is filled by the route template, not a query route value | [Behavioral notes](#behavioral-notes) |
+| Detect mid-migration silent skips (`.WithVersionedRoute()` left in place after `AddApiVersioning(...)` was removed) | Default: warn once per `(endpoint, AppDomain)` to the `Trellis.Asp.ApiVersioning` `ILogger` category. Opt-in fail-fast: `services.AddTrellisAsp(o => o.FailFastOnSilentVersionInjection = true)` | [Behavioral notes](#behavioral-notes) |
 
 ## Common traps
 
@@ -85,7 +86,7 @@ Both overloads short-circuit to a no-op (no `api-version` route value injected) 
 
 - The endpoint is decorated with `[ApiVersionNeutral]` — version-neutral endpoints must not carry a version in their `Location` header.
 - The endpoint participates in URL-segment versioning (the route template contains a `{version:apiVersion}` segment) — the segment is filled by the route template binder, not a query/header route value.
-- The endpoint has no `ApiVersionMetadata` attached — the host did not call `services.AddApiVersioning(...)`, or this endpoint sits outside its versioning surface. Emitting an `api-version` route value when no API-versioning middleware is installed would be a stale URL artefact the receiving middleware would never act on; the helpers compose cleanly in unversioned and mixed-versioned hosts by silently dropping injection in this case.
+- The endpoint has no `ApiVersionMetadata` attached — the host did not call `services.AddApiVersioning(...)`, or this endpoint sits outside its versioning surface. Emitting an `api-version` route value when no API-versioning middleware is installed would be a stale URL artefact the receiving middleware would never act on; the helpers compose cleanly in unversioned and mixed-versioned hosts by silently dropping injection in this case. The framework emits a single warning per `(endpoint, AppDomain)` pair through the `Trellis.Asp.ApiVersioning` `ILogger` category to flag the mid-migration scenario where `AddApiVersioning(...)` was removed but the chain remained; set `TrellisAspOptions.FailFastOnSilentVersionInjection = true` to throw on every offending request instead.
 
 The skip rules apply to the explicit-version overload as well: `WithVersionedRoute(explicitVersion)` overrides the resolution order but still respects neutral, URL-segment, and missing-metadata skips, so a pinned version is never injected into a Location that targets a neutral endpoint, duplicates a path-segment version, or lands on an endpoint with no versioning metadata.
 
