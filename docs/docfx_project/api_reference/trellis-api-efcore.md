@@ -259,17 +259,20 @@ Abstraction over the commit boundary for staged changes. Repositories stage chan
 ### `EfUnitOfWork<TContext>`
 
 ```csharp
-public class EfUnitOfWork<TContext> : IUnitOfWork
+public class EfUnitOfWork<TContext> : IUnitOfWork, ITrackedAggregateSource
     where TContext : DbContext
 ```
 
 EF Core implementation of `IUnitOfWork`. Delegates to `DbContextExtensions.SaveChangesResultUnitAsync` which maps `DbUpdateConcurrencyException` → `new Error.Conflict(null, "concurrent_modification")`, duplicate-key → `new Error.Conflict(null, "duplicate.key")`, and FK violations → `new Error.Conflict(null, "referential.integrity")`. Tracks scope depth via an internal counter; `CommitAsync` defers (returns success without persisting) when depth > 1.
 
+Also implements [`ITrackedAggregateSource`](trellis-api-core.md#itrackedaggregatesource): captures the `IAggregate` instances tracked by the `ChangeTracker` immediately before each `SaveChangesAsync` call. The snapshot is cleared before save and only assigned on success, so `CommittedAggregates` is empty before any commit, empty after a failed or thrown commit, unchanged during deferred nested commits, and replaced on the next successful outer commit. Consumed by `Trellis.Mediator.TrackedAggregateDomainEventDispatchBehavior<,>`.
+
 | Signature | Returns | Description |
 | --- | --- | --- |
 | `public EfUnitOfWork(TContext context)` | — | Captures the resolved `TContext` instance. Throws `ArgumentNullException` when `context` is null. Registered as scoped by `AddTrellisUnitOfWork<TContext>()`. |
-| `public Task<Result<Unit>> CommitAsync(CancellationToken cancellationToken = default)` | `Task<Result<Unit>>` | At depth 0/1, calls `context.SaveChangesResultUnitAsync(cancellationToken)`. At depth > 1 (inside a nested scope), returns `Result.Ok()` without touching the database. |
+| `public Task<Result<Unit>> CommitAsync(CancellationToken cancellationToken = default)` | `Task<Result<Unit>>` | At depth 0/1, clears the tracked-aggregate snapshot, snapshots all `IAggregate` change-tracker entries, calls `context.SaveChangesResultUnitAsync(cancellationToken)`, and (only on success) assigns the snapshot to `CommittedAggregates`. At depth > 1 (inside a nested scope), returns `Result.Ok()` without touching the database or the snapshot. |
 | `public IDisposable BeginScope()` | `IDisposable` | Increments the scope-depth counter; the returned `IDisposable.Dispose()` decrements it. Thread-safe via `Interlocked`. |
+| `IReadOnlyList<IAggregate> ITrackedAggregateSource.CommittedAggregates { get; }` | `IReadOnlyList<IAggregate>` | Snapshot of aggregates the most recent successful commit persisted. Empty by default. |
 
 ### `TransactionalCommandBehavior<TMessage, TResponse>`
 
@@ -299,8 +302,8 @@ public static class UnitOfWorkServiceCollectionExtensions
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public static IServiceCollection AddTrellisUnitOfWork<TContext>(this IServiceCollection services) where TContext : DbContext` | `IServiceCollection` | Registers `EfUnitOfWork<TContext>` as `IUnitOfWork` and adds the `TransactionalCommandBehavior` pipeline behavior. The behavior is inserted after the last existing `IPipelineBehavior<,>` registration (innermost position). Call this **after** `AddTrellisBehaviors()` so that commit failures are visible to outer behaviors (logging, tracing). |
-| `public static IServiceCollection AddTrellisUnitOfWorkWithoutBehavior<TContext>(this IServiceCollection services) where TContext : DbContext` | `IServiceCollection` | Registers `EfUnitOfWork<TContext>` without the pipeline behavior. Use for manual commit control or non-Mediator scenarios. |
+| `public static IServiceCollection AddTrellisUnitOfWork<TContext>(this IServiceCollection services) where TContext : DbContext` | `IServiceCollection` | Registers `EfUnitOfWork<TContext>` as `IUnitOfWork` (and forwards it as `ITrackedAggregateSource` for `Trellis.Mediator.TrackedAggregateDomainEventDispatchBehavior<,>`) and adds the `TransactionalCommandBehavior` pipeline behavior. The behavior is inserted after the last existing `IPipelineBehavior<,>` registration (innermost position). Call this **after** `AddTrellisBehaviors()` so that commit failures are visible to outer behaviors (logging, tracing). |
+| `public static IServiceCollection AddTrellisUnitOfWorkWithoutBehavior<TContext>(this IServiceCollection services) where TContext : DbContext` | `IServiceCollection` | Registers `EfUnitOfWork<TContext>` without the pipeline behavior (also forwarded as `ITrackedAggregateSource`). Use for manual commit control or non-Mediator scenarios. |
 
 ### `EntityTimestampInterceptor`
 

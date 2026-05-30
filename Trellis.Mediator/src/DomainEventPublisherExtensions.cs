@@ -9,10 +9,9 @@ using System.ComponentModel;
 /// </summary>
 public static class DomainEventPublisherExtensions
 {
-    // MUST match DomainEventDispatchBehavior<,>.MaxDispatchWaves. Kept as a local literal so the
-    // helper does not need to instantiate the closed generic just to read its public constant.
-    // If one changes, change both.
-    private const int MaxDispatchWaves = 8;
+    // Use the shared dispatch cap so the manual helper, the response-shape behavior, and the
+    // tracked-aggregate behavior never drift apart.
+    private const int MaxDispatchWaves = DomainEventDispatchDefaults.MaxDispatchWaves;
 
     /// <summary>
     /// <b>POST-COMMIT ONLY.</b> Publishes <paramref name="aggregate"/>'s uncommitted domain events in

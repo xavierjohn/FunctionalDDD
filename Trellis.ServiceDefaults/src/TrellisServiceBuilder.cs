@@ -39,6 +39,7 @@ public sealed class TrellisServiceBuilder
     private bool _useFluentValidation;
     private bool _useResourceAuthorization;
     private bool _useDomainEvents;
+    private bool _useTrackedAggregateDomainEvents;
     private ActorProviderKind _actorProviderKind;
 
     internal TrellisServiceBuilder(IServiceCollection services) =>
@@ -199,10 +200,52 @@ public sealed class TrellisServiceBuilder
     public TrellisServiceBuilder UseDomainEvents(params Assembly[] assemblies)
     {
         ArgumentNullException.ThrowIfNull(assemblies);
+        if (_useTrackedAggregateDomainEvents)
+            throw new InvalidOperationException(
+                "UseDomainEvents and UseTrackedAggregateDomainEvents are mutually exclusive. " +
+                "Pick the response-shape dispatch (UseDomainEvents) or the tracked-aggregate " +
+                "auto-dispatch (UseTrackedAggregateDomainEvents), not both.");
+
         if (assemblies.Length > 0)
             AddAssemblies(_domainEventAssemblies, assemblies, nameof(assemblies));
 
         _useDomainEvents = true;
+        _useMediator = true;
+        return this;
+    }
+
+    /// <summary>
+    /// Registers the tracked-aggregate domain-event dispatch behavior and (optionally) scans
+    /// assemblies for <see cref="IDomainEventHandler{TEvent}"/> implementations. Implies
+    /// <see cref="UseMediator"/>. Mutually exclusive with <see cref="UseDomainEvents(Assembly[])"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The tracked-aggregate behavior auto-dispatches events from every aggregate the unit of
+    /// work tracked at commit time, regardless of the command's response shape (works for
+    /// outcome-DTO handlers, <c>Result&lt;Unit&gt;</c> commands, and so on). It requires an
+    /// <see cref="ITrackedAggregateSource"/> registration — the default EF Core unit of work
+    /// (<c>UseEntityFrameworkUnitOfWork&lt;TContext&gt;()</c>) wires this automatically.
+    /// </para>
+    /// <para>
+    /// Calling this method and <see cref="UseDomainEvents(Assembly[])"/> on the same builder
+    /// throws because the two dispatch strategies would double-fire on
+    /// <c>Result&lt;TAggregate&gt;</c> handlers.
+    /// </para>
+    /// </remarks>
+    public TrellisServiceBuilder UseTrackedAggregateDomainEvents(params Assembly[] assemblies)
+    {
+        ArgumentNullException.ThrowIfNull(assemblies);
+        if (_useDomainEvents)
+            throw new InvalidOperationException(
+                "UseTrackedAggregateDomainEvents and UseDomainEvents are mutually exclusive. " +
+                "Pick the tracked-aggregate auto-dispatch (UseTrackedAggregateDomainEvents) or the " +
+                "response-shape dispatch (UseDomainEvents), not both.");
+
+        if (assemblies.Length > 0)
+            AddAssemblies(_domainEventAssemblies, assemblies, nameof(assemblies));
+
+        _useTrackedAggregateDomainEvents = true;
         _useMediator = true;
         return this;
     }
@@ -267,6 +310,19 @@ public sealed class TrellisServiceBuilder
             _services.AddDomainEventDispatch();
         else if (_useDomainEvents)
             _services.AddDomainEventDispatch([.. _domainEventAssemblies]);
+
+        if (_useTrackedAggregateDomainEvents)
+        {
+            _services.AddTrackedAggregateDomainEventDispatch();
+
+            // The tracked opt-in registers the publisher + behavior; assemblies passed to
+            // UseTrackedAggregateDomainEvents are scanned for IDomainEventHandler<TEvent>
+            // implementations via the same AddDomainEventDispatch(params Assembly[]) entry
+            // point. That call is safe here: AddDomainEventDispatch detects the tracked
+            // behavior and skips the response-shape append.
+            if (_domainEventAssemblies.Count > 0)
+                _services.AddDomainEventDispatch([.. _domainEventAssemblies]);
+        }
 
         _unitOfWorkRegistration?.Invoke(_services);
     }

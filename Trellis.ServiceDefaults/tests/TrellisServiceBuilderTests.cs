@@ -337,6 +337,119 @@ public class TrellisServiceBuilderTests
         pipeline.Should().EndWith(typeof(TransactionalCommandBehavior<,>));
     }
 
+    [Fact]
+    public void UseTrackedAggregateDomainEvents_WithoutAssemblies_RegistersTrackedBehaviorAndPublisher()
+    {
+        var services = new ServiceCollection();
+
+        services.AddTrellis(options => options.UseTrackedAggregateDomainEvents());
+
+        services.Should().ContainSingle(d =>
+            d.ServiceType == typeof(IDomainEventPublisher));
+        services.Should().ContainSingle(d =>
+            d.ServiceType == typeof(IPipelineBehavior<,>) &&
+            d.ImplementationType == typeof(TrackedAggregateDomainEventDispatchBehavior<,>));
+        services.Should().NotContain(d =>
+            d.ServiceType == typeof(IPipelineBehavior<,>) &&
+            d.ImplementationType == typeof(DomainEventDispatchBehavior<,>));
+    }
+
+    [Fact]
+    public void UseTrackedAggregateDomainEvents_WithAssembly_RegistersDiscoveredHandlers()
+    {
+        var services = new ServiceCollection();
+
+        services.AddTrellis(options => options.UseTrackedAggregateDomainEvents(typeof(SampleEventHandler).Assembly));
+
+        services.Should().Contain(d =>
+            d.ServiceType == typeof(IDomainEventHandler<SampleEvent>) &&
+            d.ImplementationType == typeof(SampleEventHandler));
+        // Handler-scan path uses AddDomainEventDispatch internally; the registration helper
+        // detects the tracked behavior is already present and skips the response-shape append.
+        services.Should().NotContain(d =>
+            d.ServiceType == typeof(IPipelineBehavior<,>) &&
+            d.ImplementationType == typeof(DomainEventDispatchBehavior<,>));
+    }
+
+    [Fact]
+    public void UseTrackedAggregateDomainEvents_WithUnitOfWork_PlacesTrackedDispatchBeforeTransactional()
+    {
+        var services = new ServiceCollection();
+
+        services.AddTrellis(options => options
+            .UseTrackedAggregateDomainEvents()
+            .UseEntityFrameworkUnitOfWork<TestDbContext>());
+
+        var pipeline = services
+            .Where(d => d.ServiceType == typeof(IPipelineBehavior<,>))
+            .Select(d => d.ImplementationType)
+            .ToList();
+
+        var trackedIndex = pipeline.IndexOf(typeof(TrackedAggregateDomainEventDispatchBehavior<,>));
+        var txIndex = pipeline.IndexOf(typeof(TransactionalCommandBehavior<,>));
+
+        trackedIndex.Should().BeGreaterOrEqualTo(0);
+        txIndex.Should().BeGreaterOrEqualTo(0);
+        trackedIndex.Should().BeLessThan(txIndex,
+            "tracked-aggregate dispatch must run after the transaction commits");
+        pipeline.Should().EndWith(typeof(TransactionalCommandBehavior<,>));
+    }
+
+    [Fact]
+    public void UseTrackedAggregateDomainEvents_WithUnitOfWorkRegisteredBefore_PlacesTrackedDispatchBeforeTransactional()
+    {
+        // Inverse ordering: TX registered before tracked dispatch on the builder. The opt-in
+        // must yank TX, append always-on behaviors, append tracked dispatch, and re-append
+        // TX so the final order is canonical regardless of call order.
+        var services = new ServiceCollection();
+
+        services.AddTrellis(options => options
+            .UseEntityFrameworkUnitOfWork<TestDbContext>()
+            .UseTrackedAggregateDomainEvents());
+
+        var pipeline = services
+            .Where(d => d.ServiceType == typeof(IPipelineBehavior<,>))
+            .Select(d => d.ImplementationType)
+            .ToList();
+
+        var trackedIndex = pipeline.IndexOf(typeof(TrackedAggregateDomainEventDispatchBehavior<,>));
+        var txIndex = pipeline.IndexOf(typeof(TransactionalCommandBehavior<,>));
+
+        trackedIndex.Should().BeGreaterOrEqualTo(0);
+        txIndex.Should().BeGreaterOrEqualTo(0);
+        trackedIndex.Should().BeLessThan(txIndex);
+        pipeline.Should().EndWith(typeof(TransactionalCommandBehavior<,>));
+    }
+
+    [Fact]
+    public void UseDomainEvents_AfterUseTrackedAggregateDomainEvents_Throws()
+    {
+        // Mutex: picking both dispatchers would double-dispatch for Result<TAggregate>
+        // handlers. The builder enforces fail-fast misconfiguration just like the actor-provider
+        // and unit-of-work slots do.
+        var services = new ServiceCollection();
+
+        var act = () => services.AddTrellis(options => options
+            .UseTrackedAggregateDomainEvents()
+            .UseDomainEvents());
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*mutually exclusive*");
+    }
+
+    [Fact]
+    public void UseTrackedAggregateDomainEvents_AfterUseDomainEvents_Throws()
+    {
+        var services = new ServiceCollection();
+
+        var act = () => services.AddTrellis(options => options
+            .UseDomainEvents()
+            .UseTrackedAggregateDomainEvents());
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*mutually exclusive*");
+    }
+
     // -------- Round-N inspection findings (M-S1, N-S1, N-S4) --------
 
     [Fact]

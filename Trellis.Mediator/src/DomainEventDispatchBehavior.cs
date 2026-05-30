@@ -43,7 +43,7 @@ public sealed partial class DomainEventDispatchBehavior<TMessage, TResponse>
     /// raises new events on the same aggregate. v1 expects single-wave dispatch; this
     /// cap exists to surface accidental re-entry without hanging the pipeline.
     /// </summary>
-    public const int MaxDispatchWaves = 8;
+    public const int MaxDispatchWaves = DomainEventDispatchDefaults.MaxDispatchWaves;
 
     /// <summary>
     /// Per-closed-generic extractor. Computed once per <c>(TMessage, TResponse)</c> instantiation

@@ -37,6 +37,7 @@ public static class UnitOfWorkServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         services.TryAddScoped<IUnitOfWork, EfUnitOfWork<TContext>>();
+        AddTrackedAggregateSourceForwarder(services);
         InsertTransactionalBehavior(services);
         return services;
     }
@@ -55,8 +56,29 @@ public static class UnitOfWorkServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         services.TryAddScoped<IUnitOfWork, EfUnitOfWork<TContext>>();
+        AddTrackedAggregateSourceForwarder(services);
         return services;
     }
+
+    /// <summary>
+    /// Forwards <see cref="ITrackedAggregateSource"/> through the registered <see cref="IUnitOfWork"/>
+    /// so the same scoped instance backs both contracts. If a consumer pre-registered a custom
+    /// <see cref="IUnitOfWork"/> that does not implement <see cref="ITrackedAggregateSource"/>, the
+    /// forwarder throws at resolution time with an actionable message rather than silently handing
+    /// out a different EF instance whose snapshot is never populated.
+    /// </summary>
+    private static void AddTrackedAggregateSourceForwarder(IServiceCollection services) =>
+        services.TryAddScoped<ITrackedAggregateSource>(static sp =>
+        {
+            var unitOfWork = sp.GetRequiredService<IUnitOfWork>();
+            if (unitOfWork is ITrackedAggregateSource source)
+                return source;
+
+            throw new InvalidOperationException(
+                $"The registered IUnitOfWork implementation '{unitOfWork.GetType().FullName}' does not implement " +
+                $"ITrackedAggregateSource. Replace it with one that does (e.g. EfUnitOfWork<TContext>) or register " +
+                $"ITrackedAggregateSource explicitly to use TrackedAggregateDomainEventDispatchBehavior.");
+        });
 
     /// <summary>
     /// Inserts <see cref="TransactionalCommandBehavior{TMessage,TResponse}"/> after the last
