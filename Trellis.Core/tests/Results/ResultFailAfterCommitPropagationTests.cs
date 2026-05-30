@@ -419,4 +419,600 @@ public class ResultFailAfterCommitPropagationTests
         PersistFlag(ensured).Should().BeFalse(
             "EnsureAll's caller-supplied errors are fresh — even if a caller passed PersistError here, it was constructed as a plain Error, not a FailAfterCommit");
     }
+
+    // ---------- Async-variant smoke tests (cover ProjectFailure call sites in wrapper files) ----------
+
+    [Fact]
+    public async Task CheckAsync_Task_right_propagates_persist_flag_when_check_returns_persist_failure()
+    {
+        var source = Result.Ok(42);
+
+        var checked_ = await source.CheckAsync(_ => Task.FromResult(Result.FailAfterCommit(PersistError)));
+
+        checked_.Should().BeFailure();
+        PersistFlag(checked_).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CheckAsync_Task_both_propagates_persist_flag_when_check_returns_persist_failure()
+    {
+        var source = Task.FromResult(Result.Ok(42));
+
+        var checked_ = await source.CheckAsync(_ => Task.FromResult(Result.FailAfterCommit(PersistError)));
+
+        checked_.Should().BeFailure();
+        PersistFlag(checked_).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CheckAsync_ValueTask_right_propagates_persist_flag_when_check_returns_persist_failure()
+    {
+        var source = Result.Ok(42);
+
+        var checked_ = await source.CheckAsync(_ => new ValueTask<Result<Unit>>(Result.FailAfterCommit(PersistError)));
+
+        checked_.Should().BeFailure();
+        PersistFlag(checked_).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CheckAsync_ValueTask_both_propagates_persist_flag_when_check_returns_persist_failure()
+    {
+        var source = new ValueTask<Result<int>>(Result.Ok(42));
+
+        var checked_ = await source.CheckAsync(_ => new ValueTask<Result<Unit>>(Result.FailAfterCommit(PersistError)));
+
+        checked_.Should().BeFailure();
+        PersistFlag(checked_).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CheckIfAsync_Task_right_propagates_persist_flag_when_check_returns_persist_failure()
+    {
+        var source = Result.Ok(42);
+
+        var checked_ = await source.CheckIfAsync(condition: true, _ => Task.FromResult(Result.FailAfterCommit(PersistError)));
+
+        checked_.Should().BeFailure();
+        PersistFlag(checked_).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CheckIfAsync_Task_both_propagates_persist_flag_when_check_returns_persist_failure()
+    {
+        var source = Task.FromResult(Result.Ok(42));
+
+        var checked_ = await source.CheckIfAsync(condition: true, _ => Task.FromResult(Result.FailAfterCommit(PersistError)));
+
+        checked_.Should().BeFailure();
+        PersistFlag(checked_).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CheckIfAsync_ValueTask_right_propagates_persist_flag_when_check_returns_persist_failure()
+    {
+        var source = Result.Ok(42);
+
+        var checked_ = await source.CheckIfAsync(condition: true, _ => new ValueTask<Result<Unit>>(Result.FailAfterCommit(PersistError)));
+
+        checked_.Should().BeFailure();
+        PersistFlag(checked_).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CheckIfAsync_ValueTask_both_propagates_persist_flag_when_check_returns_persist_failure()
+    {
+        var source = new ValueTask<Result<int>>(Result.Ok(42));
+
+        var checked_ = await source.CheckIfAsync(condition: true, _ => new ValueTask<Result<Unit>>(Result.FailAfterCommit(PersistError)));
+
+        checked_.Should().BeFailure();
+        PersistFlag(checked_).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task BindZipAsync_Task_right_outer_failure_propagates_outer_persist_flag()
+    {
+        var source = Result.FailAfterCommit<int>(PersistError);
+
+        var zipped = await source.BindZipAsync(x => Task.FromResult(Result.Ok(x.ToString(System.Globalization.CultureInfo.InvariantCulture))));
+
+        zipped.Should().BeFailure();
+        PersistFlag(zipped).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task BindZipAsync_Task_both_outer_failure_propagates_outer_persist_flag()
+    {
+        var source = Task.FromResult(Result.FailAfterCommit<int>(PersistError));
+
+        var zipped = await source.BindZipAsync(x => Task.FromResult(Result.Ok(x.ToString(System.Globalization.CultureInfo.InvariantCulture))));
+
+        zipped.Should().BeFailure();
+        PersistFlag(zipped).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task BindZipAsync_ValueTask_right_outer_failure_propagates_outer_persist_flag()
+    {
+        var source = Result.FailAfterCommit<int>(PersistError);
+
+        var zipped = await source.BindZipAsync(x => new ValueTask<Result<string>>(Result.Ok(x.ToString(System.Globalization.CultureInfo.InvariantCulture))));
+
+        zipped.Should().BeFailure();
+        PersistFlag(zipped).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task BindZipAsync_ValueTask_both_outer_failure_propagates_outer_persist_flag()
+    {
+        var source = new ValueTask<Result<int>>(Result.FailAfterCommit<int>(PersistError));
+
+        var zipped = await source.BindZipAsync(x => new ValueTask<Result<string>>(Result.Ok(x.ToString(System.Globalization.CultureInfo.InvariantCulture))));
+
+        zipped.Should().BeFailure();
+        PersistFlag(zipped).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task BindZipAsync_Task_inner_failure_propagates_inner_persist_flag()
+    {
+        var source = Result.Ok(42);
+
+        var zipped = await source.BindZipAsync(_ => Task.FromResult(Result.FailAfterCommit<string>(PersistError)));
+
+        zipped.Should().BeFailure();
+        PersistFlag(zipped).Should().BeTrue(
+            "BindZipAsync's inner persist intent must carry through; outer was a plain success");
+    }
+
+    [Fact]
+    public async Task BindZipAsync_ValueTask_inner_failure_propagates_inner_persist_flag()
+    {
+        var source = Result.Ok(42);
+
+        var zipped = await source.BindZipAsync(_ => new ValueTask<Result<string>>(Result.FailAfterCommit<string>(PersistError)));
+
+        zipped.Should().BeFailure();
+        PersistFlag(zipped).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task TraverseAsync_Task_typed_propagates_persist_flag_from_first_failure()
+    {
+        var inputs = new[] { 1, 2, 3 };
+
+        var traversed = await inputs.TraverseAsync(x =>
+            Task.FromResult(x == 2
+                ? Result.FailAfterCommit<int>(PersistError)
+                : Result.Ok(x)));
+
+        traversed.Should().BeFailure();
+        PersistFlag(traversed).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task TraverseAsync_ValueTask_typed_propagates_persist_flag_from_first_failure()
+    {
+        var inputs = new[] { 1, 2, 3 };
+
+        var traversed = await inputs.TraverseAsync(x =>
+            new ValueTask<Result<int>>(x == 2
+                ? Result.FailAfterCommit<int>(PersistError)
+                : Result.Ok(x)));
+
+        traversed.Should().BeFailure();
+        PersistFlag(traversed).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task TraverseAsync_Task_unit_propagates_persist_flag_from_first_failure()
+    {
+        var inputs = new[] { 1, 2, 3 };
+
+        var traversed = await inputs.TraverseAsync(x =>
+            Task.FromResult(x == 2
+                ? Result.FailAfterCommit(PersistError)
+                : Result.Ok()));
+
+        traversed.Should().BeFailure();
+        PersistFlag(traversed).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task TraverseAllAsync_Task_typed_propagates_persist_flag_when_any_failure_has_it()
+    {
+        var inputs = new[] { 1, 2, 3 };
+
+        var traversed = await inputs.TraverseAllAsync(x => Task.FromResult(x switch
+        {
+            1 => Result.Fail<int>(PlainError),
+            2 => Result.FailAfterCommit<int>(PersistError),
+            _ => Result.Ok(x),
+        }));
+
+        traversed.Should().BeFailure();
+        PersistFlag(traversed).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task TraverseAllAsync_ValueTask_typed_propagates_persist_flag_when_any_failure_has_it()
+    {
+        var inputs = new[] { 1, 2, 3 };
+
+        var traversed = await inputs.TraverseAllAsync(x => new ValueTask<Result<int>>(x switch
+        {
+            1 => Result.Fail<int>(PlainError),
+            2 => Result.FailAfterCommit<int>(PersistError),
+            _ => Result.Ok(x),
+        }));
+
+        traversed.Should().BeFailure();
+        PersistFlag(traversed).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task TraverseAllAsync_Task_unit_propagates_persist_flag_when_any_failure_has_it()
+    {
+        var inputs = new[] { 1, 2, 3 };
+
+        var traversed = await inputs.TraverseAllAsync(x => Task.FromResult(x switch
+        {
+            1 => Result.Fail(PlainError),
+            2 => Result.FailAfterCommit(PersistError),
+            _ => Result.Ok(),
+        }));
+
+        traversed.Should().BeFailure();
+        PersistFlag(traversed).Should().BeTrue();
+    }
+
+    [Fact]
+    public void Combine_propagates_persist_flag_when_both_failing_sources_have_it()
+    {
+        var persistA = Result.FailAfterCommit<int>(PersistError);
+        var persistB = Result.FailAfterCommit<string>(PersistError);
+
+        var combined = persistA.Combine(persistB);
+
+        combined.Should().BeFailure();
+        PersistFlag(combined).Should().BeTrue(
+            "OR-accumulation with both sources opted in must remain opted in");
+    }
+
+    [Fact]
+    public void Combine_propagates_persist_flag_when_only_second_failing_source_has_it()
+    {
+        var plainA = Result.Fail<int>(PlainError);
+        var persistB = Result.FailAfterCommit<string>(PersistError);
+
+        var combined = plainA.Combine(persistB);
+
+        combined.Should().BeFailure();
+        PersistFlag(combined).Should().BeTrue(
+            "OR-accumulation must promote even when only the right-hand failing source has persist intent");
+    }
+
+    // ---------- Generic-TK and predicate overloads (cover non-Unit ProjectFailure call sites) ----------
+
+    [Fact]
+    public async Task CheckIfAsync_Task_both_generic_TK_propagates_persist_flag()
+    {
+        var source = Task.FromResult(Result.Ok(42));
+
+        var checked_ = await source.CheckIfAsync(condition: true, _ => Task.FromResult(Result.FailAfterCommit<string>(PersistError)));
+
+        checked_.Should().BeFailure();
+        PersistFlag(checked_).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CheckIfAsync_Task_right_generic_TK_propagates_persist_flag()
+    {
+        var source = Result.Ok(42);
+
+        var checked_ = await source.CheckIfAsync(condition: true, _ => Task.FromResult(Result.FailAfterCommit<string>(PersistError)));
+
+        checked_.Should().BeFailure();
+        PersistFlag(checked_).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CheckIfAsync_ValueTask_both_generic_TK_propagates_persist_flag()
+    {
+        var source = new ValueTask<Result<int>>(Result.Ok(42));
+
+        var checked_ = await source.CheckIfAsync(condition: true, _ => new ValueTask<Result<string>>(Result.FailAfterCommit<string>(PersistError)));
+
+        checked_.Should().BeFailure();
+        PersistFlag(checked_).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CheckIfAsync_ValueTask_right_generic_TK_propagates_persist_flag()
+    {
+        var source = Result.Ok(42);
+
+        var checked_ = await source.CheckIfAsync(condition: true, _ => new ValueTask<Result<string>>(Result.FailAfterCommit<string>(PersistError)));
+
+        checked_.Should().BeFailure();
+        PersistFlag(checked_).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CheckIfAsync_Task_both_predicate_propagates_persist_flag()
+    {
+        var source = Task.FromResult(Result.Ok(42));
+
+        var checked_ = await source.CheckIfAsync(_ => true, _ => Task.FromResult(Result.FailAfterCommit(PersistError)));
+
+        checked_.Should().BeFailure();
+        PersistFlag(checked_).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CheckIfAsync_Task_right_predicate_propagates_persist_flag()
+    {
+        var source = Result.Ok(42);
+
+        var checked_ = await source.CheckIfAsync(_ => true, _ => Task.FromResult(Result.FailAfterCommit(PersistError)));
+
+        checked_.Should().BeFailure();
+        PersistFlag(checked_).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CheckIfAsync_ValueTask_both_predicate_propagates_persist_flag()
+    {
+        var source = new ValueTask<Result<int>>(Result.Ok(42));
+
+        var checked_ = await source.CheckIfAsync(_ => true, _ => new ValueTask<Result<Unit>>(Result.FailAfterCommit(PersistError)));
+
+        checked_.Should().BeFailure();
+        PersistFlag(checked_).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CheckIfAsync_ValueTask_right_predicate_propagates_persist_flag()
+    {
+        var source = Result.Ok(42);
+
+        var checked_ = await source.CheckIfAsync(_ => true, _ => new ValueTask<Result<Unit>>(Result.FailAfterCommit(PersistError)));
+
+        checked_.Should().BeFailure();
+        PersistFlag(checked_).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CheckAsync_Task_both_generic_TK_propagates_persist_flag()
+    {
+        var source = Task.FromResult(Result.Ok(42));
+
+        var checked_ = await source.CheckAsync(_ => Task.FromResult(Result.FailAfterCommit<string>(PersistError)));
+
+        checked_.Should().BeFailure();
+        PersistFlag(checked_).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CheckAsync_Task_right_generic_TK_propagates_persist_flag()
+    {
+        var source = Result.Ok(42);
+
+        var checked_ = await source.CheckAsync(_ => Task.FromResult(Result.FailAfterCommit<string>(PersistError)));
+
+        checked_.Should().BeFailure();
+        PersistFlag(checked_).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CheckAsync_ValueTask_both_generic_TK_propagates_persist_flag()
+    {
+        var source = new ValueTask<Result<int>>(Result.Ok(42));
+
+        var checked_ = await source.CheckAsync(_ => new ValueTask<Result<string>>(Result.FailAfterCommit<string>(PersistError)));
+
+        checked_.Should().BeFailure();
+        PersistFlag(checked_).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CheckAsync_ValueTask_right_generic_TK_propagates_persist_flag()
+    {
+        var source = Result.Ok(42);
+
+        var checked_ = await source.CheckAsync(_ => new ValueTask<Result<string>>(Result.FailAfterCommit<string>(PersistError)));
+
+        checked_.Should().BeFailure();
+        PersistFlag(checked_).Should().BeTrue();
+    }
+
+    // ---------- BindZip both-async inner failure (the inner branch was previously uncovered) ----------
+
+    [Fact]
+    public async Task BindZipAsync_Task_both_inner_failure_propagates_inner_persist_flag()
+    {
+        var source = Task.FromResult(Result.Ok(42));
+
+        var zipped = await source.BindZipAsync(_ => Task.FromResult(Result.FailAfterCommit<string>(PersistError)));
+
+        zipped.Should().BeFailure();
+        PersistFlag(zipped).Should().BeTrue(
+            "BindZipAsync both-async inner persist intent must carry through; outer was a plain success");
+    }
+
+    [Fact]
+    public async Task BindZipAsync_ValueTask_both_inner_failure_propagates_inner_persist_flag()
+    {
+        var source = new ValueTask<Result<int>>(Result.Ok(42));
+
+        var zipped = await source.BindZipAsync(_ => new ValueTask<Result<string>>(Result.FailAfterCommit<string>(PersistError)));
+
+        zipped.Should().BeFailure();
+        PersistFlag(zipped).Should().BeTrue();
+    }
+
+    // ---------- Traverse CancellationToken-variant overloads ----------
+
+    [Fact]
+    public async Task TraverseAsync_Task_with_cancellation_token_propagates_persist_flag_from_first_failure()
+    {
+        var inputs = new[] { 1, 2, 3 };
+
+        var traversed = await inputs.TraverseAsync(
+            (x, ct) => Task.FromResult(x == 2 ? Result.FailAfterCommit<int>(PersistError) : Result.Ok(x)),
+            CancellationToken.None);
+
+        traversed.Should().BeFailure();
+        PersistFlag(traversed).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task TraverseAsync_ValueTask_with_cancellation_token_propagates_persist_flag_from_first_failure()
+    {
+        var inputs = new[] { 1, 2, 3 };
+
+        var traversed = await inputs.TraverseAsync(
+            (x, ct) => new ValueTask<Result<int>>(x == 2 ? Result.FailAfterCommit<int>(PersistError) : Result.Ok(x)),
+            CancellationToken.None);
+
+        traversed.Should().BeFailure();
+        PersistFlag(traversed).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task TraverseAsync_no_payload_unit_overload_propagates_persist_flag_from_first_failure()
+    {
+        var inputs = new[] { 1, 2, 3 };
+
+        var traversed = await inputs.TraverseAsync(
+            (x, ct) => Task.FromResult(x == 2 ? Result.FailAfterCommit(PersistError) : Result.Ok()),
+            CancellationToken.None);
+
+        traversed.Should().BeFailure();
+        PersistFlag(traversed).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task TraverseAllAsync_Task_with_cancellation_token_propagates_persist_flag_when_any_failure_has_it()
+    {
+        var inputs = new[] { 1, 2, 3 };
+
+        var traversed = await inputs.TraverseAllAsync(
+            (x, ct) => Task.FromResult(x switch
+            {
+                1 => Result.Fail<int>(PlainError),
+                2 => Result.FailAfterCommit<int>(PersistError),
+                _ => Result.Ok(x),
+            }),
+            CancellationToken.None);
+
+        traversed.Should().BeFailure();
+        PersistFlag(traversed).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task TraverseAllAsync_ValueTask_with_cancellation_token_propagates_persist_flag_when_any_failure_has_it()
+    {
+        var inputs = new[] { 1, 2, 3 };
+
+        var traversed = await inputs.TraverseAllAsync(
+            (x, ct) => new ValueTask<Result<int>>(x switch
+            {
+                1 => Result.Fail<int>(PlainError),
+                2 => Result.FailAfterCommit<int>(PersistError),
+                _ => Result.Ok(x),
+            }),
+            CancellationToken.None);
+
+        traversed.Should().BeFailure();
+        PersistFlag(traversed).Should().BeTrue();
+    }
+
+    // ---------- Async Combine OR-accumulation (Task and ValueTask, all 3 receiver shapes) ----------
+
+    [Fact]
+    public async Task CombineAsync_Task_left_propagates_persist_flag_when_async_source_has_it()
+    {
+        var persistTask = Task.FromResult(Result.FailAfterCommit<int>(PersistError));
+        var plain = Result.Fail<string>(PlainError);
+
+        var combined = await persistTask.CombineAsync(plain);
+
+        combined.Should().BeFailure();
+        PersistFlag(combined).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CombineAsync_Task_right_propagates_persist_flag_when_async_source_has_it()
+    {
+        var plain = Result.Fail<int>(PlainError);
+        var persistTask = Task.FromResult(Result.FailAfterCommit<string>(PersistError));
+
+        var combined = await plain.CombineAsync(persistTask);
+
+        combined.Should().BeFailure();
+        PersistFlag(combined).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CombineAsync_Task_both_propagates_persist_flag_when_either_async_source_has_it()
+    {
+        var persistTask = Task.FromResult(Result.FailAfterCommit<int>(PersistError));
+        var plainTask = Task.FromResult(Result.Fail<string>(PlainError));
+
+        var combined = await persistTask.CombineAsync(plainTask);
+
+        combined.Should().BeFailure();
+        PersistFlag(combined).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CombineAsync_ValueTask_left_propagates_persist_flag_when_async_source_has_it()
+    {
+        var persistValueTask = new ValueTask<Result<int>>(Result.FailAfterCommit<int>(PersistError));
+        var plain = Result.Fail<string>(PlainError);
+
+        var combined = await persistValueTask.CombineAsync(plain);
+
+        combined.Should().BeFailure();
+        PersistFlag(combined).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CombineAsync_ValueTask_right_propagates_persist_flag_when_async_source_has_it()
+    {
+        var plain = Result.Fail<int>(PlainError);
+        var persistValueTask = new ValueTask<Result<string>>(Result.FailAfterCommit<string>(PersistError));
+
+        var combined = await plain.CombineAsync(persistValueTask);
+
+        combined.Should().BeFailure();
+        PersistFlag(combined).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CombineAsync_ValueTask_both_propagates_persist_flag_when_either_async_source_has_it()
+    {
+        var persistValueTask = new ValueTask<Result<int>>(Result.FailAfterCommit<int>(PersistError));
+        var plainValueTask = new ValueTask<Result<string>>(Result.Fail<string>(PlainError));
+
+        var combined = await persistValueTask.CombineAsync(plainValueTask);
+
+        combined.Should().BeFailure();
+        PersistFlag(combined).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task CombineAsync_Task_both_does_not_promote_persist_flag_when_no_failing_source_has_it()
+    {
+        var plainA = Task.FromResult(Result.Fail<int>(PlainError));
+        var plainB = Task.FromResult(Result.Fail<string>(PlainError));
+
+        var combined = await plainA.CombineAsync(plainB);
+
+        combined.Should().BeFailure();
+        PersistFlag(combined).Should().BeFalse(
+            "async Combine without any persist-on-failure source must not invent persist intent");
+    }
 }

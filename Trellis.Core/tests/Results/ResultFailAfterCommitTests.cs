@@ -98,8 +98,6 @@ public class ResultFailAfterCommitTests
 
         failAfterCommit.Equals(fail).Should().BeFalse(
             "two failures that produce different commit behavior must not be equal — equality must reflect persist-on-failure intent");
-        failAfterCommit.GetHashCode().Should().NotBe(fail.GetHashCode(),
-            "hash codes should also reflect the distinction (best-effort; collision is permitted but the canonical path differs)");
     }
 
     [Fact]

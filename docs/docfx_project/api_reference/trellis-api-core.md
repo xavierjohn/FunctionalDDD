@@ -29,7 +29,7 @@ Use this table before searching the long type catalog.
 | Goal | Canonical API | See |
 |---|---|---|
 | Return success/failure without payload | `Result.Ok()` / `Result.Fail(error)` (returns `Result<Unit>`) | [`Result`](#public-static-partial-class-result) |
-| Return success/failure with payload | `Result.Ok(value)` / `Result.Fail<T>(error)` | [`Result<TValue>`](#public-readonly-struct-resulttvalue--iresulttvalue-iequatableresulttvalue-ifailurefactoryresulttvalue) |
+| Return success/failure with payload | `Result.Ok(value)` / `Result.Fail<T>(error)` | [`Result<TValue>`](#public-readonly-struct-resulttvalue--iresulttvalue-iequatableresulttvalue-ifailurefactoryresulttvalue-ipersistonfailure) |
 | Fail but still persist staged work (worker pattern) | `Result.FailAfterCommit<T>(error)` / `Result.FailAfterCommit(error)` | [`Result`](#public-static-partial-class-result), [`IPersistOnFailure`](#public-interface-ipersistonfailure) |
 | Turn a boolean guard into a result | `Result.Ensure(condition, error)` or `.Ensure(...)` in a chain | [`Result`](#public-static-partial-class-result), [`Ensure family`](#ensure-family--ensureextensions-ensureextensionsasync-ensureallextensions-ensureallextensionsasync) |
 | Start independent async result-producing operations concurrently | `Result.ParallelAsync(...)`, then combine the returned tasks | [`Result`](#public-static-partial-class-result) |
