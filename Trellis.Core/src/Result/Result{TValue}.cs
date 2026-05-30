@@ -17,7 +17,9 @@ using System.Diagnostics;
 /// <c>default(Result&lt;T&gt;)</c> represents a <em>failure</em> carrying a sentinel
 /// <see cref="Trellis.Error.Unexpected"/> with <c>ReasonCode = "default_initialized"</c>. This makes
 /// uninitialized state a typed failure rather than a silent success that would hide a programming error.
-/// Always construct via <see cref="Result.Ok{T}(T)"/> or <see cref="Result.Fail{T}(Error)"/>; analyzer
+/// Always construct via <see cref="Result.Ok{T}(T)"/>, <see cref="Result.Fail{T}(Error)"/>, or
+/// <see cref="Result.FailAfterCommit{T}(Error)"/> (the persist-on-failure factory consumed by
+/// <c>Trellis.EntityFrameworkCore.TransactionalCommandBehavior</c>); analyzer
 /// <c>TRLS019</c> flags explicit <c>default(Result&lt;T&gt;)</c> at call sites.
 /// </para>
 /// </remarks>
@@ -46,7 +48,7 @@ using System.Diagnostics;
 [DebuggerDisplay("{IsSuccess ? \"Success\" : \"Failure\"}, Value = {(_value is null ? \"<null>\" : _value)}, Error = {(IsSuccess ? \"<none>\" : EffectiveError().Code)}")]
 [DebuggerTypeProxy(typeof(ResultDebugView<>))]
 [System.Text.Json.Serialization.JsonConverter(typeof(ResultRequiresExplicitHttpMappingConverter))]
-public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValue>>, IFailureFactory<Result<TValue>>
+public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValue>>, IFailureFactory<Result<TValue>>, IPersistOnFailure
 {
     /// <summary>
     /// True when the result represents success.
@@ -77,6 +79,11 @@ public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValu
 #pragma warning restore CA1000
 
     internal Result(bool isFailure, TValue? ok, Error? error)
+        : this(isFailure, ok, error, persistOnFailure: false)
+    {
+    }
+
+    internal Result(bool isFailure, TValue? ok, Error? error, bool persistOnFailure)
     {
         if (isFailure)
         {
@@ -87,11 +94,15 @@ public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValu
         {
             if (error is not null)
                 throw new ArgumentException("If 'isFailure' is false, 'error' must be null.", nameof(error));
+
+            if (persistOnFailure)
+                throw new ArgumentException("persistOnFailure has no meaning on a successful result.", nameof(persistOnFailure));
         }
 
         _isOk = !isFailure;
         _error = error;
         _value = ok;
+        _persistOnFailure = persistOnFailure;
 
         Activity.Current?.SetStatus(IsFailure ? ActivityStatusCode.Error : ActivityStatusCode.Ok);
 
@@ -107,6 +118,39 @@ public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValu
     private readonly bool _isOk;
     private readonly TValue? _value;
     private readonly Error? _error;
+    private readonly bool _persistOnFailure;
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// Returns <see langword="true"/> for instances created via
+    /// <see cref="Result.FailAfterCommit{TValue}(Error)"/> or <see cref="Result.FailAfterCommit(Error)"/>,
+    /// and for failures projected or aggregated from such an instance by railway operators
+    /// (e.g. <c>Map</c>, <c>Bind</c>, <c>Combine</c>). The flag is sticky: once a persist-on-failure
+    /// source enters an aggregator, the aggregated outcome's flag stays <see langword="true"/>
+    /// even if a later operand vetoes the result with a plain failure.
+    /// <see cref="Result.Ok{TValue}(TValue)"/>, <see cref="Result.Fail{TValue}(Error)"/>, and
+    /// <c>default(Result&lt;T&gt;)</c> all return <see langword="false"/>.
+    /// </remarks>
+    bool IPersistOnFailure.PersistOnFailure => _persistOnFailure;
+
+    /// <summary>
+    /// Internal allocation-free accessor for the persist-on-failure flag. Used by multi-source
+    /// railway operators (e.g. <c>Combine</c>, <c>Traverse</c>) that need to OR-accumulate the
+    /// flag across sources without paying for an <see cref="IPersistOnFailure"/> interface box.
+    /// </summary>
+    internal bool PersistOnFailureFlag => _persistOnFailure;
+
+    /// <summary>
+    /// Internal helper used by single-source railway operators (<c>Map</c>, <c>Bind</c>,
+    /// <c>BindZip</c>, <c>Check</c>, <c>MapOnFailure</c>, etc.) to project this result's
+    /// persist-on-failure intent into a new failure envelope of a different value type.
+    /// Callers must have already verified the result is a failure and supply the (possibly
+    /// rewritten) error.
+    /// </summary>
+    /// <typeparam name="TOut">Target value type of the projected failure.</typeparam>
+    /// <param name="error">The error to wrap. Must not be null.</param>
+    internal Result<TOut> ProjectFailure<TOut>(Error error) =>
+        Result.ProjectFailure<TOut>(error, _persistOnFailure);
 
     /// <summary>
     /// Returns the failure-side error, routing default-initialized failures through the shared
@@ -247,14 +291,17 @@ public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValu
     /// <returns>True if the specified result is equal to the current result; otherwise false.</returns>
     /// <remarks>
     /// Two results are equal if they have the same success/failure state and equal values/errors.
-    /// Default-initialized failures use the shared sentinel <see cref="Trellis.Error.Unexpected"/>
-    /// so two <c>default(Result&lt;T&gt;)</c> values are equal, and a default
-    /// equals an explicit <c>Result.Fail&lt;T&gt;(...)</c> with the same sentinel.
+    /// For failures, the <see cref="IPersistOnFailure.PersistOnFailure"/> flag is also part of equality:
+    /// an ordinary failure does not equal a <see cref="Result.FailAfterCommit{T}(Error)"/> carrying the
+    /// same <see cref="Error"/>. Default-initialized failures use the shared sentinel
+    /// <see cref="Trellis.Error.Unexpected"/> so two <c>default(Result&lt;T&gt;)</c> values are equal,
+    /// and a default equals an explicit <c>Result.Fail&lt;T&gt;(...)</c> with the same sentinel.
     /// </remarks>
     public bool Equals(Result<TValue> other)
     {
         if (_isOk != other._isOk) return false;
         if (_isOk) return EqualityComparer<TValue>.Default.Equals(_value, other._value);
+        if (_persistOnFailure != other._persistOnFailure) return false;
         return EffectiveError().Equals(other.EffectiveError());
     }
 
@@ -272,7 +319,7 @@ public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValu
     public override int GetHashCode() =>
         _isOk
             ? HashCode.Combine(false, _value)
-            : HashCode.Combine(true, EffectiveError());
+            : HashCode.Combine(true, _persistOnFailure, EffectiveError());
 
     /// <summary>
     /// Determines whether two results are equal.
@@ -302,7 +349,16 @@ public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValu
     /// the shared sentinel — never returns a default-initialized <c>Result&lt;Unit&gt;</c>.
     /// </remarks>
     /// <returns>A <see cref="Result{Unit}"/> mirroring this result's success/failure state.</returns>
-    public Result<Unit> AsUnit() => _isOk ? Result.Ok() : Result.Fail(EffectiveError());
+    /// <remarks>
+    /// If the source is a persist-on-failure outcome (created via
+    /// <see cref="Result.FailAfterCommit{T}(Error)"/>), the returned <see cref="Result{Unit}"/>
+    /// preserves that intent — the commit signal must not be lost when discarding the success value.
+    /// </remarks>
+    public Result<Unit> AsUnit()
+    {
+        if (_isOk) return Result.Ok();
+        return Result.ProjectFailure<Unit>(EffectiveError(), _persistOnFailure);
+    }
 
     /// <summary>
     /// Returns a string representation of the result.

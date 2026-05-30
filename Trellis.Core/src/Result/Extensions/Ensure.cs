@@ -120,7 +120,7 @@ public static class EnsureExtensions
         var predicateResult = predicate();
 
         if (predicateResult.IsFailure)
-            return Result.Fail<TValue>(predicateResult.Error);
+            return predicateResult.ProjectFailure<TValue>(predicateResult.Error);
 
         result.LogActivityStatus();
         return result;
@@ -148,7 +148,7 @@ public static class EnsureExtensions
         var predicateResult = predicate(value);
 
         if (predicateResult.IsFailure)
-            return Result.Fail<TValue>(predicateResult.Error);
+            return predicateResult.ProjectFailure<TValue>(predicateResult.Error);
 
         result.LogActivityStatus();
         return result;
@@ -181,7 +181,7 @@ public static class EnsureExtensions
         if (!result.TryGetValue(out var value, out var resultError))
         {
             result.LogActivityStatus();
-            return Result.Fail<T>(resultError);
+            return result.ProjectFailure<T>(resultError);
         }
 
         if (value is null)
@@ -211,7 +211,7 @@ public static class EnsureExtensions
 
         if (!result.TryGetValue(out var value, out var resultError))
         {
-            var failure = Result.Fail<T>(resultError);
+            var failure = result.ProjectFailure<T>(resultError);
             failure.LogActivityStatus();
             return failure;
         }

@@ -1,7 +1,7 @@
 ﻿---
 package: Trellis.Core
 namespaces: [Trellis]
-types: [Result, "Result<T>", IResult, "IResult<TValue>", "IFailureFactory<TSelf>", "Maybe<T>", Maybe, MaybeInvariant, Error, ITransportFault, RetryAdvice, Unit, "Page<T>", Page, Cursor, PageSize, CursorCodec, PageBuilder, "EquatableArray<T>", EquatableArray, ResourceRef, InputPointer, FieldViolation, RuleViolation, IAggregate, "Aggregate<TId>", IEntity, "Entity<TId>", IDomainEvent, ValueObject, "ScalarValueObject<TSelf,T>", "IScalarValue<TSelf,TPrimitive>", "IFormattableScalarValue<TSelf,TPrimitive>", "RequiredString<TSelf>", "RequiredInt<TSelf>", "RequiredLong<TSelf>", "RequiredDecimal<TSelf>", "RequiredBool<TSelf>", "RequiredGuid<TSelf>", "RequiredDateTime<TSelf>", "RequiredEnum<TSelf>", "RequiredEnumJsonConverter<T>", "ParsableJsonConverter<T>", ResultRequiresExplicitHttpMappingConverter, PrimitiveValueObjectTrace, "Specification<T>", TrellisJsonValidationException, RangeAttribute, StringLengthAttribute, NotDefaultAttribute, TrimAttribute, RailwayTrackAttribute, TrackBehavior, EnumValueAttribute, ResultDebugSettings]
+types: [Result, "Result<T>", IResult, "IResult<TValue>", "IFailureFactory<TSelf>", IPersistOnFailure, "Maybe<T>", Maybe, MaybeInvariant, Error, ITransportFault, RetryAdvice, Unit, "Page<T>", Page, Cursor, PageSize, CursorCodec, PageBuilder, "EquatableArray<T>", EquatableArray, ResourceRef, InputPointer, FieldViolation, RuleViolation, IAggregate, "Aggregate<TId>", IEntity, "Entity<TId>", IDomainEvent, ValueObject, "ScalarValueObject<TSelf,T>", "IScalarValue<TSelf,TPrimitive>", "IFormattableScalarValue<TSelf,TPrimitive>", "RequiredString<TSelf>", "RequiredInt<TSelf>", "RequiredLong<TSelf>", "RequiredDecimal<TSelf>", "RequiredBool<TSelf>", "RequiredGuid<TSelf>", "RequiredDateTime<TSelf>", "RequiredEnum<TSelf>", "RequiredEnumJsonConverter<T>", "ParsableJsonConverter<T>", ResultRequiresExplicitHttpMappingConverter, PrimitiveValueObjectTrace, "Specification<T>", TrellisJsonValidationException, RangeAttribute, StringLengthAttribute, NotDefaultAttribute, TrimAttribute, RailwayTrackAttribute, TrackBehavior, EnumValueAttribute, ResultDebugSettings]
 version: v3
 last_verified: 2026-05-06
 audience: [llm]
@@ -29,7 +29,8 @@ Use this table before searching the long type catalog.
 | Goal | Canonical API | See |
 |---|---|---|
 | Return success/failure without payload | `Result.Ok()` / `Result.Fail(error)` (returns `Result<Unit>`) | [`Result`](#public-static-partial-class-result) |
-| Return success/failure with payload | `Result.Ok(value)` / `Result.Fail<T>(error)` | [`Result<TValue>`](#public-readonly-struct-resulttvalue--iresulttvalue-iequatableresulttvalue-ifailurefactoryresulttvalue) |
+| Return success/failure with payload | `Result.Ok(value)` / `Result.Fail<T>(error)` | [`Result<TValue>`](#public-readonly-struct-resulttvalue--iresulttvalue-iequatableresulttvalue-ifailurefactoryresulttvalue-ipersistonfailure) |
+| Fail but still persist staged work (worker pattern) | `Result.FailAfterCommit<T>(error)` / `Result.FailAfterCommit(error)` | [`Result`](#public-static-partial-class-result), [`IPersistOnFailure`](#public-interface-ipersistonfailure) |
 | Turn a boolean guard into a result | `Result.Ensure(condition, error)` or `.Ensure(...)` in a chain | [`Result`](#public-static-partial-class-result), [`Ensure family`](#ensure-family--ensureextensions-ensureextensionsasync-ensureallextensions-ensureallextensionsasync) |
 | Start independent async result-producing operations concurrently | `Result.ParallelAsync(...)`, then combine the returned tasks | [`Result`](#public-static-partial-class-result) |
 | Combine multiple validated *typed* fields into a tuple | static `Result.Combine<T1,T2>(Result<T1>, Result<T2>)` or instance `r1.Combine(r2)`, then `.Map(...)` | [`Combine family`](#combine-family--combineextensions-combineextensionsasync-combineerrorextensions) |
@@ -224,6 +225,8 @@ Static factory and helper surface for `Result<TValue>`. There is no non-generic 
 | `public static Result<Unit> Ok()` | Success without payload (returns `Result<Unit>`) |
 | `public static Result<TValue> Fail<TValue>(Error error)` | Failure factory |
 | `public static Result<Unit> Fail(Error error)` | Failure without payload (returns `Result<Unit>`) |
+| `public static Result<TValue> FailAfterCommit<TValue>(Error error)` | Persist-on-failure factory. Still a failure (`IsFailure == true`), but sets [`IPersistOnFailure.PersistOnFailure`](#public-interface-ipersistonfailure) so `TransactionalCommandBehavior` (and any other opt-in pipeline behavior) commits staged changes alongside the failure. Canonical use: worker handler that converts a transient external-service rejection into a persisted `permanently_failed` row. Throws `ArgumentNullException` on null `error`. |
+| `public static Result<Unit> FailAfterCommit(Error error)` | No-payload persist-on-failure factory (returns `Result<Unit>`). |
 | `public static Result<Unit> Ensure(bool flag, Error error)` | Converts a boolean to `Result<Unit>` |
 | `public static Result<Unit> Ensure(Func<bool> predicate, Error error)` | Deferred predicate version |
 | `public static Task<Result<Unit>> EnsureAsync(Func<Task<bool>> predicate, Error error)` | Async predicate version |
@@ -239,11 +242,32 @@ The default exception mapper produces `new Error.Unexpected("unhandled_exception
 
 #### Factory Methods
 
-`Ok`, `Fail`, `Ensure`, `Try`, `TryAsync`, `Combine`, and `ParallelAsync`. Removed from the current API (see "Breaking changes from v1" above): `Success`, `Failure`, `Success(Func<T>)`, `Failure<T>(Func<Error>)`, `SuccessIf`, `FailureIf`, `SuccessIfAsync`, `FailureIfAsync`, `FromException`, and the non-generic `Result` instance type itself (`CreateFailure`, `IFailureFactory<Result>`, `IEquatable<Result>`, etc.).
+`Ok`, `Fail`, `FailAfterCommit`, `Ensure`, `Try`, `TryAsync`, `Combine`, and `ParallelAsync`. Removed from the current API (see "Breaking changes from v1" above): `Success`, `Failure`, `Success(Func<T>)`, `Failure<T>(Func<Error>)`, `SuccessIf`, `FailureIf`, `SuccessIfAsync`, `FailureIfAsync`, `FromException`, and the non-generic `Result` instance type itself (`CreateFailure`, `IFailureFactory<Result>`, `IEquatable<Result>`, etc.).
 
 ---
 
-### `public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValue>>, IFailureFactory<Result<TValue>>`
+### `public interface IPersistOnFailure`
+
+Opt-in marker carried by result types whose **failure** outcome should still trigger any post-handler persistence step (notably `TransactionalCommandBehavior`'s commit). The canonical producer is `Result.FailAfterCommit<T>(error)`; the canonical consumer is `TransactionalCommandBehavior`, which checks `result is IPersistOnFailure { PersistOnFailure: true }` to decide whether to commit a failed handler outcome.
+
+> **Per-instance, not type-level.** `Result<T>` implements `IPersistOnFailure` unconditionally — the same struct represents both ordinary failures and persist-on-failure failures, and the per-instance `PersistOnFailure` property discriminates. A type-only `is IPersistOnFailure` check is therefore *insufficient* and would incorrectly include ordinary `Result.Fail<T>(error)` values; consumers must use the property-bound pattern `result is IPersistOnFailure { PersistOnFailure: true }`.
+
+#### Properties
+
+| Name | Type | Notes |
+| --- | --- | --- |
+| `PersistOnFailure` | `bool` | `true` for instances created via `Result.FailAfterCommit<T>(error)` / `Result.FailAfterCommit(error)`, and for failures projected or aggregated from such an instance by railway operators (e.g. `Map`, `Bind`, `Combine`). The flag is sticky once propagated. `Result.Ok(...)`, `Result.Fail(...)`, and `default(Result<T>)` all return `false`. |
+
+#### Pipeline composition
+
+| Behavior | Persist-on-failure handling |
+| --- | --- |
+| `TransactionalCommandBehavior` (`Trellis.EntityFrameworkCore`) | Commits staged changes on success **or** persist-on-failure. Commit error on a persist-on-failure outcome replaces the handler error in the returned response. |
+| `DomainEventDispatchBehavior` (`Trellis.Mediator`) | Treats persist-on-failure as failure: events are **not** dispatched. Events the handler raised on aggregates remain on those in-memory instances and are discarded with the request scope — they are not a durable retry buffer. Model post-failure side effects via an outbox row or a dedicated follow-up command. |
+
+---
+
+### `public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValue>>, IFailureFactory<Result<TValue>>, IPersistOnFailure`
 
 Represents either a successful `TValue` or a failure `Error`.
 
@@ -275,8 +299,8 @@ Represents either a successful `TValue` or a failure `Error`.
 | `public bool TryGetValue([MaybeNullWhen(false)] out TValue value, [NotNullWhen(false)] out Error? error)` | Combined extractor — binds both `value` (on success) and `error` (on failure) in one call, eliminating the need for `result.Error!` after a failed single-out `TryGetValue`. |
 | `public bool TryGetError([NotNullWhen(true)] out Error? error)` | Non-throwing failure extractor; on `default(Result<T>)` returns `true` with the `Error.Unexpected` sentinel. |
 | `public void Deconstruct(out bool isSuccess, out TValue? value, out Error? error)` | Deconstruction support: `var (ok, value, error) = result;`. |
-| `public Result<Unit> AsUnit()` | Discards the success value, returning a `Result<Unit>`. On a default-initialized failure, returns an explicit `Result.Fail(sentinel)` (never another `default`). |
-| `public bool Equals(Result<TValue> other)` | Value equality. Equal if both are success with `EqualityComparer<TValue>.Default.Equals` over the values, or both are failure with equal `Error`. Default-initialized failures route through the shared sentinel. |
+| `public Result<Unit> AsUnit()` | Discards the success value, returning a `Result<Unit>`. On a default-initialized failure, returns an explicit `Result.Fail(sentinel)` (never another `default`). Preserves the persist-on-failure flag when the source was created via `Result.FailAfterCommit<T>(error)`. |
+| `public bool Equals(Result<TValue> other)` | Value equality. Equal if both are success with `EqualityComparer<TValue>.Default.Equals` over the values, or both are failure with equal `Error` *and* equal persist-on-failure intent. Default-initialized failures route through the shared sentinel; an ordinary `Result.Fail(error)` and a `Result.FailAfterCommit(error)` with the same `Error` are **not** equal. |
 | `public override bool Equals(object? obj)` | Object equality. |
 | `public override int GetHashCode()` | Hash code matching `Equals`. |
 | `public override string ToString()` | `"Success({value})"` or `"Failure({Code}: {Detail})"`. |

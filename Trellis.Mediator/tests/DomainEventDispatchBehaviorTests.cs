@@ -1,4 +1,4 @@
-namespace Trellis.Mediator.Tests;
+﻿namespace Trellis.Mediator.Tests;
 
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -57,7 +57,45 @@ public class DomainEventDispatchBehaviorTests
 
         response.IsFailure.Should().BeTrue();
         publisher.Published.Should().BeEmpty();
-        aggregate.UncommittedEvents().Should().HaveCount(1, "events stay on the aggregate when the command fails so they can be retried by a re-issued command");
+        aggregate.UncommittedEvents().Should().HaveCount(1, "dispatch is skipped on failure, so the events the handler raised remain on the in-memory aggregate instance and are discarded with the request scope");
+    }
+
+    /// <summary>
+    /// Issue #533 regression: a persist-on-failure outcome (created via
+    /// <c>Result.FailAfterCommit&lt;TAggregate&gt;(error)</c>) is still a failure, so
+    /// <c>DomainEventDispatchBehavior</c> must not fan out events. The commit happens upstream
+    /// in <c>TransactionalCommandBehavior</c>; this behavior only handles event dispatch, and
+    /// the rule "no dispatch on failure" continues to apply. Any events the handler raised
+    /// stay on the in-memory aggregate instance and are discarded with the request scope —
+    /// if the permanent-failure transition needs to drive downstream work, write an outbox
+    /// row inside the same handler so it commits alongside the state change.
+    /// </summary>
+    [Fact]
+    public async Task Handle_FailAfterCommitResult_DoesNotDispatch_AndLeavesEventsOnAggregate()
+    {
+        var aggregate = new TestAggregate(Id1);
+        var pendingEvent = new TestEventA("staged-during-failure", DateTimeOffset.UtcNow);
+        aggregate.RaiseEvent(pendingEvent);
+
+        var publisher = new RecordingPublisher();
+        var behavior = new DomainEventDispatchBehavior<AggregateCommand, Result<TestAggregate>>(
+            publisher,
+            NullLogger<DomainEventDispatchBehavior<AggregateCommand, Result<TestAggregate>>>.Instance);
+
+        var persistOnFailure = Result.FailAfterCommit<TestAggregate>(
+            new Error.Conflict(null, "external.permanent_failure") { Detail = "gateway rejected" });
+        var response = await behavior.Handle(
+            new AggregateCommand(aggregate),
+            (_, _) => new ValueTask<Result<TestAggregate>>(persistOnFailure),
+            CancellationToken.None);
+
+        response.IsFailure.Should().BeTrue();
+        ((IPersistOnFailure)response).PersistOnFailure.Should().BeTrue(
+            "the response shape is preserved end-to-end — the failure stays opt-in to commit");
+        publisher.Published.Should().BeEmpty(
+            "FailAfterCommit is still a failure; event dispatch must not run");
+        aggregate.UncommittedEvents().Should().HaveCount(1,
+            "dispatch is skipped, so the events the handler raised remain on the in-memory aggregate instance");
     }
 
     [Fact]

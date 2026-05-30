@@ -53,7 +53,7 @@ public static class TraverseExtensions
             if (!result.TryGetValue(out var value, out var error))
             {
                 activity?.SetStatus(ActivityStatusCode.Error);
-                return Result.Fail<IReadOnlyList<TOut>>(error);
+                return result.ProjectFailure<IReadOnlyList<TOut>>(error);
             }
 
             results.Add(value);
@@ -88,7 +88,7 @@ public static class TraverseExtensions
             if (!result.TryGetValue(out var value, out var error))
             {
                 activity?.SetStatus(ActivityStatusCode.Error);
-                return Result.Fail<IReadOnlyList<TOut>>(error);
+                return result.ProjectFailure<IReadOnlyList<TOut>>(error);
             }
 
             results.Add(value);
@@ -126,7 +126,7 @@ public static class TraverseExtensions
             if (!result.TryGetValue(out var value, out var error))
             {
                 activity?.SetStatus(ActivityStatusCode.Error);
-                return Result.Fail<IReadOnlyList<TOut>>(error);
+                return result.ProjectFailure<IReadOnlyList<TOut>>(error);
             }
 
             results.Add(value);
@@ -161,7 +161,7 @@ public static class TraverseExtensions
             if (!result.TryGetValue(out var value, out var error))
             {
                 activity?.SetStatus(ActivityStatusCode.Error);
-                return Result.Fail<IReadOnlyList<TOut>>(error);
+                return result.ProjectFailure<IReadOnlyList<TOut>>(error);
             }
 
             results.Add(value);
@@ -199,7 +199,7 @@ public static class TraverseExtensions
             if (!result.TryGetValue(out var value, out var error))
             {
                 activity?.SetStatus(ActivityStatusCode.Error);
-                return Result.Fail<IReadOnlyList<TOut>>(error);
+                return result.ProjectFailure<IReadOnlyList<TOut>>(error);
             }
 
             results.Add(value);
@@ -229,7 +229,7 @@ public static class TraverseExtensions
             if (result.IsFailure)
             {
                 activity?.SetStatus(ActivityStatusCode.Error);
-                return Result.Fail(result.Error);
+                return result;
             }
         }
 
@@ -279,7 +279,7 @@ public static class TraverseExtensions
             if (!result.TryGetValue(out var value, out var error))
             {
                 activity?.SetStatus(ActivityStatusCode.Error);
-                return Result.Fail<IReadOnlyList<T>>(error);
+                return result.ProjectFailure<IReadOnlyList<T>>(error);
             }
 
             values.Add(value);
@@ -310,7 +310,7 @@ public static class TraverseExtensions
             if (result.IsFailure)
             {
                 activity?.SetStatus(ActivityStatusCode.Error);
-                return Result.Fail(result.Error);
+                return result;
             }
         }
 

@@ -354,6 +354,8 @@ services.AddTrellisUnitOfWork<AppDbContext>(); // commit behavior goes innermost
 
 `TransactionalCommandBehavior<TMessage, TResponse>` only fires for `ICommand<TResponse>` (queries are skipped at the type-constraint level). On handler success it calls `unitOfWork.CommitAsync(ct)`; if commit fails, it returns `TResponse.CreateFailure(error)`. EF Core's implicit transaction around `SaveChanges` makes the staged changes commit atomically.
 
+A handler can also opt into a **persist-on-failure** outcome by returning `Result.FailAfterCommit<T>(error)` — staged changes are still committed alongside the failure result. This is the canonical shape for a worker handler that wants to persist a `permanently_failed` row and surface the underlying error to the caller. See [Persisting failure state from a worker handler](integration-mediator.md#persisting-failure-state-from-a-worker-handler) in the mediator article for the full recipe.
+
 For background jobs or non-mediator code, inject `IUnitOfWork` directly and call `CommitAsync`. Use `AddTrellisUnitOfWorkWithoutBehavior<TContext>()` to skip the pipeline behavior registration.
 
 ### Nested commands and scope-aware commit

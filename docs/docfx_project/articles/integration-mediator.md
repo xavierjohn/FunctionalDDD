@@ -25,6 +25,7 @@ audience: [developer]
 | Convert thrown exceptions to typed failures | `ExceptionBehavior` (always-on) | [Exception safety net](#exception-safety-net) |
 | Dispatch domain events that aggregates raised during a command | `services.AddDomainEventDispatch()` + `IDomainEventHandler<TEvent>` | [Domain event dispatch](#domain-event-dispatch) |
 | Use a custom envelope response type around an aggregate | `TResponse : IResult<TAggregate>, IFailureFactory<TResponse>` | [Custom envelope response types](#custom-envelope-response-types) |
+| Persist a `permanently_failed` row alongside a failure outcome (worker pattern) | `Result.FailAfterCommit<T>(error)` | [Persisting failure state from a worker handler](#persisting-failure-state-from-a-worker-handler) |
 
 ## Use this guide when
 
@@ -495,6 +496,52 @@ Other response shapes pass through the dispatch behavior untouched:
 | Custom type with **two** distinct `IResult<TAggregate1>` / `IResult<TAggregate2>` interfaces | **Fails fast at startup** with `InvalidOperationException` — the behavior cannot disambiguate which aggregate's events to dispatch. |
 
 When the response is `Result<Unit>` or any non-aggregate shape and you still need events to fire, dispatch them yourself (e.g. through an injected `IDomainEventPublisher`) — but prefer the canonical `Result<TAggregate>` shape so the pipeline owns the boundary.
+
+### Persisting failure state from a worker handler
+
+A worker handler often needs to mark a domain record as `permanently_failed` *and* return failure to the caller (so retries stop, alerts fire, the outbox doesn't redrive). The naive shape — handler stages the state change then returns `Result.Fail<T>(error)` — loses the persisted state because `TransactionalCommandBehavior` rolls back on failure.
+
+`Result.FailAfterCommit<T>(error)` solves this. It is still a failure (`IsFailure == true`, dispatch is skipped, callers see the error), but it carries an `IPersistOnFailure.PersistOnFailure` flag that `TransactionalCommandBehavior` reads to decide whether to commit:
+
+```csharp
+public async ValueTask<Result<Reminder>> Handle(
+    SendReminderCommand cmd,
+    CancellationToken cancellationToken)
+{
+    var reminder = await _repo.GetAsync(cmd.ReminderId, cancellationToken).ConfigureAwait(false);
+    if (reminder is null)
+        return Result.Fail<Reminder>(new Error.NotFound(ResourceRef.For<Reminder>(cmd.ReminderId)));
+
+    var gatewayResult = await _gateway.SendAsync(reminder, cancellationToken).ConfigureAwait(false);
+    if (gatewayResult.IsSuccess)
+    {
+        reminder.MarkSent(_clock.UtcNow);
+        return Result.Ok(reminder);
+    }
+
+    // Transient → ordinary failure: nothing persists, retry will re-enter the handler.
+    if (gatewayResult.Error is Error.Unavailable or Error.RateLimited)
+        return Result.Fail<Reminder>(gatewayResult.Error);
+
+    // Permanent failure → mark the row and persist that decision alongside the failure outcome.
+    // Without FailAfterCommit, MarkPermanentlyFailed's tracked changes roll back and the next
+    // tick re-enters this handler against the same row.
+    reminder.MarkPermanentlyFailed(gatewayResult.Error.Code, _clock.UtcNow);
+    return Result.FailAfterCommit<Reminder>(gatewayResult.Error);
+}
+```
+
+Pipeline behavior at this point:
+
+- `TransactionalCommandBehavior` sees `result is IPersistOnFailure { PersistOnFailure: true }` and runs `CommitAsync`. If the commit itself fails (e.g., DB unavailable), that commit error replaces the handler's gateway error in the returned response — there is no partial commit.
+- `DomainEventDispatchBehavior` sees an `IsFailure` result and skips dispatch. The `MarkPermanentlyFailed` event remains on the in-memory `reminder` aggregate and is discarded when the request scope ends; it is not a durable retry buffer. If you need the permanent-failure transition to drive downstream notifications, write an outbox row inside the same handler (committed by `TransactionalCommandBehavior` alongside `MarkPermanentlyFailed`'s row updates) and dispatch from there.
+- Callers (worker tick loop, outbox processor, HTTP controller) see a plain failure result and react accordingly (log + alert + don't retry).
+
+Guidance:
+
+- Only the **permanent** branch uses `FailAfterCommit`. Transient errors must stay as `Result.Fail<T>(...)` so the retry path re-runs against fresh state.
+- `Result.FailAfterCommit<T>(error)` and `Result.Fail<T>(error)` with the same `Error` are **not** equal — equality discriminates on the per-instance `PersistOnFailure` flag.
+- `IFailureFactory<Result<T>>.CreateFailure(error)` (the constructor used by upstream behaviors when projecting a failure into the response type) deliberately produces a plain `Result.Fail<T>(error)`, **not** a `FailAfterCommit`. This prevents a commit-error from looping back into another commit attempt.
 
 ## Exception safety net
 

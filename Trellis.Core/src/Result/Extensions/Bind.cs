@@ -30,7 +30,7 @@ public static partial class BindExtensions
 
         using var activity = RopTrace.ActivitySource.StartActivity();
         if (!result.TryGetValue(out var value, out var error))
-            return Result.Fail<TResult>(error);
+            return result.ProjectFailure<TResult>(error);
 
         var output = func(value);
         output.LogActivityStatus();
@@ -58,7 +58,7 @@ public static partial class BindExtensionsAsync
 
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         if (!result.TryGetValue(out var value, out var error))
-            return Result.Fail<TResult>(error);
+            return result.ProjectFailure<TResult>(error);
 
         var output = await func(value).ConfigureAwait(false);
         output.LogActivityStatus();
@@ -145,7 +145,7 @@ public static partial class BindExtensionsAsync
 
         using var activity = RopTrace.ActivitySource.StartActivity(nameof(BindExtensions.Bind));
         if (!result.TryGetValue(out var value, out var error))
-            return Result.Fail<TResult>(error);
+            return result.ProjectFailure<TResult>(error);
 
         var output = await valueTask(value).ConfigureAwait(false);
         output.LogActivityStatus();

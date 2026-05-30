@@ -30,7 +30,7 @@ public static partial class CheckIfExtensionsAsync
         var checkResult = await func(value).ConfigureAwait(false);
         if (checkResult.IsFailure)
         {
-            var failure = Result.Fail<T>(checkResult.Error);
+            var failure = checkResult.ProjectFailure<T>(checkResult.Error);
             failure.LogActivityStatus();
             return failure;
         }
@@ -55,7 +55,7 @@ public static partial class CheckIfExtensionsAsync
         var checkResult = await func(value).ConfigureAwait(false);
         if (checkResult.IsFailure)
         {
-            var failure = Result.Fail<T>(checkResult.Error);
+            var failure = checkResult.ProjectFailure<T>(checkResult.Error);
             failure.LogActivityStatus();
             return failure;
         }
@@ -90,7 +90,7 @@ public static partial class CheckIfExtensionsAsync
         var checkResult = await func(value).ConfigureAwait(false);
         if (checkResult.IsFailure)
         {
-            var failure = Result.Fail<T>(checkResult.Error);
+            var failure = checkResult.ProjectFailure<T>(checkResult.Error);
             failure.LogActivityStatus();
             return failure;
         }
@@ -116,7 +116,7 @@ public static partial class CheckIfExtensionsAsync
         var checkResult = await func(value).ConfigureAwait(false);
         if (checkResult.IsFailure)
         {
-            var failure = Result.Fail<T>(checkResult.Error);
+            var failure = checkResult.ProjectFailure<T>(checkResult.Error);
             failure.LogActivityStatus();
             return failure;
         }

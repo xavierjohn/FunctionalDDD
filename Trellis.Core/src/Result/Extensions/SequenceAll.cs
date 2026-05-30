@@ -31,6 +31,7 @@ public static class SequenceAllExtensions
         using var activity = RopTrace.ActivitySource.StartActivity();
         var values = source is ICollection<Result<T>> coll ? new List<T>(coll.Count) : new List<T>();
         Error? accumulated = null;
+        bool persistOnFailure = false;
 
         foreach (var result in source)
         {
@@ -41,13 +42,14 @@ public static class SequenceAllExtensions
             else
             {
                 accumulated = accumulated.Combine(result.Error);
+                persistOnFailure |= result.PersistOnFailureFlag;
             }
         }
 
         if (accumulated is not null)
         {
             activity?.SetStatus(ActivityStatusCode.Error);
-            return Result.Fail<IReadOnlyList<T>>(accumulated);
+            return Result.ProjectFailure<IReadOnlyList<T>>(accumulated, persistOnFailure);
         }
 
         return Result.Ok<IReadOnlyList<T>>(values);
@@ -69,17 +71,21 @@ public static class SequenceAllExtensions
 
         using var activity = RopTrace.ActivitySource.StartActivity();
         Error? accumulated = null;
+        bool persistOnFailure = false;
 
         foreach (var result in source)
         {
             if (result.IsFailure)
+            {
                 accumulated = accumulated.Combine(result.Error);
+                persistOnFailure |= result.PersistOnFailureFlag;
+            }
         }
 
         if (accumulated is not null)
         {
             activity?.SetStatus(ActivityStatusCode.Error);
-            return Result.Fail(accumulated);
+            return Result.ProjectFailure<Unit>(accumulated, persistOnFailure);
         }
 
         return Result.Ok();

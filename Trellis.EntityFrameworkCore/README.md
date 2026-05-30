@@ -39,6 +39,7 @@ Result<int> saved = await dbContext.SaveChangesResultAsync(cancellationToken);
 - Query `Maybe<T>` naturally instead of dropping to storage-specific null handling.
 - Return `Result<int>` or `Result` from save operations instead of throwing on expected failures.
 - Cursor-based seek pagination via `IQueryable<T>.ToPageAsync(pageSize, cursor, keySelector, …)` — returns `Result<Page<T>>`, composes with `PageBuilder` and `CursorCodec`, and never throws on malformed input.
+- `TransactionalCommandBehavior` honors `Result.FailAfterCommit<T>(error)`: handlers that need to commit a permanent-failure transition (e.g., a worker marking an aggregate `permanently_failed` after a non-retryable external rejection) opt in per-result, and the staged row is committed alongside the failure outcome.
 
 ## Documentation
 - [Full documentation](https://xavierjohn.github.io/Trellis/articles/integration-ef.html)

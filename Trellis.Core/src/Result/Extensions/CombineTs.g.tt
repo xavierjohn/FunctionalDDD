@@ -103,7 +103,7 @@ public static partial class CombineExtensions
         Error? error = null;
         if (t1.IsFailure) error = error.Combine(t1.Error);
         if (tc.IsFailure) error = error.Combine(tc.Error);
-        if (error is not null) return Result.Fail<(<# WriteTs(i); #>)>(error);
+        if (error is not null) return Result.ProjectFailure<(<# WriteTs(i); #>)>(error, t1.PersistOnFailureFlag || tc.PersistOnFailureFlag);
         t1.TryGetValue(out var tuple);
         tc.TryGetValue(out var tcValue);
         return Result.Ok((<# for(var j = 1; j <= i - 1; j++) { #><#= j > 1 ? ", " : "" #>tuple!.Item<#= j #><# } #>, tcValue!));
@@ -139,7 +139,7 @@ public static partial class CombineExtensionsAsync
         var t1 = await tt1.ConfigureAwait(false);
         if (t1.IsFailure) error = error.Combine(t1.Error);
         if (tc.IsFailure) error = error.Combine(tc.Error);
-        if (error is not null) return Result.Fail<(<# WriteTs(i); #>)>(error);
+        if (error is not null) return Result.ProjectFailure<(<# WriteTs(i); #>)>(error, t1.PersistOnFailureFlag || tc.PersistOnFailureFlag);
         t1.TryGetValue(out var tuple);
         tc.TryGetValue(out var tcValue);
         return Result.Ok((<# for(var j = 1; j <= i - 1; j++) { #><#= j > 1 ? ", " : "" #>tuple!.Item<#= j #><# } #>, tcValue!));
@@ -160,7 +160,7 @@ public static partial class CombineExtensionsAsync
         var t1 = await vt1.ConfigureAwait(false);
         if (t1.IsFailure) error = error.Combine(t1.Error);
         if (tc.IsFailure) error = error.Combine(tc.Error);
-        if (error is not null) return Result.Fail<(<# WriteTs(i); #>)>(error);
+        if (error is not null) return Result.ProjectFailure<(<# WriteTs(i); #>)>(error, t1.PersistOnFailureFlag || tc.PersistOnFailureFlag);
         t1.TryGetValue(out var tuple);
         tc.TryGetValue(out var tcValue);
         return Result.Ok((<# for(var j = 1; j <= i - 1; j++) { #><#= j > 1 ? ", " : "" #>tuple!.Item<#= j #><# } #>, tcValue!));

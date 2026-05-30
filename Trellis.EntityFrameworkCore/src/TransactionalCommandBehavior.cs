@@ -12,6 +12,14 @@ using global::Mediator;
 /// the <see cref="Microsoft.EntityFrameworkCore.DbContext"/> is disposed.
 /// </para>
 /// <para>
+/// <b>Persist-on-failure outcomes.</b> If the response implements <see cref="IPersistOnFailure"/>
+/// and the per-instance flag is <see langword="true"/> (the canonical producer is
+/// <see cref="Result.FailAfterCommit{T}(Error)"/>), the commit step also runs even though the
+/// result is a failure. This enables the worker-handler pattern of persisting a
+/// <c>permanently_failed</c> state row alongside the failure outcome. On commit failure for a
+/// persist-on-failure outcome, the commit error replaces the handler error in the returned result.
+/// </para>
+/// <para>
 /// This behavior is constrained to <see cref="ICommand{TResponse}"/> messages — queries
 /// are not wrapped and incur no overhead.
 /// </para>
@@ -57,6 +65,16 @@ public sealed class TransactionalCommandBehavior<TMessage, TResponse>
     }
 
     /// <inheritdoc />
+    /// <remarks>
+    /// <para>
+    /// The handler is committed when the result is successful, or when the result opts in to
+    /// post-handler persistence via <see cref="IPersistOnFailure.PersistOnFailure"/> = <see langword="true"/>
+    /// (typically a <see cref="Result.FailAfterCommit{T}(Error)"/> outcome from a worker handler that
+    /// stages a "permanently_failed" row). On commit failure for a persist-on-failure outcome, the
+    /// commit error replaces the handler error — the caller must learn that the persist-on-failure
+    /// guarantee was not honored.
+    /// </para>
+    /// </remarks>
     public async ValueTask<TResponse> Handle(
         TMessage message,
         MessageHandlerDelegate<TMessage, TResponse> next,
@@ -66,7 +84,7 @@ public sealed class TransactionalCommandBehavior<TMessage, TResponse>
 
         var result = await next(message, cancellationToken).ConfigureAwait(false);
 
-        if (result.IsSuccess)
+        if (result.IsSuccess || result is IPersistOnFailure { PersistOnFailure: true })
         {
             var commitResult = await _unitOfWork.CommitAsync(cancellationToken).ConfigureAwait(false);
             if (commitResult.TryGetError(out var error))

@@ -33,6 +33,61 @@ public static partial class Result
     public static Result<TValue> Fail<TValue>(Error error) =>
         new(true, default, error);
 
+    /// <summary>
+    /// Creates a failed result that <em>opts in</em> to post-handler persistence: pipeline
+    /// behaviors implementing the <see cref="IPersistOnFailure"/> contract (notably
+    /// <c>TransactionalCommandBehavior</c>) will still commit staged changes alongside this
+    /// failure, so the failure state is durably recorded.
+    /// </summary>
+    /// <typeparam name="TValue">Success value type for the result envelope.</typeparam>
+    /// <param name="error">The error describing the failure.</param>
+    /// <returns>
+    /// A failed <see cref="Result{TValue}"/> whose <see cref="IPersistOnFailure.PersistOnFailure"/>
+    /// flag is <see langword="true"/>.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="error"/> is null.</exception>
+    /// <remarks>
+    /// <para>
+    /// <strong>Worker-handler pattern.</strong> The canonical use case is a background-worker
+    /// handler that converts a transient external-service rejection into a persisted
+    /// <c>permanently_failed</c> state on the corresponding aggregate. The handler updates the
+    /// aggregate via the change tracker, then returns <c>Result.FailAfterCommit&lt;TResponse&gt;(error)</c>.
+    /// <c>TransactionalCommandBehavior</c> observes the per-instance flag and commits the staged
+    /// row even though the result is a failure. The caller still receives the original
+    /// <see cref="Error"/> — the result is <em>still a failure</em>.
+    /// </para>
+    /// <para>
+    /// <strong>Commit-failure semantics.</strong> If the commit itself fails, the commit error
+    /// is returned (overwriting the original handler error). This is intentional — the caller
+    /// must learn that the persist-on-failure guarantee was not honored.
+    /// </para>
+    /// <para>
+    /// <strong>Domain-event dispatch.</strong>
+    /// <c>DomainEventDispatchBehavior</c> does <em>not</em> fan out events on a failed result,
+    /// including persist-on-failure ones. Any events the handler raised on aggregates remain on
+    /// those in-memory aggregate instances and are discarded with them when the request scope ends —
+    /// they are <em>not</em> a durable retry buffer. If your scenario requires post-failure side
+    /// effects (notifications, downstream commands), model them explicitly via an outbox row or a
+    /// dedicated follow-up command instead of relying on event re-dispatch.
+    /// </para>
+    /// <para>
+    /// <strong>Operator propagation.</strong> The persist-on-failure flag is preserved by every
+    /// railway operator that projects a failure (<c>Map</c>, <c>Bind</c>, <c>MapOnFailure</c>,
+    /// <c>Check</c>, <c>BindZip</c>, <c>Traverse</c>, <c>Ensure</c> upstream-propagation). Aggregating
+    /// operators (<c>Combine</c>, <c>TraverseAll</c>, <c>SequenceAll</c>, <c>WhenAllAsync</c>)
+    /// OR-accumulate the flag: if any failing source opted in, the aggregated failure carries the
+    /// flag. The flag is sticky once introduced — a later validation failure combined with an
+    /// upstream <c>FailAfterCommit</c> cannot suppress the persist intent. Fresh failures created
+    /// without an upstream source (e.g., <c>Ensure</c> evaluating <c>false</c> on a previously
+    /// successful value, <c>EnsureNotNull</c>'s value-was-null branch) do <em>not</em> set the flag.
+    /// </para>
+    /// </remarks>
+    public static Result<TValue> FailAfterCommit<TValue>(Error error)
+    {
+        ArgumentNullException.ThrowIfNull(error);
+        return new Result<TValue>(isFailure: true, ok: default, error: error, persistOnFailure: true);
+    }
+
     // ----- No-payload factories (Result<Unit>) -----------------------------------------------
 
     /// <summary>
@@ -50,6 +105,50 @@ public static partial class Result
     /// Creates a failed no-payload result (<c>Result&lt;Unit&gt;</c>) with the specified <paramref name="error"/>.
     /// </summary>
     public static Result<Unit> Fail(Error error) => new(true, default, error);
+
+    /// <summary>
+    /// Creates a failed no-payload result that opts in to post-handler persistence.
+    /// See <see cref="FailAfterCommit{TValue}(Error)"/> for the full semantics.
+    /// </summary>
+    /// <param name="error">The error describing the failure.</param>
+    /// <returns>
+    /// A failed <see cref="Result{Unit}"/> whose <see cref="IPersistOnFailure.PersistOnFailure"/>
+    /// flag is <see langword="true"/>.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="error"/> is null.</exception>
+    public static Result<Unit> FailAfterCommit(Error error)
+    {
+        ArgumentNullException.ThrowIfNull(error);
+        return new Result<Unit>(isFailure: true, ok: default, error: error, persistOnFailure: true);
+    }
+
+    /// <summary>
+    /// Internal failure projector. Selects between <see cref="Fail{TValue}(Error)"/> and
+    /// <see cref="FailAfterCommit{TValue}(Error)"/> based on <paramref name="persistOnFailure"/>.
+    /// Used by railway operators (<c>Bind</c>, <c>Map</c>, <c>Combine</c>, <c>Check</c>, <c>BindZip</c>,
+    /// <c>Traverse</c>, <c>MapOnFailure</c>, etc.) so that an upstream <see cref="FailAfterCommit{TValue}(Error)"/>
+    /// result keeps its persist-on-failure intent when the operator changes the success value type or
+    /// rewrites the error.
+    /// </summary>
+    /// <typeparam name="TValue">Success value type for the projected failure envelope.</typeparam>
+    /// <param name="error">The error describing the failure. Must not be null.</param>
+    /// <param name="persistOnFailure">When <see langword="true"/> the projected failure carries the
+    /// <see cref="IPersistOnFailure.PersistOnFailure"/> flag; otherwise it is an ordinary failure.</param>
+    /// <remarks>
+    /// Aggregating operators (<c>Combine</c>, <c>TraverseAll</c>, <c>SequenceAll</c>) OR-accumulate
+    /// the flag across every failing source: if any failing source opted into persist-on-failure, the
+    /// aggregated result carries the flag. This is intentional and irreversible — a later validation
+    /// or veto failure combined with an upstream <c>FailAfterCommit</c> cannot un-stage the persist
+    /// intent. Model "abort persistence" as an explicit reset (e.g., wrap and rethrow as a plain
+    /// <c>Result.Fail</c>) rather than relying on aggregation to suppress it.
+    /// </remarks>
+    internal static Result<TValue> ProjectFailure<TValue>(Error error, bool persistOnFailure)
+    {
+        Debug.Assert(error is not null, "ProjectFailure requires a non-null error.");
+        return persistOnFailure
+            ? new Result<TValue>(isFailure: true, ok: default, error: error, persistOnFailure: true)
+            : new Result<TValue>(isFailure: true, ok: default, error: error);
+    }
 
     // ----- Static Combine ---------------------------------------------------------------------
 

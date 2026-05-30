@@ -63,7 +63,7 @@ public static partial class BindZipExtensions
 
         if (!result.TryGetValue(out var tupleValue, out var error))
         {
-            var failure = Result.Fail<(<# WriteTs(outputSize); #>)>(error);
+            var failure = result.ProjectFailure<(<# WriteTs(outputSize); #>)>(error);
             failure.LogActivityStatus();
             return failure;
         }
@@ -72,7 +72,7 @@ public static partial class BindZipExtensions
         var nextResult = func(<# WriteArgs(i); #>);
         if (!nextResult.TryGetValue(out var nextValue, out var innerError))
         {
-            var failure = Result.Fail<(<# WriteTs(outputSize); #>)>(innerError);
+            var failure = nextResult.ProjectFailure<(<# WriteTs(outputSize); #>)>(innerError);
             failure.LogActivityStatus();
             return failure;
         }
@@ -112,7 +112,7 @@ public static partial class BindZipExtensionsAsync
 
         if (!result.TryGetValue(out var tupleValue, out var error))
         {
-            var failure = Result.Fail<(<# WriteTs(outputSize); #>)>(error);
+            var failure = result.ProjectFailure<(<# WriteTs(outputSize); #>)>(error);
             failure.LogActivityStatus();
             return failure;
         }
@@ -121,7 +121,7 @@ public static partial class BindZipExtensionsAsync
         var nextResult = await func(<# WriteArgs(i); #>).ConfigureAwait(false);
         if (!nextResult.TryGetValue(out var nextValue, out var innerError))
         {
-            var failure = Result.Fail<(<# WriteTs(outputSize); #>)>(innerError);
+            var failure = nextResult.ProjectFailure<(<# WriteTs(outputSize); #>)>(innerError);
             failure.LogActivityStatus();
             return failure;
         }
@@ -158,7 +158,7 @@ public static partial class BindZipExtensionsAsync
         var result = await resultTask.ConfigureAwait(false);
         if (!result.TryGetValue(out var tupleValue, out var error))
         {
-            var failure = Result.Fail<(<# WriteTs(outputSize); #>)>(error);
+            var failure = result.ProjectFailure<(<# WriteTs(outputSize); #>)>(error);
             failure.LogActivityStatus();
             return failure;
         }
@@ -167,7 +167,7 @@ public static partial class BindZipExtensionsAsync
         var nextResult = await func(<# WriteArgs(i); #>).ConfigureAwait(false);
         if (!nextResult.TryGetValue(out var nextValue, out var innerError))
         {
-            var failure = Result.Fail<(<# WriteTs(outputSize); #>)>(innerError);
+            var failure = nextResult.ProjectFailure<(<# WriteTs(outputSize); #>)>(innerError);
             failure.LogActivityStatus();
             return failure;
         }
@@ -189,7 +189,7 @@ public static partial class BindZipExtensionsAsync
 
         if (!result.TryGetValue(out var tupleValue, out var error))
         {
-            var failure = Result.Fail<(<# WriteTs(outputSize); #>)>(error);
+            var failure = result.ProjectFailure<(<# WriteTs(outputSize); #>)>(error);
             failure.LogActivityStatus();
             return failure;
         }
@@ -198,7 +198,7 @@ public static partial class BindZipExtensionsAsync
         var nextResult = await func(<# WriteArgs(i); #>).ConfigureAwait(false);
         if (!nextResult.TryGetValue(out var nextValue, out var innerError))
         {
-            var failure = Result.Fail<(<# WriteTs(outputSize); #>)>(innerError);
+            var failure = nextResult.ProjectFailure<(<# WriteTs(outputSize); #>)>(innerError);
             failure.LogActivityStatus();
             return failure;
         }
@@ -234,7 +234,7 @@ public static partial class BindZipExtensionsAsync
         var result = await resultTask.ConfigureAwait(false);
         if (!result.TryGetValue(out var tupleValue, out var error))
         {
-            var failure = Result.Fail<(<# WriteTs(outputSize); #>)>(error);
+            var failure = result.ProjectFailure<(<# WriteTs(outputSize); #>)>(error);
             failure.LogActivityStatus();
             return failure;
         }
@@ -243,7 +243,7 @@ public static partial class BindZipExtensionsAsync
         var nextResult = await func(<# WriteArgs(i); #>).ConfigureAwait(false);
         if (!nextResult.TryGetValue(out var nextValue, out var innerError))
         {
-            var failure = Result.Fail<(<# WriteTs(outputSize); #>)>(innerError);
+            var failure = nextResult.ProjectFailure<(<# WriteTs(outputSize); #>)>(innerError);
             failure.LogActivityStatus();
             return failure;
         }

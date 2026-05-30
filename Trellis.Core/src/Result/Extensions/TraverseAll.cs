@@ -37,6 +37,7 @@ public static class TraverseAllExtensions
         using var activity = RopTrace.ActivitySource.StartActivity();
         var values = source is ICollection<TIn> coll ? new List<TOut>(coll.Count) : new List<TOut>();
         Error? accumulated = null;
+        bool persistOnFailure = false;
 
         foreach (var item in source)
         {
@@ -48,13 +49,14 @@ public static class TraverseAllExtensions
             else
             {
                 accumulated = accumulated.Combine(result.Error);
+                persistOnFailure |= result.PersistOnFailureFlag;
             }
         }
 
         if (accumulated is not null)
         {
             activity?.SetStatus(ActivityStatusCode.Error);
-            return Result.Fail<IReadOnlyList<TOut>>(accumulated);
+            return Result.ProjectFailure<IReadOnlyList<TOut>>(accumulated, persistOnFailure);
         }
 
         return Result.Ok<IReadOnlyList<TOut>>(values);
@@ -84,6 +86,7 @@ public static class TraverseAllExtensions
         using var activity = RopTrace.ActivitySource.StartActivity();
         var values = source is ICollection<TIn> coll ? new List<TOut>(coll.Count) : new List<TOut>();
         Error? accumulated = null;
+        bool persistOnFailure = false;
 
         foreach (var item in source)
         {
@@ -95,13 +98,14 @@ public static class TraverseAllExtensions
             else
             {
                 accumulated = accumulated.Combine(result.Error);
+                persistOnFailure |= result.PersistOnFailureFlag;
             }
         }
 
         if (accumulated is not null)
         {
             activity?.SetStatus(ActivityStatusCode.Error);
-            return Result.Fail<IReadOnlyList<TOut>>(accumulated);
+            return Result.ProjectFailure<IReadOnlyList<TOut>>(accumulated, persistOnFailure);
         }
 
         return Result.Ok<IReadOnlyList<TOut>>(values);
@@ -134,6 +138,7 @@ public static class TraverseAllExtensions
         using var activity = RopTrace.ActivitySource.StartActivity();
         var values = source is ICollection<TIn> coll ? new List<TOut>(coll.Count) : new List<TOut>();
         Error? accumulated = null;
+        bool persistOnFailure = false;
 
         foreach (var item in source)
         {
@@ -146,13 +151,14 @@ public static class TraverseAllExtensions
             else
             {
                 accumulated = accumulated.Combine(result.Error);
+                persistOnFailure |= result.PersistOnFailureFlag;
             }
         }
 
         if (accumulated is not null)
         {
             activity?.SetStatus(ActivityStatusCode.Error);
-            return Result.Fail<IReadOnlyList<TOut>>(accumulated);
+            return Result.ProjectFailure<IReadOnlyList<TOut>>(accumulated, persistOnFailure);
         }
 
         return Result.Ok<IReadOnlyList<TOut>>(values);
@@ -182,6 +188,7 @@ public static class TraverseAllExtensions
         using var activity = RopTrace.ActivitySource.StartActivity();
         var values = source is ICollection<TIn> coll ? new List<TOut>(coll.Count) : new List<TOut>();
         Error? accumulated = null;
+        bool persistOnFailure = false;
 
         foreach (var item in source)
         {
@@ -193,13 +200,14 @@ public static class TraverseAllExtensions
             else
             {
                 accumulated = accumulated.Combine(result.Error);
+                persistOnFailure |= result.PersistOnFailureFlag;
             }
         }
 
         if (accumulated is not null)
         {
             activity?.SetStatus(ActivityStatusCode.Error);
-            return Result.Fail<IReadOnlyList<TOut>>(accumulated);
+            return Result.ProjectFailure<IReadOnlyList<TOut>>(accumulated, persistOnFailure);
         }
 
         return Result.Ok<IReadOnlyList<TOut>>(values);
@@ -232,6 +240,7 @@ public static class TraverseAllExtensions
         using var activity = RopTrace.ActivitySource.StartActivity();
         var values = source is ICollection<TIn> coll ? new List<TOut>(coll.Count) : new List<TOut>();
         Error? accumulated = null;
+        bool persistOnFailure = false;
 
         foreach (var item in source)
         {
@@ -244,13 +253,14 @@ public static class TraverseAllExtensions
             else
             {
                 accumulated = accumulated.Combine(result.Error);
+                persistOnFailure |= result.PersistOnFailureFlag;
             }
         }
 
         if (accumulated is not null)
         {
             activity?.SetStatus(ActivityStatusCode.Error);
-            return Result.Fail<IReadOnlyList<TOut>>(accumulated);
+            return Result.ProjectFailure<IReadOnlyList<TOut>>(accumulated, persistOnFailure);
         }
 
         return Result.Ok<IReadOnlyList<TOut>>(values);
@@ -281,19 +291,23 @@ public static class TraverseAllExtensions
 
         using var activity = RopTrace.ActivitySource.StartActivity();
         Error? accumulated = null;
+        bool persistOnFailure = false;
 
         foreach (var item in source)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var result = await selector(item, cancellationToken).ConfigureAwait(false);
             if (result.IsFailure)
+            {
                 accumulated = accumulated.Combine(result.Error);
+                persistOnFailure |= result.PersistOnFailureFlag;
+            }
         }
 
         if (accumulated is not null)
         {
             activity?.SetStatus(ActivityStatusCode.Error);
-            return Result.Fail(accumulated);
+            return Result.ProjectFailure<Unit>(accumulated, persistOnFailure);
         }
 
         return Result.Ok();

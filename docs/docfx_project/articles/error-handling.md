@@ -15,6 +15,7 @@ audience: [developer]
 | Goal | Use | See |
 |---|---|---|
 | Return a typed failure from a function | `Result.Fail<T>(new Error.X(payload) { Detail = "..." })` | [Creating errors](#creating-errors) |
+| Fail but still persist staged work (worker handler) | `Result.FailAfterCommit<T>(error)` | [Persisting failure state from a worker handler](integration-mediator.md#persisting-failure-state-from-a-worker-handler) |
 | Build a single-violation 422 from a property name | `Error.InvalidInput.ForField("email", "required", "...")` | [Validation failures](#validation-failures) |
 | Build a single-violation 422 from an object-level rule | `Error.InvalidInput.ForRule("passwords_must_match", "...")` | [Validation failures](#validation-failures) |
 | Aggregate per-field and cross-field violations | `new Error.InvalidInput(Fields: ..., Rules: ...)` | [Validation failures](#validation-failures) |
