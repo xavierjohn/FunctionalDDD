@@ -162,6 +162,106 @@ public class TransactionalCommandBehaviorTests
             "the inner commit was deferred and the outer never committed — no persistence happens");
     }
 
+    /// <summary>
+    /// Issue #533: <c>Result.FailAfterCommit&lt;T&gt;(error)</c> is semantically a failure but
+    /// opts in (via <see cref="IPersistOnFailure"/>) to having staged changes committed alongside
+    /// the failure. The handler returns the persist-on-failure outcome, the commit runs, the
+    /// caller still sees the failure.
+    /// </summary>
+    [Fact]
+    public async Task Handle_fail_after_commit_result_commits_and_returns_failure()
+    {
+        // Arrange
+        var ct = TestContext.Current.CancellationToken;
+        var uow = new FakeUnitOfWork();
+        var behavior = new TransactionalCommandBehavior<FakeCommand, Result<string>>(uow);
+        var error = new Error.Conflict(null, "external.permanent_failure") { Detail = "gateway rejected the payload" };
+        var persistOnFailureResult = Result.FailAfterCommit<string>(error);
+
+        // Act
+        var result = await behavior.Handle(
+            new FakeCommand(),
+            (_, _) => new ValueTask<Result<string>>(persistOnFailureResult),
+            ct);
+
+        // Assert
+        result.Should().BeFailure();
+        result.Error.Should().BeSameAs(error);
+        uow.CommitCount.Should().Be(1,
+            "FailAfterCommit must trigger the post-handler commit so the staged failure-state row is persisted");
+    }
+
+    /// <summary>
+    /// Issue #533: if the commit itself fails on a persist-on-failure outcome, the commit
+    /// error is returned (overwriting the original handler error). Intentional — the caller
+    /// must learn that the persist-on-failure guarantee was not honored.
+    /// </summary>
+    [Fact]
+    public async Task Handle_fail_after_commit_with_commit_failure_returns_commit_error()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var commitError = new Error.Conflict(null, "concurrent_modification") { Detail = "row was concurrently modified" };
+        var uow = new FakeUnitOfWork { CommitResult = Result.Fail(commitError) };
+        var behavior = new TransactionalCommandBehavior<FakeCommand, Result<string>>(uow);
+        var handlerError = new Error.Conflict(null, "external.permanent_failure") { Detail = "gateway rejected" };
+        var persistOnFailureResult = Result.FailAfterCommit<string>(handlerError);
+
+        var result = await behavior.Handle(
+            new FakeCommand(),
+            (_, _) => new ValueTask<Result<string>>(persistOnFailureResult),
+            ct);
+
+        result.Should().BeFailure();
+        result.UnwrapError().Should().BeSameAs(commitError);
+        uow.CommitCount.Should().Be(1);
+    }
+
+    /// <summary>
+    /// Issue #533: <c>Result&lt;Unit&gt;.FailAfterCommit</c> follows the same path as the generic
+    /// overload — the no-payload result envelope must also opt in to the commit step.
+    /// </summary>
+    [Fact]
+    public async Task Handle_unit_fail_after_commit_result_commits_and_returns_failure()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var uow = new FakeUnitOfWork();
+        var behavior = new TransactionalCommandBehavior<FakeUnitCommand, Result<Unit>>(uow);
+        var error = new Error.Conflict(null, "external.permanent_failure") { Detail = "gateway rejected" };
+        var persistOnFailureResult = Result.FailAfterCommit(error);
+
+        var result = await behavior.Handle(
+            new FakeUnitCommand(),
+            (_, _) => new ValueTask<Result<Unit>>(persistOnFailureResult),
+            ct);
+
+        result.Should().BeFailure();
+        result.Error.Should().BeSameAs(error);
+        uow.CommitCount.Should().Be(1);
+    }
+
+    /// <summary>
+    /// Issue #533: a handler that throws (rather than returning a result) must not commit. The
+    /// behavior must let the exception propagate so the outer exception-handling pipeline can
+    /// react, and the unit-of-work scope must dispose without firing <c>CommitAsync</c>.
+    /// </summary>
+    [Fact]
+    public async Task Handle_throwing_handler_does_not_commit_and_propagates_exception()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var uow = new FakeUnitOfWork();
+        var behavior = new TransactionalCommandBehavior<FakeCommand, Result<string>>(uow);
+
+        var act = async () => await behavior.Handle(
+            new FakeCommand(),
+            (_, _) => throw new InvalidOperationException("handler blew up"),
+            ct);
+
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("handler blew up");
+        uow.CommitCount.Should().Be(0,
+            "an exception bypasses the success/persist-on-failure branches; no commit must run");
+    }
+
     #region Test Infrastructure
 
     private sealed class FakeUnitOfWork : IUnitOfWork

@@ -1,4 +1,4 @@
-﻿namespace Trellis;
+namespace Trellis;
 
 /// <summary>
 /// Async Check extensions where BOTH input and check function are async (Task).
@@ -32,7 +32,7 @@ public static partial class CheckExtensionsAsync
         var checkResult = await func(value).ConfigureAwait(false);
         if (checkResult.IsFailure)
         {
-            var failure = Result.Fail<T>(checkResult.Error);
+            var failure = checkResult.ProjectFailure<T>(checkResult.Error);
             failure.LogActivityStatus();
             return failure;
         }
@@ -66,7 +66,7 @@ public static partial class CheckExtensionsAsync
         var checkResult = await func(value).ConfigureAwait(false);
         if (checkResult.IsFailure)
         {
-            var failure = Result.Fail<T>(checkResult.Error);
+            var failure = checkResult.ProjectFailure<T>(checkResult.Error);
             failure.LogActivityStatus();
             return failure;
         }

@@ -27,7 +27,7 @@ public static partial class BindZipExtensions
 
         if (!result.TryGetValue(out var value, out var error))
         {
-            var failure = Result.Fail<(T1, T2)>(error);
+            var failure = result.ProjectFailure<(T1, T2)>(error);
             failure.LogActivityStatus();
             return failure;
         }
@@ -35,7 +35,7 @@ public static partial class BindZipExtensions
         var nextResult = func(value);
         if (!nextResult.TryGetValue(out var inner, out var innerError))
         {
-            var failure = Result.Fail<(T1, T2)>(innerError);
+            var failure = nextResult.ProjectFailure<(T1, T2)>(innerError);
             failure.LogActivityStatus();
             return failure;
         }

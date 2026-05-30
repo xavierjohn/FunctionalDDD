@@ -1,4 +1,4 @@
-﻿namespace Trellis;
+namespace Trellis;
 
 using System.Diagnostics;
 
@@ -22,7 +22,7 @@ public static partial class CombineExtensions
         Error? error = null;
         if (t1.IsFailure) error = error.Combine(t1.Error);
         if (t2.IsFailure) error = error.Combine(t2.Error);
-        if (error is not null) return Result.Fail<(T1, T2)>(error);
+        if (error is not null) return Result.ProjectFailure<(T1, T2)>(error, t1.PersistOnFailureFlag || t2.PersistOnFailureFlag);
         t1.TryGetValue(out var v1);
         t2.TryGetValue(out var v2);
         return Result.Ok<(T1, T2)>((v1!, v2!));
@@ -48,7 +48,7 @@ public static partial class CombineExtensionsAsync
         var t1 = await tt1.ConfigureAwait(false);
         if (t1.IsFailure) error = error.Combine(t1.Error);
         if (t2.IsFailure) error = error.Combine(t2.Error);
-        if (error is not null) return Result.Fail<(T1, T2)>(error);
+        if (error is not null) return Result.ProjectFailure<(T1, T2)>(error, t1.PersistOnFailureFlag || t2.PersistOnFailureFlag);
         t1.TryGetValue(out var v1);
         t2.TryGetValue(out var v2);
         return Result.Ok((v1!, v2!));
@@ -65,7 +65,7 @@ public static partial class CombineExtensionsAsync
         var t2 = await tt2.ConfigureAwait(false);
         if (t1.IsFailure) error = error.Combine(t1.Error);
         if (t2.IsFailure) error = error.Combine(t2.Error);
-        if (error is not null) return Result.Fail<(T1, T2)>(error);
+        if (error is not null) return Result.ProjectFailure<(T1, T2)>(error, t1.PersistOnFailureFlag || t2.PersistOnFailureFlag);
         t1.TryGetValue(out var v1);
         t2.TryGetValue(out var v2);
         return Result.Ok((v1!, v2!));
@@ -84,7 +84,7 @@ public static partial class CombineExtensionsAsync
         var t2 = await tt2.ConfigureAwait(false);
         if (t1.IsFailure) error = error.Combine(t1.Error);
         if (t2.IsFailure) error = error.Combine(t2.Error);
-        if (error is not null) return Result.Fail<(T1, T2)>(error);
+        if (error is not null) return Result.ProjectFailure<(T1, T2)>(error, t1.PersistOnFailureFlag || t2.PersistOnFailureFlag);
         t1.TryGetValue(out var v1);
         t2.TryGetValue(out var v2);
         return Result.Ok((v1!, v2!));
@@ -104,7 +104,7 @@ public static partial class CombineExtensionsAsync
         var t1 = await vt1.ConfigureAwait(false);
         if (t1.IsFailure) error = error.Combine(t1.Error);
         if (t2.IsFailure) error = error.Combine(t2.Error);
-        if (error is not null) return Result.Fail<(T1, T2)>(error);
+        if (error is not null) return Result.ProjectFailure<(T1, T2)>(error, t1.PersistOnFailureFlag || t2.PersistOnFailureFlag);
         t1.TryGetValue(out var v1);
         t2.TryGetValue(out var v2);
         return Result.Ok((v1!, v2!));
@@ -120,7 +120,7 @@ public static partial class CombineExtensionsAsync
         var t2 = await vt2.ConfigureAwait(false);
         if (t1.IsFailure) error = error.Combine(t1.Error);
         if (t2.IsFailure) error = error.Combine(t2.Error);
-        if (error is not null) return Result.Fail<(T1, T2)>(error);
+        if (error is not null) return Result.ProjectFailure<(T1, T2)>(error, t1.PersistOnFailureFlag || t2.PersistOnFailureFlag);
         t1.TryGetValue(out var v1);
         t2.TryGetValue(out var v2);
         return Result.Ok((v1!, v2!));
@@ -137,7 +137,7 @@ public static partial class CombineExtensionsAsync
         var t2 = await vt2.ConfigureAwait(false);
         if (t1.IsFailure) error = error.Combine(t1.Error);
         if (t2.IsFailure) error = error.Combine(t2.Error);
-        if (error is not null) return Result.Fail<(T1, T2)>(error);
+        if (error is not null) return Result.ProjectFailure<(T1, T2)>(error, t1.PersistOnFailureFlag || t2.PersistOnFailureFlag);
         t1.TryGetValue(out var v1);
         t2.TryGetValue(out var v2);
         return Result.Ok((v1!, v2!));

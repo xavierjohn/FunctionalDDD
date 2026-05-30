@@ -26,6 +26,7 @@ Result<string> email = Result.Ok("ada@example.com")
 - Use `AsTask()` / `AsValueTask()` to return synchronous `Result` chains from async-shaped APIs.
 - Build resource-aware HTTP errors tersely with `ResourceRef.For<TResource>(id)`.
 - Define custom `Required*<TSelf>` value objects with source-generated parsing, JSON conversion, and tracing support.
+- Persist staged state alongside a failure with `Result.FailAfterCommit<T>(error)` — opt-in for background-worker handlers that need a permanent-failure transition to commit even though the handler returns a failed result.
 
 ## `Result<T>` is not directly JSON-serializable
 

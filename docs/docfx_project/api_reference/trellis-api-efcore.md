@@ -282,12 +282,14 @@ public sealed class TransactionalCommandBehavior<TMessage, TResponse>
 
 Pipeline behavior that auto-commits staged changes after a successful command handler. Only applies to `ICommand<TResponse>` messages — queries are skipped at the type-constraint level and incur no overhead. If the handler returns a failure, no commit occurs and staged changes are discarded with the `DbContext`. EF Core wraps each `SaveChanges` call in an implicit transaction, so all staged changes within a single handler commit atomically.
 
+> **Persist-on-failure outcomes.** If `TResponse` implements `IPersistOnFailure` and the per-instance `PersistOnFailure` flag is `true` — the canonical producer is `Result.FailAfterCommit<T>(error)` — the commit step runs even though the result is a failure. This enables the worker-handler pattern of persisting a `permanently_failed` state row alongside the failure outcome. On commit failure for a persist-on-failure outcome, the commit error replaces the handler error in the returned response.
+
 > **Important:** This behavior is **not** registered by `Trellis.Mediator.ServiceCollectionExtensions.AddTrellisBehaviors()`. Consumers of `Trellis.EntityFrameworkCore` must register it explicitly via `AddTrellisUnitOfWork<TContext>()` (see below) **after** `AddTrellisBehaviors()` so it lands innermost — closest to the handler — and commit failures remain visible to outer logging/tracing/exception behaviors.
 
 | Signature | Returns | Description |
 | --- | --- | --- |
 | `public TransactionalCommandBehavior(IUnitOfWork unitOfWork)` | — | Captures the scoped `IUnitOfWork` resolved alongside the handler. Throws `ArgumentNullException` when `unitOfWork` is null. |
-| `public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)` | `ValueTask<TResponse>` | Wraps the invocation in `using var scope = unitOfWork.BeginScope();` so a successful inner command's commit is deferred until the outermost scope unwinds. Awaits the inner handler; on success, calls `unitOfWork.CommitAsync(cancellationToken)`; if the commit reports an `Error`, returns `TResponse.CreateFailure(error)`. On handler failure, returns the failure as-is without committing. |
+| `public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)` | `ValueTask<TResponse>` | Wraps the invocation in `using var scope = unitOfWork.BeginScope();` so a successful inner command's commit is deferred until the outermost scope unwinds. Awaits the inner handler; on success **or** persist-on-failure (`result is IPersistOnFailure { PersistOnFailure: true }`), calls `unitOfWork.CommitAsync(cancellationToken)`; if the commit reports an `Error`, returns `TResponse.CreateFailure(error)` (overwriting the original handler error for persist-on-failure outcomes). On ordinary failure, returns the failure as-is without committing. |
 
 ### `UnitOfWorkServiceCollectionExtensions`
 

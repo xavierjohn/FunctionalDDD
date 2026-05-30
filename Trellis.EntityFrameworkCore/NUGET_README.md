@@ -32,7 +32,7 @@ Result<int> saved = await dbContext.SaveChangesResultAsync(cancellationToken);
 - Cursor-based seek pagination via `IQueryable<T>.ToPageAsync(pageSize, cursor, keySelector, …)` — returns `Result<Page<T>>`, composes with `PageBuilder` and `CursorCodec`, and never throws on malformed input.
 - `RepositoryBase<TAggregate, TId>` — staging-only base class (Add/Remove/Query/Exists/Count).
 - `IUnitOfWork` / `EfUnitOfWork<TContext>` — single commit boundary for staged changes.
-- `TransactionalCommandBehavior` — Mediator pipeline behavior that auto-commits after successful command handlers (requires Mediator pipeline registration).
+- `TransactionalCommandBehavior` — Mediator pipeline behavior that auto-commits after successful command handlers (requires Mediator pipeline registration). Also commits on `Result.FailAfterCommit<T>(error)` outcomes so persist-on-failure handlers (e.g., a worker recording a permanent-failure transition) can stage state alongside the failed result.
 
 ## Documentation
 - [Full documentation](https://xavierjohn.github.io/Trellis/articles/integration-ef.html)
