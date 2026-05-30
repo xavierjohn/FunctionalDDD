@@ -1,7 +1,7 @@
 ﻿---
 package: Trellis.Mediator
 namespaces: [Trellis.Mediator]
-types: [ICommand<T>, IQuery<T>, "IRequestHandler<,>", "IPipelineBehavior<,>", ServiceCollectionExtensions, IDomainEventHandler<TEvent>, IDomainEventPublisher, "DomainEventDispatchBehavior<,>", DomainEventDispatchServiceCollectionExtensions]
+types: [ICommand<T>, IQuery<T>, "IRequestHandler<,>", "IPipelineBehavior<,>", ServiceCollectionExtensions, IDomainEventHandler<TEvent>, IDomainEventPublisher, "DomainEventDispatchBehavior<,>", DomainEventDispatchServiceCollectionExtensions, DomainEventPublisherExtensions]
 version: v3
 last_verified: 2026-05-02
 audience: [llm]
@@ -532,6 +532,17 @@ public static IServiceCollection AddDomainEventHandler<TEvent, [DynamicallyAcces
 [RequiresDynamicCode("Constructs closed generic IDomainEventHandler<TEvent> at runtime.")]
 public static IServiceCollection AddDomainEventDispatch(this IServiceCollection services, params Assembly[] assemblies)
 ```
+
+### Trellis.Mediator.DomainEventPublisherExtensions
+
+```csharp
+public static Task DispatchAggregateEventsAsync(
+    this IDomainEventPublisher publisher,
+    IAggregate aggregate,
+    CancellationToken cancellationToken = default)
+```
+
+**POST-COMMIT ONLY.** Mirrors [`DomainEventDispatchBehavior<,>`](#domaineventdispatchbehavior)'s wave loop for handlers whose `TResponse` is not an `IResult<TAggregate>` shape (`Result<Unit>`, `Result<TDto>`, `Result<(A,B)>`) and for non-Mediator call sites such as `BackgroundService` workers. Publishes each event from `aggregate.UncommittedEvents()` sequentially, picks up handler-raised events on subsequent waves (capped at `MaxDispatchWaves = 8`, matching the pipeline behavior), and calls `IChangeTracking.AcceptChanges()` once on the full-success path. Throws `InvalidOperationException` if the cap is exceeded (`AcceptChanges()` is not called — undispatched events remain on the aggregate). Cancellation propagates above `AcceptChanges()` so undispatched events remain on the aggregate; dispatched events stay dispatched (handlers must be idempotent for retry). Handler exceptions follow the publisher's contract: the default `MediatorDomainEventPublisher` logs and swallows non-cancellation handler exceptions so the helper continues; a custom publisher that propagates handler exceptions causes the helper to rethrow without calling `AcceptChanges()`. **Must only be called after the underlying unit of work has committed** — calling it inside a handler that relies on `TransactionalCommandBehavior` for its commit publishes events before the database transaction is durable. See [Dispatching events from non-aggregate response shapes](../articles/integration-mediator.md#dispatching-events-from-non-aggregate-response-shapes-post-commit-safe) for the cookbook recipe.
 
 ## Interfaces
 
