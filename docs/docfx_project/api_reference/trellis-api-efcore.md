@@ -1,7 +1,7 @@
 ﻿---
 package: Trellis.EntityFrameworkCore
 namespaces: [Trellis.EntityFrameworkCore]
-types: [DbContextExtensions, DbContextOptionsBuilderExtensions, DbExceptionClassifier, "EfUnitOfWork<TContext>", EntityTimestampInterceptor, IUnitOfWork, MaybeEntityTypeBuilderExtensions, MaybeModelExtensions, MaybePropertyMapping, MaybeQueryableExtensions, MaybeQueryInterceptor, MaybeUpdateExtensions, ModelConfigurationBuilderExtensions, OwnedEntityAttribute, QueryableExtensions, "RepositoryBase<TAggregate,TId>", ScalarValueQueryInterceptor, "TransactionalCommandBehavior<TMessage,TResponse>", TrellisPersistenceMappingException, "TrellisScalarConverter<TModel,TProvider>", UnitOfWorkServiceCollectionExtensions]
+types: [DbContextExtensions, DbContextOptionsBuilderExtensions, DbContextRetryExtensions, DbExceptionClassifier, "EfUnitOfWork<TContext>", EntityTimestampInterceptor, IUnitOfWork, MaybeEntityTypeBuilderExtensions, MaybeModelExtensions, MaybePropertyMapping, MaybeQueryableExtensions, MaybeQueryInterceptor, MaybeUpdateExtensions, ModelConfigurationBuilderExtensions, OwnedEntityAttribute, QueryableExtensions, "RepositoryBase<TAggregate,TId>", ScalarValueQueryInterceptor, "TransactionalCommandBehavior<TMessage,TResponse>", TrellisPersistenceMappingException, "TrellisScalarConverter<TModel,TProvider>", UnitOfWorkServiceCollectionExtensions]
 version: v3
 last_verified: 2026-05-06
 audience: [llm]
@@ -25,6 +25,7 @@ Use this table to find the canonical Trellis API for the most common EF Core tas
 | Make `Maybe<T>.GetValueOrDefault(d)` and similar expressions translate in EF queries (alternative to the helpers above when you must write a raw expression) | Register `AddTrellisInterceptors()` on the `DbContextOptionsBuilder`. The `MaybeQueryInterceptor` rewrites supported `Maybe<T>` calls to SQL. Prefer the `WhereXxx` helpers above when available. | [`DbContextOptionsBuilderExtensions`](#dbcontextoptionsbuilderextensions), [`MaybeQueryInterceptor`](#maybequeryinterceptor) |
 | Index a `Maybe<T>` property (avoids TRLS016 by mapping to the storage member) | `entityTypeBuilder.HasTrellisIndex(x => x.M)` (or composite `x => new { x.M, x.Other }`) | [`MaybeEntityTypeBuilderExtensions`](#maybeentitytypebuilderextensions) |
 | Save changes and get a `Result<int>` / `Result<Unit>` instead of throwing | `db.SaveChangesResultAsync()` / `db.SaveChangesResultUnitAsync()` (analyzer TRLS015 enforces in non-UoW contexts) | [`DbContextExtensions`](#dbcontextextensions) |
+| Save with retry-on-collision for system-generated unique keys (short codes, slugs, tokens) — detaches only the conflicting entries, calls back to regenerate the key in place, re-Adds, retries | `db.SaveChangesWithRetryAsync(shouldRetry, regenerate, maxAttempts: 3)` (only `Added` entries; sibling aggregates and entries promoted via `entry.State = Added` are preserved; concurrency exceptions bypass `shouldRetry`) | [`DbContextRetryExtensions`](#dbcontextretryextensions) |
 | Update a `Maybe<T>` property via EF Core `ExecuteUpdate` | `MaybeUpdateExtensions.SetMaybeValue(...)` (set Some) / `SetMaybeNone(...)` (clear) | [`MaybeUpdateExtensions`](#maybeupdateextensions) |
 | Mark a composite value object as EF-owned (replaces `OwnsOne`/`OwnsMany` boilerplate) | `[OwnedEntity]` on the value-object class. Init-only setters are flagged by TRLS022 — use `{ get; private set; }`. | [`OwnedEntityAttribute`](#ownedentityattribute) |
 | Wire Trellis EF conventions in `ConfigureConventions` (preferred — compile-time, no reflection) | `configurationBuilder.ApplyTrellisConventionsFor<TContext>()` (source-generated) | [`GeneratedTrellisConventions`](#generatedtrellisconventions-source-generated) |
@@ -142,6 +143,20 @@ public static class DbContextExtensions
 | `public static Task<Result<int>> SaveChangesResultAsync(this DbContext context, bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)` | `Task<Result<int>>` | Wraps `SaveChangesAsync`; maps `DbUpdateConcurrencyException` to `new Error.Conflict(null, "concurrent_modification")`, duplicate-key `DbUpdateException` to `new Error.Conflict(null, "duplicate.key")`, and foreign-key `DbUpdateException` to `new Error.Conflict(null, "referential.integrity")`. |
 | `public static Task<Result<Unit>> SaveChangesResultUnitAsync(this DbContext context, CancellationToken cancellationToken = default)` | `Task<Result<Unit>>` | Saves changes and discards the row count. |
 | `public static Task<Result<Unit>> SaveChangesResultUnitAsync(this DbContext context, bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)` | `Task<Result<Unit>>` | Saves changes with explicit `acceptAllChangesOnSuccess`. |
+
+### `DbContextRetryExtensions`
+
+```csharp
+public static class DbContextRetryExtensions
+```
+
+| Name | Type | Description |
+| --- | --- | --- |
+| — | — | No public properties. |
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `public static Task<Result<Unit>> SaveChangesWithRetryAsync(this DbContext db, Func<DbUpdateException, bool> shouldRetry, Func<IReadOnlyList<EntityEntry>, int, CancellationToken, ValueTask<bool>> regenerate, int maxAttempts = 3, CancellationToken cancellationToken = default)` | `Task<Result<Unit>>` | Saves changes. On `DbUpdateException` classified retryable by `shouldRetry`, detaches **only** the entries reported by `DbUpdateException.Entries` (never the full change tracker — sibling aggregates pending in the change tracker, including entries promoted via `entry.State = Added`, are preserved), invokes `regenerate(entries, attempt, ct)` so the caller can mutate the conflicting entities' natural keys in place, re-`Add`s them, and retries up to `maxAttempts` total attempts (initial + retries). `DbUpdateConcurrencyException` is mapped to `new Error.Conflict(null, "concurrent_modification")` **without** calling `shouldRetry` (regenerating a natural key cannot resolve a stale rowversion). When `shouldRetry` returns false, non-retryable `DbUpdateException`s are mapped exactly like `SaveChangesResultAsync`: duplicate → `"duplicate.key"`, FK → `"referential.integrity"`, unrecognised → rethrown. Only `Added` entries are supported — if `ex.Entries` contains a non-`Added` entry, throws `InvalidOperationException` (Modified retries lose original values, `IsModified` flags, and temporary-value metadata across the detach/re-attach cycle). When `regenerate` returns false, conflicting entries remain detached and the method returns `Error.Conflict` with reason code `"retry.aborted"`. When `maxAttempts` is exhausted, no detach is performed on the final attempt and the method returns `Error.Conflict` with reason code `"retry.exhausted"`. The helper's exhaust/abort paths use these neutral reason codes (distinct from the caller-classifier-related `"duplicate.key"` / `"referential.integrity"` codes) so a broader `shouldRetry` classifier does not surface a misleading `duplicate.key` code on exhaust/abort. `attempt` is 1-based and equals the regenerate-call number. |
 
 ### `QueryableExtensions`
 
@@ -547,6 +562,17 @@ public static Task<Result<int>> SaveChangesResultAsync(this DbContext context, C
 public static Task<Result<int>> SaveChangesResultAsync(this DbContext context, bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
 public static Task<Result<Unit>> SaveChangesResultUnitAsync(this DbContext context, CancellationToken cancellationToken = default)
 public static Task<Result<Unit>> SaveChangesResultUnitAsync(this DbContext context, bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
+```
+
+### `DbContextRetryExtensions`
+
+```csharp
+public static Task<Result<Unit>> SaveChangesWithRetryAsync(
+    this DbContext db,
+    Func<DbUpdateException, bool> shouldRetry,
+    Func<IReadOnlyList<EntityEntry>, int, CancellationToken, ValueTask<bool>> regenerate,
+    int maxAttempts = 3,
+    CancellationToken cancellationToken = default)
 ```
 
 ### `QueryableExtensions`
