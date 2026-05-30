@@ -255,6 +255,26 @@ public sealed class HttpContextPageUrlExtensionsTests
             .And.Contain("Widgets_List");
     }
 
+    [Fact]
+    public async Task Explicit_pin_overrides_consumer_supplied_api_version()
+    {
+        // Bug-regression: the explicit-pin overload used to honor a consumer-supplied
+        // api-version in the callback dictionary, silently bypassing both the pin AND
+        // its declared-version validation. The pinned overload must always win — callers
+        // who need per-call version selection should use the per-request overload, which
+        // documents consumer-supplied api-version as an explicit escape hatch. Pinning
+        // here is V2; the callback inserts V1; the emitted URL must carry V2.
+        using var host = CreateMultiVersionHost(defaultVersion: null);
+        using var client = host.GetTestClient();
+
+        var resp = await client.GetAsync($"/multi/widgets/pin-overrides-consumer-supplied?api-version={ApiVersionV1}", TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.OK);
+        var page = await resp.Content.ReadFromJsonAsync<PagedShape>(JsonOpts, TestContext.Current.CancellationToken);
+        page!.Next!.Href.Should().Contain($"api-version={ApiVersionV2}");
+        page.Next.Href.Should().NotContain($"api-version={ApiVersionV1}");
+    }
+
     #endregion
 
     #region Edge cases
@@ -1174,6 +1194,28 @@ public sealed class MultiVersionPagedController : ControllerBase
                 "Multi_Widgets_Pinned",
                 new ApiVersion(new DateOnly(2026, 12, 1)),
                 (c, applied) => new RouteValueDictionary { ["cursor"] = c.Token, ["limit"] = applied }),
+            body: WidgetResponse.From);
+    }
+
+    [HttpGet("pin-overrides-consumer-supplied", Name = "Multi_Widgets_PinOverridesConsumer")]
+    public HttpResult PinOverridesConsumer([FromQuery] string? cursor)
+    {
+        // Bug-regression: the explicit-pin overload used to honor a consumer-supplied
+        // api-version in the callback dictionary, silently bypassing both the pin AND
+        // its declared-version validation. Pinning V2 while the callback inserts V1
+        // must result in V2 in the emitted URL — pinned means pinned.
+        var (page, _) = PagedFixtures.NextPage(cursor);
+        var result = Trellis.Result.Ok(page);
+        return result.ToHttpResponse(
+            nextUrlBuilder: HttpContext.PageUrl(
+                "Multi_Widgets_PinOverridesConsumer",
+                new ApiVersion(new DateOnly(2026, 12, 1)),
+                (c, applied) => new RouteValueDictionary
+                {
+                    ["cursor"] = c.Token,
+                    ["limit"] = applied,
+                    ["api-version"] = HttpContextPageUrlExtensionsTests_ApiVersions.V1,
+                }),
             body: WidgetResponse.From);
     }
 

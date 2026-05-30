@@ -92,8 +92,10 @@ public static class HttpContextPageUrlExtensions
             var targetEndpoint = FindEndpointByRouteName(httpContext, routeName)
                 ?? throw new InvalidOperationException(
                     $"PageUrl: no registered endpoint has route name '{routeName}'. " +
-                    "Ensure the target action carries [HttpGet(Name = \"...\")] (or equivalent) " +
-                    "and that its controller is registered with MapControllers().");
+                    "Ensure the target endpoint is named — for example [HttpGet(Name = \"...\")] on " +
+                    "an MVC controller action or .WithName(\"...\") on a minimal-API endpoint — and " +
+                    "registered with the routing pipeline (MapControllers(), MapGet(...), " +
+                    "MapGroup(...), etc.).");
 
             var consumerValues = routeValues(cursor, appliedLimit)
                 ?? throw new InvalidOperationException(
@@ -206,8 +208,10 @@ public static class HttpContextPageUrlExtensions
             var targetEndpoint = FindEndpointByRouteName(httpContext, routeName)
                 ?? throw new InvalidOperationException(
                     $"PageUrl: no registered endpoint has route name '{routeName}'. " +
-                    "Ensure the target action carries [HttpGet(Name = \"...\")] (or equivalent) " +
-                    "and that its controller is registered with MapControllers().");
+                    "Ensure the target endpoint is named — for example [HttpGet(Name = \"...\")] on " +
+                    "an MVC controller action or .WithName(\"...\") on a minimal-API endpoint — and " +
+                    "registered with the routing pipeline (MapControllers(), MapGet(...), " +
+                    "MapGroup(...), etc.).");
 
             // URL-segment-versioned targets carry the version in the path. Silently skipping
             // the pin (the WithVersionedRoute precedent for same-route Location headers) would
@@ -244,8 +248,13 @@ public static class HttpContextPageUrlExtensions
             //     Lets PageUrl compose cleanly in unversioned and mixed-versioned hosts.
             // The URL-segment case is rejected earlier with a loud exception — segment routes
             // need a different overload, not silent suppression.
-            if (!values.ContainsKey(HttpResponseOptionsBuilderApiVersioningExtensions.DefaultRouteValueKey)
-                && !HttpResponseOptionsBuilderApiVersioningExtensions.ShouldSkipInjection(targetEndpoint))
+            //
+            // When NOT skipped, the pin always wins over any api-version the consumer placed
+            // in the callback dictionary. This matches the WithVersionedRoute(explicitVersion)
+            // precedent and keeps "pinned" semantics honest: callers who need per-call version
+            // selection should use the per-request overload (PageUrl(routeName, routeValues)),
+            // which deliberately honors consumer-supplied api-version as an escape hatch.
+            if (!HttpResponseOptionsBuilderApiVersioningExtensions.ShouldSkipInjection(targetEndpoint))
             {
                 // Past the skip check the metadata is guaranteed non-null (ShouldSkipInjection
                 // returns true for the null case). Validate the pinned version is declared so

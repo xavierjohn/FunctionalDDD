@@ -256,14 +256,19 @@ app.UseTrellisProblemDetails();
 Hosts that compose Trellis via `Trellis.ServiceDefaults` get the same wiring through the builder slot:
 
 ```csharp
-builder.AddTrellis(t => t.UseProblemDetails());
+builder.Services.AddTrellis(t => t.UseProblemDetails());
 ```
 
 `UseProblemDetails()` defers to `AddTrellisProblemDetails()` internally, so the same defaults and override hooks apply.
 
 ### Wire shape
 
-`Error.Aggregate` renders as one outer Problem Details object with the worst child status and an RFC 9457 `errors[]` extension containing one child object per inner error (`type`, `status`, `code`, `kind`, `detail`). `Error.TransportFault` projects the wrapped `HttpError` payload into `extensions` and uses the inner `code` / `kind`, not the outer `transport-fault` envelope. Every response also carries `instance`; `5xx` responses replace the public detail with `"An internal error occurred."`.
+`Error.Aggregate` renders as one outer Problem Details object with the worst child status and an RFC 9457 `errors[]` extension containing one child object per inner error (`type`, `status`, `code`, `kind`, `detail`). `Error.TransportFault` projects the wrapped `HttpError` payload into `extensions` and uses the inner `code` / `kind`, not the outer `transport-fault` envelope. Every response also carries `instance`.
+
+The two ProblemDetails-producing paths use different 5xx detail messages:
+
+- **Trellis-`Result<T>`-converted failures** (wire shapes shown below) — `ResponseFailureWriter` replaces the public `detail` on every `5xx` response with `"An internal error occurred."`.
+- **ASP.NET Core's ProblemDetails pipeline** (uncaught exceptions surfaced via `UseExceptionHandler`, status-code short-circuits via `UseStatusCodePages`) — when `AddTrellisProblemDetails()` is wired (see recipe above), the 500 `detail` is rewritten to `"An error occurred in our API. Please share the trace id with our support team."` so clients can quote the trace id back to support without leaking exception internals.
 
 `Error.InvalidInput` is routed to `Results.ValidationProblem(...)`:
 
