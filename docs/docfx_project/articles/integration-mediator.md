@@ -520,7 +520,7 @@ public async ValueTask<Result<Reminder>> Handle(
     }
 
     // Transient → ordinary failure: nothing persists, retry will re-enter the handler.
-    if (gatewayResult.Error.IsTransient())
+    if (gatewayResult.Error is Error.Unavailable or Error.RateLimited)
         return Result.Fail<Reminder>(gatewayResult.Error);
 
     // Permanent failure → mark the row and persist that decision alongside the failure outcome.
