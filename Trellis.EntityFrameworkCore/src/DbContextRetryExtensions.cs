@@ -46,10 +46,17 @@ public static class DbContextRetryExtensions
     /// <b>Detach is conditional on attempting a retry.</b> If
     /// <paramref name="shouldRetry"/> returns <see langword="false"/>, OR if the failure
     /// occurs on the final allowed attempt (<paramref name="maxAttempts"/> exhausted), no
-    /// detach is performed and the change tracker is left untouched. If
+    /// detach is performed and the change tracker is left untouched. Exhaustion returns
+    /// <see cref="Error.Conflict"/> with reason code <c>retry.exhausted</c>. If
     /// <paramref name="regenerate"/> returns <see langword="false"/>, the conflicting
-    /// entries remain detached and the method returns
-    /// <see cref="Error.Conflict"/>.
+    /// entries remain detached and the method returns <see cref="Error.Conflict"/> with
+    /// reason code <c>retry.aborted</c>. These reason codes are distinct from the
+    /// caller-classifier-related <c>duplicate.key</c> / <c>referential.integrity</c>
+    /// codes (which are only returned when <paramref name="shouldRetry"/> returns
+    /// <see langword="false"/> for a recognised non-retryable <see cref="DbUpdateException"/>),
+    /// so a broader <paramref name="shouldRetry"/> classifier (e.g. one accepting a
+    /// provider-specific transient error) does not surface a misleading
+    /// <c>duplicate.key</c> reason code on exhaust/abort.
     /// </para>
     /// <para>
     /// <b>Failure mapping for non-retryable <see cref="DbUpdateException"/>.</b> Matches
@@ -137,18 +144,18 @@ public static class DbContextRetryExtensions
             {
                 if (!shouldRetry(ex))
                 {
-                    if (DbExceptionClassifier.IsForeignKeyViolation(ex))
-                        return Result.Fail<Unit>(new Error.Conflict(Resource: null, ReasonCode: "referential.integrity")
-                        { Detail = "Operation violates a referential integrity constraint." });
                     if (DbExceptionClassifier.IsDuplicateKey(ex))
                         return Result.Fail<Unit>(new Error.Conflict(Resource: null, ReasonCode: "duplicate.key")
                         { Detail = "A record with the same unique value already exists." });
+                    if (DbExceptionClassifier.IsForeignKeyViolation(ex))
+                        return Result.Fail<Unit>(new Error.Conflict(Resource: null, ReasonCode: "referential.integrity")
+                        { Detail = "Operation violates a referential integrity constraint." });
                     throw;
                 }
 
                 if (attempt >= maxAttempts)
-                    return Result.Fail<Unit>(new Error.Conflict(Resource: null, ReasonCode: "duplicate.key")
-                    { Detail = "A record with the same unique value already exists. Maximum retry attempts exhausted." });
+                    return Result.Fail<Unit>(new Error.Conflict(Resource: null, ReasonCode: "retry.exhausted")
+                    { Detail = $"Maximum retry attempts ({maxAttempts}) exhausted; the caller-supplied classifier kept reporting the save failure as retryable." });
 
                 ValidateAllEntriesAreAdded(ex.Entries);
 
@@ -165,8 +172,8 @@ public static class DbContextRetryExtensions
 
                 var keepGoing = await regenerate(entriesForCallback, attempt, cancellationToken).ConfigureAwait(false);
                 if (!keepGoing)
-                    return Result.Fail<Unit>(new Error.Conflict(Resource: null, ReasonCode: "duplicate.key")
-                    { Detail = "A record with the same unique value already exists. Retry aborted by regenerate callback." });
+                    return Result.Fail<Unit>(new Error.Conflict(Resource: null, ReasonCode: "retry.aborted")
+                    { Detail = $"Retry aborted by regenerate callback after attempt {attempt}." });
 
                 foreach (var s in snapshot)
                     db.Entry(s.Entity).State = EntityState.Added;

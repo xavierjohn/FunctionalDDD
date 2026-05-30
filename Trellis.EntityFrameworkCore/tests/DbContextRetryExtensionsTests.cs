@@ -124,6 +124,8 @@ public class DbContextRetryExtensionsTests : IDisposable
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<Error.Conflict>()
             .Which.Detail.Should().Contain("Retry aborted by regenerate callback");
+        result.Error.Should().BeOfType<Error.Conflict>()
+            .Which.ReasonCode.Should().Be("retry.aborted");
         _context.Entry(customer).State.Should().Be(EntityState.Detached);
     }
 
@@ -150,7 +152,9 @@ public class DbContextRetryExtensionsTests : IDisposable
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<Error.Conflict>()
-            .Which.Detail.Should().Contain("Maximum retry attempts exhausted");
+            .Which.Detail.Should().Contain("Maximum retry attempts");
+        result.Error.Should().BeOfType<Error.Conflict>()
+            .Which.ReasonCode.Should().Be("retry.exhausted");
         attempts.Should().HaveCount(2);
         attempts[0].Should().Be(1);
         attempts[1].Should().Be(2);
@@ -533,7 +537,9 @@ public class DbContextRetryExtensionsTests : IDisposable
 
         result.IsFailure.Should().BeTrue();
         result.Error.Should().BeOfType<Error.Conflict>()
-            .Which.Detail.Should().Contain("Maximum retry attempts exhausted");
+            .Which.Detail.Should().Contain("Maximum retry attempts");
+        result.Error.Should().BeOfType<Error.Conflict>()
+            .Which.ReasonCode.Should().Be("retry.exhausted");
         regenerateCalls.Should().Be(0);
     }
 }
