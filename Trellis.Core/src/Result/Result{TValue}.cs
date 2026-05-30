@@ -17,7 +17,9 @@ using System.Diagnostics;
 /// <c>default(Result&lt;T&gt;)</c> represents a <em>failure</em> carrying a sentinel
 /// <see cref="Trellis.Error.Unexpected"/> with <c>ReasonCode = "default_initialized"</c>. This makes
 /// uninitialized state a typed failure rather than a silent success that would hide a programming error.
-/// Always construct via <see cref="Result.Ok{T}(T)"/> or <see cref="Result.Fail{T}(Error)"/>; analyzer
+/// Always construct via <see cref="Result.Ok{T}(T)"/>, <see cref="Result.Fail{T}(Error)"/>, or
+/// <see cref="Result.FailAfterCommit{T}(Error)"/> (the persist-on-failure factory consumed by
+/// <c>Trellis.EntityFrameworkCore.TransactionalCommandBehavior</c>); analyzer
 /// <c>TRLS019</c> flags explicit <c>default(Result&lt;T&gt;)</c> at call sites.
 /// </para>
 /// </remarks>
@@ -289,9 +291,11 @@ public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValu
     /// <returns>True if the specified result is equal to the current result; otherwise false.</returns>
     /// <remarks>
     /// Two results are equal if they have the same success/failure state and equal values/errors.
-    /// Default-initialized failures use the shared sentinel <see cref="Trellis.Error.Unexpected"/>
-    /// so two <c>default(Result&lt;T&gt;)</c> values are equal, and a default
-    /// equals an explicit <c>Result.Fail&lt;T&gt;(...)</c> with the same sentinel.
+    /// For failures, the <see cref="IPersistOnFailure.PersistOnFailure"/> flag is also part of equality:
+    /// an ordinary failure does not equal a <see cref="Result.FailAfterCommit{T}(Error)"/> carrying the
+    /// same <see cref="Error"/>. Default-initialized failures use the shared sentinel
+    /// <see cref="Trellis.Error.Unexpected"/> so two <c>default(Result&lt;T&gt;)</c> values are equal,
+    /// and a default equals an explicit <c>Result.Fail&lt;T&gt;(...)</c> with the same sentinel.
     /// </remarks>
     public bool Equals(Result<TValue> other)
     {
