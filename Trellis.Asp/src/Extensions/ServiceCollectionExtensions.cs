@@ -569,7 +569,7 @@ public static class ServiceCollectionExtensions
     /// <see cref="ProblemDetailsOptions"/> that wraps any consumer-supplied
     /// <see cref="ProblemDetailsOptions.CustomizeProblemDetails"/> delegate. <b>Trellis defaults
     /// run first; the consumer's customization runs last</b>, so consumers can override Trellis
-    /// behaviour (e.g. tweak the trace-id format, replace the 500 detail message) by setting
+    /// behavior (e.g. tweak the trace-id format, replace the 500 detail message) by setting
     /// <c>CustomizeProblemDetails</c> via <c>services.AddProblemDetails(o => o.CustomizeProblemDetails = ...)</c>
     /// either before or after the call to <c>AddTrellisProblemDetails</c>.
     /// </para>

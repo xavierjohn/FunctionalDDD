@@ -479,6 +479,32 @@ public sealed class HttpContextPageUrlExtensionsTests
 
     #endregion
 
+    #region Minimal APIs (named via .WithName(...))
+
+    [Fact]
+    public async Task MinimalApi_endpoint_named_via_WithName_resolves_for_PageUrl()
+    {
+        // Regression: a code-review pass questioned whether HttpContext.PageUrl(...) could
+        // resolve minimal-API endpoints named via .WithName("..."). The concern was that
+        // FindEndpointByRouteName only inspects RouteNameMetadata while minimal APIs use
+        // EndpointNameMetadata. The ASP.NET Core source for .WithName (see
+        // RoutingEndpointConventionBuilderExtensions.WithName) attaches BOTH metadata
+        // types — so the canonical .WithName(...) shape works without a fallback. Pin
+        // that with an end-to-end test so a future ASP.NET Core change (or a Trellis
+        // refactor of FindEndpointByRouteName) that drops minimal-API coverage is caught.
+        using var host = CreateMinimalApiHost();
+        using var client = host.GetTestClient();
+
+        var resp = await client.GetAsync("/minimal/widgets", TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.OK);
+        var page = await resp.Content.ReadFromJsonAsync<PagedShape>(JsonOpts, TestContext.Current.CancellationToken);
+        page!.Next!.Href.Should().Contain("/minimal/widgets");
+        page.Next.Href.Should().Contain("cursor=cur-2");
+    }
+
+    #endregion
+
     #region Helpers
 
     private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web)
@@ -629,6 +655,45 @@ public sealed class HttpContextPageUrlExtensionsTests
                 {
                     app.UseRouting();
                     app.UseEndpoints(e => e.MapControllers());
+                }));
+        return b.Start();
+    }
+
+    private static IHost CreateMinimalApiHost()
+    {
+        // Pure minimal-API host: no MVC controllers, no AddApiVersioning(). Pins the
+        // contract that HttpContext.PageUrl resolves endpoints registered via
+        // app.MapGet("...").WithName("...") — the canonical minimal-API name-attachment
+        // shape. ASP.NET Core's .WithName(...) attaches BOTH EndpointNameMetadata and
+        // RouteNameMetadata (see RoutingEndpointConventionBuilderExtensions.WithName),
+        // so FindEndpointByRouteName's RouteNameMetadata lookup catches it.
+        var b = Host.CreateDefaultBuilder()
+            .ConfigureWebHostDefaults(web => web
+                .UseTestServer()
+                .ConfigureServices(s =>
+                {
+                    s.AddTrellisAsp();
+                    s.AddRouting();
+                })
+                .Configure(app =>
+                {
+                    app.UseRouting();
+                    app.UseEndpoints(e => e
+                        .MapGet("/minimal/widgets", (HttpContext ctx) =>
+                        {
+                            var (page, _) = PagedFixtures.NextPage(null);
+                            var result = Trellis.Result.Ok(page);
+                            return result.ToHttpResponse(
+                                nextUrlBuilder: ctx.PageUrl(
+                                    "Minimal_Widgets_List",
+                                    (c, applied) => new RouteValueDictionary
+                                    {
+                                        ["cursor"] = c.Token,
+                                        ["limit"] = applied,
+                                    }),
+                                body: WidgetResponse.From);
+                        })
+                        .WithName("Minimal_Widgets_List"));
                 }));
         return b.Start();
     }

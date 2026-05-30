@@ -69,8 +69,12 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
         // Resolution happens per-request from HttpContext (inside the resolver delegate);
         // only the route-value key is fixed at registration time. The key is the constant
         // `DefaultRouteValueKey` ("api-version") — no IOptions lookup is involved for the key.
-        // For `WithVersionedRoute` the target endpoint IS the current endpoint (the response is
-        // a Location header pointing back into the same handler), so we pass `GetEndpoint()`.
+        // `httpContext.GetEndpoint()` returns the endpoint currently being executed. For
+        // same-route Location responses (the common case) that endpoint IS the target of the
+        // Location header. For cross-route Location helpers (e.g. CreatedAtRoute pointing at
+        // a sibling route) it is the best signal the resolver has at registration time —
+        // declared-version inspection of the actual target route requires the route name and
+        // happens in PageUrl(...) instead, which takes the route name as a parameter.
         return builder.WithRouteValueResolver(
             DefaultRouteValueKey,
             httpContext => ResolveApiVersion(httpContext, httpContext.GetEndpoint()));
