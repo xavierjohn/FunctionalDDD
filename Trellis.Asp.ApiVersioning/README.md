@@ -23,7 +23,7 @@ The resolver short-circuits to a no-op (no `api-version` route value injected) w
 
 - The endpoint is decorated with `[ApiVersionNeutral]`.
 - The endpoint participates in URL-segment versioning (route template contains `:apiVersion`).
-- The endpoint has no `ApiVersionMetadata` attached — the host did not call `services.AddApiVersioning(...)`, or this endpoint sits outside its versioning surface. Lets the helpers compose cleanly in unversioned and mixed-versioned hosts by silently dropping injection rather than emitting a stale URL artefact.
+- The endpoint has no `ApiVersionMetadata` attached — the host did not call `services.AddApiVersioning(...)`, or this endpoint sits outside its versioning surface. Lets the helpers compose cleanly in unversioned and mixed-versioned hosts by silently dropping injection rather than emitting a stale URL artefact. The framework emits a single warning per `(endpoint, AppDomain)` pair through the `Trellis.Asp.ApiVersioning` `ILogger` category to flag the mid-migration scenario where `AddApiVersioning(...)` was removed but the `.WithVersionedRoute()` chain remained; set `TrellisAspOptions.FailFastOnSilentVersionInjection = true` to throw on every offending request instead.
 
 ## Usage
 

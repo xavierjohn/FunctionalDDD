@@ -77,7 +77,17 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
         // happens in PageUrl(...) instead, which takes the route name as a parameter.
         return builder.WithRouteValueResolver(
             DefaultRouteValueKey,
-            httpContext => ResolveApiVersion(httpContext, httpContext.GetEndpoint()));
+            httpContext =>
+            {
+                var endpoint = httpContext.GetEndpoint();
+                // Mid-migration safety net: warn once (or fail fast, opt-in) when this chain
+                // runs against an endpoint with no ApiVersionMetadata — the canonical
+                // "AddApiVersioning() was removed but WithVersionedRoute() chains remain"
+                // regression. Scoped to the missing-metadata case; [ApiVersionNeutral] and
+                // URL-segment skips stay silent.
+                SilentVersionInjectionDiagnostic.EmitIfMetadataMissing(httpContext, endpoint);
+                return ResolveApiVersion(httpContext, endpoint);
+            });
     }
 
     /// <summary>
@@ -111,7 +121,16 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
         var pinnedValue = explicitVersion.ToString();
         return builder.WithRouteValueResolver(
             DefaultRouteValueKey,
-            httpContext => ShouldSkipInjection(httpContext.GetEndpoint()) ? null : pinnedValue);
+            httpContext =>
+            {
+                var endpoint = httpContext.GetEndpoint();
+                // Mid-migration safety net (mirrors the per-request overload): emit a single
+                // warning (or fail fast when TrellisAspOptions.FailFastOnSilentVersionInjection
+                // is set) when the explicit pin would be silently dropped because the endpoint
+                // carries no ApiVersionMetadata.
+                SilentVersionInjectionDiagnostic.EmitIfMetadataMissing(httpContext, endpoint);
+                return ShouldSkipInjection(endpoint) ? null : pinnedValue;
+            });
     }
 
     /// <summary>

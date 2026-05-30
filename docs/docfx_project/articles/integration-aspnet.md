@@ -359,6 +359,32 @@ The underlying `WithRouteValueResolver(string key, Func<HttpContext, string?> re
 > [!NOTE]
 > See [`trellis-api-asp-apiversioning.md`](../api_reference/trellis-api-asp-apiversioning.md) for the full LLM-targeted reference and [`TRLS023`](analyzers/TRLS023.md) for the analyzer that catches missed migrations.
 
+#### Mid-migration diagnostic
+
+When a host removes `services.AddApiVersioning(...)` but leaves `.WithVersionedRoute()` chains in place — e.g. mid-rollback of a versioning experiment, or moving a controller into an unversioned project — the resolver silently drops `api-version` injection. That keeps the helper composable in greenfield unversioned hosts, but in the mid-migration case it hides a real downstream contract regression (clients stop seeing `api-version` in `Location` headers).
+
+The framework logs a single warning per `(endpoint, AppDomain)` pair via the `Microsoft.Extensions.Logging` category `Trellis.Asp.ApiVersioning` the first time each affected endpoint serves a request:
+
+```text
+.WithVersionedRoute() ran for endpoint 'MyApp.OrdersController.Create (...)' but the endpoint
+has no ApiVersionMetadata attached — the host did not call services.AddApiVersioning(...),
+or this endpoint sits outside its surface. The api-version route value is being silently
+omitted from the response Location/route URL. If this host is intentionally unversioned,
+remove the .WithVersionedRoute() chain. To fail fast on this configuration instead of logging
+once per endpoint, configure TrellisAspOptions.FailFastOnSilentVersionInjection = true.
+```
+
+To surface the misconfiguration as a hard failure during integration tests or non-production runs, opt into fail-fast on `TrellisAspOptions`:
+
+```csharp
+services.AddTrellisAsp(o =>
+    o.FailFastOnSilentVersionInjection = builder.Environment.IsDevelopment());
+```
+
+With fail-fast enabled, every request whose `.WithVersionedRoute()` chain would silently drop injection throws `InvalidOperationException` (de-duplication does not apply). Leave it off in Production so a stale chain produces a single observability signal rather than a request-storm of 500s.
+
+The diagnostic only fires for the missing-metadata case. `[ApiVersionNeutral]` endpoints and URL-segment-versioned routes are intentional skips and stay silent.
+
 ### `WriteOutcome<T>`
 
 When commands return `Result<WriteOutcome<T>>`, the response is RFC 9110-shaped from the variant:

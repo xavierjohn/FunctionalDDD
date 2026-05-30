@@ -66,6 +66,39 @@ public sealed class TrellisAspOptions
     /// </remarks>
     internal static TrellisAspOptions SystemDefault { get; } = new();
 
+    /// <summary>
+    /// When <c>true</c>, calls to <c>.WithVersionedRoute()</c> (or its pinned overload)
+    /// that would silently skip <c>api-version</c> injection because the target endpoint
+    /// has no <c>ApiVersionMetadata</c> attached throw
+    /// <see cref="InvalidOperationException"/> on every offending request instead of
+    /// logging a single warning per endpoint. Defaults to <c>false</c> (warn-once-per-endpoint).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The framework's <c>.WithVersionedRoute()</c> resolver silently no-ops on hosts that
+    /// never call <c>services.AddApiVersioning(...)</c> so the helper composes cleanly in
+    /// unversioned hosts. Mid-migration — when <c>AddApiVersioning(...)</c> has been removed
+    /// but legacy <c>.WithVersionedRoute()</c> chains remain — that silent skip can hide a
+    /// downstream contract regression (clients stop receiving <c>api-version</c> in
+    /// <c>Location</c> headers). Set this option to <c>true</c> in non-Production
+    /// environments to surface the misconfiguration immediately rather than at the next
+    /// client integration test.
+    /// </para>
+    /// <para>
+    /// When <c>false</c> (default) the framework logs a single warning per
+    /// <c>(endpoint, AppDomain)</c> pair via the <c>"Trellis.Asp.ApiVersioning"</c>
+    /// <see cref="Microsoft.Extensions.Logging.ILogger"/> category. When <c>true</c>, every
+    /// silent-skip occurrence throws; de-duplication does not apply because the request
+    /// fails fast and never reaches the consumer.
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// builder.Services.AddTrellisAsp(o =&gt; o.FailFastOnSilentVersionInjection = builder.Environment.IsDevelopment());
+    /// </code>
+    /// </example>
+    public bool FailFastOnSilentVersionInjection { get; set; }
+
     private static readonly Dictionary<Type, int> s_httpTransportMappings = new()
     {
         [typeof(HttpError.MethodNotAllowed)] = StatusCodes.Status405MethodNotAllowed,
