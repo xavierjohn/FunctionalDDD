@@ -1,7 +1,6 @@
 ﻿namespace Trellis.Asp.ApiVersioning;
 
 using System;
-using System.Linq;
 using global::Asp.Versioning;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;

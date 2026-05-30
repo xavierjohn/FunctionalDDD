@@ -2,8 +2,6 @@
 
 using System.Diagnostics;
 using System.Net;
-using System.Net.Http.Json;
-using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -116,15 +114,27 @@ public sealed class TrellisProblemDetailsTests
     [Fact]
     public void Trace_id_falls_back_to_HttpContext_TraceIdentifier_when_no_Activity()
     {
-        Activity.Current = null;
-        var services = new ServiceCollection();
-        services.AddTrellisProblemDetails();
-        var ctx = MakeContext(400);
-        ctx.HttpContext.TraceIdentifier = "test-trace-id-xyz";
+        // Activity.Current is an AsyncLocal that leaks across tests when written to
+        // without restoration; xUnit's default parallel scheduling can then surface
+        // flaky trace-id assertions in unrelated tests. Capture-and-restore so this
+        // test is self-contained regardless of what the host process set Current to.
+        var originalActivity = Activity.Current;
+        try
+        {
+            Activity.Current = null;
+            var services = new ServiceCollection();
+            services.AddTrellisProblemDetails();
+            var ctx = MakeContext(400);
+            ctx.HttpContext.TraceIdentifier = "test-trace-id-xyz";
 
-        ResolveCustomizer(services).Invoke(ctx);
+            ResolveCustomizer(services).Invoke(ctx);
 
-        ctx.ProblemDetails.Extensions["traceId"].Should().Be("test-trace-id-xyz");
+            ctx.ProblemDetails.Extensions["traceId"].Should().Be("test-trace-id-xyz");
+        }
+        finally
+        {
+            Activity.Current = originalActivity;
+        }
     }
 
     // ---- 500 detail rewrite ----------------------------------------------
