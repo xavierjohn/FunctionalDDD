@@ -108,6 +108,10 @@ public static class HttpContextPageUrlExtensions
 
             // Consumer-supplied api-version wins over framework injection — gives callers
             // an escape hatch for cross-version Location-like URLs without a separate overload.
+            // This escape hatch only applies to query/header-versioned targets where the route
+            // value with the "api-version" KEY carries the version; URL-segment validation
+            // below runs independently because for URL-segment targets the segment route value
+            // (not the query key) is what fills the URL.
             if (!values.ContainsKey(HttpResponseOptionsBuilderApiVersioningExtensions.DefaultRouteValueKey))
             {
                 var resolved = HttpResponseOptionsBuilderApiVersioningExtensions.ResolveApiVersion(
@@ -120,6 +124,13 @@ public static class HttpContextPageUrlExtensions
                     values[HttpResponseOptionsBuilderApiVersioningExtensions.DefaultRouteValueKey] = resolved;
                 }
             }
+
+            // URL-segment cross-route validation runs independently of the api-version
+            // escape hatch above: the query-string key is irrelevant to URL-segment
+            // targets, so the escape hatch for those is supplying the segment route value
+            // in the callback. LinkGenerator otherwise fills the segment from ambient
+            // route data and may emit a version the target does not declare.
+            ValidateUrlSegmentCrossRouteOrThrow(httpContext, targetEndpoint, routeName, values);
 
             var linkGenerator = httpContext.RequestServices.GetRequiredService<LinkGenerator>();
             var url = linkGenerator.GetUriByRouteValues(httpContext, routeName, values);
@@ -301,5 +312,85 @@ public static class HttpContextPageUrlExtensions
         }
 
         return null;
+    }
+
+    internal static void ValidateUrlSegmentCrossRouteOrThrow(
+        HttpContext httpContext,
+        Endpoint targetEndpoint,
+        string routeName,
+        RouteValueDictionary values)
+    {
+        // The cross-route URL-segment trap: ResolveApiVersion correctly skips api-version
+        // injection (the segment IS the version), but LinkGenerator then fills the segment
+        // from ambient route data. For SAME-route requests that ambient value is by
+        // construction a version the route declares (the request matched the route).
+        // For CROSS-route targets the ambient value may be a version the target does not
+        // declare, producing a URL the target rejects when followed.
+        var segmentKey = HttpResponseOptionsBuilderApiVersioningExtensions
+            .TryGetUrlSegmentVersionParameterName(targetEndpoint);
+        if (segmentKey is null)
+            return;
+
+        // Escape hatch: consumer supplied the segment value explicitly in the routeValues
+        // callback. Honour it without validation — the consumer has taken ownership.
+        if (values.ContainsKey(segmentKey))
+            return;
+
+        var targetMetadata = targetEndpoint.Metadata.GetMetadata<ApiVersionMetadata>();
+        if (targetMetadata is null || targetMetadata.IsApiVersionNeutral)
+            return;
+
+        // Determine what LinkGenerator will fill the segment with. It uses ambient
+        // Request.RouteValues[segmentKey] when present — RequestedApiVersion is a
+        // higher-level concept (parsed by IApiVersionReader) and does not drive
+        // segment substitution. So validate ambient first when present; only fall
+        // back to RequestedApiVersion when ambient is absent (e.g., a query/header-
+        // versioned source request whose route has no parameter named segmentKey).
+        // Unparseable ambient is itself a leak: it means the source route has an
+        // unrelated parameter colliding with the target's segment name, and
+        // LinkGenerator will substitute the literal string into the URL — which the
+        // target's apiVersion route constraint will reject when followed. Throw with
+        // the same guidance shape so the consumer can disambiguate via the segment
+        // escape hatch.
+        ApiVersion? versionToValidate;
+        if (httpContext.Request.RouteValues.TryGetValue(segmentKey, out var ambientRaw)
+            && ambientRaw is string ambientStr
+            && !string.IsNullOrEmpty(ambientStr))
+        {
+            var parser = httpContext.RequestServices.GetService<IApiVersionParser>()
+                ?? ApiVersionParser.Default;
+            if (!parser.TryParse(ambientStr, out var ambientParsed))
+            {
+                throw new InvalidOperationException(
+                    $"PageUrl: ambient route value '{segmentKey}'='{ambientStr}' is not a valid " +
+                    $"ApiVersion, but the URL-segment-versioned target route '{routeName}' has a " +
+                    $"'{{{segmentKey}:apiVersion}}' segment. LinkGenerator would substitute the " +
+                    "literal ambient value into the URL, producing a URL the target's apiVersion " +
+                    "route constraint rejects when the client follows it. Either link to a route " +
+                    "whose segment name does not collide with the current request's route " +
+                    "parameters, or supply the segment value explicitly in the routeValues " +
+                    $"callback (for example `[\"{segmentKey}\"] = \"<a-version-the-target-declares>\"`).");
+            }
+
+            versionToValidate = ambientParsed;
+        }
+        else
+        {
+            versionToValidate = httpContext.RequestedApiVersion;
+        }
+
+        if (versionToValidate is null)
+            return;
+
+        if (HttpResponseOptionsBuilderApiVersioningExtensions.TargetDeclaresVersion(targetMetadata, versionToValidate))
+            return;
+
+        throw new InvalidOperationException(
+            $"PageUrl: the current request's api-version='{versionToValidate}' is not declared by the " +
+            $"URL-segment-versioned target route '{routeName}'. LinkGenerator would fill the " +
+            $"'{{{segmentKey}:apiVersion}}' route segment from ambient route data, emitting a URL " +
+            "the target rejects when the client follows it. Either link to a route that declares " +
+            "the current request's version, or supply the segment value explicitly in the " +
+            $"routeValues callback (for example `[\"{segmentKey}\"] = \"<a-version-the-target-declares>\"`).");
     }
 }

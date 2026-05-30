@@ -190,17 +190,25 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
         if (declared.Count == 1)
             return declared[0].ToString();
 
-        // 3. ApiVersioningOptions.DefaultApiVersion — host-level fallback.
+        // 3. ApiVersioningOptions.DefaultApiVersion — host-level fallback. Validate that the
+        //    configured default is declared by the TARGET endpoint before using it. Asp.Versioning
+        //    sets DefaultApiVersion to 1.0 even on date-versioned hosts that never explicitly
+        //    configured one, so an unvalidated return here would silently emit `?api-version=1.0`
+        //    on a date-versioned target that never declares 1.0 — a URL the target rejects when
+        //    the client follows it. Step 1 already validates RequestedApiVersion against the
+        //    target; step 3 must do the same for the host-level fallback.
         var apiVersioningOptions = httpContext.RequestServices.GetService<IOptions<ApiVersioningOptions>>();
-        if (apiVersioningOptions?.Value.DefaultApiVersion is { } defaultVersion)
+        if (apiVersioningOptions?.Value.DefaultApiVersion is { } defaultVersion
+            && TargetDeclaresVersion(metadata, defaultVersion))
             return defaultVersion.ToString();
 
         // 4. No way to resolve — fail loudly. Silent picking would resurrect the original 404 bug.
         throw new InvalidOperationException(
             $"Cannot determine the api-version for {callerLabel}: the request did not specify a " +
-            "version, the endpoint declares more than one (or none), and no DefaultApiVersion is configured. " +
-            $"Either configure ApiVersioningOptions.DefaultApiVersion or use the explicit-version " +
-            $"{explicitOverloadHint} overload.");
+            "version this endpoint declares, the endpoint declares more than one (or none), and " +
+            "no ApiVersioningOptions.DefaultApiVersion this endpoint declares is configured. " +
+            "Either configure ApiVersioningOptions.DefaultApiVersion to a version this endpoint " +
+            $"declares, or use the explicit-version {explicitOverloadHint} overload.");
     }
 
     /// <summary>
@@ -305,5 +313,30 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
         // produce a route token. Match either the parameter name "version" with the apiVersion
         // constraint, or the constraint anywhere in the template.
         return template.Contains(":apiVersion", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Returns the name of the route parameter carrying the <c>:apiVersion</c> constraint on the
+    /// endpoint's route pattern, or <c>null</c> when the endpoint is not URL-segment-versioned.
+    /// Distinct from <see cref="RouteTemplateContainsVersionToken"/> in that callers needing the
+    /// route-value KEY (e.g., to detect a consumer override) get the actual parameter name from
+    /// the route pattern rather than hard-coding <c>"version"</c>. The conventional name is
+    /// <c>version</c> but the template may use any name (e.g., <c>v{apiVer:apiVersion}</c>).
+    /// </summary>
+    internal static string? TryGetUrlSegmentVersionParameterName(Microsoft.AspNetCore.Http.Endpoint? endpoint)
+    {
+        if (endpoint is not Microsoft.AspNetCore.Routing.RouteEndpoint routeEndpoint)
+            return null;
+
+        foreach (var parameter in routeEndpoint.RoutePattern.Parameters)
+        {
+            foreach (var policy in parameter.ParameterPolicies)
+            {
+                if (string.Equals(policy.Content, "apiVersion", StringComparison.OrdinalIgnoreCase))
+                    return parameter.Name;
+            }
+        }
+
+        return null;
     }
 }

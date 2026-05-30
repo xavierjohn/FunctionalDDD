@@ -376,6 +376,211 @@ public sealed class HttpContextPageUrlExtensionsTests
     }
 
     [Fact]
+    public async Task UrlSegment_cross_route_target_without_declared_request_version_throws_with_guidance()
+    {
+        // Bug-regression: when the cross-route target is URL-segment-versioned (template
+        // contains `{version:apiVersion}`), ResolveApiVersion returns null (the skip path
+        // that lets same-route URL-segment requests reuse the ambient segment correctly).
+        // PageUrl then calls LinkGenerator without setting the segment route value, and
+        // LinkGenerator fills it from ambient route data — emitting the CURRENT request's
+        // version on a sibling route that may not declare it. v2 source → v1-only segment
+        // target would emit `/v{V2}/segments/widgets`, a URL the target rejects when the
+        // client follows it. Surface the mismatch at emit time so the caller corrects it.
+        using var host = CreateUrlSegmentHost();
+        using var client = host.GetTestClient();
+
+        var ct = TestContext.Current.CancellationToken;
+        Func<Task> act = () => client.GetAsync($"/v{ApiVersionV2}/segments/multi/cross-route-to-v1-only", ct);
+        var assertion = await act.Should().ThrowAsync<InvalidOperationException>();
+        assertion.Which.Message
+            .Should().Contain("URL-segment")
+            .And.Contain($"api-version='{ApiVersionV2}'")
+            .And.Contain("Segment_Widgets_List")
+            .And.Contain("ambient");
+    }
+
+    [Fact]
+    public async Task UrlSegment_cross_route_with_explicit_segment_value_in_callback_is_emitted_unmodified()
+    {
+        // Documented escape hatch from the UrlSegment cross-route throw: the consumer can
+        // bypass the ambient-version validation by supplying the segment route value
+        // explicitly in the routeValues callback. PageUrl must honour that value (whatever
+        // it is) and not throw. The target endpoint's segment is filled from the consumer-
+        // supplied value rather than ambient route data, so a v2 request can cleanly link
+        // to a v1-only segment target by setting `["version"] = "<declared>"` in the dict.
+        using var host = CreateUrlSegmentHost();
+        using var client = host.GetTestClient();
+
+        var resp = await client.GetAsync(
+            $"/v{ApiVersionV2}/segments/multi/cross-route-with-explicit-segment",
+            TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.OK);
+        var page = await resp.Content.ReadFromJsonAsync<PagedShape>(JsonOpts, TestContext.Current.CancellationToken);
+        page!.Next!.Href.Should().Contain($"/v{ApiVersionV1}/segments/widgets");
+        page.Next.Href.Should().NotContain($"/v{ApiVersionV2}/segments/widgets");
+    }
+
+    [Fact]
+    public async Task UrlSegment_cross_route_query_escape_hatch_does_not_bypass_segment_validation()
+    {
+        // Round-3 regression: a callback that sets ["api-version"] (the query-string
+        // escape-hatch key) but NOT the URL-segment key ("version") must still trigger
+        // URL-segment cross-route validation. The earlier fix gated the validator behind
+        // the api-version-injection block, so this combination silently dropped through
+        // to LinkGenerator with the segment filled from ambient (v2) — leaking the
+        // original cross-route bug. PageUrl must validate independently of the query key.
+        using var host = CreateUrlSegmentHost();
+        using var client = host.GetTestClient();
+
+        var ct = TestContext.Current.CancellationToken;
+        Func<Task> act = () => client.GetAsync(
+            $"/v{ApiVersionV2}/segments/multi/cross-route-with-api-version-query-only", ct);
+        var assertion = await act.Should().ThrowAsync<InvalidOperationException>();
+        assertion.Which.Message
+            .Should().Contain("URL-segment")
+            .And.Contain($"api-version='{ApiVersionV2}'")
+            .And.Contain("Segment_Widgets_List");
+    }
+
+    [Fact]
+    public void UrlSegment_cross_route_unparseable_ambient_route_value_throws_with_guidance()
+    {
+        // Round-3 regression: LinkGenerator fills the URL-segment parameter from ambient
+        // Request.RouteValues — not from RequestedApiVersion. So when the source route has
+        // an unrelated parameter colliding with the target's segment name (e.g., the source
+        // is /widgets/{version} where "version" identifies a non-apiVersion concept like
+        // "draft"), and the source is query/header versioned (RequestedApiVersion is set
+        // and declared by the target), the previous shape — validate RequestedApiVersion
+        // first, fall back to ambient — let the cross-route call pass validation while
+        // LinkGenerator emitted /vdraft/... for the target. The validator must inspect
+        // ambient first; if ambient is present but does not parse as an ApiVersion, it
+        // is itself a leak and must throw.
+        var ctx = new DefaultHttpContext { RequestServices = new ServiceCollection().BuildServiceProvider() };
+        ctx.Request.RouteValues["version"] = "draft"; // unparseable as ApiVersion
+
+        var v1 = new ApiVersion(new DateOnly(2026, 11, 12));
+        var targetEndpoint = BuildUrlSegmentEndpointDeclaring(
+            "Segment_Widgets_List",
+            "v{version:apiVersion}/segments/widgets",
+            v1);
+
+        Action act = () => HttpContextPageUrlExtensions.ValidateUrlSegmentCrossRouteOrThrow(
+            ctx,
+            targetEndpoint,
+            routeName: "Segment_Widgets_List",
+            values: []);
+
+        act.Should().Throw<InvalidOperationException>()
+            .Which.Message.Should()
+            .Contain("ambient route value")
+            .And.Contain("'version'='draft'")
+            .And.Contain("not a valid ApiVersion")
+            .And.Contain("Segment_Widgets_List");
+    }
+
+    [Fact]
+    public void UrlSegment_cross_route_ambient_takes_priority_over_RequestedApiVersion()
+    {
+        // Round-3 regression: validator must prefer ambient Request.RouteValues[segmentKey]
+        // over RequestedApiVersion when both are set, because LinkGenerator uses ambient
+        // to fill the segment. A query-versioned source whose RequestedApiVersion the
+        // target declares (so a RequestedApiVersion-first check would pass) but whose
+        // ambient route value is a version the target does NOT declare must still throw.
+        var v1 = new ApiVersion(new DateOnly(2026, 11, 12));
+        var v2 = new ApiVersion(new DateOnly(2026, 12, 1));
+
+        // Set up a context where RequestedApiVersion is v1 (= target-declared) but ambient
+        // route value for the segment key is v2 (= NOT target-declared). The httpContext
+        // doesn't expose a public setter for RequestedApiVersion, so use Features:
+        var ctx = new DefaultHttpContext { RequestServices = new ServiceCollection().BuildServiceProvider() };
+        ctx.Features.Set<global::Asp.Versioning.IApiVersioningFeature>(
+            new global::Asp.Versioning.ApiVersioningFeature(ctx) { RequestedApiVersion = v1 });
+        ctx.Request.RouteValues["version"] = ApiVersionV2; // = v2, target does NOT declare
+
+        var targetEndpoint = BuildUrlSegmentEndpointDeclaring(
+            "Segment_Widgets_List",
+            "v{version:apiVersion}/segments/widgets",
+            v1); // declares ONLY v1
+
+        Action act = () => HttpContextPageUrlExtensions.ValidateUrlSegmentCrossRouteOrThrow(
+            ctx,
+            targetEndpoint,
+            routeName: "Segment_Widgets_List",
+            values: []);
+
+        act.Should().Throw<InvalidOperationException>()
+            .Which.Message.Should()
+            .Contain("URL-segment")
+            .And.Contain($"api-version='{ApiVersionV2}'") // ambient, not requested
+            .And.Contain("Segment_Widgets_List");
+    }
+
+    [Fact]
+    public void UrlSegment_cross_route_validates_ambient_route_value_when_no_RequestedApiVersion()
+    {
+        // Round-3 regression: ValidateUrlSegmentCrossRouteOrThrow's earlier shape returned
+        // early when httpContext.RequestedApiVersion was null — leaving LinkGenerator free
+        // to fill the {version} segment from ambient Request.RouteValues. That covers
+        // hosts whose source endpoint has the {version:apiVersion} segment in its template
+        // but where no IApiVersionReader produced a RequestedApiVersion (e.g., the source
+        // is API-version-neutral, or the host registered only a query-string reader). The
+        // validator must inspect ambient route values for the segment key and validate
+        // them against the target's declared versions.
+        var ctx = new DefaultHttpContext { RequestServices = new ServiceCollection().BuildServiceProvider() };
+        ctx.Request.RouteValues["version"] = ApiVersionV2;
+
+        var targetEndpoint = BuildUrlSegmentEndpointDeclaring(
+            "Segment_Widgets_List",
+            "v{version:apiVersion}/segments/widgets",
+            new ApiVersion(new DateOnly(2026, 11, 12)));
+
+        Action act = () => HttpContextPageUrlExtensions.ValidateUrlSegmentCrossRouteOrThrow(
+            ctx,
+            targetEndpoint,
+            routeName: "Segment_Widgets_List",
+            values: []);
+
+        act.Should().Throw<InvalidOperationException>()
+            .Which.Message.Should()
+            .Contain("URL-segment")
+            .And.Contain($"api-version='{ApiVersionV2}'")
+            .And.Contain("Segment_Widgets_List");
+    }
+
+    [Fact]
+    public async Task Default_api_version_not_declared_by_target_falls_through_to_throw()
+    {
+        // Bug-regression: ResolveApiVersion's host-level fallback (step 3) used to return
+        // ApiVersioningOptions.DefaultApiVersion unconditionally. Asp.Versioning's
+        // DefaultApiVersion is non-null by default (1.0) even on date-versioned hosts that
+        // never explicitly configured it — so a date-versioned multi-version target with no
+        // matching DefaultApiVersion would silently get `?api-version=1.0`, a URL the target
+        // rejects. The fallback must validate the configured default against the target's
+        // declared versions exactly like step 1 (RequestedApiVersion) does. Otherwise this
+        // path leaks an undeclared version into the emitted URL.
+        var defaultThatTargetDoesNotDeclare = new ApiVersion(1, 0);
+        var ctx = BuildHttpContextWithDefaultApiVersion(defaultThatTargetDoesNotDeclare);
+        var endpoint = BuildMultiVersionEndpointWithoutDefault();
+
+        Action act = () =>
+            HttpResponseOptionsBuilderApiVersioningExtensions.ResolveApiVersion(
+                ctx,
+                endpoint,
+                callerLabel: "the next-page URL",
+                explicitOverloadHint: "PageUrl(routeName, ApiVersion, ...)");
+
+        act.Should().Throw<InvalidOperationException>()
+            .Which.Message.Should()
+            .Contain("declares more than one")
+            .And.Contain("next-page URL")
+            .And.Contain("PageUrl")
+            .And.Contain("ApiVersion");
+
+        await Task.CompletedTask;
+    }
+
+    [Fact]
     public async Task Multi_version_resolution_failure_message_mentions_PageUrl_overload()
     {
         // Direct unit test on the internal resolver. The HTTP-driven path isn't reachable for
@@ -744,6 +949,18 @@ public sealed class HttpContextPageUrlExtensionsTests
         return new DefaultHttpContext { RequestServices = services };
     }
 
+    private static DefaultHttpContext BuildHttpContextWithDefaultApiVersion(ApiVersion defaultVersion)
+    {
+        // Variant of BuildHttpContextWithoutRequestedVersion that wires IOptions<ApiVersioningOptions>
+        // with a configured DefaultApiVersion. Lets the resolver's host-level fallback (step 3)
+        // actually run, so tests can pin the cross-route emitted version OR observe the new
+        // target-declaration validation that fails the fallback when the configured default is
+        // not declared by the target endpoint.
+        var services = new ServiceCollection();
+        services.Configure<ApiVersioningOptions>(opt => opt.DefaultApiVersion = defaultVersion);
+        return new DefaultHttpContext { RequestServices = services.BuildServiceProvider() };
+    }
+
     private static RouteEndpoint BuildMultiVersionEndpointWithoutDefault()
     {
         // ApiVersionMetadata declaring 2 implicit versions and no explicit ones. Count != 1,
@@ -783,6 +1000,27 @@ public sealed class HttpContextPageUrlExtensionsTests
             metadata: new EndpointMetadataCollection(metadata),
             displayName: "SplitMappingTarget");
         return endpoint;
+    }
+
+    private static RouteEndpoint BuildUrlSegmentEndpointDeclaring(
+        string displayName,
+        string routeTemplate,
+        params ApiVersion[] declaredVersions)
+    {
+        // URL-segment endpoint helper for the round-3 cross-route-validation unit tests.
+        // routeTemplate must contain a {param:apiVersion} segment so
+        // TryGetUrlSegmentVersionParameterName returns the parameter name; declaredVersions
+        // populates the implicit declared set (single mapping is enough for the regression).
+        var versions = declaredVersions.ToArray();
+        var model = new ApiVersionModel(versions, versions, [], [], []);
+        var metadata = new ApiVersionMetadata(model, ApiVersionModel.Empty, displayName);
+
+        return new RouteEndpoint(
+            requestDelegate: _ => Task.CompletedTask,
+            routePattern: Microsoft.AspNetCore.Routing.Patterns.RoutePatternFactory.Parse(routeTemplate),
+            order: 0,
+            metadata: new EndpointMetadataCollection(metadata),
+            displayName: displayName);
     }
 
     #endregion
@@ -1041,6 +1279,75 @@ public sealed class SegmentPagedController : ControllerBase
                 "Segment_Widgets_ExplicitPin",
                 new ApiVersion(new DateOnly(2026, 12, 1)),
                 (c, applied) => new RouteValueDictionary { ["cursor"] = c.Token, ["limit"] = applied }),
+            body: WidgetResponse.From);
+    }
+}
+
+[ApiController]
+[ApiVersion(HttpContextPageUrlExtensionsTests_ApiVersions.V1)]
+[ApiVersion(HttpContextPageUrlExtensionsTests_ApiVersions.V2)]
+[Route("v{version:apiVersion}/segments/multi")]
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822", Justification = "Test fixture controllers don't need to be static.")]
+public sealed class MultiVersionSegmentPagedController : ControllerBase
+{
+    [HttpGet("cross-route-to-v1-only", Name = "Segment_MultiVersion_CrossRoute")]
+    public HttpResult CrossRouteToV1Only([FromQuery] string? cursor)
+    {
+        // Cross-route to the v1-only SegmentPagedController.List target. With v2 ambient,
+        // LinkGenerator would fill the {version} segment from ambient route data (= v2)
+        // even though the target only declares v1 — emitting a URL the target rejects.
+        // The per-request PageUrl overload must validate ambient against target-declared
+        // versions and throw exactly like the explicit overload does.
+        var (page, _) = PagedFixtures.NextPage(cursor);
+        var result = Trellis.Result.Ok(page);
+        return result.ToHttpResponse(
+            nextUrlBuilder: HttpContext.PageUrl(
+                "Segment_Widgets_List",
+                (c, applied) => new RouteValueDictionary { ["cursor"] = c.Token, ["limit"] = applied }),
+            body: WidgetResponse.From);
+    }
+
+    [HttpGet("cross-route-with-explicit-segment", Name = "Segment_MultiVersion_CrossRouteWithSegment")]
+    public HttpResult CrossRouteWithExplicitSegment([FromQuery] string? cursor)
+    {
+        // Escape hatch from the cross-route throw: caller supplies the {version} segment
+        // route value explicitly in the routeValues callback. PageUrl must honour the
+        // consumer-supplied segment (here pinned to V1, which the target declares) without
+        // the ambient-version validation kicking in.
+        var (page, _) = PagedFixtures.NextPage(cursor);
+        var result = Trellis.Result.Ok(page);
+        return result.ToHttpResponse(
+            nextUrlBuilder: HttpContext.PageUrl(
+                "Segment_Widgets_List",
+                (c, applied) => new RouteValueDictionary
+                {
+                    ["cursor"] = c.Token,
+                    ["limit"] = applied,
+                    ["version"] = HttpContextPageUrlExtensionsTests_ApiVersions.V1,
+                }),
+            body: WidgetResponse.From);
+    }
+
+    [HttpGet("cross-route-with-api-version-query-only", Name = "Segment_MultiVersion_CrossRouteApiVersionQueryOnly")]
+    public HttpResult CrossRouteWithApiVersionQueryOnly([FromQuery] string? cursor)
+    {
+        // Round-3 regression: caller supplies the QUERY-string escape-hatch key
+        // ("api-version") but NOT the URL-segment key ("version"). The earlier round-3
+        // fix gated URL-segment validation behind `!values.ContainsKey("api-version")`,
+        // so this combination silently dropped through to LinkGenerator with the segment
+        // filled from ambient route data — re-introducing the original cross-route leak.
+        // PageUrl must still validate the URL-segment cross-route case here.
+        var (page, _) = PagedFixtures.NextPage(cursor);
+        var result = Trellis.Result.Ok(page);
+        return result.ToHttpResponse(
+            nextUrlBuilder: HttpContext.PageUrl(
+                "Segment_Widgets_List",
+                (c, applied) => new RouteValueDictionary
+                {
+                    ["cursor"] = c.Token,
+                    ["limit"] = applied,
+                    ["api-version"] = HttpContextPageUrlExtensionsTests_ApiVersions.V1,
+                }),
             body: WidgetResponse.From);
     }
 }
