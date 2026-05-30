@@ -217,7 +217,8 @@ public class TransactionalCommandBehaviorTests
     }
 
     /// <summary>
-    /// Issue #533: <c>Result&lt;Unit&gt;.FailAfterCommit</c> follows the same path as the generic
+    /// Issue #533: the no-payload <see cref="Result.FailAfterCommit(Error)"/> factory returns a
+    /// <see cref="Result{Unit}"/> that follows the same persist-on-failure path as the generic
     /// overload — the no-payload result envelope must also opt in to the commit step.
     /// </summary>
     [Fact]
