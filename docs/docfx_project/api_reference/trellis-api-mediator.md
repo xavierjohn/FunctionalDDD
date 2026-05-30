@@ -1,7 +1,7 @@
 ﻿---
 package: Trellis.Mediator
 namespaces: [Trellis.Mediator]
-types: [ICommand<T>, IQuery<T>, "IRequestHandler<,>", "IPipelineBehavior<,>", ServiceCollectionExtensions, IDomainEventHandler<TEvent>, IDomainEventPublisher, "DomainEventDispatchBehavior<,>", DomainEventDispatchServiceCollectionExtensions, DomainEventPublisherExtensions]
+types: [ICommand<T>, IQuery<T>, "IRequestHandler<,>", "IPipelineBehavior<,>", ServiceCollectionExtensions, IDomainEventHandler<TEvent>, IDomainEventPublisher, "DomainEventDispatchBehavior<,>", DomainEventDispatchServiceCollectionExtensions, DomainEventPublisherExtensions, "TrackedAggregateDomainEventDispatchBehavior<,>", TrackedAggregateDomainEventDispatchServiceCollectionExtensions]
 version: v3
 last_verified: 2026-05-02
 audience: [llm]
@@ -34,6 +34,7 @@ See also: [trellis-api-cookbook.md](trellis-api-cookbook.md) — recipes using t
 | Keep commits inside the pipeline | Repositories stage changes; `TransactionalCommandBehavior` commits on success | [`Behavioral notes`](#behavioral-notes) |
 | Dispatch domain events on a successful command (assembly scan) | `services.AddDomainEventDispatch(typeof(MyHandler).Assembly)` | [`DomainEventDispatchServiceCollectionExtensions`](#domaineventdispatchservicecollectionextensions) |
 | Dispatch domain events with explicit (AOT-friendly) handler registration | `services.AddDomainEventHandler<TEvent, THandler>()` | [`DomainEventDispatchServiceCollectionExtensions`](#domaineventdispatchservicecollectionextensions) |
+| Auto-dispatch domain events from every tracked aggregate (regardless of response shape) | `services.AddTrackedAggregateDomainEventDispatch()` | [`TrackedAggregateDomainEventDispatchServiceCollectionExtensions`](#trackedaggregatedomaineventdispatchservicecollectionextensions) |
 | Implement a domain-event handler | Implement `IDomainEventHandler<TEvent>` | [`IDomainEventHandler`](#idomaineventhandler) |
 
 ## Common traps
@@ -504,6 +505,45 @@ DI registration helpers for the dispatch behavior, default publisher, and per-ev
 | `public static IServiceCollection AddDomainEventHandler<TEvent, [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] THandler>(this IServiceCollection services) where TEvent : IDomainEvent where THandler : class, IDomainEventHandler<TEvent>` | `IServiceCollection` | Registers a single `IDomainEventHandler<TEvent>` implementation as scoped, and ensures the dispatch behavior + publisher are wired. Use this for AOT/trim scenarios. **Idempotent**. |
 | `[RequiresUnreferencedCode("Assembly scanning requires unreferenced types. Use AddDomainEventHandler<TEvent, THandler> for AOT/trim scenarios.")] [RequiresDynamicCode("Constructs closed generic IDomainEventHandler<TEvent> at runtime.")] public static IServiceCollection AddDomainEventDispatch(this IServiceCollection services, params Assembly[] assemblies)` | `IServiceCollection` | Scans the assemblies for concrete `IDomainEventHandler<TEvent>` implementations and registers each as scoped. A type implementing handlers for multiple event types is registered once per interface. Also wires the dispatch behavior + publisher (idempotent). |
 
+### TrackedAggregateDomainEventDispatchBehavior
+**Declaration**
+
+```csharp
+public sealed class TrackedAggregateDomainEventDispatchBehavior<TMessage, TResponse>
+    : global::Mediator.IPipelineBehavior<TMessage, TResponse>
+    where TMessage : global::Mediator.ICommand<TResponse>
+    where TResponse : IResult
+```
+
+Opt-in alternative to [`DomainEventDispatchBehavior<,>`](#domaineventdispatchbehavior). Instead of extracting an aggregate from the response, it reads the unit-of-work's [`ITrackedAggregateSource`](trellis-api-core.md#itrackedaggregatesource) and dispatches events from every aggregate that participated in the most recent successful commit. Use this when handlers return outcome DTOs (`Result<DoneDto>`, `Result<Unit>`, `Result<(A, B)>`) but mutate aggregates via the EF change tracker.
+
+**Constants**
+
+| Name | Type | Value | Description |
+| --- | --- | --- | --- |
+| `MaxDispatchWaves` | `int` | `DomainEventDispatchDefaults.MaxDispatchWaves` (currently `8`) | Per-aggregate cap on cascading-event waves. Matches `DomainEventDispatchBehavior<,>` and `DispatchAggregateEventsAsync`. |
+
+**Methods**
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `public async ValueTask<TResponse> Handle(TMessage message, MessageHandlerDelegate<TMessage, TResponse> next, CancellationToken cancellationToken)` | `ValueTask<TResponse>` | Awaits `next`. Skips dispatch on `IsFailure` (including `Result.FailAfterCommit<T>(...)`), on cancellation, when re-entered (`AsyncLocal` guard shared across all closed-generic instantiations), and when `ITrackedAggregateSource.CommittedAggregates` is empty. Otherwise iterates the snapshot in waves, draining each aggregate's events via the registered `IDomainEventPublisher`. When the per-aggregate wave loop drains every event, calls `IChangeTracking.AcceptChanges()` on every snapshot aggregate. If any single aggregate exceeds `MaxDispatchWaves`, logs an error with the remaining count and the aggregate type and still calls `AcceptChanges()` on every aggregate (so undispatched events do not bleed into the next request that re-tracks the same aggregate). Cancellation propagates above `AcceptChanges()` so undispatched events remain on every snapshot aggregate. |
+
+### TrackedAggregateDomainEventDispatchServiceCollectionExtensions
+**Declaration**
+
+```csharp
+public static class TrackedAggregateDomainEventDispatchServiceCollectionExtensions
+```
+
+DI registration helper for the tracked dispatch behavior.
+
+**Methods**
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `public static IServiceCollection AddTrackedAggregateDomainEventDispatch(this IServiceCollection services)` | `IServiceCollection` | Registers `TrackedAggregateDomainEventDispatchBehavior<,>` (open generic, scoped) and the default `IDomainEventPublisher`. Removes any prior `DomainEventDispatchBehavior<,>` registration (mutually exclusive). Yanks any prior `TransactionalCommandBehavior<,>` registration and re-appends it last so tracked dispatch lands between the handler and the transaction commit. **Idempotent**. Subsequent `AddDomainEventDispatch()` / `AddDomainEventHandler<,>()` calls register handlers only — they do not reintroduce the response-shape behavior. |
+
 
 ## Extension methods
 
@@ -544,6 +584,14 @@ public static Task DispatchAggregateEventsAsync(
 
 **POST-COMMIT ONLY.** Mirrors [`DomainEventDispatchBehavior<,>`](#domaineventdispatchbehavior)'s wave loop for handlers whose `TResponse` is not an `IResult<TAggregate>` shape (`Result<Unit>`, `Result<TDto>`, `Result<(A,B)>`) and for non-Mediator call sites such as `BackgroundService` workers. Publishes each event from `aggregate.UncommittedEvents()` sequentially, picks up handler-raised events on subsequent waves (capped at `MaxDispatchWaves = 8`, matching the pipeline behavior), and calls `IChangeTracking.AcceptChanges()` once on the full-success path. Throws `InvalidOperationException` if the cap is exceeded (`AcceptChanges()` is not called — undispatched events remain on the aggregate). Cancellation propagates above `AcceptChanges()` so undispatched events remain on the aggregate; dispatched events stay dispatched (handlers must be idempotent for retry). Handler exceptions follow the publisher's contract: the default `MediatorDomainEventPublisher` logs and swallows non-cancellation handler exceptions so the helper continues; a custom publisher that propagates handler exceptions causes the helper to rethrow without calling `AcceptChanges()`. **Must only be called after the underlying unit of work has committed** — calling it inside a handler that relies on `TransactionalCommandBehavior` for its commit publishes events before the database transaction is durable. See [Dispatching events from non-aggregate response shapes](../articles/integration-mediator.md#dispatching-events-from-non-aggregate-response-shapes-post-commit-safe) for the cookbook recipe.
 
+### Trellis.Mediator.TrackedAggregateDomainEventDispatchServiceCollectionExtensions
+
+```csharp
+public static IServiceCollection AddTrackedAggregateDomainEventDispatch(this IServiceCollection services)
+```
+
+Registers the tracked-aggregate pipeline behavior + default publisher. Mutually exclusive with `AddDomainEventDispatch()`: removes any prior response-shape `DomainEventDispatchBehavior<,>` registration so calling both no longer double-dispatches. Re-orders any prior `Trellis.EntityFrameworkCore.TransactionalCommandBehavior<,>` registration so tracked dispatch lands between the handler and the transaction commit (events are read from the unit-of-work's snapshot, taken at commit time). Idempotent. See [`TrackedAggregateDomainEventDispatchBehavior`](#trackedaggregatedomaineventdispatchbehavior) for the behavior contract and [Auto-dispatching from outcome-DTO commands](../articles/integration-mediator.md#auto-dispatching-from-outcome-dto-commands-opt-in-tracked-behavior) for the cookbook recipe.
+
 ## Interfaces
 
 ```csharp
@@ -565,7 +613,8 @@ The Trellis pipeline executes outermost → innermost in this order. The first f
 4. **`AuthorizationBehavior<,>`** — runs for `IAuthorize` messages; resolves the actor and rejects with `new Error.Forbidden("authorization.insufficient.permissions")` when `RequiredPermissions` are not satisfied. No I/O.
 5. **`ResourceAuthorizationBehavior<,,>`** *(opt-in via `AddResourceAuthorization(...)`)* — runs for `IAuthorizeResource<TResource>` messages. Inserted **immediately before `ValidationBehavior<,>`** so a 403 short-circuits before a 422 is computed. Resolves the actor first (fail-fast, no I/O when null), then loads the resource via `IResourceLoader<TMessage, TResource>` and calls `message.Authorize(actor, resource)`.
 6. **`ValidationBehavior<,>`** — unified validation stage. Runs `IValidate.Validate()` if implemented, then every `IMessageValidator<TMessage>` resolved from DI; aggregates all `Error.InvalidInput` failures into a single response. External validation sources (e.g., the `Trellis.FluentValidation` adapter) participate here without occupying their own pipeline slot.
-7. **`DomainEventDispatchBehavior<,>`** *(opt-in via `AddDomainEventDispatch(...)`)* — runs for `ICommand<TResponse>` messages where `TResponse` is `IResult<TAggregate>` (typically `Result<TAggregate>`) and `TAggregate : IAggregate`. After the inner pipeline returns success, dispatches each event from `aggregate.UncommittedEvents()` to its registered `IDomainEventHandler<TEvent>` instances and calls `AcceptChanges()`. When `TransactionalCommandBehavior` is registered innermost, dispatch fires after the transaction commits — handlers see committed state. Non-cancellation handler exceptions are logged and swallowed; the command still succeeds. `OperationCanceledException` matching the request's token is the one exception that propagates so cancellation aborts the dispatch loop and skips `AcceptChanges()`.
+7. **`DomainEventDispatchBehavior<,>`** *(opt-in via `AddDomainEventDispatch(...)`)* — runs for `ICommand<TResponse>` messages where `TResponse` is `IResult<TAggregate>` (typically `Result<TAggregate>`) and `TAggregate : IAggregate`. After the inner pipeline returns success, dispatches each event from `aggregate.UncommittedEvents()` to its registered `IDomainEventHandler<TEvent>` instances and calls `AcceptChanges()`. When `TransactionalCommandBehavior` is registered innermost, dispatch fires after the transaction commits — handlers see committed state. Non-cancellation handler exceptions are logged and swallowed; the command still succeeds. `OperationCanceledException` matching the request's token is the one exception that propagates so cancellation aborts the dispatch loop and skips `AcceptChanges()`. **Mutually exclusive** with `TrackedAggregateDomainEventDispatchBehavior<,>` (the tracked extension removes this registration and vice versa).
+   - **Or** `TrackedAggregateDomainEventDispatchBehavior<,>` *(opt-in via `AddTrackedAggregateDomainEventDispatch(...)`)* — sits at the same slot but reads the aggregates from `ITrackedAggregateSource.CommittedAggregates` (populated by the unit-of-work at commit time). Fires for any response shape, including outcome DTOs. See [`TrackedAggregateDomainEventDispatchBehavior`](#trackedaggregatedomaineventdispatchbehavior).
 8. **`TransactionalCommandBehavior<,>`** *(opt-in, lives in `Trellis.EntityFrameworkCore`, not registered by `AddTrellisBehaviors()`)* — wraps the handler for `ICommand<TResponse>` messages and calls `IUnitOfWork.CommitAsync` on success. Register via `AddTrellisUnitOfWork<TContext>()` from the EFCore package **after** `AddTrellisBehaviors()` and `AddDomainEventDispatch(...)` so it lands innermost (closest to the handler) and commit failures remain visible to outer logging/tracing/dispatch. Queries are skipped.
 
 ## Code examples

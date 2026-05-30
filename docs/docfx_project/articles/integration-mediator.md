@@ -25,6 +25,7 @@ audience: [developer]
 | Convert thrown exceptions to typed failures | `ExceptionBehavior` (always-on) | [Exception safety net](#exception-safety-net) |
 | Dispatch domain events that aggregates raised during a command | `services.AddDomainEventDispatch()` + `IDomainEventHandler<TEvent>` | [Domain event dispatch](#domain-event-dispatch) |
 | Manually dispatch an aggregate's events from a non-aggregate handler or `BackgroundService` | `IDomainEventPublisher.DispatchAggregateEventsAsync(aggregate, ct)` | [Dispatching events from non-aggregate response shapes](#dispatching-events-from-non-aggregate-response-shapes-post-commit-safe) |
+| Auto-dispatch domain events from *every* aggregate the unit-of-work tracked, regardless of response shape | `services.AddTrellis(t => t.UseTrackedAggregateDomainEvents(...))` | [Auto-dispatching from outcome-DTO commands](#auto-dispatching-from-outcome-dto-commands-opt-in-tracked-behavior) |
 | Use a custom envelope response type around an aggregate | `TResponse : IResult<TAggregate>, IFailureFactory<TResponse>` | [Custom envelope response types](#custom-envelope-response-types) |
 | Persist a `permanently_failed` row alongside a failure outcome (worker pattern) | `Result.FailAfterCommit<T>(error)` | [Persisting failure state from a worker handler](#persisting-failure-state-from-a-worker-handler) |
 
@@ -54,6 +55,9 @@ audience: [developer]
 | `IDomainEventHandler<TEvent>` | Interface | Side-effect handler invoked once per matching event after the command commits. |
 | `IDomainEventPublisher` | Interface | Resolves `IDomainEventHandler<TEvent>` instances and fans events out; default impl is `MediatorDomainEventPublisher` (DI-resolved, scoped). |
 | `DomainEventPublisherExtensions.DispatchAggregateEventsAsync(this IDomainEventPublisher, IAggregate, CancellationToken)` | Extension method | Post-commit-only helper that mirrors `DomainEventDispatchBehavior<,>`'s wave loop for handlers that do not return `Result<TAggregate>`. |
+| `TrackedAggregateDomainEventDispatchBehavior<TMessage, TResponse>` | Pipeline behavior | Opt-in alternative to `DomainEventDispatchBehavior<,>` that auto-dispatches events from every aggregate the unit-of-work tracked at commit time, regardless of response shape. Registered via `AddTrackedAggregateDomainEventDispatch()` or `TrellisServiceBuilder.UseTrackedAggregateDomainEvents(...)`. Mutually exclusive with the response-shape behavior. |
+| `AddTrackedAggregateDomainEventDispatch()` | DI extension | Registers the tracked behavior + default publisher and replaces any prior response-shape dispatch registration. Idempotent. |
+| `ITrackedAggregateSource` | Interface | Sidecar exposed by `EfUnitOfWork<TContext>` (or a custom `IUnitOfWork`) — returns the aggregates the unit-of-work committed on its most recent successful save. Empty after a failed commit or thrown save. |
 
 Full signatures: [`trellis-api-mediator.md`](../api_reference/trellis-api-mediator.md).
 
@@ -592,7 +596,72 @@ Failure / cancellation contract:
 - Re-entrant calls on the same aggregate are **not supported**. Do not call `DispatchAggregateEventsAsync` from inside an `IDomainEventHandler<TEvent>` that is currently draining the same aggregate: the in-flight event's index has not yet advanced and `AcceptChanges()` has not yet run, so the nested call republishes it (and each nested call also starts with its own wave counter, so the cap does not stop runaway recursion). Treat domain event handlers as side-effect-only and let exactly one outer call own the drain.
 
 > [!NOTE]
-> An opt-in pipeline behavior — `TrackedAggregateDomainEventDispatchBehavior` — is planned ([#537](https://github.com/xavierjohn/Trellis/issues/537)) for the common case where you want post-commit dispatch against an aggregate the handler tracks via the EF change tracker (instead of returning it through `Result<TAggregate>`). Until then, the manual helper is the supported path.
+> An opt-in pipeline behavior — `TrackedAggregateDomainEventDispatchBehavior` — covers the common case where you want post-commit dispatch against aggregates the handler tracks via the EF change tracker (instead of returning them through `Result<TAggregate>`). See [Auto-dispatching from outcome-DTO commands](#auto-dispatching-from-outcome-dto-commands-opt-in-tracked-behavior) below.
+
+### Auto-dispatching from outcome-DTO commands (opt-in tracked behavior)
+
+`DomainEventDispatchBehavior<,>` only fires when the handler returns `IResult<TAggregate>` — it has no way to know which aggregates the handler mutated otherwise. For handlers that return an outcome DTO (`Result<MarkReadDto>`, `Result<Unit>`, `Result<(A, B)>`, ...) and stage their changes through `IUnitOfWork.CommitAsync(...)`, the alternative `TrackedAggregateDomainEventDispatchBehavior<,>` reads the aggregates the unit-of-work tracked at commit time and dispatches their events automatically. No manual `DispatchAggregateEventsAsync` call is needed.
+
+The behavior is **opt-in** and **mutually exclusive** with `DomainEventDispatchBehavior<,>` — pick one model per host.
+
+```csharp
+// Outcome-DTO command. Handler returns Result<MarkReadDto>, not Result<Inbox>.
+public sealed record MarkInboxReadCommand(Guid Id) : ICommand<Result<MarkReadDto>>;
+public sealed record MarkReadDto(Guid Id, DateTimeOffset ReadAt);
+
+public sealed class MarkInboxReadHandler(AppDbContext db, TimeProvider clock)
+    : ICommandHandler<MarkInboxReadCommand, Result<MarkReadDto>>
+{
+    public async ValueTask<Result<MarkReadDto>> Handle(
+        MarkInboxReadCommand cmd,
+        CancellationToken cancellationToken)
+    {
+        var inbox = await db.Inboxes.FirstAsync(i => i.Id == cmd.Id, cancellationToken).ConfigureAwait(false);
+        inbox.MarkRead(clock.GetUtcNow()); // raises InboxRead — staged on the aggregate
+
+        // No SaveChangesAsync or DispatchAggregateEventsAsync needed:
+        // TransactionalCommandBehavior commits, then TrackedAggregateDomainEventDispatchBehavior
+        // reads ITrackedAggregateSource.CommittedAggregates and drains events from each.
+        return Result.Ok(new MarkReadDto(inbox.Id, inbox.ReadAt!.Value));
+    }
+}
+```
+
+Registration via the `TrellisServiceBuilder`:
+
+```csharp
+services.AddTrellis(t => t
+    .UseEntityFrameworkUnitOfWork<AppDbContext>()
+    .UseTrackedAggregateDomainEvents(typeof(MarkInboxReadHandler).Assembly));
+```
+
+Or via DI extensions directly:
+
+```csharp
+services.AddTrackedAggregateDomainEventDispatch();
+services.AddTrellisUnitOfWork<AppDbContext>();
+services.AddDomainEventHandler<InboxRead, SendReadReceiptHandler>();
+```
+
+#### How it composes with the rest of the pipeline
+
+- The tracked behavior sits at the same slot as `DomainEventDispatchBehavior<,>` — between the handler and `TransactionalCommandBehavior`. Pipeline order is enforced by `AddTrackedAggregateDomainEventDispatch()` regardless of registration order with `AddTrellisUnitOfWork<>()`.
+- After the inner pipeline returns `IsSuccess`, the behavior reads `ITrackedAggregateSource.CommittedAggregates` (the snapshot the unit-of-work captured at commit time), then drains events from each aggregate in a wave loop. The cap (`MaxDispatchWaves = 8`) is per-aggregate.
+- The snapshot is **cleared before save** and **only repopulated on success**. A failed commit (or a thrown save) leaves it empty, so a subsequent successful commit never auto-dispatches events from a previously-failed handler.
+- `Result.FailAfterCommit<T>(error)` (a failure whose `IPersistOnFailure.PersistOnFailure` flag is set) commits the staged state, but the tracked behavior **skips dispatch** because the result is a failure — the worker pattern in [Persisting failure state from a worker handler](#persisting-failure-state-from-a-worker-handler) continues to work as documented.
+- Re-entrant calls (a handler raises a new event whose handler schedules another command via `IMediator.Send`) are blocked by an `AsyncLocal` guard so the nested invocation of the tracked behavior does not overwrite the outer's snapshot or republish its events. The guard is shared across all closed-generic instantiations of the behavior, so the nested command's own tracked dispatch is **also skipped** — even when the nested command has a different `(TMessage, TResponse)` shape from the outer. If the nested command's own aggregates need to dispatch events, call `IDomainEventPublisher.DispatchAggregateEventsAsync(aggregate, ct)` manually inside that handler after its commit, or refactor so the nested command runs at the top of its own pipeline (not from inside an outer command's event handler).
+
+#### When to pick which model
+
+| Handler shape | Recommendation |
+|---|---|
+| Returns `Result<TAggregate>` for one aggregate per command | `AddDomainEventDispatch()` (the response-shape behavior). Most precise — the response identifies the aggregate. |
+| Returns an outcome DTO (`Result<DoneDto>`, `Result<Unit>`, `Result<(A, B)>`) and mutates one or more aggregates via the EF change tracker | `AddTrackedAggregateDomainEventDispatch()`. The unit-of-work tells the behavior which aggregates committed. |
+| Hand-rolled `BackgroundService` tick without `TransactionalCommandBehavior` | `IDomainEventPublisher.DispatchAggregateEventsAsync(aggregate, ct)` after your own `SaveChangesAsync`. |
+| Custom `IUnitOfWork` that does not implement `ITrackedAggregateSource` | Throws at first resolve. Either implement the interface on your unit-of-work or use the response-shape model. |
+
+> [!NOTE]
+> `AddTrackedAggregateDomainEventDispatch()` and `AddDomainEventDispatch()` are mutually exclusive. The tracked extension removes any prior response-shape registration, and `AddDomainEventDispatch()` short-circuits if the tracked behavior is already registered. The `TrellisServiceBuilder` slots `UseDomainEvents(...)` and `UseTrackedAggregateDomainEvents(...)` throw `InvalidOperationException` if you call both.
 
 ### Persisting failure state from a worker handler
 

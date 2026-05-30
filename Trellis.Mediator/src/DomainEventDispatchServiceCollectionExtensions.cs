@@ -52,7 +52,14 @@ public static class DomainEventDispatchServiceCollectionExtensions
         var transactionalDescriptor = TryRemoveTransactionalBehavior(services);
 
         services.AddTrellisBehaviors();
-        AppendDispatchBehavior(services);
+
+        // If the tracked-aggregate behavior is already registered (opt-in dispatch chose
+        // the tracked variant), do NOT append the response-shape behavior — it would
+        // cause double-dispatch for Result<TAggregate> handlers. The publisher and
+        // handler registrations above are still needed so AddDomainEventHandler works
+        // when called after AddTrackedAggregateDomainEventDispatch.
+        if (!HasTrackedAggregateDispatchBehavior(services))
+            AppendDispatchBehavior(services);
 
         if (transactionalDescriptor is not null)
             services.Add(transactionalDescriptor);
@@ -156,7 +163,7 @@ public static class DomainEventDispatchServiceCollectionExtensions
     // transactional behavior by full type name to keep the package boundary clean.
     private const string TransactionalBehaviorTypeName = "Trellis.EntityFrameworkCore.TransactionalCommandBehavior`2";
 
-    private static ServiceDescriptor? TryRemoveTransactionalBehavior(IServiceCollection services)
+    internal static ServiceDescriptor? TryRemoveTransactionalBehavior(IServiceCollection services)
     {
         for (var i = 0; i < services.Count; i++)
         {
@@ -187,5 +194,39 @@ public static class DomainEventDispatchServiceCollectionExtensions
         services.Add(ServiceDescriptor.Scoped(
             typeof(IPipelineBehavior<,>),
             typeof(DomainEventDispatchBehavior<,>)));
+    }
+
+    /// <summary>
+    /// Removes the response-shape <see cref="DomainEventDispatchBehavior{TMessage, TResponse}"/>
+    /// registration if present. Used by the tracked-aggregate opt-in to prevent double-dispatch.
+    /// </summary>
+    internal static void RemoveResponseShapeDispatchBehavior(IServiceCollection services)
+    {
+        for (var i = services.Count - 1; i >= 0; i--)
+        {
+            if (services[i].ServiceType == typeof(IPipelineBehavior<,>)
+                && services[i].ImplementationType == typeof(DomainEventDispatchBehavior<,>))
+            {
+                services.RemoveAt(i);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> when the tracked-aggregate dispatch behavior is registered
+    /// as an open-generic pipeline behavior.
+    /// </summary>
+    internal static bool HasTrackedAggregateDispatchBehavior(IServiceCollection services)
+    {
+        for (var i = 0; i < services.Count; i++)
+        {
+            if (services[i].ServiceType == typeof(IPipelineBehavior<,>)
+                && services[i].ImplementationType == typeof(TrackedAggregateDomainEventDispatchBehavior<,>))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
