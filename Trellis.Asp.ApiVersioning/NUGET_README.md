@@ -27,7 +27,8 @@ return pageResult.ToHttpResponse(
         (c, applied) => new RouteValueDictionary { ["cursor"] = c.Token, ["limit"] = applied }),
     body: o => OrderListItemResponse.From(o));
 //   ↑ next URL carries the api-version, fills URL-segment templates from ambient route data,
-//     skips injection on [ApiVersionNeutral] endpoints, and URL-encodes the cursor token.
+//     skips injection on [ApiVersionNeutral] endpoints and on endpoints with no
+//     ApiVersionMetadata (unversioned hosts), and URL-encodes the cursor token.
 ```
 
 `WithVersionedRoute()` chains after any builder method that emits a builder-generated `Location` header — including `CreatedAtRoute(...)` / `CreatedAtAction(...)` (201 Created) and `WithLocation(...)` (2xx state-transition responses on existing resources).
@@ -40,7 +41,7 @@ Under query/header API versioning, `Location` headers from `CreatedAtRoute(...)`
 - `HttpContext.PageUrl(routeName, ...)` returns a `Func<Cursor, int, string>` for the `nextUrlBuilder` parameter of paginated `ToHttpResponse(Async)` — replaces hand-rolled URL concatenation, version literals, and `Uri.EscapeDataString` calls with one helper
 - Per-request resolution via `httpContext.RequestedApiVersion` (the `Asp.Versioning.Http` extension property), falling back to declared and default versions
 - Explicit-version overloads for both `WithVersionedRoute(ApiVersion)` and `PageUrl(routeName, version, ...)` — pin cross-version Location / next-page URLs
-- Honours `[ApiVersionNeutral]` and URL-segment versioning by skipping injection (applies to all overloads — even explicit pinning won't inject a version into a neutral endpoint or duplicate a path-segment version)
+- Honours `[ApiVersionNeutral]` endpoints and unversioned hosts (endpoints with no `ApiVersionMetadata`) by skipping injection — applies to all overloads, including explicit pinning. For URL-segment versioning the per-request `PageUrl` / `WithVersionedRoute()` overloads and the explicit `WithVersionedRoute(ApiVersion)` overload skip query injection (ambient routing fills the path segment); the explicit `PageUrl(routeName, version, ...)` overload throws instead, because silently dropping the pin would let `LinkGenerator` emit a URL with the wrong path-segment version
 - Throws on degenerate configurations (multi-version action with no client-requested version and no `DefaultApiVersion`) instead of silently picking
 
 ## Documentation

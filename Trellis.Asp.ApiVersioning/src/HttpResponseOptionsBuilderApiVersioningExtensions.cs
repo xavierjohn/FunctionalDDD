@@ -34,11 +34,15 @@ using Trellis.Asp;
 /// <para>
 /// Cases that skip injection (resolver returns <c>null</c>, applies to both the per-request
 /// and explicit-version overloads): version-neutral endpoints
-/// (<c>ApiVersionMetadata.IsApiVersionNeutral</c> or <c>[ApiVersionNeutral]</c>) and
+/// (<c>ApiVersionMetadata.IsApiVersionNeutral</c> or <c>[ApiVersionNeutral]</c>),
 /// URL-segment-versioned routes (route template contains <c>:apiVersion</c>; ambient
-/// routing handles substitution). Multi-version actions with no client-requested version
-/// AND no <c>DefaultApiVersion</c> throw <see cref="InvalidOperationException"/> rather
-/// than silently picking — silent picking would resurrect the original 404 bug.
+/// routing handles substitution), and endpoints with no <see cref="ApiVersionMetadata"/>
+/// attached (hosts that never called <c>AddApiVersioning(...)</c>, or endpoints sitting
+/// outside its surface — the helpers compose cleanly in unversioned and mixed-versioned
+/// hosts by dropping injection rather than emitting a stale URL artefact). Multi-version
+/// actions with no client-requested version AND no <c>DefaultApiVersion</c> throw
+/// <see cref="InvalidOperationException"/> rather than silently picking — silent picking
+/// would resurrect the original 404 bug.
 /// </para>
 /// </remarks>
 public static class HttpResponseOptionsBuilderApiVersioningExtensions
@@ -83,12 +87,15 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
     /// <remarks>
     /// Explicit pinning overrides the per-request resolution order (requested / declared /
     /// default), but the skip rules still apply: on a version-neutral endpoint
-    /// (<c>ApiVersionMetadata.IsApiVersionNeutral</c> or <c>[ApiVersionNeutral]</c>) and on
-    /// URL-segment-versioned routes (route template contains <c>:apiVersion</c>) the resolver
-    /// returns <c>null</c> and no <c>api-version</c> route value is injected. Injecting a
-    /// pinned version into a Location that targets a neutral endpoint would mislead clients;
-    /// injecting it as a query parameter alongside a path segment would create a redundant /
-    /// conflicting value. Both bugs are silent without this guard.
+    /// (<c>ApiVersionMetadata.IsApiVersionNeutral</c> or <c>[ApiVersionNeutral]</c>), on
+    /// URL-segment-versioned routes (route template contains <c>:apiVersion</c>), and on
+    /// targets with no <see cref="ApiVersionMetadata"/> attached (the host did not call
+    /// <c>AddApiVersioning(...)</c>) the resolver returns <c>null</c> and no
+    /// <c>api-version</c> route value is injected. Injecting a pinned version into a
+    /// Location that targets a neutral or unversioned endpoint would mislead clients or be
+    /// a stale URL artefact; injecting it as a query parameter alongside a path segment
+    /// would create a redundant / conflicting value. All three bugs are silent without
+    /// this guard.
     /// </remarks>
     public static HttpResponseOptionsBuilder<TDomain> WithVersionedRoute<TDomain>(
         this HttpResponseOptionsBuilder<TDomain> builder,
@@ -128,8 +135,9 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
     /// (2) Single declared version on <paramref name="targetEndpoint"/> — unambiguous fallback.
     /// (3) <c>ApiVersioningOptions.DefaultApiVersion</c> — host-level fallback.
     /// (4) Throws <see cref="InvalidOperationException"/> — silent picking would resurrect the original 404 bug.
-    /// Returns <c>null</c> when the target endpoint is version-neutral or URL-segment-versioned —
-    /// callers must NOT inject a route value in either case.
+    /// Returns <c>null</c> when <see cref="ShouldSkipInjection"/> reports the target is version-neutral,
+    /// URL-segment-versioned, or has no <see cref="ApiVersionMetadata"/> attached (the host did not call
+    /// <c>AddApiVersioning(...)</c> for this endpoint) — callers must NOT inject a route value in any of those cases.
     /// </remarks>
     /// <param name="httpContext">The current request context — supplies per-request signals.</param>
     /// <param name="targetEndpoint">The endpoint whose URL is being built — supplies declared-version metadata and skip signals.</param>
@@ -149,14 +157,16 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
         string callerLabel = "the Location header",
         string explicitOverloadHint = "WithVersionedRoute(explicitVersion)")
     {
-        // Skip injection on version-neutral endpoints (the response URL shouldn't carry
-        // a parameter the target endpoint doesn't accept) and on URL-segment versioning (the
-        // ambient route values already carry the version token; adding a query copy creates
-        // a redundant/conflicting parameter).
+        // Skip injection when ShouldSkipInjection reports a skip case (version-neutral
+        // endpoint, URL-segment-versioned route, or — most relevant for unversioned hosts —
+        // an endpoint with no ApiVersionMetadata at all). In all three cases injecting an
+        // api-version route value would emit a misleading or stale URL artefact.
         if (ShouldSkipInjection(targetEndpoint))
             return null;
 
-        var metadata = targetEndpoint?.Metadata.GetMetadata<ApiVersionMetadata>();
+        // Past the skip check the metadata is guaranteed non-null; ShouldSkipInjection
+        // returns true for the null case. The null-forgiving operator is safe here.
+        var metadata = targetEndpoint!.Metadata.GetMetadata<ApiVersionMetadata>()!;
 
         // 1. Echo the version the client requested — primary signal. Only echo when the target
         //    actually declares the requested version. For same-route targets the requested
@@ -164,7 +174,7 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
         //    same-route behaviour is unchanged. For cross-route targets (PageUrl) this prevents
         //    leaking a v2 request into a v1-only target URL.
         var requested = httpContext.RequestedApiVersion;
-        if (requested is not null && (metadata is null || TargetDeclaresVersion(metadata, requested)))
+        if (requested is not null && TargetDeclaresVersion(metadata, requested))
             return requested.ToString();
 
         // 2. Single declared version on the endpoint metadata — unambiguous fallback.
@@ -172,12 +182,9 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
         //    TargetDeclaresVersion. Otherwise a controller with `[ApiVersion(v1)]` + an action
         //    `[MapToApiVersion(v2)]` (1 implicit + 1 explicit) would look "single-declared" via
         //    Implicit alone and silently echo v1, even though the target declares two versions.
-        if (metadata is not null)
-        {
-            var declared = DistinctDeclaredVersions(metadata);
-            if (declared.Count == 1)
-                return declared[0].ToString();
-        }
+        var declared = DistinctDeclaredVersions(metadata);
+        if (declared.Count == 1)
+            return declared[0].ToString();
 
         // 3. ApiVersioningOptions.DefaultApiVersion — host-level fallback.
         var apiVersioningOptions = httpContext.RequestServices.GetService<IOptions<ApiVersioningOptions>>();
@@ -244,10 +251,24 @@ public static class HttpResponseOptionsBuilderApiVersioningExtensions
     /// </summary>
     internal static bool ShouldSkipInjection(Endpoint? endpoint)
     {
+        var metadata = endpoint?.Metadata.GetMetadata<ApiVersionMetadata>();
+
+        // No metadata to drive injection — either the endpoint argument is null (unrouted
+        // request: caller invoked the resolver before UseRouting matched, or under test) or
+        // the target endpoint carries no ApiVersionMetadata (the host never called
+        // AddApiVersioning(), or this endpoint sits outside its surface). In both cases skip
+        // silently rather than echoing a RequestedApiVersion value the target can't
+        // interpret, falling through to the multi-version unresolvable branch with advice
+        // (configure DefaultApiVersion / use the explicit overload) that does not apply
+        // when versioning is not in use, or emitting a pinned version as a stale query
+        // parameter the (absent or unrelated) versioning middleware would never consume.
+        // Lets the helpers compose cleanly in unversioned and mixed-versioned hosts.
+        if (metadata is null)
+            return true;
+
         // Version-neutral endpoints reject any api-version parameter; emitting one would
         // mislead clients into resending the same Location with an unsupported value.
-        var metadata = endpoint?.Metadata.GetMetadata<ApiVersionMetadata>();
-        if (metadata is { IsApiVersionNeutral: true })
+        if (metadata.IsApiVersionNeutral)
             return true;
 
         // URL-segment versioning embeds the version in the path; ambient routing fills the

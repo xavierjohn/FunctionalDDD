@@ -433,6 +433,52 @@ public sealed class HttpContextPageUrlExtensionsTests
 
     #endregion
 
+    #region Unversioned host (no AddApiVersioning called)
+
+    [Fact]
+    public async Task PerRequest_PageUrl_without_AddApiVersioning_emits_url_without_api_version()
+    {
+        // The host never calls services.AddApiVersioning(...) and the controller carries no
+        // [ApiVersion] attribute, so the endpoint has no ApiVersionMetadata at all. The
+        // per-request PageUrl helper must NOT throw the unresolvable-version error (which
+        // tells callers to configure DefaultApiVersion or use the explicit overload —
+        // advice that does not apply when versioning isn't in use). It must emit a clean
+        // next-page URL with no api-version query parameter.
+        using var host = CreateUnversionedHost();
+        using var client = host.GetTestClient();
+
+        var resp = await client.GetAsync("/unversioned/widgets", TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.OK);
+        var page = await resp.Content.ReadFromJsonAsync<PagedShape>(JsonOpts, TestContext.Current.CancellationToken);
+        page!.Next!.Href.Should().NotContain("api-version");
+        page.Next.Href.Should().Contain("/unversioned/widgets");
+        page.Next.Href.Should().Contain("cursor=cur-2");
+    }
+
+    [Fact]
+    public async Task Explicit_PageUrl_without_AddApiVersioning_skips_pin_silently()
+    {
+        // Same unversioned-host setup as above, but the controller calls the EXPLICIT
+        // overload PageUrl(routeName, version, callback). With no ApiVersionMetadata on
+        // the target, the pinned version has no declared-version set to validate against
+        // and emitting it as a query parameter would be a stale URL artefact (the host
+        // has no API-versioning middleware to consume it). The pin must be silently
+        // suppressed — same precedent as [ApiVersionNeutral] — and a clean URL emitted.
+        using var host = CreateUnversionedHost();
+        using var client = host.GetTestClient();
+
+        var resp = await client.GetAsync("/unversioned/widgets/pinned", TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.OK);
+        var page = await resp.Content.ReadFromJsonAsync<PagedShape>(JsonOpts, TestContext.Current.CancellationToken);
+        page!.Next!.Href.Should().NotContain("api-version");
+        page.Next.Href.Should().Contain("/unversioned/widgets/pinned");
+        page.Next.Href.Should().Contain("cursor=cur-2");
+    }
+
+    #endregion
+
     #region Helpers
 
     private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web)
@@ -585,6 +631,43 @@ public sealed class HttpContextPageUrlExtensionsTests
                     app.UseEndpoints(e => e.MapControllers());
                 }));
         return b.Start();
+    }
+
+    private static IHost CreateUnversionedHost()
+    {
+        // No services.AddApiVersioning(...) call. The UnversionedPagedController carries no
+        // [ApiVersion] attribute, so the registered endpoint will have no ApiVersionMetadata
+        // — the canonical "host doesn't use API versioning" shape.
+        // The application part is scoped to UnversionedPagedController only because other
+        // test controllers carry routes with the `:apiVersion` constraint, which is only
+        // registered when AddApiVersioning() runs — including them here would explode the
+        // route table for reasons unrelated to the PageUrl behaviour under test.
+        var b = Host.CreateDefaultBuilder()
+            .ConfigureWebHostDefaults(web => web
+                .UseTestServer()
+                .ConfigureServices(s =>
+                {
+                    s.AddTrellisAsp();
+                    s.AddControllers()
+                        .ConfigureApplicationPartManager(apm =>
+                        {
+                            apm.FeatureProviders.Clear();
+                            apm.FeatureProviders.Add(new SingleControllerFeatureProvider(typeof(UnversionedPagedController)));
+                        });
+                })
+                .Configure(app =>
+                {
+                    app.UseRouting();
+                    app.UseEndpoints(e => e.MapControllers());
+                }));
+        return b.Start();
+    }
+
+    private sealed class SingleControllerFeatureProvider : Microsoft.AspNetCore.Mvc.Controllers.ControllerFeatureProvider
+    {
+        private readonly HashSet<Type> _allowed;
+        public SingleControllerFeatureProvider(params Type[] allowed) => _allowed = [.. allowed];
+        protected override bool IsController(System.Reflection.TypeInfo typeInfo) => _allowed.Contains(typeInfo.AsType());
     }
 
     private static DefaultHttpContext BuildHttpContextWithoutRequestedVersion()
@@ -901,6 +984,41 @@ internal static class HttpContextPageUrlExtensionsTests_ApiVersions
 {
     public const string V1 = "2026-11-12";
     public const string V2 = "2026-12-01";
+}
+
+[ApiController]
+[Route("unversioned/widgets")]
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822", Justification = "Test fixture controllers don't need to be static.")]
+public sealed class UnversionedPagedController : ControllerBase
+{
+    // No [ApiVersion] attribute and no AddApiVersioning() on the host → the registered
+    // endpoint will have no ApiVersionMetadata at all. Exercises the unversioned-host
+    // path of HttpContext.PageUrl(...).
+
+    [HttpGet(Name = "Unversioned_Widgets_List")]
+    public HttpResult List([FromQuery] string? cursor)
+    {
+        var (page, _) = PagedFixtures.NextPage(cursor);
+        var result = Trellis.Result.Ok(page);
+        return result.ToHttpResponse(
+            nextUrlBuilder: HttpContext.PageUrl(
+                "Unversioned_Widgets_List",
+                (c, applied) => new RouteValueDictionary { ["cursor"] = c.Token, ["limit"] = applied }),
+            body: WidgetResponse.From);
+    }
+
+    [HttpGet("pinned", Name = "Unversioned_Widgets_Pinned")]
+    public HttpResult Pinned([FromQuery] string? cursor)
+    {
+        var (page, _) = PagedFixtures.NextPage(cursor);
+        var result = Trellis.Result.Ok(page);
+        return result.ToHttpResponse(
+            nextUrlBuilder: HttpContext.PageUrl(
+                "Unversioned_Widgets_Pinned",
+                new ApiVersion(new DateOnly(2026, 12, 1)),
+                (c, applied) => new RouteValueDictionary { ["cursor"] = c.Token, ["limit"] = applied }),
+            body: WidgetResponse.From);
+    }
 }
 
 internal static class PagedFixtures

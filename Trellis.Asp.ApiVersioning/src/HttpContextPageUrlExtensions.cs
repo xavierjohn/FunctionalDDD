@@ -18,9 +18,14 @@ using Microsoft.Extensions.DependencyInjection;
 /// Mirrors the resolution and skip rules of
 /// <see cref="HttpResponseOptionsBuilderApiVersioningExtensions.WithVersionedRoute{TDomain}(HttpResponseOptionsBuilder{TDomain})"/>
 /// for paginated <c>Link</c> / <c>next</c> URLs: query/header versioning round-trips
-/// <c>api-version</c> automatically; URL-segment versioning fills the segment from ambient
-/// route data and skips query injection; version-neutral endpoints never receive an
-/// <c>api-version</c> parameter.
+/// <c>api-version</c> automatically; version-neutral endpoints never receive an
+/// <c>api-version</c> parameter; endpoints with no <see cref="ApiVersionMetadata"/> attached
+/// (hosts that never called <c>AddApiVersioning(...)</c>) likewise skip injection so
+/// <c>PageUrl</c> composes cleanly in unversioned and mixed-versioned hosts. For URL-segment
+/// versioning, the per-request overload skips query injection and lets ambient route data
+/// fill the path segment; the explicit-version overload throws instead, because silently
+/// dropping the pin would let <see cref="Microsoft.AspNetCore.Routing.LinkGenerator"/>
+/// emit a URL with the wrong path-segment version.
 /// </para>
 /// <para>
 /// Builds absolute URLs via <c>LinkGenerator.GetUriByRouteValues(HttpContext, ...)</c> so the
@@ -66,6 +71,13 @@ public static class HttpContextPageUrlExtensions
     /// otherwise the resolver falls through to the target's single declared version or to
     /// <c>DefaultApiVersion</c>. This prevents emitting a URL the target would reject when the
     /// client follows it.
+    /// <para>
+    /// Unversioned-host behaviour: when the target endpoint has no <see cref="ApiVersionMetadata"/>
+    /// — the host never called <c>AddApiVersioning()</c>, or the endpoint sits outside its
+    /// surface — the helper skips <c>api-version</c> injection silently and emits a clean URL.
+    /// This lets <c>PageUrl</c> compose in unversioned hosts and in mixed-versioned hosts where
+    /// individual paginated endpoints are not part of the versioning surface.
+    /// </para>
     /// </remarks>
     public static Func<Cursor, int, string> PageUrl(
         this HttpContext httpContext,
@@ -156,6 +168,13 @@ public static class HttpContextPageUrlExtensions
     /// The explicit version is still silently suppressed on version-neutral endpoints — emitting
     /// a query <c>api-version</c> on a neutral endpoint would mislead clients into resending the
     /// URL with a parameter the target rejects.
+    /// <para>
+    /// Unversioned-host behaviour: when the target endpoint has no <see cref="ApiVersionMetadata"/>
+    /// — the host never called <c>AddApiVersioning()</c>, or the endpoint sits outside its
+    /// surface — the pin is silently suppressed and a clean URL is emitted (the pinned version
+    /// has no target declaration set to validate against, and emitting it as a query parameter
+    /// would be a stale URL artefact). This lets <c>PageUrl</c> compose in unversioned hosts.
+    /// </para>
     /// </remarks>
     public static Func<Cursor, int, string> PageUrl(
         this HttpContext httpContext,
@@ -205,23 +224,26 @@ public static class HttpContextPageUrlExtensions
 
             var values = new RouteValueDictionary(consumerValues);
 
-            // Skip injection silently for version-neutral targets (same precedent as
-            // WithVersionedRoute(ApiVersion)): neutral endpoints reject api-version parameters
-            // entirely, so emitting one would mislead clients. The pin is honoured for everything
-            // else — query/header versioning, no metadata at all, etc.
+            // Skip injection silently when ShouldSkipInjection reports a skip case:
+            //   - Version-neutral targets (the same precedent as WithVersionedRoute(ApiVersion))
+            //     reject api-version parameters entirely; emitting one would mislead clients.
+            //   - Targets with no ApiVersionMetadata — the host did not call AddApiVersioning()
+            //     or this endpoint sits outside its surface. There is no declared-version set
+            //     to validate against, and emitting an api-version parameter would be a stale
+            //     URL artefact (the middleware, if installed at all, would never act on it).
+            //     Lets PageUrl compose cleanly in unversioned and mixed-versioned hosts.
+            // The URL-segment case is rejected earlier with a loud exception — segment routes
+            // need a different overload, not silent suppression.
             if (!values.ContainsKey(HttpResponseOptionsBuilderApiVersioningExtensions.DefaultRouteValueKey)
                 && !HttpResponseOptionsBuilderApiVersioningExtensions.ShouldSkipInjection(targetEndpoint))
             {
-                // Validate the pinned version is declared by the target endpoint before injection.
-                // The per-request overload performs this same check via ResolveApiVersion's
-                // TargetDeclaresVersion; without it here, a caller could pin v2 on a v1-only
-                // target and emit a URL the target rejects (e.g., 400 from the versioning
-                // middleware) when the client follows it. Skip when the target has no
-                // ApiVersionMetadata — there are no declared versions to validate against and
-                // the API-versioning middleware will simply ignore the query parameter.
-                var targetMetadata = targetEndpoint.Metadata.GetMetadata<ApiVersionMetadata>();
-                if (targetMetadata is not null
-                    && !HttpResponseOptionsBuilderApiVersioningExtensions.TargetDeclaresVersion(targetMetadata, version))
+                // Past the skip check the metadata is guaranteed non-null (ShouldSkipInjection
+                // returns true for the null case). Validate the pinned version is declared so
+                // the helper never emits a URL the target rejects (e.g. 400 from the versioning
+                // middleware) when the client follows it.
+                var targetMetadata = targetEndpoint.Metadata.GetMetadata<ApiVersionMetadata>()!;
+
+                if (!HttpResponseOptionsBuilderApiVersioningExtensions.TargetDeclaresVersion(targetMetadata, version))
                 {
                     throw new InvalidOperationException(
                         $"PageUrl: api-version='{pinnedValue}' is not declared by the target endpoint " +

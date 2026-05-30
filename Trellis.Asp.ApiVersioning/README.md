@@ -3,7 +3,7 @@
 API-versioning helpers for [Trellis.Asp](../Trellis.Asp/README.md). Auto-inject the `api-version` route value into builder-generated URLs so responses round-trip the requested version under query/header API versioning, without authors having to remember the parameter or hard-code the version literal.
 
 - **`HttpResponseOptionsBuilder<T>.WithVersionedRoute(...)`** — chains after `CreatedAtRoute(...)` / `CreatedAtAction(...)` (201 Created) or `WithLocation(...)` (200 OK on existing resources) to version the `Location` header.
-- **`HttpContext.PageUrl(routeName, ...)`** — returns a `Func<Cursor, int, string>` for the `nextUrlBuilder` parameter of `ToHttpResponse(Async)` on `Result<Page<T>>`, so paginated `next` URLs carry the version, honor URL-segment ambient route values, and skip injection on neutral endpoints — no manual URL encoding.
+- **`HttpContext.PageUrl(routeName, ...)`** — returns a `Func<Cursor, int, string>` for the `nextUrlBuilder` parameter of `ToHttpResponse(Async)` on `Result<Page<T>>`, so paginated `next` URLs carry the version, honor URL-segment ambient route values, and skip injection on neutral, URL-segment-versioned, and unversioned-host endpoints — no manual URL encoding.
 
 ## Why this package exists
 
@@ -23,6 +23,7 @@ The resolver short-circuits to a no-op (no `api-version` route value injected) w
 
 - The endpoint is decorated with `[ApiVersionNeutral]`.
 - The endpoint participates in URL-segment versioning (route template contains `:apiVersion`).
+- The endpoint has no `ApiVersionMetadata` attached — the host did not call `services.AddApiVersioning(...)`, or this endpoint sits outside its versioning surface. Lets the helpers compose cleanly in unversioned and mixed-versioned hosts by silently dropping injection rather than emitting a stale URL artefact.
 
 ## Usage
 
@@ -52,7 +53,7 @@ public class OrdersController : ControllerBase
 
 The resulting `Location` header is `/api/orders/42?api-version=2026-12-01` (or whatever version the client requested).
 
-To pin a specific version regardless of what the client requested (cross-version `Location` redirects on deprecated endpoints), use the explicit overload: `.WithVersionedRoute(new ApiVersion(new DateOnly(2026, 12, 1)))`. The neutral and URL-segment skip rules still apply: an explicit pin is never injected into a Location targeting a `[ApiVersionNeutral]` endpoint or a `v{version:apiVersion}` template.
+To pin a specific version regardless of what the client requested (cross-version `Location` redirects on deprecated endpoints), use the explicit overload: `.WithVersionedRoute(new ApiVersion(new DateOnly(2026, 12, 1)))`. The neutral, URL-segment, and missing-metadata skip rules still apply: an explicit pin is never injected into a Location targeting a `[ApiVersionNeutral]` endpoint, a `v{version:apiVersion}` template, or an endpoint with no `ApiVersionMetadata` (unversioned hosts where `AddApiVersioning(...)` was never called).
 
 ### Paginated lists — `HttpContext.PageUrl`
 
@@ -79,7 +80,7 @@ public async Task<IResult> GetOverdue(
 }
 ```
 
-The emitted `next` URL is `/api/orders/overdue?cursor=<token>&limit=20&api-version=2026-12-01` for query/header versioning, `/api/v2026-12-01/orders/overdue?cursor=<token>&limit=20` for URL-segment versioning (no duplicate query parameter), and `/api/orders/overdue?cursor=<token>&limit=20` (no version) for `[ApiVersionNeutral]` controllers. The cursor token is URL-encoded automatically. `PathBase` is preserved for hosts mounted under a virtual directory.
+The emitted `next` URL is `/api/orders/overdue?cursor=<token>&limit=20&api-version=2026-12-01` for query/header versioning, `/api/v2026-12-01/orders/overdue?cursor=<token>&limit=20` for URL-segment versioning (no duplicate query parameter), and `/api/orders/overdue?cursor=<token>&limit=20` (no version) for `[ApiVersionNeutral]` controllers as well as for endpoints with no `ApiVersionMetadata` (unversioned hosts where `AddApiVersioning(...)` was never called). The cursor token is URL-encoded automatically. `PathBase` is preserved for hosts mounted under a virtual directory.
 
 The target action must carry `Name = "..."` on the `[HttpGet(...)]` attribute — the helper resolves the endpoint by route name via `EndpointDataSource`. An explicit-version overload mirrors `WithVersionedRoute(ApiVersion)` for cross-version next-page URLs.
 
