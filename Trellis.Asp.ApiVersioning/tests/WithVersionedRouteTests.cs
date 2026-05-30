@@ -100,6 +100,41 @@ public sealed class WithVersionedRouteTests
         return builder.Start();
     }
 
+    private static IHost CreateUnversionedHost()
+    {
+        // No services.AddApiVersioning(...) call. The UnversionedCustomerController carries no
+        // [ApiVersion] attribute, so the registered endpoint will have no ApiVersionMetadata —
+        // the canonical "host doesn't use API versioning" shape. Scoped to a single controller
+        // because other test controllers (SegmentVersionController) carry the `:apiVersion`
+        // route constraint, which is only registered when AddApiVersioning() runs.
+        var builder = Host.CreateDefaultBuilder()
+            .ConfigureWebHostDefaults(web => web
+                .UseTestServer()
+                .ConfigureServices(s =>
+                {
+                    s.AddTrellisAsp();
+                    s.AddControllers()
+                        .ConfigureApplicationPartManager(apm =>
+                        {
+                            apm.FeatureProviders.Clear();
+                            apm.FeatureProviders.Add(new SingleControllerFeatureProvider(typeof(UnversionedCustomerController)));
+                        });
+                })
+                .Configure(app =>
+                {
+                    app.UseRouting();
+                    app.UseEndpoints(e => e.MapControllers());
+                }));
+        return builder.Start();
+    }
+
+    private sealed class SingleControllerFeatureProvider : Microsoft.AspNetCore.Mvc.Controllers.ControllerFeatureProvider
+    {
+        private readonly System.Collections.Generic.HashSet<Type> _allowed;
+        public SingleControllerFeatureProvider(params Type[] allowed) => _allowed = [.. allowed];
+        protected override bool IsController(System.Reflection.TypeInfo typeInfo) => _allowed.Contains(typeInfo.AsType());
+    }
+
     [Fact]
     public async Task Single_declared_version_with_client_request_echoes_version_in_Location()
     {
@@ -253,6 +288,46 @@ public sealed class WithVersionedRouteTests
         resp.Headers.Location.OriginalString.Should().NotContain("?api-version=");
         resp.Headers.Location.OriginalString.Should().NotContain("&api-version=");
         resp.Headers.Location.OriginalString.Should().NotContain($"={ApiVersionV2}");
+    }
+
+    [Fact]
+    public async Task PerRequest_WithVersionedRoute_without_AddApiVersioning_omits_api_version_from_Location()
+    {
+        // The host never calls services.AddApiVersioning(...) and the controller carries no
+        // [ApiVersion] attribute, so the endpoint has no ApiVersionMetadata at all. The
+        // per-request WithVersionedRoute() resolver must NOT throw the multi-version
+        // unresolvable error (whose advice — configure DefaultApiVersion or use the explicit
+        // overload — does not apply when versioning is not in use) and must NOT echo the
+        // default-constructed ApiVersioningOptions.DefaultApiVersion (which IOptions returns
+        // even without AddApiVersioning, value 1.0). It must emit a clean Location header
+        // with no api-version query parameter.
+        using var host = CreateUnversionedHost();
+        using var client = host.GetTestClient();
+
+        var resp = await client.PostAsync("/unversioned/customers", JsonContent("{}"), TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.Created);
+        resp.Headers.Location!.OriginalString.Should().Contain("/unversioned/customers/");
+        resp.Headers.Location.OriginalString.Should().NotContain("api-version");
+    }
+
+    [Fact]
+    public async Task Explicit_WithVersionedRoute_without_AddApiVersioning_skips_pin_silently()
+    {
+        // Same unversioned-host setup as above, but the controller chains
+        // WithVersionedRoute(ApiVersion) — the EXPLICIT overload. With no ApiVersionMetadata
+        // on the target the pinned version has no declared-version set to validate against
+        // and emitting it as a query parameter on the Location would be a stale URL artefact
+        // (no API-versioning middleware is installed to consume it). The pin must be silently
+        // suppressed — same precedent as [ApiVersionNeutral] — and a clean Location emitted.
+        using var host = CreateUnversionedHost();
+        using var client = host.GetTestClient();
+
+        var resp = await client.PostAsync("/unversioned/customers/pinned", JsonContent("{}"), TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.Created);
+        resp.Headers.Location!.OriginalString.Should().Contain("/unversioned/customers/");
+        resp.Headers.Location.OriginalString.Should().NotContain("api-version");
     }
 
     [Fact]
@@ -435,6 +510,41 @@ public sealed class SegmentVersionController : ControllerBase
             .ToHttpResponse(opts => opts
                 .CreatedAtRoute(
                     "Segments_GetById",
+                    c => new RouteValueDictionary { ["id"] = c.Id })
+                .WithVersionedRoute(new ApiVersion(new DateOnly(2026, 12, 1))))
+            .AsActionResult<CreatedCustomer>();
+}
+
+[ApiController]
+[Route("unversioned/customers")]
+[System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822", Justification = "Test fixture controllers don't need to be static.")]
+public sealed class UnversionedCustomerController : ControllerBase
+{
+    // No [ApiVersion] attribute and no AddApiVersioning() on the host → the registered
+    // endpoint has no ApiVersionMetadata at all. Exercises the unversioned-host path
+    // shared by ResolveApiVersion (per-request WithVersionedRoute()) and the explicit
+    // WithVersionedRoute(ApiVersion) overload — both of which must skip api-version
+    // injection silently in this configuration.
+
+    [HttpGet("{id:int}", Name = "Unversioned_Customers_GetById")]
+    public IActionResult Get(int id) => Ok(new { id });
+
+    [HttpPost]
+    public ActionResult<CreatedCustomer> Post() =>
+        Result.Ok(new CreatedCustomer(101))
+            .ToHttpResponse(opts => opts
+                .CreatedAtRoute(
+                    "Unversioned_Customers_GetById",
+                    c => new RouteValueDictionary { ["id"] = c.Id })
+                .WithVersionedRoute())
+            .AsActionResult<CreatedCustomer>();
+
+    [HttpPost("pinned")]
+    public ActionResult<CreatedCustomer> PostPinned() =>
+        Result.Ok(new CreatedCustomer(101))
+            .ToHttpResponse(opts => opts
+                .CreatedAtRoute(
+                    "Unversioned_Customers_GetById",
                     c => new RouteValueDictionary { ["id"] = c.Id })
                 .WithVersionedRoute(new ApiVersion(new DateOnly(2026, 12, 1))))
             .AsActionResult<CreatedCustomer>();

@@ -34,6 +34,7 @@ public sealed class TrellisServiceBuilder
     private Action<IServiceCollection>? _cachingActorProviderWrap;
     private Action<IServiceCollection>? _unitOfWorkRegistration;
     private bool _useAsp;
+    private bool _useProblemDetails;
     private bool _useMediator;
     private bool _useFluentValidation;
     private bool _useResourceAuthorization;
@@ -58,6 +59,29 @@ public sealed class TrellisServiceBuilder
         if (configure is not null)
             _configureAsp = Combine(_configureAsp, configure);
 
+        return this;
+    }
+
+    /// <summary>
+    /// Registers Trellis ProblemDetails customization (traceId on every error, 405 Allow
+    /// header projected as <c>extensions.allow</c>, 500 detail rewrite).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Independent of <see cref="UseAsp(Action{TrellisAspOptions}?)"/>: ProblemDetails
+    /// customization layers on top of ASP.NET Core's <c>IProblemDetailsService</c> and does
+    /// not pull in Trellis MVC/result-mapping infrastructure.
+    /// </para>
+    /// <para>
+    /// Idempotent across direct + builder composition: calling
+    /// <c>services.AddTrellisProblemDetails()</c> directly and also opting in via
+    /// <c>options.UseProblemDetails()</c> registers exactly one Trellis post-configure
+    /// layer, so <c>traceId</c> / <c>allow</c> extensions are not duplicated.
+    /// </para>
+    /// </remarks>
+    public TrellisServiceBuilder UseProblemDetails()
+    {
+        _useProblemDetails = true;
         return this;
     }
 
@@ -216,6 +240,9 @@ public sealed class TrellisServiceBuilder
             else
                 _services.AddTrellisAsp(_configureAsp);
         }
+
+        if (_useProblemDetails)
+            _services.AddTrellisProblemDetails();
 
         _actorProviderRegistration?.Invoke(_services);
         _cachingActorProviderWrap?.Invoke(_services);

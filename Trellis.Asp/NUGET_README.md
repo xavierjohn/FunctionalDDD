@@ -1,4 +1,4 @@
-# Trellis.Asp
+﻿# Trellis.Asp
 
 [![NuGet Package](https://img.shields.io/nuget/v/Trellis.Asp.svg)](https://www.nuget.org/packages/Trellis.Asp)
 
@@ -25,6 +25,7 @@ app.MapGet("/widgets/{id}", (string id) =>
 - Validate Trellis scalar values during model binding and JSON deserialization.
 - Support controller and minimal API styles, including AOT-friendly setups.
 - Emit [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) Problem Details with `instance` populated from the request path so clients can correlate failures with the originating request.
+- Ship the canonical ProblemDetails recipe via `AddTrellisProblemDetails()` + `UseTrellisProblemDetails()` (trace id from `Activity.Current`, friendly 500 detail, `allow` array on 405). Composes with any consumer `CustomizeProblemDetails` callback so the application keeps the last word on collisions.
 
 ## Documentation
 - [Full documentation](https://xavierjohn.github.io/Trellis/articles/integration-aspnet.html)

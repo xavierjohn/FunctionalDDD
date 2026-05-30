@@ -240,7 +240,35 @@ Resolution order: `WithErrorMapping(Func<Error,int>)` → `WithErrorMapping<TErr
 
 Failures are emitted as `application/problem+json`. `Error.InvalidInput` with field violations uses `Results.ValidationProblem(...)`; everything else uses `Results.Problem(...)`. Companion headers are synthesized automatically from the error payload: `Allow` for `HttpError.MethodNotAllowed`, `Content-Range` for `HttpError.RangeNotSatisfiable`, `Retry-After` from `RetryAdvice` on `Error.RateLimited` / `Error.Unavailable`, and `WWW-Authenticate` from `Error.AuthenticationRequired.Scheme` or the registered `IAuthenticationSchemeProvider` fallback.
 
-`Error.Aggregate` renders as one outer Problem Details object with the worst child status and an RFC 9457 `errors[]` extension containing one child object per inner error (`type`, `status`, `code`, `kind`, `detail`). `Error.TransportFault` projects the wrapped `HttpError` payload into `extensions` and uses the inner `code` / `kind`, not the outer `transport-fault` envelope. Every response also carries `instance`; `5xx` responses replace the public detail with `"An internal error occurred."`.
+### Wiring the canonical Trellis enrichment
+
+`Trellis.Asp` ships an opinionated ProblemDetails pipeline that adds a `traceId` extension (from `Activity.Current?.Id` falling back to `HttpContext.TraceIdentifier`), rewrites the 500 `detail` to a support-friendly message that does not leak exception internals, and projects the `Allow` header into a structured `extensions["allow"]` array on 405 responses. Wire it once at startup:
+
+```csharp
+builder.Services.AddTrellisProblemDetails();
+
+var app = builder.Build();
+app.UseTrellisProblemDetails();
+```
+
+`AddTrellisProblemDetails()` is idempotent and composes with `services.AddProblemDetails()` — register either or both in any order. Consumers override individual defaults by setting `ProblemDetailsOptions.CustomizeProblemDetails` either before or after `AddTrellisProblemDetails()`; Trellis defaults run first, the consumer's customization runs last. `UseTrellisProblemDetails()` wires the standard `UseExceptionHandler` + `UseStatusCodePages` pipeline so ASP.NET short-circuits (404 / 405 / 415) surface as ProblemDetails bodies.
+
+Hosts that compose Trellis via `Trellis.ServiceDefaults` get the same wiring through the builder slot:
+
+```csharp
+builder.Services.AddTrellis(t => t.UseProblemDetails());
+```
+
+`UseProblemDetails()` defers to `AddTrellisProblemDetails()` internally, so the same defaults and override hooks apply.
+
+### Wire shape
+
+`Error.Aggregate` renders as one outer Problem Details object with the worst child status and an RFC 9457 `errors[]` extension containing one child object per inner error (`type`, `status`, `code`, `kind`, `detail`). `Error.TransportFault` projects the wrapped `HttpError` payload into `extensions` and uses the inner `code` / `kind`, not the outer `transport-fault` envelope. Every response also carries `instance`.
+
+The two ProblemDetails-producing paths use different 5xx detail messages:
+
+- **Trellis-`Result<T>`-converted failures** (wire shapes shown below) — `ResponseFailureWriter` replaces the public `detail` on every `5xx` response with `"An internal error occurred."`.
+- **ASP.NET Core's ProblemDetails pipeline** (uncaught exceptions surfaced via `UseExceptionHandler`, status-code short-circuits via `UseStatusCodePages`) — when `AddTrellisProblemDetails()` is wired (see recipe above), the 500 `detail` is rewritten to `"An error occurred in our API. Please share the trace id with our support team."` so clients can quote the trace id back to support without leaking exception internals.
 
 `Error.InvalidInput` is routed to `Results.ValidationProblem(...)`:
 

@@ -1,5 +1,6 @@
 ﻿namespace Trellis.Asp;
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
@@ -545,5 +546,122 @@ public static class ServiceCollectionExtensions
         // Idempotent: configures both MVC and Minimal API JSON pipelines for ScalarValue/Maybe support.
         services.AddScalarValueValidation();
         return services;
+    }
+
+    /// <summary>
+    /// Registers the canonical Trellis ProblemDetails enrichment so unhandled exceptions and
+    /// ASP.NET status-code short-circuits (404 / 405 / 415 / 5xx) become RFC 9457 ProblemDetails
+    /// responses with a trace id, a support-friendly 500 detail message, and a structured
+    /// <c>allow</c> array on 405.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The service collection for chaining.</returns>
+    /// <remarks>
+    /// <para>
+    /// Pair with <see cref="ApplicationBuilderExtensions.UseTrellisProblemDetails(IApplicationBuilder)"/>
+    /// in the request pipeline. Without the matching <c>Use*</c> call, ASP.NET routing short-circuits
+    /// (404 / 405 / 415) reach the client as bare status responses with no body.
+    /// </para>
+    /// <para>
+    /// <b>Composition.</b> This method ensures <see cref="IProblemDetailsService"/> is registered
+    /// (idempotent, safe to call alongside or in lieu of <c>services.AddProblemDetails()</c>).
+    /// It then registers a <see cref="IPostConfigureOptions{TOptions}"/> for
+    /// <see cref="ProblemDetailsOptions"/> that wraps any consumer-supplied
+    /// <see cref="ProblemDetailsOptions.CustomizeProblemDetails"/> delegate. <b>Trellis defaults
+    /// run first; the consumer's customization runs last</b>, so consumers can override Trellis
+    /// behavior (e.g. tweak the trace-id format, replace the 500 detail message) by setting
+    /// <c>CustomizeProblemDetails</c> via <c>services.AddProblemDetails(o => o.CustomizeProblemDetails = ...)</c>
+    /// either before or after the call to <c>AddTrellisProblemDetails</c>.
+    /// </para>
+    /// <para>
+    /// <b>Idempotence.</b> Repeated calls are no-ops past the first; Trellis defaults are
+    /// applied exactly once per pipeline invocation regardless of how many times this method
+    /// runs.
+    /// </para>
+    /// <para>
+    /// <b>What gets enriched.</b>
+    /// <list type="bullet">
+    /// <item><c>Extensions["traceId"]</c> from <c>Activity.Current?.Id</c>, falling back to
+    /// <c>HttpContext.TraceIdentifier</c>.</item>
+    /// <item><see cref="ProblemDetails.Detail"/> on 500 responses is replaced with
+    /// <c>"An error occurred in our API. Please share the trace id with our support team."</c>
+    /// to avoid leaking raw exception detail.</item>
+    /// <item><c>Extensions["allow"]</c> on 405 responses contains the methods listed in the
+    /// outgoing <c>Allow</c> header (per RFC 9110 §15.5.6) as a structured string array.</item>
+    /// </list>
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// builder.Services.AddTrellisProblemDetails();
+    ///
+    /// var app = builder.Build();
+    /// app.UseTrellisProblemDetails();
+    /// </code>
+    /// </example>
+    public static IServiceCollection AddTrellisProblemDetails(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        services.AddProblemDetails();
+
+        // Idempotent: register the PostConfigure wrapper exactly once even if
+        // AddTrellisProblemDetails is called multiple times (e.g. from both a
+        // shared library and the application composition root).
+        if (services.Any(d => d.ServiceType == typeof(TrellisProblemDetailsMarker)))
+            return services;
+        services.AddSingleton<TrellisProblemDetailsMarker>();
+
+        // PostConfigure runs AFTER all Configure callbacks for ProblemDetailsOptions.
+        // We capture whatever CustomizeProblemDetails the consumer set (via any prior or
+        // posterior AddProblemDetails(...) call — last Configure wins on that single
+        // delegate property) and wrap it so Trellis defaults run FIRST, then the
+        // consumer's customization runs LAST. Consumers can therefore override any
+        // Trellis default by setting their own CustomizeProblemDetails.
+        services.PostConfigure<ProblemDetailsOptions>(options =>
+        {
+            var consumer = options.CustomizeProblemDetails;
+            options.CustomizeProblemDetails = ctx =>
+            {
+                ApplyTrellisProblemDetailsDefaults(ctx);
+                consumer?.Invoke(ctx);
+            };
+        });
+
+        return services;
+    }
+
+    private sealed class TrellisProblemDetailsMarker
+    {
+    }
+
+    private static void ApplyTrellisProblemDetailsDefaults(ProblemDetailsContext ctx)
+    {
+        // Surface the active trace id so clients can correlate the failure with
+        // server-side spans / log entries. Falls back to the connection-level
+        // identifier when no diagnostic Activity is current.
+        ctx.ProblemDetails.Extensions["traceId"] =
+            Activity.Current?.Id ?? ctx.HttpContext.TraceIdentifier;
+
+        // Replace the raw exception detail on 500 with a support-friendly message
+        // so internal information (stack-frame paths, message text) does not leak
+        // to the client. Application-specific messaging can override this by
+        // setting CustomizeProblemDetails after AddTrellisProblemDetails.
+        if (ctx.ProblemDetails.Status == StatusCodes.Status500InternalServerError)
+        {
+            ctx.ProblemDetails.Detail =
+                "An error occurred in our API. Please share the trace id with our support team.";
+        }
+
+        // RFC 9110 §15.5.6: 405 responses list permitted methods in the Allow header.
+        // Echo that into the body as a structured array for clients that ignore the
+        // representation header. Tolerates both "GET,HEAD" and "GET, HEAD" forms.
+        if (ctx.ProblemDetails.Status == StatusCodes.Status405MethodNotAllowed &&
+            ctx.HttpContext.Response.Headers.TryGetValue("Allow", out var allow))
+        {
+            ctx.ProblemDetails.Extensions["allow"] = allow
+                .ToString()
+                .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        }
     }
 }

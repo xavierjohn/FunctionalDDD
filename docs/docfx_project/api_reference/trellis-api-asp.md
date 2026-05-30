@@ -1,7 +1,7 @@
 ﻿---
 package: Trellis.Asp
 namespaces: [Trellis.Asp, Trellis.Asp.Authorization, Trellis.Asp.ModelBinding, Trellis.Asp.Routing, Trellis.Asp.Validation]
-types: [TrellisHttpResult, ToHttpResponse, AsActionResult, HttpResponseOptionsBuilder<T>, CacheControl, MaybePrimitiveJsonConverter<T>, MaybePrimitiveJsonConverterFactory, MaybePrimitiveModelBinder<T>, MaybePrimitives, ClaimsActorProvider, EntraActorProvider, DevelopmentActorProvider, CachingActorProvider]
+types: [TrellisHttpResult, ToHttpResponse, AsActionResult, HttpResponseOptionsBuilder<T>, CacheControl, MaybePrimitiveJsonConverter<T>, MaybePrimitiveJsonConverterFactory, MaybePrimitiveModelBinder<T>, MaybePrimitives, ClaimsActorProvider, EntraActorProvider, DevelopmentActorProvider, CachingActorProvider, AddTrellisProblemDetails, UseTrellisProblemDetails]
 version: v3
 last_verified: 2026-05-01
 audience: [llm]
@@ -40,6 +40,7 @@ See also: [trellis-api-cookbook.md](trellis-api-cookbook.md) — recipes using t
 | Return paginated list responses | `Result<Page<T>>.ToHttpResponse(nextUrlBuilder, bodySelector, ...)` | [`PagedResponse<TResponse>`](#pagedresponsetresponse) |
 | Resolve actors from requests | `AddClaimsActorProvider`, `AddEntraActorProvider`, or `AddDevelopmentActorProvider` | [`Trellis.Asp.Authorization`](#namespace-trellisaspauthorization) |
 | Bind scalar value objects from routes/query/body | `AddTrellisAsp()` plus route constraints / validation middleware as needed | [`Trellis.Asp.ModelBinding`](#namespace-trellisaspmodelbinding), [`Trellis.Asp.Validation`](#namespace-trellisaspvalidation) |
+| Add Trellis ProblemDetails recipe (trace id from `Activity.Current`, friendly 500 detail, `allow` extension on 405) | `services.AddTrellisProblemDetails()` plus `app.UseTrellisProblemDetails()` (or `options.UseProblemDetails()` via [`Trellis.ServiceDefaults`](trellis-api-servicedefaults.md#trellisservicebuilder)) | [`ServiceCollectionExtensions`](#servicecollectionextensions), [`ApplicationBuilderExtensions`](#applicationbuilderextensions) |
 
 ## Endpoint checklist for generated APIs
 
@@ -351,6 +352,21 @@ The main DI surface for `Trellis.Asp` (in folder `Extensions/`).
 | `public static RouteHandlerBuilder WithScalarValueValidation(this RouteHandlerBuilder builder)` | `RouteHandlerBuilder` | Adds `ScalarValueValidationEndpointFilter` to the route handler. |
 | `public static IServiceCollection AddTrellisAsp(this IServiceCollection services)` | `IServiceCollection` | Registers `TrellisAspOptions` with default error mappings, then calls `AddScalarValueValidation()`. |
 | `public static IServiceCollection AddTrellisAsp(this IServiceCollection services, Action<TrellisAspOptions> configure)` | `IServiceCollection` | Same as above, with a `MapError<TError>(...)` callback for overrides. **Calls compose** — when `AddTrellisAsp(o => ...)` is invoked more than once (e.g. by a library and the application), every `configure` delegate runs in registration order against the same `TrellisAspOptions` instance built lazily by `OptionsFactory<TrellisAspOptions>`. Same-`TError` mappings still follow last-wins, but mappings for different error types from earlier calls are preserved. |
+| `public static IServiceCollection AddTrellisProblemDetails(this IServiceCollection services)` | `IServiceCollection` | Registers `IProblemDetailsService` (via `AddProblemDetails`) and applies the Trellis recipe: trace id projected from `Activity.Current?.Id ?? HttpContext.TraceIdentifier`, friendly detail rewrite for `500` responses, and `allow` extension array on `405` projected from the `Allow` header (split on `,` with whitespace trimmed). Composes with consumer customizations: Trellis defaults run first, then any prior or subsequent `AddProblemDetails(o => o.CustomizeProblemDetails = ...)` callback runs last and wins on collisions. Idempotent — additional calls are no-ops. Pair with `app.UseTrellisProblemDetails()` in the request pipeline. Composition-root consumers can opt in via the `options.UseProblemDetails()` slot on [`TrellisServiceBuilder`](trellis-api-servicedefaults.md#trellisservicebuilder); direct + builder composition is idempotent (one Trellis post-configure layer). |
+
+### `ApplicationBuilderExtensions`
+
+**Declaration**
+
+```csharp
+public static class ApplicationBuilderExtensions
+```
+
+The middleware pipeline surface for `Trellis.Asp` (in folder `Extensions/`).
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `public static IApplicationBuilder UseTrellisProblemDetails(this IApplicationBuilder app)` | `IApplicationBuilder` | Wires the canonical ProblemDetails request pipeline: `UseExceptionHandler()` then `UseStatusCodePages()`. Must be registered **early** in the pipeline — `UseStatusCodePages` only rewrites status-code responses produced by middleware registered after it (routing, authorization, endpoint execution). Pair with `services.AddTrellisProblemDetails()` so the rewritten responses pick up Trellis defaults (trace id, friendly 500 detail, 405 `allow` array). |
 
 ### Namespace `Trellis.Asp.Authorization`
 

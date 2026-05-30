@@ -15,6 +15,7 @@ using Trellis.ServiceDefaults;
 
 builder.Services.AddTrellis(options => options
     .UseAsp()
+    .UseProblemDetails()
     .UseMediator()
     .UseFluentValidation(typeof(Program).Assembly)
     .UseClaimsActorProvider()
@@ -26,8 +27,10 @@ builder.Services.AddTrellis(options => options
 
 `UseFluentValidation()` and `UseResourceAuthorization()` both support no-assembly calls for explicit, no-scanning composition; pass assemblies only when you want Trellis to discover validators/resource loaders automatically.
 
+`UseProblemDetails()` is independent of `UseAsp()` — it registers Trellis ProblemDetails customization (`traceId` on every error, 405 `Allow` header projected as `extensions.allow`, 500 detail rewrite) without pulling in Trellis MVC/result-mapping infrastructure. Composing it with a direct `services.AddTrellisProblemDetails()` call is idempotent — exactly one Trellis post-configure layer ends up registered.
+
 ## Key Features
-- One composition root for the typical Trellis web service: `AddTrellis(...)` chains every framework slot (`UseAsp`, `UseMediator`, `UseFluentValidation`, an actor provider, `UseResourceAuthorization`, `UseEntityFrameworkUnitOfWork`) so consumers don't have to remember per-package wiring order.
+- One composition root for the typical Trellis web service: `AddTrellis(...)` chains every framework slot (`UseAsp`, `UseProblemDetails`, `UseMediator`, `UseFluentValidation`, an actor provider, `UseResourceAuthorization`, `UseEntityFrameworkUnitOfWork`) so consumers don't have to remember per-package wiring order.
 - Mediator pipeline order is owned by `Trellis.Mediator` (outermost → innermost: `ExceptionBehavior`, `TracingBehavior`, `LoggingBehavior`, `AuthorizationBehavior`, `ResourceAuthorizationBehavior` (opt-in), `ValidationBehavior`, `TransactionalCommandBehavior` (opt-in)). `Trellis.ServiceDefaults` preserves that order across its helpers: `UseEntityFrameworkUnitOfWork<TContext>()` is always applied last so the transactional commit runs innermost; domain events also register before UoW when enabled.
 - Actor-provider selectors (`UseClaimsActorProvider`, `UseEntraActorProvider`, `UseDevelopmentActorProvider`, `UseCachingActorProvider<T>`) replace the `IActorProvider` slot atomically — calling more than one leaves exactly one provider registered (last call wins) per the `Trellis.Asp.Authorization` contract.
 
