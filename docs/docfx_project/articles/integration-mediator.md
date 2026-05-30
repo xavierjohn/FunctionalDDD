@@ -24,6 +24,7 @@ audience: [developer]
 | Show `Error.Detail` in logs/traces (dev only) | `AddTrellisBehaviors(o => o.IncludeErrorDetail = true)` | [Telemetry redaction](#telemetry-redaction) |
 | Convert thrown exceptions to typed failures | `ExceptionBehavior` (always-on) | [Exception safety net](#exception-safety-net) |
 | Dispatch domain events that aggregates raised during a command | `services.AddDomainEventDispatch()` + `IDomainEventHandler<TEvent>` | [Domain event dispatch](#domain-event-dispatch) |
+| Manually dispatch an aggregate's events from a non-aggregate handler or `BackgroundService` | `IDomainEventPublisher.DispatchAggregateEventsAsync(aggregate, ct)` | [Dispatching events from non-aggregate response shapes](#dispatching-events-from-non-aggregate-response-shapes-post-commit-safe) |
 | Use a custom envelope response type around an aggregate | `TResponse : IResult<TAggregate>, IFailureFactory<TResponse>` | [Custom envelope response types](#custom-envelope-response-types) |
 | Persist a `permanently_failed` row alongside a failure outcome (worker pattern) | `Result.FailAfterCommit<T>(error)` | [Persisting failure state from a worker handler](#persisting-failure-state-from-a-worker-handler) |
 
@@ -52,6 +53,7 @@ audience: [developer]
 | `AddDomainEventHandler<TEvent, THandler>()` | DI extension | AOT/trim-friendly per-handler registration (also wires up the dispatch behavior + publisher). |
 | `IDomainEventHandler<TEvent>` | Interface | Side-effect handler invoked once per matching event after the command commits. |
 | `IDomainEventPublisher` | Interface | Resolves `IDomainEventHandler<TEvent>` instances and fans events out; default impl is `MediatorDomainEventPublisher` (DI-resolved, scoped). |
+| `DomainEventPublisherExtensions.DispatchAggregateEventsAsync(this IDomainEventPublisher, IAggregate, CancellationToken)` | Extension method | Post-commit-only helper that mirrors `DomainEventDispatchBehavior<,>`'s wave loop for handlers that do not return `Result<TAggregate>`. |
 
 Full signatures: [`trellis-api-mediator.md`](../api_reference/trellis-api-mediator.md).
 
@@ -496,6 +498,101 @@ Other response shapes pass through the dispatch behavior untouched:
 | Custom type with **two** distinct `IResult<TAggregate1>` / `IResult<TAggregate2>` interfaces | **Fails fast at startup** with `InvalidOperationException` — the behavior cannot disambiguate which aggregate's events to dispatch. |
 
 When the response is `Result<Unit>` or any non-aggregate shape and you still need events to fire, dispatch them yourself (e.g. through an injected `IDomainEventPublisher`) — but prefer the canonical `Result<TAggregate>` shape so the pipeline owns the boundary.
+
+### Dispatching events from non-aggregate response shapes (post-commit safe)
+
+For the manual case the cleanest entry point is `IDomainEventPublisher.DispatchAggregateEventsAsync(aggregate)` — an extension method on the publisher that mirrors `DomainEventDispatchBehavior<,>`'s wave loop (same `MaxDispatchWaves` cap, same cancellation contract, same final `AcceptChanges()` on full drain) so you do not have to re-implement either the loop or its edge cases.
+
+> [!WARNING]
+> **POST-COMMIT ONLY.** The helper publishes events immediately. If you call it inside a handler whose commit is run by `TransactionalCommandBehavior` (i.e., the handler is chained behind `AddTrellisUnitOfWork<TContext>()`), the events fire *before* the database transaction commits — and if the commit then fails, the handlers have already observed state that was rolled back. `AcceptChanges()` has cleared the events off the aggregate, so the failure is non-replayable.
+
+**Wrong shape — helper called inside a transactional handler:**
+
+```csharp
+// AddTrellisUnitOfWork<AppDbContext>() is wired; TransactionalCommandBehavior owns the commit.
+public async ValueTask<Result<MarkReadDto>> Handle(
+    MarkInboxReadCommand cmd,
+    CancellationToken cancellationToken)
+{
+    var inbox = await _db.Inboxes.FirstAsync(i => i.Id == cmd.Id, cancellationToken).ConfigureAwait(false);
+    inbox.MarkRead(_clock.UtcNow); // raises InboxRead event
+
+    // ⚠️ Events fire NOW, before TransactionalCommandBehavior commits. If the commit fails after
+    // this handler returns, handlers have already seen InboxRead — and AcceptChanges() has erased
+    // it from the aggregate so nothing on the next retry will re-raise it.
+    await _publisher.DispatchAggregateEventsAsync(inbox, cancellationToken).ConfigureAwait(false);
+
+    return Result.Ok(new MarkReadDto(inbox.Id, inbox.ReadAt!.Value));
+}
+```
+
+**Right shape 1 — handler owns its commit, helper runs after it succeeds:**
+
+```csharp
+// No AddTrellisUnitOfWork<>() chain. The handler is responsible for saving and dispatching.
+public async ValueTask<Result<MarkReadDto>> Handle(
+    MarkInboxReadCommand cmd,
+    CancellationToken cancellationToken)
+{
+    var inbox = await _db.Inboxes.FirstAsync(i => i.Id == cmd.Id, cancellationToken).ConfigureAwait(false);
+    inbox.MarkRead(_clock.UtcNow);
+
+    await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+    // Commit is durable. Safe to publish. If a handler throws, AcceptChanges() will NOT have run
+    // and the helper rethrows — the caller decides whether to re-dispatch (handlers must be
+    // idempotent because some may already have fired before the failing one).
+    await _publisher.DispatchAggregateEventsAsync(inbox, cancellationToken).ConfigureAwait(false);
+
+    return Result.Ok(new MarkReadDto(inbox.Id, inbox.ReadAt!.Value));
+}
+```
+
+**Right shape 2 — `BackgroundService` tick after `SaveChangesAsync`:**
+
+```csharp
+public sealed class InboxCleanupWorker(
+    IServiceScopeFactory scopes,
+    TimeProvider clock,
+    ILogger<InboxCleanupWorker> log) : BackgroundService
+{
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            await using var scope = scopes.CreateAsyncScope();
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var publisher = scope.ServiceProvider.GetRequiredService<IDomainEventPublisher>();
+
+            var stale = await db.Inboxes
+                .Where(i => i.ReadAt == null && i.CreatedAt < clock.GetUtcNow().AddDays(-30))
+                .ToListAsync(stoppingToken)
+                .ConfigureAwait(false);
+
+            foreach (var inbox in stale)
+                inbox.Discard(clock.GetUtcNow()); // raises InboxDiscarded
+
+            await db.SaveChangesAsync(stoppingToken).ConfigureAwait(false);
+
+            // Commit is durable; now drain each aggregate's events.
+            foreach (var inbox in stale)
+                await publisher.DispatchAggregateEventsAsync(inbox, stoppingToken).ConfigureAwait(false);
+
+            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken).ConfigureAwait(false);
+        }
+    }
+}
+```
+
+Failure / cancellation contract:
+
+- On `OperationCanceledException`, `AcceptChanges()` is **not** called, so undispatched events remain on the aggregate. Events that already fired stay fired — handlers must be idempotent on retry.
+- On `InvalidOperationException` (more than `MaxDispatchWaves` waves), `AcceptChanges()` is **not** called and the still-undispatched events stay on the aggregate so the caller can inspect them. Domain event handlers must not raise new events on the same aggregate they were given; if you have a cascade requirement, model it with a separate command.
+- On an exception thrown by an event handler, behavior follows the publisher's contract. The default `MediatorDomainEventPublisher` **logs and swallows** non-cancellation handler exceptions (same as `DomainEventDispatchBehavior<,>`), so the helper continues dispatching the remaining events and reaches `AcceptChanges()` on the success path. If you supply a custom `IDomainEventPublisher` that propagates handler exceptions, the helper rethrows and `AcceptChanges()` is not called. Use idempotent handlers and an outbox for durable downstream retries; the helper is not a retry buffer.
+- Re-entrant calls on the same aggregate are **not supported**. Do not call `DispatchAggregateEventsAsync` from inside an `IDomainEventHandler<TEvent>` that is currently draining the same aggregate: the in-flight event's index has not yet advanced and `AcceptChanges()` has not yet run, so the nested call republishes it (and each nested call also starts with its own wave counter, so the cap does not stop runaway recursion). Treat domain event handlers as side-effect-only and let exactly one outer call own the drain.
+
+> [!NOTE]
+> An opt-in pipeline behavior — `TrackedAggregateDomainEventDispatchBehavior` — is planned ([#537](https://github.com/xavierjohn/Trellis/issues/537)) for the common case where you want post-commit dispatch against an aggregate the handler tracks via the EF change tracker (instead of returning it through `Result<TAggregate>`). Until then, the manual helper is the supported path.
 
 ### Persisting failure state from a worker handler
 
