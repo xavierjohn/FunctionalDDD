@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — retry classification
+
+- **`Trellis.Core`** — transport-neutral retry classification over the closed `Error` catalog: `RetryClassification` enum (`Transient`, `Permanent`, `FailFast`) and the static `ErrorRetryExtensions` class with `error.Classify()`, `error.IsTransient()`, `error.IsPermanent()`, `error.IsFailFast()`, and `error.GetRetryAdvice()`. `Classify` is exhaustive over all 12 `Error` cases. `Error.Aggregate` uses max-severity semantics over its inners; `GetRetryAdvice` returns `null` for `Error.Aggregate` by design. `Error.TransportFault` defaults to `Permanent` because every transport-specific payload shipped today (`HttpError.MethodNotAllowed`, `NotAcceptable`, `PreconditionFailed`, `ContentTooLarge`, `UnsupportedMediaType`, `RangeNotSatisfiable`, `PreconditionRequired`) is a caller-side error; retryable transient transport outcomes (HTTP 429, HTTP 503) are mapped at the boundary to `Error.RateLimited` / `Error.Unavailable` and never reach `Error.TransportFault`. Replaces hand-rolled `gatewayResult.Error is Error.Unavailable or Error.RateLimited` switches in worker loops, message consumers, and outbound-gateway clients.
+
 ### Added — pagination ergonomics
 
 - **`Trellis.Core`** — first-class cursor pagination primitives shared by every storage adapter and transport: `PageSize` (with `FromRequested` lenient parser and `TryCreate` strict parser), `Cursor` (opaque `readonly record struct`), `CursorCodec` (URL-safe base64 encode / `TryDecode<TKey>` returning `Result<TKey>` with `Error.InvalidInput.ForField(..., "cursor.malformed", ...)` on bad input), `Page<T>` (`Items`, `Next`, `Previous`, `RequestedLimit`, `AppliedLimit`, `WasCapped`, `DeliveredCount`), `Page<T>.Map<TOut>` (preserves cursors and limits across DTO projection), and `PageBuilder.FromOverFetch` (storage-agnostic over-fetch slicer for single-key and composite `(CreatedAt, Id)` seek). All AOT-friendly — no JSON, no reflection, no `Expression.Compile`.

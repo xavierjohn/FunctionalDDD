@@ -553,9 +553,9 @@ HTTP-specific status codes, headers, and problem-details `type` tokens are not t
 
 | Error case | Classification |
 | --- | --- |
-| `Error.Unavailable`, `Error.RateLimited`, `Error.Unexpected`, `Error.TransportFault` | `Transient` |
+| `Error.Unavailable`, `Error.RateLimited`, `Error.Unexpected` | `Transient` |
 | `Error.AuthenticationRequired` | `FailFast` |
-| `Error.Forbidden`, `Error.InvalidInput`, `Error.InvariantViolation`, `Error.NotFound`, `Error.Gone`, `Error.Conflict` | `Permanent` |
+| `Error.Forbidden`, `Error.InvalidInput`, `Error.InvariantViolation`, `Error.NotFound`, `Error.Gone`, `Error.Conflict`, `Error.TransportFault` | `Permanent` |
 
 `Error.Aggregate` is classified by max-severity over its inner errors (the constructor flattens nested aggregates, so the inners are never themselves `Aggregate`): `FailFast` if any inner classifies as `FailFast`; otherwise `Permanent` if any inner classifies as `Permanent`; otherwise `Transient`. The rule answers "should I retry the operation that produced this aggregate **as an indivisible unit?**" — a mixed `Aggregate(Permanent, Transient)` is `Permanent` because retrying the unit will not change the permanent inner's outcome. Callers that want per-inner retry granularity must iterate over `agg.Errors` themselves.
 
@@ -564,6 +564,8 @@ HTTP-specific status codes, headers, and problem-details `type` tokens are not t
 **Conflict and eventually-consistent reads.** `Error.Conflict` defaults to `Permanent` because a generic outer retry loop cannot perform the conflict-specific work (rowversion reload, natural-key regeneration) that 409-shaped failures usually require. Domains with a meaningful conflict retry strategy should override locally — branch on the concrete shape first and only call `Classify()` in the fallback arm — or use a dedicated primitive such as `DbContext.SaveChangesWithRetryAsync` (see [trellis-api-efcore.md](trellis-api-efcore.md)). `Error.NotFound` and `Error.Gone` default to `Permanent`; services whose reads are eventually consistent should override the mapping locally rather than expect the framework default to infer their consistency model.
 
 **Why `Error.Unexpected` is `Transient`.** `Error.Unexpected` wraps unhandled exceptions and "this should not have happened" conditions. A retry can hide a deterministic bug or recover a momentary failure; the default favours availability. Producers should reserve `Error.Unexpected` for unknown internal faults and surface deterministic failures as `Error.InvariantViolation`, `Error.InvalidInput`, or `Error.Conflict` instead. Consumers must still cap retries.
+
+**Why `Error.TransportFault` is `Permanent`.** `ITransportFault` is opaque from `Trellis.Core`'s perspective; concrete payloads (such as `HttpError` in `Trellis.Http.Abstractions`) are defined by transport-specific packages. The retryable transient outcomes those transports produce (HTTP 429, HTTP 503, gRPC `UNAVAILABLE`) are mapped at the boundary to `Error.RateLimited` and `Error.Unavailable` — which carry `RetryAdvice` — and never reach `Error.TransportFault`. Every `HttpError` case shipped today (405, 406, 412, 413, 415, 416, 428) is a caller-side error that will not succeed by waiting and retrying. Transport packages that surface their own retryable transient faults via `Error.TransportFault` should provide a transport-aware classification extension that overrides this default for the specific faults that are genuinely retryable.
 
 #### Supporting types
 

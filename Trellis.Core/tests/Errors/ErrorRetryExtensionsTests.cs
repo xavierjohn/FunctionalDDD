@@ -29,7 +29,7 @@ public class ErrorRetryExtensionsTests
         { new Error.Unavailable(), RetryClassification.Transient },
         { new Error.RateLimited(), RetryClassification.Transient },
         { new Error.Unexpected("unhandled_exception"), RetryClassification.Transient },
-        { new Error.TransportFault(new SampleTransportFault("http-timeout")), RetryClassification.Transient },
+        { new Error.TransportFault(new SampleTransportFault("http-timeout")), RetryClassification.Permanent },
         { new Error.AuthenticationRequired(), RetryClassification.FailFast },
         { new Error.Forbidden("policy.deny"), RetryClassification.Permanent },
         { Error.InvalidInput.ForField("name", "required"), RetryClassification.Permanent },

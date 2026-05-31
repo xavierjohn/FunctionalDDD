@@ -55,7 +55,7 @@ public static class ErrorRetryExtensions
     /// <item><term><see cref="Error.Unavailable"/></term><description><see cref="RetryClassification.Transient"/></description></item>
     /// <item><term><see cref="Error.RateLimited"/></term><description><see cref="RetryClassification.Transient"/></description></item>
     /// <item><term><see cref="Error.Unexpected"/></term><description><see cref="RetryClassification.Transient"/> — see below</description></item>
-    /// <item><term><see cref="Error.TransportFault"/></term><description><see cref="RetryClassification.Transient"/></description></item>
+    /// <item><term><see cref="Error.TransportFault"/></term><description><see cref="RetryClassification.Permanent"/> — see below</description></item>
     /// <item><term><see cref="Error.AuthenticationRequired"/></term><description><see cref="RetryClassification.FailFast"/></description></item>
     /// <item><term><see cref="Error.Forbidden"/></term><description><see cref="RetryClassification.Permanent"/></description></item>
     /// <item><term><see cref="Error.InvalidInput"/></term><description><see cref="RetryClassification.Permanent"/></description></item>
@@ -75,6 +75,20 @@ public static class ErrorRetryExtensions
     /// internal faults and surface deterministic failures as
     /// <see cref="Error.InvariantViolation"/>, <see cref="Error.InvalidInput"/>, or
     /// <see cref="Error.Conflict"/> instead. Consumers must still cap retries.
+    /// </para>
+    /// <para>
+    /// <b>Why <see cref="Error.TransportFault"/> is <see cref="RetryClassification.Permanent"/>.</b>
+    /// <see cref="ITransportFault"/> is opaque from <c>Trellis.Core</c>'s perspective; the
+    /// concrete payload is defined by transport-specific packages (for example
+    /// <c>HttpError</c> in <c>Trellis.Http.Abstractions</c>). The retryable transient
+    /// outcomes those transports produce (HTTP 429, HTTP 503, gRPC <c>UNAVAILABLE</c>) are
+    /// mapped at the boundary to <see cref="Error.RateLimited"/> and
+    /// <see cref="Error.Unavailable"/> — which carry <see cref="RetryAdvice"/> — and never
+    /// reach <see cref="Error.TransportFault"/>. Every <c>HttpError</c> case shipped today
+    /// (405, 406, 412, 413, 415, 416, 428) is a caller-side error that will not succeed by
+    /// waiting and retrying. Transport packages that surface their own retryable transient
+    /// faults via <see cref="Error.TransportFault"/> should provide a transport-aware
+    /// classification extension that overrides this default for those specific faults.
     /// </para>
     /// <para>
     /// <b>Why <see cref="Error.Conflict"/> is <see cref="RetryClassification.Permanent"/>.</b>
@@ -102,7 +116,7 @@ public static class ErrorRetryExtensions
             Error.Unavailable => RetryClassification.Transient,
             Error.RateLimited => RetryClassification.Transient,
             Error.Unexpected => RetryClassification.Transient,
-            Error.TransportFault => RetryClassification.Transient,
+            Error.TransportFault => RetryClassification.Permanent,
             Error.AuthenticationRequired => RetryClassification.FailFast,
             Error.Forbidden => RetryClassification.Permanent,
             Error.InvalidInput => RetryClassification.Permanent,

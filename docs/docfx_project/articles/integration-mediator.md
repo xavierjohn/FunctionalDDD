@@ -686,7 +686,7 @@ public async ValueTask<Result<Reminder>> Handle(
     }
 
     // Transient → ordinary failure: nothing persists, retry will re-enter the handler.
-    if (gatewayResult.Error is Error.Unavailable or Error.RateLimited)
+    if (gatewayResult.Error.IsTransient())
         return Result.Fail<Reminder>(gatewayResult.Error);
 
     // Permanent failure → mark the row and persist that decision alongside the failure outcome.
@@ -696,6 +696,8 @@ public async ValueTask<Result<Reminder>> Handle(
     return Result.FailAfterCommit<Reminder>(gatewayResult.Error);
 }
 ```
+
+`Error.IsTransient()` (and the sibling `IsPermanent()` / `IsFailFast()` / `Classify()` helpers in `Trellis.Core.ErrorRetryExtensions`) is the canonical worker-side retry classifier. It covers `Error.Unavailable` and `Error.RateLimited` as transient, but also folds in `Error.Unexpected` (so an unanticipated exception in a downstream gateway doesn't permanently park the message) and `Error.Aggregate` with max-severity semantics. The hand-written `is Error.Unavailable or Error.RateLimited` switch is incomplete on both axes and should not be repeated.
 
 Pipeline behavior at this point:
 
