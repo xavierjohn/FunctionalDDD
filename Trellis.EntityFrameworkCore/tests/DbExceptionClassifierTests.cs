@@ -343,11 +343,19 @@ public class DbExceptionClassifierTests
 
     /// <summary>
     /// Fake exception named "PostgresException" so GetType().Name returns "PostgresException".
-    /// Has a SqlState property for PostgreSQL error code detection.
+    /// Has a SqlState property for PostgreSQL error code detection, plus ConstraintName /
+    /// TableName / SchemaName properties matching the real Npgsql shape so the constraint-identity
+    /// extractor can pick them up via reflection.
     /// </summary>
     private class PostgresException : Exception
     {
         public string SqlState { get; } = string.Empty;
+
+        public string? ConstraintName { get; set; }
+
+        public string? TableName { get; set; }
+
+        public string? SchemaName { get; set; }
 
         public PostgresException() { }
         public PostgresException(string message) : base(message) { }
@@ -460,6 +468,273 @@ public class DbExceptionClassifierTests
         var ex = CreateDbUpdateException(inner);
 
         DbExceptionClassifier.IsForeignKeyViolation(ex).Should().BeTrue();
+    }
+
+    #endregion
+
+    #region ExtractConstraintIdentity — typed extraction (PostgreSQL)
+
+    [Fact]
+    public void ExtractConstraintIdentity_Postgres_ReturnsTypedConstraintAndTable()
+    {
+        // Arrange — Npgsql exposes ConstraintName and TableName as typed string properties.
+        var inner = new PostgresException("23505", "duplicate key value violates unique constraint \"uq_probes_url\"")
+        {
+            ConstraintName = "uq_probes_url",
+            TableName = "probes",
+            SchemaName = "public",
+        };
+        var ex = CreateDbUpdateException(inner);
+
+        var (name, table) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
+
+        name.Should().Be("uq_probes_url");
+        // Schema-qualified when the provider surfaces SchemaName.
+        table.Should().Be("public.probes");
+    }
+
+    [Fact]
+    public void ExtractConstraintIdentity_PostgresWithoutSchema_ReturnsBareTable()
+    {
+        var inner = new PostgresException("23505", "duplicate key value violates unique constraint")
+        {
+            ConstraintName = "uq_probes_url",
+            TableName = "probes",
+            SchemaName = null,
+        };
+        var ex = CreateDbUpdateException(inner);
+
+        var (name, table) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
+
+        name.Should().Be("uq_probes_url");
+        table.Should().Be("probes");
+    }
+
+    [Fact]
+    public void ExtractConstraintIdentity_PostgresNoConstraintExposed_ReturnsNullPair()
+    {
+        var inner = new PostgresException("23505", "duplicate key value");
+        var ex = CreateDbUpdateException(inner);
+
+        var (name, table) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
+
+        name.Should().BeNull();
+        table.Should().BeNull();
+    }
+
+    #endregion
+
+    #region ExtractConstraintIdentity — SQL Server message parsing
+
+    [Fact]
+    public void ExtractConstraintIdentity_SqlServer2627_ParsesViolationOfConstraintForm()
+    {
+        // 2627 form: "Violation of UNIQUE KEY constraint 'IX_Probes_Url'. Cannot insert
+        //            duplicate key in object 'dbo.Probes'. The duplicate key value is (...)."
+        var inner = new SqlException(
+            2627,
+            "Violation of UNIQUE KEY constraint 'IX_Probes_Url'. Cannot insert duplicate key in object 'dbo.Probes'. The duplicate key value is (https://example.com).");
+        var ex = CreateDbUpdateException(inner);
+
+        var (name, table) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
+
+        name.Should().Be("IX_Probes_Url");
+        table.Should().Be("dbo.Probes");
+    }
+
+    [Fact]
+    public void ExtractConstraintIdentity_SqlServer2601_ParsesUniqueIndexForm()
+    {
+        // 2601 form: "Cannot insert duplicate key row in object 'dbo.Probes' with unique
+        //            index 'IX_Probes_Url'. The duplicate key value is (...)."
+        var inner = new SqlException(
+            2601,
+            "Cannot insert duplicate key row in object 'dbo.Probes' with unique index 'IX_Probes_Url'. The duplicate key value is (https://example.com).");
+        var ex = CreateDbUpdateException(inner);
+
+        var (name, table) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
+
+        name.Should().Be("IX_Probes_Url");
+        table.Should().Be("dbo.Probes");
+    }
+
+    [Fact]
+    public void ExtractConstraintIdentity_SqlServerPrimaryKeyViolation_ParsesConstraintAndTable()
+    {
+        var inner = new SqlException(
+            2627,
+            "Violation of PRIMARY KEY constraint 'PK_Probes'. Cannot insert duplicate key in object 'dbo.Probes'. The duplicate key value is (1).");
+        var ex = CreateDbUpdateException(inner);
+
+        var (name, table) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
+
+        name.Should().Be("PK_Probes");
+        table.Should().Be("dbo.Probes");
+    }
+
+    [Fact]
+    public void ExtractConstraintIdentity_SqlServerForeignKeyViolation_ParsesConstraintAndTable()
+    {
+        var inner = new SqlException(
+            547,
+            "The INSERT statement conflicted with the FOREIGN KEY constraint \"FK_Orders_Customers\". The conflict occurred in database \"AppDb\", table \"dbo.Customers\", column 'Id'.");
+        var ex = CreateDbUpdateException(inner);
+
+        var (name, table) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
+
+        name.Should().Be("FK_Orders_Customers");
+        table.Should().Be("dbo.Customers");
+    }
+
+    [Fact]
+    public void ExtractConstraintIdentity_SqlServerReferenceConstraint_ParsesConstraintAndTable()
+    {
+        // Parent-side delete/update emits "REFERENCE constraint" instead of "FOREIGN KEY
+        // constraint" — same 547 code, different wording.
+        var inner = new SqlException(
+            547,
+            "The DELETE statement conflicted with the REFERENCE constraint \"FK_Orders_Customers\". The conflict occurred in database \"AppDb\", table \"dbo.Orders\", column 'CustomerId'.");
+        var ex = CreateDbUpdateException(inner);
+
+        var (name, table) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
+
+        name.Should().Be("FK_Orders_Customers");
+        table.Should().Be("dbo.Orders");
+    }
+
+    [Fact]
+    public void ExtractConstraintIdentity_SqlServerUnparseableMessage_ReturnsNullPair()
+    {
+        var inner = new SqlException(2627, "Some completely different message");
+        var ex = CreateDbUpdateException(inner);
+
+        var (name, table) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
+
+        name.Should().BeNull();
+        table.Should().BeNull();
+    }
+
+    #endregion
+
+    #region ExtractConstraintIdentity — SQLite message parsing
+
+    [Fact]
+    public void ExtractConstraintIdentity_SqliteSingleColumnUnique_ParsesTableFromFirstQualifiedColumn()
+    {
+        // SQLite has no constraint name in the message; only "Table.Column".
+        var inner = new InvalidOperationException("SQLite Error 19: 'UNIQUE constraint failed: Probes.Url'.");
+        var ex = CreateDbUpdateException(inner, "SqliteException");
+
+        var (name, table) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
+
+        name.Should().BeNull();
+        table.Should().Be("Probes");
+    }
+
+    [Fact]
+    public void ExtractConstraintIdentity_SqliteCompositeUnique_ParsesTableFromFirstQualifiedColumn()
+    {
+        // Composite unique: "UNIQUE constraint failed: WebhookDeliveries.EventId, WebhookDeliveries.DestinationId"
+        var inner = new InvalidOperationException(
+            "SQLite Error 19: 'UNIQUE constraint failed: WebhookDeliveries.EventId, WebhookDeliveries.DestinationId'.");
+        var ex = CreateDbUpdateException(inner, "SqliteException");
+
+        var (name, table) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
+
+        name.Should().BeNull();
+        table.Should().Be("WebhookDeliveries");
+    }
+
+    [Fact]
+    public void ExtractConstraintIdentity_SqlitePrimaryKeyConstraint_ParsesTable()
+    {
+        var inner = new InvalidOperationException("SQLite Error 19: 'PRIMARY KEY constraint failed: Probes.Id'.");
+        var ex = CreateDbUpdateException(inner, "SqliteException");
+
+        var (name, table) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
+
+        name.Should().BeNull();
+        table.Should().Be("Probes");
+    }
+
+    [Fact]
+    public void ExtractConstraintIdentity_SqliteForeignKeyConstraint_ReturnsNullPair()
+    {
+        // FK form has no table info ("FOREIGN KEY constraint failed") — refuse to guess.
+        var inner = new InvalidOperationException("SQLite Error 19: 'FOREIGN KEY constraint failed'.");
+        var ex = CreateDbUpdateException(inner, "SqliteException");
+
+        var (name, table) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
+
+        name.Should().BeNull();
+        table.Should().BeNull();
+    }
+
+    #endregion
+
+    #region ExtractConstraintIdentity — MySQL message parsing
+
+    [Fact]
+    public void ExtractConstraintIdentity_MySqlNewKeyForm_ParsesTableAndConstraint()
+    {
+        // MySQL 8 / MariaDB 10.6+ form: "Duplicate entry '...' for key '<table>.<key>'".
+        var inner = new MySqlException(1062, "23000",
+            "Duplicate entry 'https://example.com' for key 'probes.IX_Probes_Url'");
+        var ex = CreateDbUpdateException(inner);
+
+        var (name, table) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
+
+        name.Should().Be("IX_Probes_Url");
+        table.Should().Be("probes");
+    }
+
+    [Fact]
+    public void ExtractConstraintIdentity_MySqlOldKeyForm_ParsesConstraintOnly()
+    {
+        // Older MySQL form: "Duplicate entry '...' for key '<key>'" — no table prefix.
+        var inner = new MySqlException(1062, "23000",
+            "Duplicate entry 'https://example.com' for key 'IX_Probes_Url'");
+        var ex = CreateDbUpdateException(inner);
+
+        var (name, table) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
+
+        name.Should().Be("IX_Probes_Url");
+        table.Should().BeNull();
+    }
+
+    #endregion
+
+    #region ExtractConstraintIdentity — defensive paths
+
+    [Fact]
+    public void ExtractConstraintIdentity_NoInnerException_ReturnsNullPair()
+    {
+        var ex = CreateDbUpdateException(innerException: null);
+
+        var (name, table) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
+
+        name.Should().BeNull();
+        table.Should().BeNull();
+    }
+
+    [Fact]
+    public void ExtractConstraintIdentity_UnknownProvider_ReturnsNullPair()
+    {
+        var inner = new InvalidOperationException("Some weird database error");
+        var ex = CreateDbUpdateException(inner);
+
+        var (name, table) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
+
+        name.Should().BeNull();
+        table.Should().BeNull();
+    }
+
+    [Fact]
+    public void ExtractConstraintIdentity_ThrowsNullArgumentException_WhenExIsNull()
+    {
+        var act = () => DbExceptionClassifier.ExtractConstraintIdentity(null!);
+
+        act.Should().Throw<ArgumentNullException>();
     }
 
     #endregion

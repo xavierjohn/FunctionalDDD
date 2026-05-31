@@ -3,7 +3,7 @@ title: Entity Framework Core Integration
 package: Trellis.EntityFrameworkCore
 topics: [efcore, repository, unit-of-work, savechanges, owned-entity, maybe, etag, conventions]
 related_api_reference: [trellis-api-efcore.md, trellis-api-core.md]
-last_verified: 2026-05-01
+last_verified: 2026-05-31
 audience: [developer]
 ---
 # Entity Framework Core Integration
@@ -23,6 +23,7 @@ audience: [developer]
 | Filter / order an `IQueryable<T>` by a `Maybe<TInner>` property | `WhereHasValue` / `WhereEquals` / `OrderByMaybe` (and friends) | [Querying Maybe properties](#querying-maybe-properties) |
 | Save and surface DB failures as `Error` (no UoW) | `db.SaveChangesResultAsync(ct)` / `db.SaveChangesResultUnitAsync(ct)` | [Saving](#saving) |
 | Retry an INSERT after a system-generated unique-key collision | `db.SaveChangesWithRetryAsync(shouldRetry, regenerate)` | [Retrying on system-generated unique-key collisions](#retrying-on-system-generated-unique-key-collisions) |
+| Insert a row idempotently on a unique constraint (worker outboxes, "save unless exists" deduplication, redelivered events) | `db.TryInsertUniqueAsync(entity, ct)` | [Idempotent inserts on a unique constraint](#idempotent-inserts-on-a-unique-constraint) |
 | Stage aggregate changes; let the pipeline commit | `RepositoryBase<TAggregate, TId>` + `AddTrellisUnitOfWork<TContext>()` | [Repositories and unit of work](#repositories-and-unit-of-work) |
 | Commit staged changes outside the pipeline | `IUnitOfWork.CommitAsync(ct)` | [Repositories and unit of work](#repositories-and-unit-of-work) |
 | Update a `Maybe<T>` scalar via `ExecuteUpdate` | `SetMaybeValue(...)` / `SetMaybeNone(...)` | [Bulk updates over Maybe](#bulk-updates-over-maybe) |
@@ -50,13 +51,14 @@ audience: [developer]
 | `MaybeQueryableExtensions.WhereHasValue` / `WhereNone` / `WhereEquals` / `WhereLessThan` / `WhereLessThanOrEqual` / `WhereGreaterThan` / `WhereGreaterThanOrEqual` / `OrderByMaybe` / `OrderByMaybeDescending` / `ThenByMaybe` / `ThenByMaybeDescending` | Query | Translate `Maybe<TInner>` predicates and ordering to the mapped storage member. |
 | `MaybeUpdateExtensions.SetMaybeValue<T>` / `SetMaybeNone<T>` | Bulk update | `ExecuteUpdate` setters for scalar `Maybe<T>` properties. |
 | `MaybeEntityTypeBuilderExtensions.HasTrellisIndex<T>` | Model builder | Indexes a `Maybe<T>` property by resolving to its storage member (avoids TRLS016). |
-| `DbContextExtensions.SaveChangesResultAsync(...)` | Save | `Task<Result<int>>`. Maps `DbUpdateConcurrencyException` / duplicate-key / FK violations to `Error.Conflict`. |
+| `DbContextExtensions.SaveChangesResultAsync(...)` | Save | `Task<Result<int>>`. Maps `DbUpdateConcurrencyException` / duplicate-key / FK violations to `Error.Conflict` (`duplicate.key` / `referential.integrity` carry `ConstraintName` / `ConstraintTableName` telemetry from `DbExceptionClassifier.ExtractConstraintIdentity`). |
 | `DbContextExtensions.SaveChangesResultUnitAsync(...)` | Save | `Task<Result<Unit>>` overload when row count is not needed. |
+| `DbContextIdempotencyExtensions.TryInsertUniqueAsync<TEntity>(entity, ct)` | Save | `Task<Result<TEntity>>`. Adds `entity`, persists, and converts a unique-constraint violation into an `Error.Conflict` with reason code `"duplicate.key"` carrying `ConstraintName` / `ConstraintTableName`. FK / concurrency / cancellation / connection exceptions propagate. Requires a clean change tracker on entry. |
 | `RepositoryBase<TAggregate, TId>` | Aggregate repo base | `FindByIdAsync` (Maybe), `QueryAsync(spec)`, `ExistsAsync`, `CountAsync`, `Add`, `Remove`, `RemoveByIdAsync` (`Task<Result<Unit>>`). Staging only — never calls `SaveChanges`. |
 | `IUnitOfWork.CommitAsync(ct)` | Commit boundary | `Task<Result<Unit>>`. Implemented by `EfUnitOfWork<TContext>`. Scope-aware via `BeginScope()`: only the outermost scope's commit persists. |
 | `TransactionalCommandBehavior<TMessage, TResponse>` | Pipeline behavior | Auto-commits after a successful `ICommand<TResponse>` handler; only fires for commands. Wraps each command in `using var scope = unitOfWork.BeginScope();` so a nested command (dispatched via `IMediator` from another handler) defers its commit until the outermost handler returns. |
 | `UnitOfWorkServiceCollectionExtensions.AddTrellisUnitOfWork<TContext>()` / `AddTrellisUnitOfWorkWithoutBehavior<TContext>()` | DI | Registers `EfUnitOfWork<TContext>` (scoped) and inserts the commit behavior innermost. |
-| `DbExceptionClassifier.IsDuplicateKey` / `IsForeignKeyViolation` / `ExtractConstraintDetail` | Diagnostics | Cross-provider DB exception classification used by the save helpers. Recognizes SQL Server, PostgreSQL, SQLite, and MySQL/MariaDB (works with both `MySql.Data.MySqlClient` and `MySqlConnector`); provider exception types are detected by name so consumers don't take a transitive driver dependency. |
+| `DbExceptionClassifier.IsDuplicateKey` / `IsForeignKeyViolation` / `ExtractConstraintDetail` / `ExtractConstraintIdentity` | Diagnostics | Cross-provider DB exception classification used by the save helpers. Recognizes SQL Server, PostgreSQL, SQLite, and MySQL/MariaDB (works with both `MySql.Data.MySqlClient` and `MySqlConnector`); provider exception types are detected by name so consumers don't take a transitive driver dependency. `ExtractConstraintIdentity(ex)` returns `(ConstraintName, TableName)` for structured logs and is the primitive `SaveChangesResultAsync` / `SaveChangesWithRetryAsync` / `TryInsertUniqueAsync` use to populate the new `Error.Conflict` telemetry fields. |
 | `MaybeModelExtensions.GetMaybePropertyMappings()` / `ToMaybeMappingDebugString()` | Diagnostics | Inspect resolved `Maybe<T>` storage members. |
 | `TrellisPersistenceMappingException` | Exception | Thrown when a persisted scalar value object value fails materialization. |
 
@@ -340,6 +342,50 @@ Footguns the API enforces or surfaces:
 - **Callback exception semantics.** A `shouldRetry` exception propagates with no detach having occurred. A `regenerate` exception propagates with the conflicting entries already detached.
 - **Explicit transactions vary by provider.** SQLite accepts further commands on the same transaction after a unique-key violation; SQL Server may abort the transaction depending on the error and isolation level. If your handler runs inside an open transaction, test against the target provider before relying on retry — many callers will prefer to retry **outside** the transaction scope and accept the round-trip cost.
 - **Unrecognised `DbUpdateException` shapes are rethrown.** When `shouldRetry` returns false, the method maps duplicate → `"duplicate.key"`, FK → `"referential.integrity"`, and **rethrows** anything else (connection failures wrapped in `DbUpdateException`, trigger failures, provider-specific violations). This matches `SaveChangesResultAsync` semantics. The `"duplicate.key"` / `"referential.integrity"` reason codes are only returned when `shouldRetry` declines a recognised non-retryable failure; the helper's own exhaust/abort paths use `"retry.exhausted"` / `"retry.aborted"` so a broader `shouldRetry` classifier does not surface a misleading `duplicate.key` code.
+
+### Idempotent inserts on a unique constraint
+
+`TryInsertUniqueAsync` is for the other common shape: **INSERT a row that may already exist because the underlying operation can be replayed** — a worker recording "I dispatched event X to destination Y", an idempotency-key row keyed by `(EventId, Destination)`, an outbox de-duplicator, a "save unless exists" cache write. The success path returns the row; the duplicate path returns a `Result.Fail<TEntity>(Error.Conflict)` instead of an exception so the caller can treat the second delivery as a successful no-op. This is complementary to `SaveChangesWithRetryAsync`, not a substitute — use `SaveChangesWithRetryAsync` when the retry shape is "regenerate the colliding key", and `TryInsertUniqueAsync` when the retry shape is "second writer accepts the first writer won".
+
+```csharp
+using Microsoft.EntityFrameworkCore;
+using Trellis;
+using Trellis.EntityFrameworkCore;
+
+public sealed class DispatchLogger(DispatchLogDbContext db, TimeProvider time)
+{
+    public async Task<Result<DeliveryOutcome>> RecordAsync(
+        Guid eventId, Guid destinationId, CancellationToken ct)
+    {
+        var entry = new DispatchedDelivery
+        {
+            EventId = eventId,
+            DestinationId = destinationId,
+            DispatchedAt = time.GetUtcNow(),
+        };
+
+        var result = await db.TryInsertUniqueAsync(entry, ct);
+
+        if (result.IsSuccess)
+            return Result.Ok(DeliveryOutcome.Recorded);
+
+        if (result.Error is Error.Conflict { ReasonCode: "duplicate.key" })
+            return Result.Ok(DeliveryOutcome.AlreadyRecorded);
+
+        return Result.Fail<DeliveryOutcome>(result.Error!);
+    }
+}
+
+public enum DeliveryOutcome { Recorded, AlreadyRecorded }
+```
+
+Footguns the API enforces or surfaces:
+
+- **The helper requires a clean change tracker.** `TryInsertUniqueAsync` throws `InvalidOperationException` when `context.ChangeTracker.HasChanges()` is `true` on entry, because the helper cannot otherwise tell whether the duplicate-key violation came from the entity it added or from a sibling pending change. Flush unrelated changes first, or use a freshly-resolved scoped `DbContext` instance.
+- **Detach scope is the graph the call attached.** `context.Add(entity)` walks navigations and may attach owned and dependent entities as `Added`. On the duplicate path, the helper detaches every entry it newly attached (root plus owned / dependent / join entries) so a retry with a freshly-constructed entity does not re-flush stale dependents. If `context.Add` flipped an already-tracked entity from another state to `Added` (e.g., the caller passed an instance the context loaded earlier), the helper restores it to its prior state instead of detaching it, so the caller does not lose tracking of a row it did not stage for removal.
+- **Only duplicate-key violations are caught.** Foreign-key violations, `DbUpdateConcurrencyException`, connection failures wrapped in `DbUpdateException`, and `OperationCanceledException` all propagate so retry policies and global handlers still see them. When `OperationCanceledException` is raised from `SaveChangesAsync` (mid-save cancellation), the helper still performs the same change-tracker cleanup it performs on the duplicate-key path before rethrowing, so the cancelled call leaves the change tracker exactly as the caller saw it on entry and a retry on the same DI-scoped context is not blocked by `HasChanges() == true`.
+- **The duplicate `Error.Conflict` carries constraint identity.** `ConstraintName` and `ConstraintTableName` are populated from `DbExceptionClassifier.ExtractConstraintIdentity` on a best-effort basis. They are marked `[JsonIgnore]` — telemetry for structured logs, never serialized to API responses. The safe-for-clients message stays in `Detail` (`"A record with the same unique value already exists."`).
+- **Cancellation is checked before mutating the change tracker.** A pre-cancelled token throws `OperationCanceledException` after argument validation, before `context.Add`, so the change tracker is not mutated when the caller has already cancelled.
 
 ## Repositories and unit of work
 

@@ -75,16 +75,28 @@ public static class DbContextExtensions
         catch (DbUpdateException ex) when (DbExceptionClassifier.IsDuplicateKey(ex))
         {
             // Use a safe generic message for Error.Detail — it flows to API responses.
-            // For logging, use DbExceptionClassifier.ExtractConstraintDetail(ex) which may contain schema details.
-            _ = ex; // available for caller logging via ExceptionBehavior or repository catch blocks
-            return Result.Fail<int>(new Error.Conflict(Resource: null, ReasonCode: "duplicate.key") { Detail = "A record with the same unique value already exists." });
+            // ConstraintName / ConstraintTableName are [JsonIgnore]'d telemetry fields,
+            // populated on a best-effort basis for structured logging.
+            var (constraintName, constraintTable) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
+            return Result.Fail<int>(new Error.Conflict(Resource: null, ReasonCode: "duplicate.key")
+            {
+                Detail = "A record with the same unique value already exists.",
+                ConstraintName = constraintName,
+                ConstraintTableName = constraintTable,
+            });
         }
         catch (DbUpdateException ex) when (DbExceptionClassifier.IsForeignKeyViolation(ex))
         {
             // Use a safe generic message for Error.Detail — it flows to API responses.
-            // For logging, use DbExceptionClassifier.ExtractConstraintDetail(ex) which may contain schema details.
-            _ = ex;
-            return Result.Fail<int>(new Error.Conflict(Resource: null, ReasonCode: "referential.integrity") { Detail = "Operation violates a referential integrity constraint." });
+            // ConstraintName / ConstraintTableName are [JsonIgnore]'d telemetry fields,
+            // populated on a best-effort basis for structured logging.
+            var (constraintName, constraintTable) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
+            return Result.Fail<int>(new Error.Conflict(Resource: null, ReasonCode: "referential.integrity")
+            {
+                Detail = "Operation violates a referential integrity constraint.",
+                ConstraintName = constraintName,
+                ConstraintTableName = constraintTable,
+            });
         }
     }
 

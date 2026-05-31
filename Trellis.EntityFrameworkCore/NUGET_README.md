@@ -29,6 +29,7 @@ Result<int> saved = await dbContext.SaveChangesResultAsync(cancellationToken);
 - Apply Trellis value converters and owned-type conventions with one registration point.
 - Query `Maybe<T>` naturally instead of dropping to storage-specific null handling.
 - Return `Result<int>` or `Result` from save operations instead of throwing on expected failures.
+- Idempotent inserts on a unique constraint via `db.TryInsertUniqueAsync(entity, ct)` — duplicate-key violations surface as a failed `Result<TEntity>` carrying an `Error.Conflict` with reason code `"duplicate.key"` and the provider-extracted `ConstraintName` / `ConstraintTableName` telemetry fields, so worker outboxes and "save unless exists" deduplication never throw on redelivery.
 - Cursor-based seek pagination via `IQueryable<T>.ToPageAsync(pageSize, cursor, keySelector, …)` — returns `Result<Page<T>>`, composes with `PageBuilder` and `CursorCodec`, and never throws on malformed input.
 - `RepositoryBase<TAggregate, TId>` — staging-only base class (Add/Remove/Query/Exists/Count).
 - `IUnitOfWork` / `EfUnitOfWork<TContext>` — single commit boundary for staged changes.
