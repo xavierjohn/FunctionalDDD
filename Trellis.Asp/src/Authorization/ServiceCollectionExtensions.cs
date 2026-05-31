@@ -289,9 +289,8 @@ public static class ServiceCollectionExtensions
     /// </para>
     /// <list type="bullet">
     ///   <item><description>
-    ///     <b>Scoped / transient</b> via implementation type or factory: supported. Wrapper
-    ///     owns the materialized inner and disposes it (sync or async) when the wrapper
-    ///     scope ends.
+    ///     <b>Scoped</b> via implementation type or factory: supported. Wrapper owns the
+    ///     materialized inner and disposes it (sync or async) when the wrapper scope ends.
     ///   </description></item>
     ///   <item><description>
     ///     <b>Singleton via <see cref="ServiceDescriptor.ImplementationInstance"/></b>:
@@ -305,6 +304,12 @@ public static class ServiceCollectionExtensions
     ///     throws with guidance to either re-register the provider as scoped or supply a
     ///     pre-constructed instance via
     ///     <c>services.AddSingleton&lt;IActorProvider&gt;(instance)</c>.
+    ///   </description></item>
+    ///   <item><description>
+    ///     <b>Transient via implementation type or factory</b>: <b>rejected at registration
+    ///     time</b> — the wrapper is scoped, so a transient inner would silently become
+    ///     scoped-per-wrapper (one instance reused per scope rather than a fresh instance per
+    ///     resolution). The helper throws with guidance to re-register as scoped.
     ///   </description></item>
     ///   <item><description>
     ///     <b>Keyed registrations</b> are ignored — the helper inspects and replaces only the
@@ -371,14 +376,16 @@ public static class ServiceCollectionExtensions
 
         services.AddHttpContextAccessor();
 
-        // Fail fast on singleton-lifetime registrations that aren't ImplementationInstance.
-        // The wrapper is scoped, so materializing the inner via factory/type per wrapper
-        // scope would silently convert a singleton into a scoped-per-wrapper construction
-        // pattern — breaking app-wide singleton invariants (e.g. cached config, connection
-        // handles). The two safe shapes for singleton-lifetime inners are:
-        //   (1) services.AddSingleton<IActorProvider>(myInstance) — ImplementationInstance
-        //       (the wrapper does not own disposal; the singleton is preserved verbatim).
-        //   (2) Re-register the provider as scoped — matches the built-in helpers.
+        // Fail fast on lifetime shapes that would silently change semantics under wrapping.
+        // The wrapper is scoped, so materializing the inner via factory/type per wrapper scope
+        // would silently convert:
+        //   - Singleton-via-type/factory → scoped-per-wrapper (N inner instances instead of 1,
+        //     breaking app-wide singleton invariants like cached config or connection handles).
+        //   - Transient-via-type/factory → scoped-per-wrapper (one inner instance reused for
+        //     every call within a scope instead of a fresh instance per resolution).
+        // Singleton-via-ImplementationInstance is safe (the instance round-trips verbatim and
+        // the wrapper does not own its disposal). Scoped descriptors are the canonical shape
+        // and match the built-in AddXxxActorProvider helpers.
         var innerDescriptor = existing[0];
         if (innerDescriptor.Lifetime == ServiceLifetime.Singleton && innerDescriptor.ImplementationInstance is null)
         {
@@ -390,6 +397,16 @@ public static class ServiceCollectionExtensions
                 "built-in AddClaimsActorProvider / AddEntraActorProvider / AddDevelopmentActorProvider helpers), " +
                 "or register a pre-constructed singleton instance via services.AddSingleton<IActorProvider>(instance) " +
                 "so the wrapper can delegate to it without re-materializing.");
+        }
+
+        if (innerDescriptor.Lifetime == ServiceLifetime.Transient)
+        {
+            throw new InvalidOperationException(
+                "AddTrellisWorkerActor cannot wrap a transient-lifetime IActorProvider because the worker-composed " +
+                "wrapper is scoped and would silently convert transient semantics into scoped semantics (one inner " +
+                "instance reused for every call within a wrapper scope instead of a fresh instance per resolution). " +
+                "Re-register the inner provider as scoped (matching the built-in AddClaimsActorProvider / " +
+                "AddEntraActorProvider / AddDevelopmentActorProvider helpers) before calling AddTrellisWorkerActor.");
         }
 
         // Materialize the inner descriptor lazily, per wrapper scope. Built-in providers are

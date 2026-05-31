@@ -449,7 +449,7 @@ builder.Services.AddTrellis(t => t
 
 ### Order matters
 
-`AddTrellisWorkerActor` requires exactly one prior `IActorProvider` registration (typically `AddClaimsActorProvider`, `AddEntraActorProvider`, or `AddDevelopmentActorProvider`) and throws if zero or more than one are present. When `AddCachingActorProvider<T>` is also configured, place the worker wrap LAST so it sits on the outside:
+`AddTrellisWorkerActor` requires exactly one prior unkeyed `IActorProvider` registration (typically `AddClaimsActorProvider`, `AddEntraActorProvider`, or `AddDevelopmentActorProvider`) and throws if zero or more than one are present. It also rejects singleton-via-type/factory inners (silent lifetime conversion) and transient inners (silent upgrade to scoped); singleton-via-`ImplementationInstance` is accepted. When `AddCachingActorProvider<T>` is also configured, place the worker wrap LAST so it sits on the outside:
 
 ```csharp
 builder.Services.AddCachingActorProvider<DatabaseActorProvider>();
@@ -460,7 +460,7 @@ The worker wrapper has no scope to cache against on a `BackgroundService` tick, 
 
 ### Validator catches the silent-overwrite footgun
 
-A hosted-service validator runs at host start and throws if a subsequent `services.AddScoped<IActorProvider, ...>()` registration (or another `AddXxxActorProvider` call) overwrote/appended over the wrapper. Without the validator, the wrapper would silently disappear, background-worker ticks would no longer resolve the configured system actor (they would receive whatever the new provider returns — typically `Maybe.None` since there is no `HttpContext` on a tick — surfacing as `Error.AuthenticationRequired` on the first command), and the bug would not surface until the worker actually runs:
+A hosted-service validator runs at host start (in `IHostedLifecycleService.StartingAsync`, before any `BackgroundService.ExecuteAsync` runs) and throws if a subsequent `services.AddScoped<IActorProvider, ...>()` registration (or another `AddXxxActorProvider` call) overwrote/appended over the wrapper. Without the validator, the wrapper would silently disappear, background-worker ticks would no longer resolve the configured system actor (they would receive whatever the new provider returns — typically `Maybe.None` since there is no `HttpContext` on a tick — surfacing as `Error.AuthenticationRequired` on the first command), and the bug would not surface until the worker actually runs:
 
 ```csharp
 // BUG — this throws at host start with a clear diagnostic instead of silently

@@ -160,9 +160,18 @@ internal sealed class WorkerComposedActorProvider : IActorProvider, IProvideActo
 /// call after <c>AddTrellisWorkerActor</c> silently overwrites the worker composition,
 /// leaving background workers unable to resolve the configured system actor.
 /// </summary>
-internal sealed class WorkerActorRegistrationValidator(IServiceProvider rootServices) : IHostedService
+/// <remarks>
+/// Implements <see cref="IHostedLifecycleService"/> so the validation runs in
+/// <see cref="IHostedLifecycleService.StartingAsync"/>, which the .NET host invokes for every
+/// hosted service BEFORE any hosted service's <see cref="IHostedService.StartAsync"/>. This
+/// guarantees the misconfiguration throws before any other <see cref="Microsoft.Extensions.Hosting.BackgroundService"/>
+/// has a chance to call <c>ExecuteAsync</c> and dispatch a mediator command with the wrong
+/// actor. Falling back to <see cref="IHostedService.StartAsync"/> would only catch the
+/// overwrite after concurrent worker ticks may have already started.
+/// </remarks>
+internal sealed class WorkerActorRegistrationValidator(IServiceProvider rootServices) : IHostedLifecycleService
 {
-    public Task StartAsync(CancellationToken cancellationToken)
+    public Task StartingAsync(CancellationToken cancellationToken)
     {
         using var scope = rootServices.CreateScope();
         var providers = scope.ServiceProvider.GetServices<IActorProvider>().ToList();
@@ -191,7 +200,15 @@ internal sealed class WorkerActorRegistrationValidator(IServiceProvider rootServ
         return Task.CompletedTask;
     }
 
+    public Task StartAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public Task StartedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
     public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public Task StoppingAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+
+    public Task StoppedAsync(CancellationToken cancellationToken) => Task.CompletedTask;
 }
 
 /// <summary>

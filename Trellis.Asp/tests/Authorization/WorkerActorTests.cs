@@ -147,7 +147,7 @@ public class WorkerActorTests
             .OfType<WorkerActorRegistrationValidator>()
             .Single();
 
-        Func<Task> act = () => validator.StartAsync(TestContext.Current.CancellationToken);
+        Func<Task> act = () => validator.StartingAsync(TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("*worker composition has been overwritten*");
@@ -165,7 +165,7 @@ public class WorkerActorTests
             .OfType<WorkerActorRegistrationValidator>()
             .Single();
 
-        await validator.StartAsync(TestContext.Current.CancellationToken);
+        await validator.StartingAsync(TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -326,7 +326,7 @@ public class WorkerActorTests
             .OfType<WorkerActorRegistrationValidator>()
             .Single();
 
-        Func<Task> act = () => validator.StartAsync(TestContext.Current.CancellationToken);
+        Func<Task> act = () => validator.StartingAsync(TestContext.Current.CancellationToken);
 
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("*active provider type is 'FakeInnerProvider'*");
@@ -375,6 +375,54 @@ public class WorkerActorTests
         var actor = await httpScope.ServiceProvider.GetRequiredService<IActorProvider>()
             .GetCurrentActorAsync(TestContext.Current.CancellationToken);
         actor.Value.Id.Value.Should().Be("inner-user");
+    }
+
+    [Fact]
+    public void AddTrellisWorkerActor_throws_on_transient_lifetime_via_implementation_type()
+    {
+        // Transient type registration would be silently upgraded to "one instance per
+        // wrapper scope" instead of "fresh instance per resolution" — opposite of the
+        // singleton case but the same kind of silent semantic change. Fail fast.
+        var services = new ServiceCollection();
+        services.AddTransient<IActorProvider, FakeInnerProvider>();
+
+        Action act = () => services.AddTrellisWorkerActor(SystemActor);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*transient-lifetime IActorProvider*scoped semantics*");
+    }
+
+    [Fact]
+    public void AddTrellisWorkerActor_throws_on_transient_lifetime_via_implementation_factory()
+    {
+        var services = new ServiceCollection();
+        services.AddTransient<IActorProvider>(_ => new FakeInnerProvider());
+
+        Action act = () => services.AddTrellisWorkerActor(SystemActor);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*transient-lifetime IActorProvider*");
+    }
+
+    [Fact]
+    public void Validator_implements_IHostedLifecycleService_so_validation_runs_before_any_StartAsync()
+    {
+        // .NET's host invokes IHostedLifecycleService.StartingAsync on every hosted service
+        // BEFORE any hosted service's IHostedService.StartAsync. The validator must implement
+        // IHostedLifecycleService — not just IHostedService — so its check fires before any
+        // BackgroundService registered alongside it has a chance to begin ExecuteAsync and
+        // dispatch a mediator command with the wrong actor.
+        var services = new ServiceCollection();
+        services.AddClaimsActorProvider();
+        services.AddTrellisWorkerActor(SystemActor);
+
+        using var sp = services.BuildServiceProvider();
+        var validator = sp.GetServices<IHostedService>()
+            .OfType<WorkerActorRegistrationValidator>()
+            .Single();
+
+        validator.Should().BeAssignableTo<IHostedLifecycleService>(
+            "the host invokes StartingAsync on IHostedLifecycleService instances before any IHostedService.StartAsync");
     }
 
     [Fact]

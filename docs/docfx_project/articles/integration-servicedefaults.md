@@ -48,7 +48,7 @@ This sequence preserves the central pipeline invariant: the transactional behavi
 |---|---|
 | Actor provider | At most one of `UseClaimsActorProvider`, `UseEntraActorProvider`, `UseDevelopmentActorProvider`. Throws `InvalidOperationException` on duplicate (same kind or different). |
 | Caching actor wrap | At most one `UseCachingActorProvider<T>()`. Throws `InvalidOperationException` on duplicate. |
-| Worker actor wrap | At most one `UseWorkerActor(systemActor)`. Throws `InvalidOperationException` on duplicate. The underlying `AddTrellisWorkerActor(...)` also rejects singleton `IActorProvider` registered via type or factory (silent lifetime conversion); singleton via `ImplementationInstance` is supported. |
+| Worker actor wrap | At most one `UseWorkerActor(systemActor)`. Throws `InvalidOperationException` on duplicate. The underlying `AddTrellisWorkerActor(...)` also rejects singleton `IActorProvider` registered via type or factory (silent lifetime conversion) and transient `IActorProvider` (silent upgrade to scoped); singleton via `ImplementationInstance` is supported. |
 | Unit of work | At most one `UseEntityFrameworkUnitOfWork<TContext>()` per composition. Throws `InvalidOperationException` on duplicate (same `TContext` or different). Read/write context splits should run as separate composition roots or use a multi-tenant `DbContext`. |
 
 ## Per-request actor caching
