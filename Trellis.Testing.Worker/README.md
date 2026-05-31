@@ -45,10 +45,15 @@ var reminded = await harness.WaitForEventAsync<SubscriptionReminderSent>();
 reminded.SubscriptionId.Should().Be(expectedId);
 ```
 
-> **Deterministic alternative to `SettleAsync()`:** have the worker call
-> `IWorkerTickSignal.SignalAsync("ready", ct)` at the top of `ExecuteAsync` before its first
-> `Task.Delay`, then replace `await harness.SettleAsync()` with
-> `await harness.WaitForTickAsync("ready")` — no real-time yield, no flakiness.
+> **Deterministic alternative to `SettleAsync()`:** have the worker REGISTER its first
+> `Task.Delay(period, time, ct)` (e.g. `var nextDelay = Task.Delay(period, time, ct);`)
+> BEFORE calling `IWorkerTickSignal.SignalAsync("ready", ct)`, then `await` the saved
+> delay. The `Task.Delay(TimeSpan, TimeProvider, CancellationToken)` overload eagerly
+> calls `timeProvider.CreateTimer(...)` when invoked, so the callback is registered with
+> `FakeTimeProvider` before the signal fires — `await harness.WaitForTickAsync("ready")`
+> can then release and the test can safely call `Time.Advance(...)` with no race. Signaling
+> *before* `Task.Delay(...)` would leave a gap during which the test could advance the
+> clock before any callback was registered. No real-time yield, no flakiness.
 >
 > **Wiring EF Core with SQLite?** Don't pair `AddDbContextFactory<T>` with
 > `Data Source=:memory:` — every new connection opens a fresh database, so the seed and the

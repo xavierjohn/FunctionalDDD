@@ -194,12 +194,18 @@ public sealed class WorkerHarness<[System.Diagnostics.CodeAnalysis.DynamicallyAc
     /// <para>
     /// Two ways to avoid the race:
     /// <list type="number">
-    ///   <item><description>(Deterministic) Have the worker call
+    ///   <item><description>(Deterministic) Have the worker register its first
+    ///     <see cref="Task.Delay(TimeSpan, TimeProvider, CancellationToken)"/> BEFORE calling
     ///     <see cref="IWorkerTickSignal.SignalAsync(string, CancellationToken)"/> with a known
-    ///     name (e.g. <c>"ready"</c>) at the top of <c>ExecuteAsync</c> before the first
-    ///     <see cref="Task.Delay(TimeSpan, TimeProvider, CancellationToken)"/>. Tests await
-    ///     <see cref="WaitForTickAsync(string, TimeSpan?, CancellationToken)"/> for that name
-    ///     before advancing time.</description></item>
+    ///     name (e.g. <c>"ready"</c>), then <c>await</c> the saved delay. The
+    ///     <c>Task.Delay(TimeSpan, TimeProvider, CancellationToken)</c> overload eagerly
+    ///     calls <see cref="TimeProvider.CreateTimer(TimerCallback, object?, TimeSpan, TimeSpan)"/>
+    ///     when invoked, so the <see cref="FakeTimeProvider"/> callback is registered before
+    ///     the signal fires — by the time the test resumes from
+    ///     <see cref="WaitForTickAsync(string, TimeSpan?, CancellationToken)"/> the callback
+    ///     exists and the subsequent <c>Time.Advance(...)</c> is guaranteed to land on it.
+    ///     Signaling FIRST and registering the delay second would still leave a gap during
+    ///     which the test can advance the clock before any callback is registered.</description></item>
     ///   <item><description>(Lazy) Call <see cref="SettleAsync(TimeSpan?, CancellationToken)"/>
     ///     after <c>StartAsync</c>. This is a real-time yield so the worker's first scheduling
     ///     turn lands before the test advances the clock. Convenient for one-off tests but
@@ -256,10 +262,13 @@ public sealed class WorkerHarness<[System.Diagnostics.CodeAnalysis.DynamicallyAc
     /// <param name="duration">Optional real-time settle duration. Defaults to 200ms.</param>
     /// <param name="cancellationToken">A token to observe during the yield.</param>
     /// <remarks>
-    /// For a deterministic alternative, have the worker call
+    /// For a deterministic alternative, have the worker register its first
+    /// <see cref="Task.Delay(TimeSpan, TimeProvider, CancellationToken)"/> BEFORE calling
     /// <see cref="IWorkerTickSignal.SignalAsync(string, CancellationToken)"/> with a known
-    /// name at the top of <c>ExecuteAsync</c> and use
-    /// <see cref="WaitForTickAsync(string, TimeSpan?, CancellationToken)"/> instead.
+    /// name (then <c>await</c> the saved delay) and use
+    /// <see cref="WaitForTickAsync(string, TimeSpan?, CancellationToken)"/> in the test. The
+    /// signal must follow the <c>Task.Delay(...)</c> call so the <see cref="FakeTimeProvider"/>
+    /// callback is provably registered before the test resumes and advances time.
     /// </remarks>
     public Task SettleAsync(TimeSpan? duration = null, CancellationToken cancellationToken = default) =>
         Task.Delay(duration ?? TimeSpan.FromMilliseconds(200), cancellationToken);
