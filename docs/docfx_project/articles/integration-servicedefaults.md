@@ -33,7 +33,7 @@ builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlServer(connectionString
 `AddTrellis(o => ...)` records the requested modules during the configure callback, then applies them in this order:
 
 1. **ASP integration** (`UseAsp`) — `AddTrellisAsp(...)`.
-2. **Actor provider** (`UseClaimsActorProvider` / `UseEntraActorProvider` / `UseDevelopmentActorProvider`) and the **caching wrap** (`UseCachingActorProvider<T>`).
+2. **Actor provider** (`UseClaimsActorProvider` / `UseEntraActorProvider` / `UseDevelopmentActorProvider`), the optional **caching wrap** (`UseCachingActorProvider<T>`), and the optional **worker wrap** (`UseWorkerActor(systemActor)`) — the worker wrap is applied after caching so HTTP requests still flow through the inner provider (and its cache) and background-worker scopes short-circuit to the supplied system actor.
 3. **Mediator behaviors** (`UseMediator`) — `AddTrellisBehaviors(...)`. Always present when any other Use that implies it is selected (FluentValidation, ResourceAuthorization, DomainEvents, EntityFrameworkUnitOfWork).
 4. **Resource authorization** scanning (`UseResourceAuthorization(asm)`) when assemblies are supplied.
 5. **FluentValidation** adapter and (optionally) scanning (`UseFluentValidation`).
@@ -48,6 +48,7 @@ This sequence preserves the central pipeline invariant: the transactional behavi
 |---|---|
 | Actor provider | At most one of `UseClaimsActorProvider`, `UseEntraActorProvider`, `UseDevelopmentActorProvider`. Throws `InvalidOperationException` on duplicate (same kind or different). |
 | Caching actor wrap | At most one `UseCachingActorProvider<T>()`. Throws `InvalidOperationException` on duplicate. |
+| Worker actor wrap | At most one `UseWorkerActor(systemActor)`. Throws `InvalidOperationException` on duplicate. The underlying `AddTrellisWorkerActor(...)` also rejects singleton `IActorProvider` registered via type or factory (silent lifetime conversion) and transient `IActorProvider` (silent upgrade to scoped); singleton via `ImplementationInstance` is supported. |
 | Unit of work | At most one `UseEntityFrameworkUnitOfWork<TContext>()` per composition. Throws `InvalidOperationException` on duplicate (same `TContext` or different). Read/write context splits should run as separate composition roots or use a multi-tenant `DbContext`. |
 
 ## Per-request actor caching

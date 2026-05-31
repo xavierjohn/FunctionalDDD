@@ -186,6 +186,7 @@ See [Cache partitioning across actors (`VaryForActor()`)](#cache-partitioning-ac
 | Resolve actors from any flat-claim OIDC/JWT provider | `AddClaimsActorProvider(options?)` | [Generic claims provider](#generic-claims-provider) |
 | Inject a fake actor in Development / integration tests | `AddDevelopmentActorProvider(options?)` | [Development provider](#development-provider) |
 | Cache an async actor resolution per request | `AddCachingActorProvider<T>()` | [Caching wrapper](#caching-wrapper) |
+| Resolve a system actor when there is no `HttpContext` (background workers) | `AddTrellisWorkerActor(systemActor)` | [Worker actor composition](#worker-actor-composition) |
 | Flatten roles into permissions / add ABAC attributes | `EntraActorOptions.MapPermissions` / `MapAttributes` | [Customizing claim mapping](#customizing-claim-mapping) |
 | Read well-known attributes safely | `Actor.GetAttribute(ActorAttributes.*)` | [ABAC attributes](#abac-attributes) |
 | Enforce static permissions on a command | `IAuthorize.RequiredPermissions` | [Mediator integration](#mediator-integration) |
@@ -212,6 +213,7 @@ See [Cache partitioning across actors (`VaryForActor()`)](#cache-partitioning-ac
 | `AddClaimsActorProvider(this IServiceCollection, Action<ClaimsActorOptions>?)` | DI extension | Scoped `IActorProvider` → `ClaimsActorProvider` | Generic flat-claim mapping (configurable `ActorIdClaim`, `PermissionsClaim`). |
 | `AddDevelopmentActorProvider(this IServiceCollection, Action<DevelopmentActorOptions>?)` | DI extension | Scoped `IActorProvider` → `DevelopmentActorProvider` | Reads `X-Test-Actor` JSON header; throws outside `IsDevelopment()`. |
 | `AddCachingActorProvider<T>(this IServiceCollection)` | DI extension | Scoped `IActorProvider` → `CachingActorProvider` wrapping `T` | Caches one resolution task per request scope. |
+| `AddTrellisWorkerActor(this IServiceCollection, Actor)` | DI extension | Scoped `IActorProvider` → `WorkerComposedActorProvider` wrapping the prior slot | Returns the supplied system actor when `IHttpContextAccessor.HttpContext` is null; delegates to the inner provider otherwise. |
 | `ClaimsActorProvider` | Class | Scoped, virtual `GetCurrentActorAsync` | Subclass for custom flat-claim providers. Permissions resolved via literal `FindAll(PermissionsClaim)` plus the well-known short↔long counterpart from the JWT inbound claim-name map; matches are merged into a deduplicated `FrozenSet<string>`. |
 | `EntraActorProvider` | Class | Scoped, sealed | Falls back to short `oid` when `IdClaimType` is the default; rewraps mapper exceptions in `InvalidOperationException`. |
 | `DevelopmentActorProvider` | Class | Scoped, sealed partial | Logs a warning and falls back when the header is malformed (unless `ThrowOnMalformedHeader = true`). |
@@ -416,6 +418,61 @@ builder.Services.AddCachingActorProvider<DatabaseActorProvider>();
 ```
 
 `CachingActorProvider` issues the inner call with `HttpContext.RequestAborted` so the shared work is cancelled with the request, then forwards each caller's own `CancellationToken` via `Task.WaitAsync`.
+
+## Worker actor composition
+
+Background workers (`IHostedService` / `BackgroundService` ticks, scheduled jobs, message-queue consumers) execute outside any HTTP request, so the HTTP-side actor providers above have no `HttpContext` to read. The same mediator commands those workers dispatch still go through `AuthorizationBehavior`, which requires a non-empty `Actor`. `AddTrellisWorkerActor(systemActor)` composes a wrapper on top of the existing HTTP-side provider that returns the supplied system actor when `IHttpContextAccessor.HttpContext` is `null` and delegates to the inner provider otherwise.
+
+```csharp
+using Microsoft.Extensions.DependencyInjection;
+using Trellis.Asp.Authorization;
+using Trellis.Authorization;
+
+var systemActor = Actor.Create(
+    id: "system",
+    permissions: new HashSet<string> { "reminders:dispatch", "reminders:read" });
+
+builder.Services.AddClaimsActorProvider(o => o.ActorIdClaim = "sub");
+builder.Services.AddTrellisWorkerActor(systemActor);
+
+builder.Services.AddHostedService<ReminderDispatchWorker>();
+```
+
+Or via the `TrellisServiceBuilder` slot in `Trellis.ServiceDefaults`:
+
+```csharp
+builder.Services.AddTrellis(t => t
+    .UseAsp()
+    .UseClaimsActorProvider()
+    .UseWorkerActor(systemActor));
+```
+
+### Order matters
+
+`AddTrellisWorkerActor` requires exactly one prior unkeyed `IActorProvider` registration (typically `AddClaimsActorProvider`, `AddEntraActorProvider`, or `AddDevelopmentActorProvider`) and throws if zero or more than one are present. It also rejects singleton-via-type/factory inners (silent lifetime conversion) and transient inners (silent upgrade to scoped); singleton-via-`ImplementationInstance` is accepted. When `AddCachingActorProvider<T>` is also configured, place the worker wrap LAST so it sits on the outside:
+
+```csharp
+builder.Services.AddCachingActorProvider<DatabaseActorProvider>();
+builder.Services.AddTrellisWorkerActor(systemActor);  // outermost — worker ticks skip caching
+```
+
+The worker wrapper has no scope to cache against on a `BackgroundService` tick, and the system-actor branch returns synchronously without invoking any provider, so leaving caching on the inside means HTTP-path lookups still benefit from request-scoped caching while worker-path lookups bypass it entirely.
+
+### Validator catches the silent-overwrite footgun
+
+A hosted-service validator runs at host start (in `IHostedLifecycleService.StartingAsync`, before any `BackgroundService.ExecuteAsync` runs) and throws if a subsequent `services.AddScoped<IActorProvider, ...>()` registration (or another `AddXxxActorProvider` call) overwrote/appended over the wrapper. Without the validator, the wrapper would silently disappear, background-worker ticks would no longer resolve the configured system actor (they would receive whatever the new provider returns — typically `Maybe.None` since there is no `HttpContext` on a tick — surfacing as `Error.AuthenticationRequired` on the first command), and the bug would not surface until the worker actually runs:
+
+```csharp
+// BUG — this throws at host start with a clear diagnostic instead of silently
+// breaking the worker tick the next time it runs:
+builder.Services.AddClaimsActorProvider();
+builder.Services.AddTrellisWorkerActor(systemActor);
+builder.Services.AddEntraActorProvider();  // overwrites the worker wrapper
+```
+
+### Authorization implications
+
+Scope the `Actor.Permissions` granted to the system actor as narrowly as the worker requires. Every mediator command the worker dispatches authorizes against that envelope; an overly-broad system actor turns into a privilege-escalation hazard the first time a developer reuses a command handler.
 
 ## Customizing claim mapping
 

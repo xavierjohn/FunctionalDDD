@@ -565,4 +565,167 @@ public class TrellisServiceBuilderTests
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("*caching actor provider*");
     }
+
+    [Fact]
+    public async Task UseWorkerActor_AfterUseClaimsActorProvider_ReturnsSystemActorWhenHttpContextNull()
+    {
+        var services = new ServiceCollection();
+        var systemActor = Actor.Create(
+            id: "system",
+            permissions: new HashSet<string> { "reminders:dispatch" });
+
+        services.AddTrellis(options => options
+            .UseClaimsActorProvider()
+            .UseWorkerActor(systemActor));
+
+        using var sp = services.BuildServiceProvider();
+        using var scope = sp.CreateScope();
+
+        // No HttpContext set on the accessor — simulate background-worker tick.
+        var actor = await scope.ServiceProvider
+            .GetRequiredService<IActorProvider>()
+            .GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        actor.HasValue.Should().BeTrue();
+        actor.Value.Id.Value.Should().Be("system");
+    }
+
+    [Fact]
+    public async Task UseWorkerActor_ComposesAfterCachingWrap_WorkerPathSkipsCaching()
+    {
+        var services = new ServiceCollection();
+        var systemActor = Actor.Create(
+            id: "system",
+            permissions: new HashSet<string> { "reminders:dispatch" });
+
+        services.AddTrellis(options => options
+            .UseClaimsActorProvider()
+            .UseCachingActorProvider<ClaimsActorProvider>()
+            .UseWorkerActor(systemActor));
+
+        using var sp = services.BuildServiceProvider();
+        using var workerScope = sp.CreateScope();
+
+        // Worker tick — null HttpContext must short-circuit to the system actor
+        // without traversing the caching layer.
+        var actor = await workerScope.ServiceProvider
+            .GetRequiredService<IActorProvider>()
+            .GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        actor.HasValue.Should().BeTrue();
+        actor.Value.Id.Value.Should().Be("system");
+    }
+
+    [Fact]
+    public void UseWorkerActor_TwiceOnSameBuilder_Throws()
+    {
+        var services = new ServiceCollection();
+        var systemActor = Actor.Create(
+            id: "system",
+            permissions: new HashSet<string> { "reminders:dispatch" });
+
+        var act = () => services.AddTrellis(options => options
+            .UseClaimsActorProvider()
+            .UseWorkerActor(systemActor)
+            .UseWorkerActor(systemActor));
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*worker actor*");
+    }
+
+    [Fact]
+    public void UseWorkerActor_WithoutPriorActorProvider_ThrowsAtApply()
+    {
+        var services = new ServiceCollection();
+        var systemActor = Actor.Create(
+            id: "system",
+            permissions: new HashSet<string> { "reminders:dispatch" });
+
+        var act = () => services.AddTrellis(options => options.UseWorkerActor(systemActor));
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*requires a prior unkeyed IActorProvider registration*");
+    }
+
+    [Fact]
+    public async Task UseWorkerActor_ChainedBeforeUnitOfWork_AppliesInCanonicalOrder()
+    {
+        // Builder records selections and applies them in canonical order. UseWorkerActor
+        // chained BEFORE UseEntityFrameworkUnitOfWork<T>() must still leave the worker
+        // wrapper as the active IActorProvider and the transactional behavior innermost.
+        var services = new ServiceCollection();
+        services.AddDbContext<TestDbContext>(o => o.UseInMemoryDatabase("worker-order-1"));
+        var systemActor = Actor.Create(id: "system", permissions: new HashSet<string> { "reminders:dispatch" });
+
+        services.AddTrellis(options => options
+            .UseClaimsActorProvider()
+            .UseWorkerActor(systemActor)
+            .UseEntityFrameworkUnitOfWork<TestDbContext>());
+
+        using var sp = services.BuildServiceProvider();
+        using var scope = sp.CreateScope();
+
+        var actor = await scope.ServiceProvider.GetRequiredService<IActorProvider>()
+            .GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        actor.Value.Id.Value.Should().Be("system",
+            "worker wrap must be the active provider regardless of chain order");
+
+        var pipeline = services
+            .Where(d => d.ServiceType == typeof(IPipelineBehavior<,>))
+            .Select(d => d.ImplementationType)
+            .ToList();
+        pipeline.Should().EndWith(typeof(TransactionalCommandBehavior<,>),
+            "TX behavior remains innermost regardless of UseWorkerActor chain position");
+    }
+
+    [Fact]
+    public async Task UseWorkerActor_ChainedAfterUnitOfWork_AppliesInCanonicalOrder()
+    {
+        // Inverse chain order — UnitOfWork registered first, worker second. Apply() runs
+        // worker wrap before UnitOfWork regardless, so the active actor provider must still
+        // be the worker wrapper and TX behavior must still be innermost.
+        var services = new ServiceCollection();
+        services.AddDbContext<TestDbContext>(o => o.UseInMemoryDatabase("worker-order-2"));
+        var systemActor = Actor.Create(id: "system", permissions: new HashSet<string> { "reminders:dispatch" });
+
+        services.AddTrellis(options => options
+            .UseEntityFrameworkUnitOfWork<TestDbContext>()
+            .UseClaimsActorProvider()
+            .UseWorkerActor(systemActor));
+
+        using var sp = services.BuildServiceProvider();
+        using var scope = sp.CreateScope();
+
+        var actor = await scope.ServiceProvider.GetRequiredService<IActorProvider>()
+            .GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        actor.Value.Id.Value.Should().Be("system");
+
+        var pipeline = services
+            .Where(d => d.ServiceType == typeof(IPipelineBehavior<,>))
+            .Select(d => d.ImplementationType)
+            .ToList();
+        pipeline.Should().EndWith(typeof(TransactionalCommandBehavior<,>));
+    }
+
+    [Fact]
+    public async Task UseWorkerActor_ChainedBeforeActorProviderSelector_StillResolves()
+    {
+        // Apply() runs the actor-provider registration before the worker wrap regardless of
+        // chain order. Calling UseWorkerActor BEFORE UseClaimsActorProvider on the builder
+        // must still satisfy the prior-provider requirement at Apply() time.
+        var services = new ServiceCollection();
+        var systemActor = Actor.Create(id: "system", permissions: new HashSet<string> { "reminders:dispatch" });
+
+        services.AddTrellis(options => options
+            .UseWorkerActor(systemActor)
+            .UseClaimsActorProvider());
+
+        using var sp = services.BuildServiceProvider();
+        using var scope = sp.CreateScope();
+
+        var actor = await scope.ServiceProvider.GetRequiredService<IActorProvider>()
+            .GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        actor.Value.Id.Value.Should().Be("system",
+            "builder chain order between UseWorkerActor and UseXxxActorProvider must not matter");
+    }
 }

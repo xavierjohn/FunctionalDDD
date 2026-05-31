@@ -1,8 +1,11 @@
 ﻿namespace Trellis.Asp.Authorization;
 
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using Trellis.Authorization;
 
 /// <summary>
@@ -224,5 +227,233 @@ public static class ServiceCollectionExtensions
                 sp.GetRequiredService<Microsoft.AspNetCore.Http.IHttpContextAccessor>())));
 
         return services;
+    }
+
+    /// <summary>
+    /// Wraps the currently-registered <see cref="IActorProvider"/> so it composes cleanly
+    /// across HTTP requests and non-HTTP execution (typically a <see cref="BackgroundService"/>
+    /// tick). When the wrapper resolves outside an HTTP request scope (no
+    /// <c>HttpContext</c>), it returns <paramref name="systemActor"/>; inside an HTTP request
+    /// scope it delegates to the inner HTTP-side provider, preserving the standard
+    /// claims/bearer/header-derived actor resolution and the
+    /// <c>Maybe.None</c>-on-anonymous → HTTP 401 contract.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="systemActor">
+    /// The actor returned for non-HTTP (worker / hosted-service) execution. Construct with
+    /// the permissions the worker needs to issue mediator commands and queries
+    /// (e.g. <c>new Actor("system", new HashSet&lt;string&gt; { "reminders:dispatch" }, ...)</c>).
+    /// </param>
+    /// <returns>The service collection for chaining.</returns>
+    /// <exception cref="ArgumentNullException">
+    /// Thrown when <paramref name="services"/> or <paramref name="systemActor"/> is null.
+    /// </exception>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when no prior <see cref="IActorProvider"/> registration exists, when more than
+    /// one prior <see cref="IActorProvider"/> descriptor is present (registration order is
+    /// ambiguous), or when <c>AddTrellisWorkerActor</c> has already been called on this
+    /// collection. A separate <c>IHostedLifecycleService</c> validator
+    /// (<see cref="WorkerActorRegistrationValidator"/>) also runs at host start
+    /// (in <c>StartingAsync</c>, before any <c>IHostedService.StartAsync</c>) and throws if
+    /// a later registration overwrote the worker composition.
+    /// </exception>
+    /// <remarks>
+    /// <para>
+    /// <b>Order matters.</b> Call <c>AddTrellisWorkerActor</c> AFTER the HTTP-side actor
+    /// provider helper (<see cref="AddClaimsActorProvider"/>, <see cref="AddEntraActorProvider"/>,
+    /// <see cref="AddDevelopmentActorProvider"/>) and AFTER any
+    /// <see cref="AddCachingActorProvider{T}"/> wrap. The helper captures the
+    /// <see cref="IActorProvider"/> slot present at call time and re-registers a wrapper
+    /// that delegates to it; calling
+    /// <c>services.AddXxxActorProvider</c> or <c>services.AddScoped&lt;IActorProvider, ...&gt;()</c>
+    /// after this helper will silently overwrite the wrapper — background-worker ticks would
+    /// then resolve whatever the new provider returns instead of the configured system actor
+    /// (typically <see cref="Maybe{T}.None"/> in a tick context, surfacing as
+    /// <see cref="Error.AuthenticationRequired"/> on the first dispatched command). The
+    /// validator catches that case at host start.
+    /// </para>
+    /// <para>
+    /// <b>Single-registration contract.</b> Calling <c>AddTrellisWorkerActor</c> twice
+    /// throws — wrapping a wrapper would mean a worker scope returns the inner wrapper's
+    /// system actor instead of the outer's, which is never the intended composition.
+    /// </para>
+    /// <para>
+    /// <b>Lifetime.</b> The wrapper is registered as scoped (matching the other built-in
+    /// actor providers). Built-in providers (Claims / Entra / Development / Caching) are
+    /// scoped, so the typical wiring preserves the inner's lifetime semantics exactly. The
+    /// inner provider is materialized lazily on first access via a thread-safe
+    /// <see cref="Lazy{T}"/> with <see cref="LazyThreadSafetyMode.ExecutionAndPublication"/>
+    /// — worker ticks (HttpContext null) never construct it.
+    /// </para>
+    /// <para>
+    /// <b>Inner-descriptor support matrix.</b>
+    /// </para>
+    /// <list type="bullet">
+    ///   <item><description>
+    ///     <b>Scoped</b> via implementation type or factory: supported. Wrapper owns the
+    ///     materialized inner and disposes it (sync or async) when the wrapper scope ends.
+    ///   </description></item>
+    ///   <item><description>
+    ///     <b>Singleton via <see cref="ServiceDescriptor.ImplementationInstance"/></b>:
+    ///     supported. Wrapper delegates without re-materializing and does not dispose the
+    ///     instance (the consumer owns app-lifetime disposal).
+    ///   </description></item>
+    ///   <item><description>
+    ///     <b>Singleton via implementation type or factory</b>: <b>rejected at registration
+    ///     time</b> — the wrapper is scoped, so materializing per wrapper scope would
+    ///     silently break the singleton invariant (N instances instead of 1). The helper
+    ///     throws with guidance to either re-register the provider as scoped or supply a
+    ///     pre-constructed instance via
+    ///     <c>services.AddSingleton&lt;IActorProvider&gt;(instance)</c>.
+    ///   </description></item>
+    ///   <item><description>
+    ///     <b>Transient via implementation type or factory</b>: <b>rejected at registration
+    ///     time</b> — the wrapper is scoped, so a transient inner would silently become
+    ///     scoped-per-wrapper (one instance reused per scope rather than a fresh instance per
+    ///     resolution). The helper throws with guidance to re-register as scoped.
+    ///   </description></item>
+    ///   <item><description>
+    ///     <b>Keyed registrations</b> are ignored — the helper inspects and replaces only the
+    ///     unkeyed <see cref="IActorProvider"/> slot.
+    ///   </description></item>
+    /// </list>
+    /// <para>
+    /// <b>Decoration awareness.</b> The wrapper implements
+    /// <see cref="IProvideActorVaryHeaders"/> (delegating to the inner provider's headers)
+    /// and <see cref="IDecoratingActorProvider"/> (so
+    /// <see cref="HttpResponseOptionsBuilder{TDomain}.VaryForActor"/> diagnostics name the
+    /// underlying HTTP-side provider rather than the worker wrapper).
+    /// </para>
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// builder.Services.AddClaimsActorProvider(opts => opts.ActorIdClaim = "sub");
+    /// builder.Services.AddTrellisWorkerActor(new Actor(
+    ///     id: "system",
+    ///     permissions: new HashSet&lt;string&gt; { "reminders:dispatch", "reminders:read" },
+    ///     forbiddenPermissions: new HashSet&lt;string&gt;(),
+    ///     attributes: new Dictionary&lt;string, string&gt;()));
+    ///
+    /// builder.Services.AddHostedService&lt;ReminderDispatchWorker&gt;();
+    /// </code>
+    /// </example>
+    public static IServiceCollection AddTrellisWorkerActor(
+        this IServiceCollection services,
+        Actor systemActor)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(systemActor);
+
+        // Sentinel-based duplicate detection: avoids invoking the existing IActorProvider
+        // factory at registration time (which can fail when its dependencies haven't been
+        // registered yet, or cause unintended side effects).
+        if (services.Any(d => d.ServiceType == typeof(WorkerActorRegistrationMarker)))
+        {
+            throw new InvalidOperationException(
+                "AddTrellisWorkerActor has already been called on this service collection. " +
+                "Wrapping the wrapper is never the intended composition; remove the duplicate call.");
+        }
+
+        var existing = services
+            .Where(d => d.ServiceType == typeof(IActorProvider) && !d.IsKeyedService)
+            .ToList();
+
+        if (existing.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "AddTrellisWorkerActor requires a prior unkeyed IActorProvider registration. " +
+                "Call AddClaimsActorProvider, AddEntraActorProvider, or AddDevelopmentActorProvider first, " +
+                "then AddTrellisWorkerActor to compose worker-context (HttpContext-null) handling on top.");
+        }
+
+        if (existing.Count > 1)
+        {
+            throw new InvalidOperationException(
+                $"AddTrellisWorkerActor requires exactly one prior unkeyed IActorProvider registration but found {existing.Count}. " +
+                "Resolve the ambiguity by removing the duplicate IActorProvider descriptors before calling AddTrellisWorkerActor. " +
+                "The built-in AddXxxActorProvider helpers use Replace, so chaining them yields a single descriptor; multiple " +
+                "descriptors only arise when a consumer manually appends with services.AddScoped<IActorProvider>() / " +
+                "services.AddTransient<IActorProvider>() / services.AddSingleton<IActorProvider>() (which append rather than Replace). " +
+                "Keyed IActorProvider registrations are ignored and remain untouched.");
+        }
+
+        services.AddHttpContextAccessor();
+
+        // Fail fast on lifetime shapes that would silently change semantics under wrapping.
+        // The wrapper is scoped, so materializing the inner via factory/type per wrapper scope
+        // would silently convert:
+        //   - Singleton-via-type/factory → scoped-per-wrapper (N inner instances instead of 1,
+        //     breaking app-wide singleton invariants like cached config or connection handles).
+        //   - Transient-via-type/factory → scoped-per-wrapper (one inner instance reused for
+        //     every call within a scope instead of a fresh instance per resolution).
+        // Singleton-via-ImplementationInstance is safe (the instance round-trips verbatim and
+        // the wrapper does not own its disposal). Scoped descriptors are the canonical shape
+        // and match the built-in AddXxxActorProvider helpers.
+        var innerDescriptor = existing[0];
+        if (innerDescriptor.Lifetime == ServiceLifetime.Singleton && innerDescriptor.ImplementationInstance is null)
+        {
+            throw new InvalidOperationException(
+                "AddTrellisWorkerActor cannot wrap a singleton-lifetime IActorProvider registered via " +
+                "ImplementationType or ImplementationFactory because the worker-composed wrapper is scoped, " +
+                "and materializing the inner per wrapper scope would silently break the singleton invariant " +
+                "(N inner instances instead of 1). Either register the inner provider as scoped (matching the " +
+                "built-in AddClaimsActorProvider / AddEntraActorProvider / AddDevelopmentActorProvider helpers), " +
+                "or register a pre-constructed singleton instance via services.AddSingleton<IActorProvider>(instance) " +
+                "so the wrapper can delegate to it without re-materializing.");
+        }
+
+        if (innerDescriptor.Lifetime == ServiceLifetime.Transient)
+        {
+            throw new InvalidOperationException(
+                "AddTrellisWorkerActor cannot wrap a transient-lifetime IActorProvider because the worker-composed " +
+                "wrapper is scoped and would silently convert transient semantics into scoped semantics (one inner " +
+                "instance reused for every call within a wrapper scope instead of a fresh instance per resolution). " +
+                "Re-register the inner provider as scoped (matching the built-in AddClaimsActorProvider / " +
+                "AddEntraActorProvider / AddDevelopmentActorProvider helpers) before calling AddTrellisWorkerActor.");
+        }
+
+        // Materialize the inner descriptor lazily, per wrapper scope. Built-in providers are
+        // scoped with standard DI-constructor dependencies, so ActivatorUtilities
+        // materialization matches the original scoped semantics. Factory and instance shapes
+        // round-trip verbatim. The wrapper owns disposal of inners it constructed (scoped
+        // factory / scoped type descriptors); singleton instances supplied by the consumer
+        // are not disposed.
+        var innerFactory = BuildInnerFactory(innerDescriptor);
+        var ownsInner = innerDescriptor.ImplementationInstance is null;
+
+        // Remove the exact captured descriptor (preserves any keyed IActorProvider
+        // registrations untouched) and append the wrapper.
+        services.Remove(innerDescriptor);
+        services.Add(ServiceDescriptor.Scoped<IActorProvider>(sp =>
+        {
+            var http = sp.GetRequiredService<Microsoft.AspNetCore.Http.IHttpContextAccessor>();
+            return new WorkerComposedActorProvider(() => innerFactory(sp), ownsInner, http, systemActor);
+        }));
+
+        services.AddSingleton<WorkerActorRegistrationMarker>();
+
+        // Hosted-service validator catches "AddXxxActorProvider called AFTER AddTrellisWorkerActor"
+        // at host start, before any HTTP request or worker tick observes the broken composition.
+        // TryAdd (not Add): repeated AddTrellisWorkerActor calls would already throw above, so
+        // this guards the unrelated case where the type was added by another wiring path.
+        services.TryAddEnumerable(ServiceDescriptor.Singleton<IHostedService, WorkerActorRegistrationValidator>());
+
+        return services;
+    }
+
+    private static Func<IServiceProvider, IActorProvider> BuildInnerFactory(ServiceDescriptor descriptor)
+    {
+        if (descriptor.ImplementationInstance is IActorProvider singletonInstance)
+            return _ => singletonInstance;
+
+        if (descriptor.ImplementationFactory is { } factory)
+            return sp => (IActorProvider)factory(sp);
+
+        if (descriptor.ImplementationType is { } implType)
+            return sp => (IActorProvider)ActivatorUtilities.CreateInstance(sp, implType);
+
+        throw new InvalidOperationException(
+            "AddTrellisWorkerActor cannot materialize the existing IActorProvider descriptor — " +
+            "it has neither ImplementationType, ImplementationFactory, nor ImplementationInstance.");
     }
 }

@@ -32,6 +32,7 @@ public sealed class TrellisServiceBuilder
     private Action<TrellisMediatorTelemetryOptions>? _configureMediatorTelemetry;
     private Action<IServiceCollection>? _actorProviderRegistration;
     private Action<IServiceCollection>? _cachingActorProviderWrap;
+    private Action<IServiceCollection>? _workerActorWrap;
     private Action<IServiceCollection>? _unitOfWorkRegistration;
     private bool _useAsp;
     private bool _useProblemDetails;
@@ -274,6 +275,50 @@ public sealed class TrellisServiceBuilder
         return this;
     }
 
+    /// <summary>
+    /// Composes the HTTP-side <see cref="IActorProvider"/> with a system-actor identity used by
+    /// non-HTTP execution contexts (typically a <see cref="Microsoft.Extensions.Hosting.BackgroundService"/>
+    /// tick that runs outside any ambient request).
+    /// </summary>
+    /// <param name="systemActor">
+    /// The actor returned when <see cref="Microsoft.AspNetCore.Http.IHttpContextAccessor.HttpContext"/>
+    /// is <see langword="null"/>. Permissions on this actor become the authorization envelope for
+    /// every mediator command the worker dispatches; scope them as narrowly as the worker requires.
+    /// </param>
+    /// <remarks>
+    /// <para>
+    /// Applied last, AFTER both the HTTP-side actor provider (<c>UseClaimsActorProvider</c>,
+    /// <c>UseEntraActorProvider</c>, or <c>UseDevelopmentActorProvider</c>) and any
+    /// <see cref="UseCachingActorProvider{T}"/> wrap. The worker wrapper sits on the OUTSIDE
+    /// so worker-tick lookups never traverse the caching layer (which has no scope to cache
+    /// against), while HTTP-side lookups flow through caching → inner provider unchanged.
+    /// </para>
+    /// <para>
+    /// Calling this method requires that an actor provider slot is selected somewhere in the
+    /// composition — typically via <c>UseClaimsActorProvider</c>, <c>UseEntraActorProvider</c>,
+    /// <c>UseDevelopmentActorProvider</c>, or <see cref="UseCachingActorProvider{T}"/> with a
+    /// custom provider. Because <c>Apply()</c> records selections and runs them in canonical
+    /// order, the chain position of <c>UseWorkerActor(...)</c> relative to those selectors does
+    /// not matter; only that one of them is present. Calling <c>UseWorkerActor</c> twice throws.
+    /// A hosted-service validator runs at host start and fails fast if any subsequent
+    /// <c>services.AddScoped&lt;IActorProvider, ...&gt;()</c> registration overwrites the
+    /// wrapper — background-worker ticks would otherwise stop resolving the configured system
+    /// actor and would surface the first dispatched command as
+    /// <see cref="Trellis.Error.AuthenticationRequired"/>.
+    /// </para>
+    /// </remarks>
+    public TrellisServiceBuilder UseWorkerActor(Actor systemActor)
+    {
+        ArgumentNullException.ThrowIfNull(systemActor);
+
+        if (_workerActorWrap is not null)
+            throw new InvalidOperationException(
+                "Only one worker actor composition can be configured. Worker actor already configured.");
+
+        _workerActorWrap = services => services.AddTrellisWorkerActor(systemActor);
+        return this;
+    }
+
     internal void Apply()
     {
         if (_useAsp)
@@ -289,6 +334,7 @@ public sealed class TrellisServiceBuilder
 
         _actorProviderRegistration?.Invoke(_services);
         _cachingActorProviderWrap?.Invoke(_services);
+        _workerActorWrap?.Invoke(_services);
 
         if (_useMediator)
         {
