@@ -38,6 +38,7 @@ Result<int> saved = await dbContext.SaveChangesResultAsync(cancellationToken);
 - Apply Trellis value converters and owned-type conventions with one registration point.
 - Query `Maybe<T>` naturally instead of dropping to storage-specific null handling.
 - Return `Result<int>` or `Result` from save operations instead of throwing on expected failures.
+- Idempotent inserts on a unique constraint via `db.TryInsertUniqueAsync(entity, ct)` — converts a duplicate-key violation into `Result.Fail<TEntity>(Error.Conflict { ReasonCode = "duplicate.key", ConstraintName, ConstraintTableName })` and detaches the introduced graph so a retry does not flush stale dependents.
 - Cursor-based seek pagination via `IQueryable<T>.ToPageAsync(pageSize, cursor, keySelector, …)` — returns `Result<Page<T>>`, composes with `PageBuilder` and `CursorCodec`, and never throws on malformed input.
 - `TransactionalCommandBehavior` honors `Result.FailAfterCommit<T>(error)`: handlers that need to commit a permanent-failure transition (e.g., a worker marking an aggregate `permanently_failed` after a non-retryable external rejection) opt in per-result, and the staged row is committed alongside the failure outcome.
 

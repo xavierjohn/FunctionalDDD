@@ -2318,18 +2318,18 @@ public sealed class DispatchedDelivery
     public required DateTimeOffset DispatchedAt { get; init; }
 }
 
-// EF Core: unique index on (EventId, DestinationId).
+// EF Core: composite primary key on (EventId, DestinationId) gives the unique
+// constraint TryInsertUniqueAsync relies on; no separate HasIndex().IsUnique()
+// is needed. If your model already has a surrogate PK, add the unique index
+// explicitly instead: e.HasIndex(d => new { d.EventId, d.DestinationId }).IsUnique().
 public sealed class DispatchLogDbContext(DbContextOptions<DispatchLogDbContext> options) : DbContext(options)
 {
     public DbSet<DispatchedDelivery> Deliveries => Set<DispatchedDelivery>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<DispatchedDelivery>(e =>
-        {
-            e.HasKey(d => new { d.EventId, d.DestinationId });
-            e.HasIndex(d => new { d.EventId, d.DestinationId }).IsUnique();
-        });
+        modelBuilder.Entity<DispatchedDelivery>()
+            .HasKey(d => new { d.EventId, d.DestinationId });
     }
 }
 
