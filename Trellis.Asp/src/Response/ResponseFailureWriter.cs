@@ -42,15 +42,25 @@ internal static class ResponseFailureWriter
         // Emitting the server-relative path+query (rather than the absolute URL) avoids host
         // disclosure while still letting clients correlate the response with the request that
         // produced it.
-        var instance = httpContext.Request.GetEncodedPathAndQuery();
+        var requestPath = httpContext.Request.GetEncodedPathAndQuery();
+        var aspOptions = httpContext.RequestServices?.GetService<TrellisAspOptions>() ?? TrellisAspOptions.SystemDefault;
+
+        // When the failing resource is identified by a ResourceRef whose Id does NOT appear in
+        // the request URL (typical for POST-to-collection that references some other missing
+        // resource), substitute Instance with a canonical resource URI and preserve the original
+        // request URL under Extensions["request"]. Best-effort: any malformed ResourceRef or
+        // resolver error keeps the original behaviour.
+        var (instance, originalRequest) = TrySynthesizeInstance(httpContext, error, requestPath, aspOptions);
 
         Microsoft.AspNetCore.Http.IResult inner;
 
         if (error is Error.Aggregate aggregate)
         {
-            var options = httpContext.RequestServices?.GetService<TrellisAspOptions>() ?? TrellisAspOptions.SystemDefault;
+            var options = aspOptions;
             var detail = effectiveStatus >= 500 ? "An internal error occurred." : GetPublicDetail(error);
             var extensions = BuildExtensions(error, default, wireKindOverride);
+            if (originalRequest is not null)
+                extensions["request"] = originalRequest;
             extensions["errors"] = aggregate.Errors.Items
                 .Select(child =>
                 {
@@ -80,26 +90,172 @@ internal static class ResponseFailureWriter
                 .ToDictionary(g => g.Key, g => g.Select(fv => fv.Detail ?? fv.ReasonCode).ToArray());
 
             var validationDetail = effectiveStatus >= 500 ? "An internal error occurred." : unprocessable.Detail;
+            var extensions = BuildExtensions(error, unprocessable.Rules, wireKindOverride);
+            if (originalRequest is not null)
+                extensions["request"] = originalRequest;
             inner = Microsoft.AspNetCore.Http.Results.ValidationProblem(
                 errors,
                 validationDetail,
                 instance,
                 effectiveStatus,
-                extensions: BuildExtensions(error, unprocessable.Rules, wireKindOverride));
+                extensions: extensions);
         }
         else
         {
             var detail = effectiveStatus >= 500 ? "An internal error occurred." : GetPublicDetail(error);
             var rules = error is Error.InvalidInput uc ? uc.Rules : default;
+            var extensions = BuildExtensions(error, rules, wireKindOverride);
+            if (originalRequest is not null)
+                extensions["request"] = originalRequest;
             inner = Microsoft.AspNetCore.Http.Results.Problem(
                 detail,
                 instance,
                 effectiveStatus,
-                extensions: BuildExtensions(error, rules, wireKindOverride));
+                extensions: extensions);
         }
 
         await inner.ExecuteAsync(httpContext).ConfigureAwait(false);
     }
+
+    private static (string Instance, string? OriginalRequest) TrySynthesizeInstance(
+        HttpContext httpContext,
+        Error error,
+        string requestPath,
+        TrellisAspOptions aspOptions)
+    {
+        if (!aspOptions.SynthesizeProblemDetailsInstanceFromResourceRef)
+            return (requestPath, null);
+
+        var resourceRef = TryGetResourceRef(error);
+        if (resourceRef is not { } @ref
+            || string.IsNullOrWhiteSpace(@ref.Type)
+            || string.IsNullOrWhiteSpace(@ref.Id))
+        {
+            return (requestPath, null);
+        }
+
+        if (UrlContainsId(requestPath, @ref.Id!))
+            return (requestPath, null);
+
+        var registry = httpContext.RequestServices?.GetService<ResourceCollectionNameRegistry>()
+            ?? s_defaultRegistry;
+
+        string collection;
+        try
+        {
+            collection = registry.Resolve(@ref.Type);
+        }
+        catch
+        {
+            return (requestPath, null);
+        }
+
+        if (string.IsNullOrWhiteSpace(collection)
+            || !ResourceCollectionNameAttribute.IsSafePathSegment(collection))
+        {
+            return (requestPath, null);
+        }
+
+        var synthesized = "/" + collection + "/" + Uri.EscapeDataString(@ref.Id!);
+        return (synthesized, requestPath);
+    }
+
+    private static ResourceRef? TryGetResourceRef(Error error) => error switch
+    {
+        Error.NotFound nf => nf.Resource,
+        Error.Gone gn => gn.Resource,
+        Error.Conflict { Resource: { } r } => r,
+        Error.Forbidden { Resource: { } r } => r,
+        Error.InvariantViolation { Resource: { } r } => r,
+        Error.TransportFault { Fault: HttpError.PreconditionFailed pf } => pf.Resource,
+        _ => null,
+    };
+
+    // Segment- and query-aware check: matches a path segment exactly OR a query value exactly
+    // against the raw id, after percent-decoding the candidate. Percent-encoding is case-
+    // insensitive (RFC 3986 §6.2.2.1) so we normalise by decoding the candidate rather than
+    // comparing encoded forms. Query values are decoded with WebUtility.UrlDecode so that
+    // form-encoded '+' is treated as space, matching ASP.NET Core's query parser. Avoids
+    // false positives on short numeric ids that happen to appear inside path segments
+    // like "v1" or inside query keys.
+    private static bool UrlContainsId(string pathAndQuery, string id)
+    {
+        if (string.IsNullOrEmpty(pathAndQuery) || string.IsNullOrEmpty(id))
+            return false;
+
+        var queryStart = pathAndQuery.IndexOf('?');
+        var path = queryStart < 0 ? pathAndQuery.AsSpan() : pathAndQuery.AsSpan(0, queryStart);
+        var query = queryStart < 0 ? ReadOnlySpan<char>.Empty : pathAndQuery.AsSpan(queryStart + 1);
+
+        foreach (var segmentRange in SplitSpan(path, '/'))
+        {
+            var segment = path[segmentRange];
+            if (segment.Length == 0)
+                continue;
+            if (SegmentMatchesId(segment, id))
+                return true;
+        }
+
+        foreach (var pairRange in SplitSpan(query, '&'))
+        {
+            var pair = query[pairRange];
+            if (pair.Length == 0)
+                continue;
+            var eq = pair.IndexOf('=');
+            var value = eq < 0 ? pair : pair[(eq + 1)..];
+            if (QueryValueMatchesId(value, id))
+                return true;
+        }
+
+        return false;
+    }
+
+    private static bool SegmentMatchesId(ReadOnlySpan<char> segment, string id)
+    {
+        if (segment.SequenceEqual(id))
+            return true;
+
+        // Only attempt decode when the segment actually contains a percent escape; this
+        // avoids allocating a string per non-encoded segment.
+        if (segment.IndexOf('%') < 0)
+            return false;
+
+        var decoded = Uri.UnescapeDataString(segment.ToString());
+        return string.Equals(decoded, id, StringComparison.Ordinal);
+    }
+
+    private static bool QueryValueMatchesId(ReadOnlySpan<char> value, string id)
+    {
+        if (value.SequenceEqual(id))
+            return true;
+
+        // Query values may contain percent escapes OR '+' for space (form-encoded). Only
+        // pay decoding cost when either is present.
+        if (value.IndexOf('%') < 0 && value.IndexOf('+') < 0)
+            return false;
+
+        var decoded = System.Net.WebUtility.UrlDecode(value.ToString());
+        return string.Equals(decoded, id, StringComparison.Ordinal);
+    }
+
+    private static List<Range> SplitSpan(ReadOnlySpan<char> source, char separator)
+    {
+        var ranges = new List<Range>();
+        var start = 0;
+        for (var i = 0; i < source.Length; i++)
+        {
+            if (source[i] == separator)
+            {
+                ranges.Add(new Range(start, i));
+                start = i + 1;
+            }
+        }
+
+        ranges.Add(new Range(start, source.Length));
+        return ranges;
+    }
+
+    private static readonly ResourceCollectionNameRegistry s_defaultRegistry = new();
 
     private static void EmitCompanionHeaders(HttpResponse response, Error error)
     {

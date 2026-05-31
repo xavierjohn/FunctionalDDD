@@ -542,6 +542,8 @@ public static class ServiceCollectionExtensions
         services.Replace(ServiceDescriptor.Singleton<TrellisAspOptions>(sp =>
             sp.GetRequiredService<IOptions<TrellisAspOptions>>().Value));
 
+        services.TryAddSingleton<ResourceCollectionNameRegistry>();
+
         // auto-register VO binding / JSON converter infrastructure.
         // Idempotent: configures both MVC and Minimal API JSON pipelines for ScalarValue/Maybe support.
         services.AddScalarValueValidation();

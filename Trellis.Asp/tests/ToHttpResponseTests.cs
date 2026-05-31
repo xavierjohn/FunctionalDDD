@@ -101,9 +101,10 @@ public sealed class ToHttpResponseTests
     [Fact]
     public async Task Result_failure_populates_instance_from_request_url()
     {
-        // RFC 9457 §3.1: "instance" identifies the specific occurrence of the problem,
-        // conventionally the request URI. Trellis emits the server-relative path+query
-        // (no host leak; matches what most public APIs do).
+        // RFC 9457 §3.1: "instance" identifies the specific occurrence of the problem.
+        // When the failing Result carries a ResourceRef whose id is NOT in the request URL,
+        // Trellis synthesises "instance" from the ResourceRef ("/todos/1") and preserves
+        // the original request URI under Extensions["request"].
         var ctx = NewContext();
         ctx.Request.Path = "/api/orders/123";
         ctx.Request.QueryString = new QueryString("?api-version=2026-11-12");
@@ -115,7 +116,8 @@ public sealed class ToHttpResponseTests
         ctx.Response.StatusCode.Should().Be(404);
         ctx.Response.Body.Position = 0;
         var body = await new StreamReader(ctx.Response.Body).ReadToEndAsync(TestContext.Current.CancellationToken);
-        body.Should().Contain("\"instance\":\"/api/orders/123?api-version=2026-11-12\"");
+        body.Should().Contain("\"instance\":\"/todos/1\"");
+        body.Should().Contain("\"request\":\"/api/orders/123?api-version=2026-11-12\"");
     }
 
     [Fact]

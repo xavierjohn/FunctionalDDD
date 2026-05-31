@@ -1,7 +1,7 @@
 ﻿---
 package: Trellis.Core
 namespaces: [Trellis]
-types: [Result, "Result<T>", IResult, "IResult<TValue>", "IFailureFactory<TSelf>", IPersistOnFailure, "Maybe<T>", Maybe, MaybeInvariant, Error, ITransportFault, RetryAdvice, RetryClassification, ErrorRetryExtensions, Unit, "Page<T>", Page, Cursor, PageSize, CursorCodec, PageBuilder, "EquatableArray<T>", EquatableArray, ResourceRef, InputPointer, FieldViolation, RuleViolation, IAggregate, "Aggregate<TId>", IEntity, "Entity<TId>", IDomainEvent, ITrackedAggregateSource, ValueObject, "ScalarValueObject<TSelf,T>", "IScalarValue<TSelf,TPrimitive>", "IFormattableScalarValue<TSelf,TPrimitive>", "RequiredString<TSelf>", "RequiredInt<TSelf>", "RequiredLong<TSelf>", "RequiredDecimal<TSelf>", "RequiredBool<TSelf>", "RequiredGuid<TSelf>", "RequiredDateTime<TSelf>", "RequiredEnum<TSelf>", "RequiredEnumJsonConverter<T>", "ParsableJsonConverter<T>", ResultRequiresExplicitHttpMappingConverter, PrimitiveValueObjectTrace, "Specification<T>", TrellisJsonValidationException, RangeAttribute, StringLengthAttribute, NotDefaultAttribute, TrimAttribute, RailwayTrackAttribute, TrackBehavior, EnumValueAttribute, ResultDebugSettings]
+types: [Result, "Result<T>", IResult, "IResult<TValue>", "IFailureFactory<TSelf>", IPersistOnFailure, "Maybe<T>", Maybe, MaybeInvariant, Error, ITransportFault, RetryAdvice, RetryClassification, ErrorRetryExtensions, Unit, "Page<T>", Page, Cursor, PageSize, CursorCodec, PageBuilder, "EquatableArray<T>", EquatableArray, ResourceRef, InputPointer, FieldViolation, RuleViolation, IAggregate, "Aggregate<TId>", IEntity, "Entity<TId>", IDomainEvent, ITrackedAggregateSource, ValueObject, "ScalarValueObject<TSelf,T>", "IScalarValue<TSelf,TPrimitive>", "IFormattableScalarValue<TSelf,TPrimitive>", "RequiredString<TSelf>", "RequiredInt<TSelf>", "RequiredLong<TSelf>", "RequiredDecimal<TSelf>", "RequiredBool<TSelf>", "RequiredGuid<TSelf>", "RequiredDateTime<TSelf>", "RequiredEnum<TSelf>", "RequiredEnumJsonConverter<T>", "ParsableJsonConverter<T>", ResultRequiresExplicitHttpMappingConverter, PrimitiveValueObjectTrace, "Specification<T>", TrellisJsonValidationException, RangeAttribute, StringLengthAttribute, NotDefaultAttribute, TrimAttribute, RailwayTrackAttribute, TrackBehavior, EnumValueAttribute, ResourceCollectionNameAttribute, ResultDebugSettings]
 version: v3
 last_verified: 2026-05-06
 audience: [llm]
@@ -1841,6 +1841,26 @@ public sealed class EnumValueAttribute : Attribute
 | Signature | Returns | Description |
 | --- | --- | --- |
 | `public EnumValueAttribute(string value)` | `EnumValueAttribute` | Overrides the default field-name-based symbolic value. |
+
+### `ResourceCollectionNameAttribute`
+
+```csharp
+[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, AllowMultiple = false, Inherited = false)]
+public sealed class ResourceCollectionNameAttribute : Attribute
+```
+
+Overrides the default URI collection name (`{TypeName.ToLowerInvariant()}s`) used when `Trellis.Asp` synthesises `ProblemDetails.Instance` from a failing `ResourceRef`. Apply to the aggregate type whose default naive plural is wrong or unwanted (for example `[ResourceCollectionName("people")]` on `Person`, or `[ResourceCollectionName("statuses")]` on `Status`).
+
+The attribute validates the supplied name at construction time so misconfiguration fails fast at host start when `services.AddResourceCollectionNames(...)` scans the assembly. The name must be a non-empty single URL path segment containing only RFC 3986 unreserved or sub-delims characters (no `/`, no `?`, no `#`, no whitespace, no percent escapes). When the attribute is absent and no DI override is registered, the writer falls back to `{TypeName.ToLowerInvariant()}s`.
+
+| Name | Type | Description |
+| --- | --- | --- |
+| `CollectionName` | `string` | The URL collection segment (for example `"people"`). |
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `public ResourceCollectionNameAttribute(string collectionName)` | `ResourceCollectionNameAttribute` | Throws `ArgumentException` if `collectionName` is null/whitespace or contains characters that are not safe in a single URL path segment. |
+| `public static bool IsSafePathSegment(string value)` | `bool` | Predicate used by the attribute constructor and by `Trellis.Asp.ResourceCollectionNameRegistry` to validate names from DI helpers. Exposed publicly so other layers can apply the same rule. |
 
 ### `StringExtensions`
 

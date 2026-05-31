@@ -1,7 +1,7 @@
 ﻿---
 package: Trellis.Asp
 namespaces: [Trellis.Asp, Trellis.Asp.Authorization, Trellis.Asp.ModelBinding, Trellis.Asp.Routing, Trellis.Asp.Validation]
-types: [TrellisHttpResult, ToHttpResponse, AsActionResult, HttpResponseOptionsBuilder<T>, CacheControl, MaybePrimitiveJsonConverter<T>, MaybePrimitiveJsonConverterFactory, MaybePrimitiveModelBinder<T>, MaybePrimitives, ClaimsActorProvider, EntraActorProvider, DevelopmentActorProvider, CachingActorProvider, AddTrellisProblemDetails, UseTrellisProblemDetails]
+types: [TrellisHttpResult, ToHttpResponse, AsActionResult, HttpResponseOptionsBuilder<T>, CacheControl, MaybePrimitiveJsonConverter<T>, MaybePrimitiveJsonConverterFactory, MaybePrimitiveModelBinder<T>, MaybePrimitives, ClaimsActorProvider, EntraActorProvider, DevelopmentActorProvider, CachingActorProvider, AddTrellisProblemDetails, UseTrellisProblemDetails, ResourceCollectionNameRegistry, ResourceCollectionNameOverride, AddResourceCollectionName, AddResourceCollectionNames]
 version: v3
 last_verified: 2026-05-01
 audience: [llm]
@@ -171,6 +171,7 @@ Configuration registered via `AddTrellisAsp(...)` that maps domain `Error` types
 | --- | --- | --- |
 | `SystemDefault` | `static TrellisAspOptions` (internal) | Read-only default instance used when DI cannot resolve a configured `TrellisAspOptions` (e.g. the host did not call `AddTrellisAsp`). Internal — not callable from user code. Hosts customize the mappings by passing a configure delegate to `AddTrellisAsp(o => o.MapError<...>(...))`; raw `AddSingleton(new TrellisAspOptions())` is unsupported and will be replaced by the bridge factory the next time `AddTrellisAsp` runs. |
 | `FailFastOnSilentVersionInjection` | `bool` | When `true`, every `.WithVersionedRoute()` (or pinned overload) call that would silently skip `api-version` injection because the target endpoint has no `ApiVersionMetadata` throws `InvalidOperationException` instead of logging a single warning per endpoint. Defaults to `false` (warn-once-per-(endpoint, AppDomain) via the `Trellis.Asp.ApiVersioning` `ILogger` category). Intended for non-Production environments to surface mid-migration regressions where `AddApiVersioning(...)` was removed but `.WithVersionedRoute()` chains remain. |
+| `SynthesizeProblemDetailsInstanceFromResourceRef` | `bool` | When `true` (the default), `ResponseFailureWriter` populates `ProblemDetails.Instance` from the failing `ResourceRef` (`/{collectionName}/{id}`) when the request URL does not already identify the resource, and preserves the original request URL under `Extensions["request"]`. Applies to `NotFound`, `Gone`, `Conflict`, `Forbidden`, `InvariantViolation`, and `TransportFault(HttpError.PreconditionFailed)`. Set to `false` to retain the historical request-URL-only `Instance`. Collection name defaults to `{Type.ToLowerInvariant()}s`; override via `[ResourceCollectionName(name)]` on the aggregate or `services.AddResourceCollectionName<T>(name)`. |
 
 | Signature | Returns | Description |
 | --- | --- | --- |
@@ -216,6 +217,47 @@ The wire token shown above is emitted in the problem-details `extensions.kind` m
 ### Concurrent modification override
 
 When `Error.Conflict.ReasonCode == "concurrent_modification"` and the incoming request carried `If-Match`, the boundary emits `412 Precondition Failed` with wire `kind` `precondition-failed` instead of `409 conflict`. The top-level Problem Details `type` continues to default to the ASP.NET status-code URL for 412. The domain `code` stays `"concurrent_modification"`.
+
+### `ProblemDetails.Instance` synthesis from `ResourceRef`
+
+When `TrellisAspOptions.SynthesizeProblemDetailsInstanceFromResourceRef` is `true` (the default), `ResponseFailureWriter` populates `ProblemDetails.Instance` from the failing `ResourceRef` rather than the request URL whenever:
+
+1. The error carries a non-null `ResourceRef` (`NotFound`, `Gone`, `Conflict?`, `Forbidden?`, `InvariantViolation?`, or `TransportFault(HttpError.PreconditionFailed)`).
+2. `ResourceRef.Type` and `ResourceRef.Id` are both non-empty and non-whitespace.
+3. The request URL does not already identify the same resource (segment-and-query-value-aware exact match against the raw id; percent-encoded path segments are decoded for the comparison, and form-encoded `+` is treated as space in query values).
+
+The synthesised value is `/{collection}/{escapedId}` (lowercase, no `/api/` prefix, no api-version segment, no query string), where:
+
+- `{collection}` defaults to `ResourceRef.Type.ToLowerInvariant() + "s"`; override via `[ResourceCollectionName(name)]` on the aggregate type or via `services.AddResourceCollectionName<T>(name)` / `services.AddResourceCollectionNames(assembly)`.
+- `{escapedId}` is `Uri.EscapeDataString(ResourceRef.Id)`.
+
+The original request URI is preserved under `ProblemDetails.Extensions["request"]` so callers needing both have it. When synthesis is suppressed (toggle off, URL already identifies the resource, or `ResourceRef` is malformed), `Instance` falls back to the request URL and no `request` extension is emitted. `Error.Aggregate` never promotes a child's `ResourceRef`; the envelope itself carries no resource identity.
+
+Synthesis is defensive: any failure during URI construction (malformed `ResourceRef`, name not a safe URL path segment, registry not registered) is swallowed silently and the request URL is used. The synthesis path can never turn a domain 404/409 into a 500.
+
+### `ResourceCollectionNameRegistry`
+
+**Declaration**
+
+```csharp
+public sealed class ResourceCollectionNameRegistry
+```
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `public ResourceCollectionNameRegistry()` | `ResourceCollectionNameRegistry` | Empty registry — every `ResourceRef.Type` resolves to its naive lowercase plural. Used as the static fallback when `HttpContext.RequestServices` is null. |
+| `public ResourceCollectionNameRegistry(IEnumerable<ResourceCollectionNameOverride> overrides)` | `ResourceCollectionNameRegistry` | Builds the registry from DI. Validates each override (non-empty type/name; name must pass `ResourceCollectionNameAttribute.IsSafePathSegment`). Throws `InvalidOperationException` if two overrides map the same type name (case-insensitive) to different collection names. Identical duplicates are coalesced silently. Registered as a singleton by `AddTrellisAsp`. |
+| `public string Resolve(string resourceType)` | `string` | Case-insensitive override lookup; falls back to `resourceType.ToLowerInvariant() + "s"` if no override is registered. Safe to call from concurrent request threads (the underlying dictionary is built once at construction and read-only thereafter). |
+
+### `ResourceCollectionNameOverride`
+
+**Declaration**
+
+```csharp
+public sealed record ResourceCollectionNameOverride(string ResourceType, string CollectionName);
+```
+
+DI-friendly carrier record. Register one per type via `services.AddSingleton(new ResourceCollectionNameOverride("Person", "people"))` (or use the `AddResourceCollectionName*` extensions, which do the same). `ResourceCollectionNameRegistry` consumes them via `IEnumerable<ResourceCollectionNameOverride>` in its constructor — Microsoft DI auto-injects an empty enumerable when no overrides are registered.
 
 ### `RuleViolationProblemDetail`
 
@@ -355,6 +397,9 @@ The main DI surface for `Trellis.Asp` (in folder `Extensions/`).
 | `public static IServiceCollection AddTrellisAsp(this IServiceCollection services)` | `IServiceCollection` | Registers `TrellisAspOptions` with default error mappings, then calls `AddScalarValueValidation()`. |
 | `public static IServiceCollection AddTrellisAsp(this IServiceCollection services, Action<TrellisAspOptions> configure)` | `IServiceCollection` | Same as above, with a `MapError<TError>(...)` callback for overrides. **Calls compose** — when `AddTrellisAsp(o => ...)` is invoked more than once (e.g. by a library and the application), every `configure` delegate runs in registration order against the same `TrellisAspOptions` instance built lazily by `OptionsFactory<TrellisAspOptions>`. Same-`TError` mappings still follow last-wins, but mappings for different error types from earlier calls are preserved. |
 | `public static IServiceCollection AddTrellisProblemDetails(this IServiceCollection services)` | `IServiceCollection` | Registers `IProblemDetailsService` (via `AddProblemDetails`) and applies the Trellis recipe: trace id projected from `Activity.Current?.Id ?? HttpContext.TraceIdentifier`, friendly detail rewrite for `500` responses, and `allow` extension array on `405` projected from the `Allow` header (split on `,` with whitespace trimmed). Composes with consumer customizations: Trellis defaults run first, then any prior or subsequent `AddProblemDetails(o => o.CustomizeProblemDetails = ...)` callback runs last and wins on collisions. Idempotent — additional calls are no-ops. Pair with `app.UseTrellisProblemDetails()` in the request pipeline. Composition-root consumers can opt in via the `options.UseProblemDetails()` slot on [`TrellisServiceBuilder`](trellis-api-servicedefaults.md#trellisservicebuilder); direct + builder composition is idempotent (one Trellis post-configure layer). |
+| `public static IServiceCollection AddResourceCollectionName<T>(this IServiceCollection services, string collectionName)` | `IServiceCollection` | Maps the simple type name of `T` (as produced by `ResourceRef.For<T>()`) to a URL collection segment used when synthesising `ProblemDetails.Instance` from a `ResourceRef`. AOT- and trim-friendly. Registers `ResourceCollectionNameRegistry` via `TryAddSingleton` so callers can use this extension without first calling `AddTrellisAsp`. |
+| `public static IServiceCollection AddResourceCollectionName(this IServiceCollection services, string resourceType, string collectionName)` | `IServiceCollection` | Same as the typed overload but takes the `ResourceRef.Type` string directly — for cases where the consumer wants to bind a type name that does not exist as a CLR type, or to keep registration centralised. Validates the `collectionName` is a safe single URL path segment. |
+| `public static IServiceCollection AddResourceCollectionNames(this IServiceCollection services, params Assembly[] assemblies)` | `IServiceCollection` | Scans the supplied assemblies for types decorated with `[ResourceCollectionName]` and registers one `ResourceCollectionNameOverride` per type. Marked `[RequiresUnreferencedCode]` because it uses reflection over the assembly's types; AOT/trim-published apps should prefer the explicit `AddResourceCollectionName<T>(...)` overload. Conflicting registrations (same type name → different collection names) throw at registry activation; identical registrations coalesce silently. |
 
 ### `ApplicationBuilderExtensions`
 
