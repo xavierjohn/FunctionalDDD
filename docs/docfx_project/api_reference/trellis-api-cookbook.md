@@ -98,6 +98,7 @@ Use this table before writing code. If a task matches a row, read that recipe fi
 | Create HTTP-oriented resource errors | Use `ResourceRef.For<TResource>(id)` from [trellis-api-core.md](trellis-api-core.md) |
 | Add a state transition | [Recipe 9](#recipe-9--state-machine-canfire--fire-pattern-with-fireresult) |
 | Write handler/domain tests | [Recipe 10](#recipe-10--test-handler-test-using-trellistesting-shouldbe--unwraperror) |
+| Write integration tests for a `BackgroundService` worker | [Recipe 26](#recipe-26--test-a-backgroundservice-with-workerharnesstworker) |
 | Define domain events | [Recipe 17](#recipe-17--defining-custom-domain-events-occurredat-is-the-only-timestamp) |
 | Fix analyzer warnings | [Recipe 11](#recipe-11--anti-pattern--fix-gallery-the-analyzers-in-action) |
 | Wire the composition root | [Recipe 12](#recipe-12--di-wiring-playbook-addtrellis-composition-builder) |
@@ -2170,6 +2171,92 @@ public async Task Submit_with_one_unsatisfiable_line_does_not_reserve_any_stock(
 ```
 
 Together with the duplicate-product case (two lines for the same product whose summed quantity exceeds available stock), these are the two failure-mode tests that catch every form of this bug.
+
+---
+
+## Recipe 26 — Test a `BackgroundService` with `WorkerHarness<TWorker>`
+
+**Problem.** A periodic worker reads pending work, dispatches a side effect, and emits a domain event per item. Integration tests must drive the worker forward deterministically (no `Task.Delay`), capture the domain events the worker raised, and stop the host cleanly — without re-implementing the `IHost` + `FakeTimeProvider` + `IActorProvider` + `IDomainEventHandler<T>` plumbing in every test fixture.
+
+```csharp
+// The worker under test — signals a named tick at the top of each iteration so tests
+// can wait deterministically instead of sleeping. The tick is what makes the test
+// non-flaky: the harness records the signal and the test awaits it through
+// WaitForTickAsync rather than guessing how long the worker needs.
+public sealed class HealthProbeWorker(
+    IWorkerTickSignal tick,
+    TimeProvider time,
+    IMediator mediator,
+    IHealthProbeRepository repo) : BackgroundService
+{
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            await tick.SignalAsync("probe", stoppingToken).ConfigureAwait(false);
+
+            foreach (var probe in await repo.GetDuePendingAsync(stoppingToken).ConfigureAwait(false))
+            {
+                var outcome = await mediator.Send(new RunProbeCommand(probe.Id), stoppingToken).ConfigureAwait(false);
+                if (outcome.IsSuccess)
+                    await mediator.Publish(new ProbeCompletedDomainEvent(probe.Id, time.GetUtcNow()), stoppingToken).ConfigureAwait(false);
+            }
+
+            try { await Task.Delay(TimeSpan.FromMinutes(5), time, stoppingToken).ConfigureAwait(false); }
+            catch (OperationCanceledException) { return; }
+        }
+    }
+}
+
+// The integration test.
+public class HealthProbeWorkerTests
+{
+    [Fact]
+    public async Task Worker_dispatches_due_probes_and_publishes_a_completion_event_per_run()
+    {
+        await using var harness = await WorkerHarness<HealthProbeWorker>.CreateAsync(opts =>
+        {
+            opts.ConfigureServices(s =>
+            {
+                s.AddSingleton<IHealthProbeRepository, FakeHealthProbeRepository>();
+                // RunProbeCommand handler is part of the worker's normal DI surface.
+                s.AddTransient<IRequestHandler<RunProbeCommand, Result<Unit>>, RunProbeHandler>();
+            });
+            opts.SeedAsync(async (sp, ct) =>
+            {
+                var repo = sp.GetRequiredService<IHealthProbeRepository>();
+                await repo.AddAsync(new HealthProbe(ProbeId.New(), "/api/orders"), ct);
+            });
+        });
+
+        await harness.StartAsync(TestContext.Current.CancellationToken);
+
+        // Capture the global signal index of the most recent "probe" tick BEFORE advancing
+        // time. That is the cursor — tests must wait for a NEW tick strictly after this
+        // index, not for any tick already in the recorded history. LastTickIndexOf returns
+        // the global signal index (-1 if none); TickCountOf is a per-name count and is NOT
+        // a valid cursor when other tick names interleave.
+        var cursor = harness.LastTickIndexOf("probe");
+
+        // Advance the FakeTimeProvider past the worker's 5-minute Task.Delay. The advance
+        // resumes the delay; the worker loops and signals the next "probe" tick.
+        harness.Time.Advance(TimeSpan.FromMinutes(5));
+        cursor = await harness.WaitForTickAsync("probe", after: cursor, TimeSpan.FromSeconds(2));
+
+        // The worker raised one ProbeCompletedDomainEvent for the seeded probe.
+        var completed = await harness.WaitForEventAsync<ProbeCompletedDomainEvent>(TimeSpan.FromSeconds(2));
+        completed.ProbeId.Should().Be(/* seeded probe id */);
+        harness.Events<ProbeCompletedDomainEvent>().Should().HaveCount(1);
+    }
+}
+```
+
+**What it shows.** `WorkerHarness<TWorker>.CreateAsync(...)` builds an `IHost` with `TWorker` registered as the sole hosted service, wires `TimeProvider` to `FakeTimeProvider`, registers a `TestActorProvider` returning `WorkerHarnessOptions.SystemActor`, and installs an open-generic `IDomainEventHandler<>` that captures every published event for `harness.Events<TEvent>()` and `harness.WaitForEventAsync<TEvent>()`. `harness.Time.Advance(...)` is the deterministic equivalent of `Task.Delay` — the worker's `Task.Delay(interval, time, ct)` resumes synchronously and loops. Tests should pair an `Advance` with `WaitForTickAsync(name, after: cursor, ...)` so the wait observes the *next* tick rather than racing with the one already in the history; `LastTickIndexOf(name)` is the right baseline-cursor source. The harness's `DisposeAsync` stops the host with a real-time cap; if `StartAsync` itself throws, the harness drives a best-effort `StopAsync` so any earlier-registered `IHostedService` that succeeded still observes its stop hook.
+
+`Trellis.Testing.Worker` references `Trellis.Testing` transitively, so handler-test assertions like `Should().BeSuccess()` and `FakeRepository<,>` are available from the same test project without an extra package.
+
+---
+
 ## Cross-references
 
 - [trellis-api-core.md](trellis-api-core.md#extension-class-catalog-full-signatures) — every `Result*Extensions(Async)` family with full signatures.
