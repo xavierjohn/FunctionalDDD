@@ -3,6 +3,7 @@
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Text.Json.Serialization;
 
 /// <summary>
 /// Closed discriminated union of Trellis error values. Domain-facing cases stay transport-neutral,
@@ -289,6 +290,34 @@ public abstract record Error
 
         /// <inheritdoc />
         public override string Code => ReasonCode;
+
+        /// <summary>
+        /// Optional provider-reported constraint name when the conflict came from a database
+        /// constraint violation (unique index, primary key, or foreign key). Populated on a
+        /// best-effort basis by helpers such as
+        /// <c>DbContext.TryInsertUniqueAsync</c> and <c>DbContext.SaveChangesResultAsync</c>;
+        /// <see langword="null"/> for non-database conflicts or when the provider does not
+        /// surface the name.
+        /// </summary>
+        /// <remarks>
+        /// Telemetry-only. The value can reveal schema details (index names, constraint names)
+        /// and is therefore excluded from default <c>System.Text.Json</c> serialization via
+        /// <see cref="JsonIgnoreAttribute"/>. Use it for structured logging and observability
+        /// dimensions; do not surface it directly in API responses.
+        /// </remarks>
+        [JsonIgnore]
+        public string? ConstraintName { get; init; }
+
+        /// <summary>
+        /// Optional provider-reported table name associated with <see cref="ConstraintName"/>,
+        /// when the provider surfaces it. <see langword="null"/> otherwise.
+        /// </summary>
+        /// <remarks>
+        /// Telemetry-only with the same handling as <see cref="ConstraintName"/>: excluded
+        /// from default JSON serialization and unsuitable for API responses.
+        /// </remarks>
+        [JsonIgnore]
+        public string? ConstraintTableName { get; init; }
     }
 
     // ───────────────────────────────────────────────────────────────────────────

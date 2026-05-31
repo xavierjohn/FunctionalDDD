@@ -99,6 +99,7 @@ Use this table before writing code. If a task matches a row, read that recipe fi
 | Add a state transition | [Recipe 9](#recipe-9--state-machine-canfire--fire-pattern-with-fireresult) |
 | Write handler/domain tests | [Recipe 10](#recipe-10--test-handler-test-using-trellistesting-shouldbe--unwraperror) |
 | Write integration tests for a `BackgroundService` worker | [Recipe 26](#recipe-26--test-a-backgroundservice-with-workerharnesstworker) |
+| Insert a row idempotently on a unique constraint (de-duplicated worker outbox, "save unless exists") | [Recipe 27](#recipe-27--idempotent-inserts-on-a-unique-constraint-with-tryinsertuniqueasync) |
 | Define domain events | [Recipe 17](#recipe-17--defining-custom-domain-events-occurredat-is-the-only-timestamp) |
 | Fix analyzer warnings | [Recipe 11](#recipe-11--anti-pattern--fix-gallery-the-analyzers-in-action) |
 | Wire the composition root | [Recipe 12](#recipe-12--di-wiring-playbook-addtrellis-composition-builder) |
@@ -2299,6 +2300,75 @@ public class HealthProbeWorkerTests
 **What it shows.** `WorkerHarness<TWorker>.CreateAsync(...)` builds an `IHost` with `TWorker` registered as the sole hosted service, wires `TimeProvider` to `FakeTimeProvider`, registers a `TestActorProvider` returning `WorkerHarnessOptions.SystemActor`, and installs an open-generic `IDomainEventHandler<>` that captures every published event for `harness.Events<TEvent>()` and `harness.WaitForEventAsync<TEvent>()`. The harness does **not** register `AddMediator(...)` or `AddDomainEventDispatch()` — those are part of the production composition root and belong in the test's `ConfigureServices` callback so the worker exercises the same wiring it uses in production. `harness.StartAsync(...)` returns as soon as `ExecuteAsync` is scheduled on the thread pool, NOT after the worker has registered its first `Task.Delay` with `FakeTimeProvider`; the recipe makes the readiness barrier deterministic by REGISTERING the first `Task.Delay(...)` before signaling `"ready"` (because `Task.Delay(TimeSpan, TimeProvider, CancellationToken)` eagerly calls `timeProvider.CreateTimer(...)`, the callback exists by the time `SignalAsync("ready")` completes), then `await harness.WaitForTickAsync("ready", ...)` in the test releases when the test can safely call `Time.Advance`. Signaling first and registering the delay second would leave a gap during which the test could `Advance` before any callback was registered — losing the `Advance`. The lazier alternative when you cannot change the worker is `await harness.SettleAsync()`, at the cost of a real-time yield. `harness.Time.Advance(...)` is the deterministic equivalent of `Task.Delay` — the worker's `Task.Delay(interval, time, ct)` resumes synchronously and runs the next iteration. Tests should pair `Advance` with `WaitForTickAsync(name, after: cursor, ...)` so the wait observes the *next* tick rather than racing with one already in the history; `LastTickIndexOf(name)` is the right baseline-cursor source. The harness's `DisposeAsync` stops the host with a real-time cap; if `StartAsync` itself throws, the harness drives a best-effort `StopAsync` so any earlier-registered `IHostedService` that succeeded still observes its stop hook.
 
 `Trellis.Testing.Worker` references `Trellis.Testing` transitively, so handler-test assertions like `Should().BeSuccess()` and `FakeRepository<,>` are available from the same test project without an extra package.
+
+---
+
+## Recipe 27 — Idempotent inserts on a unique constraint with `TryInsertUniqueAsync`
+
+**Problem.** A worker (or any caller) processes events that may be redelivered. It must record "I handled event X for destination Y" exactly once. A `(EventId, DestinationId)` unique index in the database is the source of truth — the second delivery should silently no-op, not crash, not double-process. Doing this with `Any(...)` + `Add` + `SaveChangesAsync` is a TOCTOU race: two concurrent deliveries both see "not present", both `Add`, one wins and the loser throws `DbUpdateException`. Catching `DbUpdateException` and string-matching on the inner exception's message is provider-specific (SQL Server says one thing, PostgreSQL another, SQLite a third) and easy to get subtly wrong.
+
+**Solution.** `DbContext.TryInsertUniqueAsync(entity, ct)` (from `Trellis.EntityFrameworkCore.DbContextIdempotencyExtensions`) adds the entity, calls `SaveChangesAsync`, and converts a provider-level unique-constraint violation into `Result.Fail(new Error.Conflict(null, "duplicate.key"))` with a generic safe `Detail`. Constraint identity (`ConstraintName`, `ConstraintTableName`) is extracted on a best-effort basis and attached to the `Error.Conflict` payload for structured logging. All other failures — concurrency, foreign-key, cancellation, connection errors — propagate to the caller so retry policies and global handlers see them. The helper requires a clean `DbContext` (no pending changes) so a duplicate-key violation can be unambiguously attributed to the entity being inserted.
+
+```csharp
+// Domain: a worker records each (EventId, DestinationId) it has dispatched.
+public sealed class DispatchedDelivery
+{
+    public required Guid EventId { get; init; }
+    public required Guid DestinationId { get; init; }
+    public required DateTimeOffset DispatchedAt { get; init; }
+}
+
+// EF Core: unique index on (EventId, DestinationId).
+public sealed class DispatchLogDbContext(DbContextOptions<DispatchLogDbContext> options) : DbContext(options)
+{
+    public DbSet<DispatchedDelivery> Deliveries => Set<DispatchedDelivery>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<DispatchedDelivery>(e =>
+        {
+            e.HasKey(d => new { d.EventId, d.DestinationId });
+            e.HasIndex(d => new { d.EventId, d.DestinationId }).IsUnique();
+        });
+    }
+}
+
+public sealed class DispatchLogger(DispatchLogDbContext db, TimeProvider time, ILogger<DispatchLogger> log)
+{
+    public async Task<Result<DeliveryOutcome>> RecordDeliveryAsync(
+        Guid eventId, Guid destinationId, CancellationToken ct)
+    {
+        var entry = new DispatchedDelivery
+        {
+            EventId = eventId,
+            DestinationId = destinationId,
+            DispatchedAt = time.GetUtcNow(),
+        };
+
+        var result = await db.TryInsertUniqueAsync(entry, ct);
+
+        if (result.IsSuccess)
+            return Result.Ok(DeliveryOutcome.Recorded);
+
+        if (result.UnwrapError() is Error.Conflict conflict && conflict.ReasonCode == "duplicate.key")
+        {
+            // The second delivery — exactly what idempotency promises. No-op, do not fail.
+            log.LogInformation(
+                "Duplicate delivery suppressed for event {EventId} / destination {DestinationId} (table {Table}, constraint {Constraint}).",
+                eventId, destinationId, conflict.ConstraintTableName, conflict.ConstraintName);
+            return Result.Ok(DeliveryOutcome.AlreadyRecorded);
+        }
+
+        return Result.Fail<DeliveryOutcome>(result.UnwrapError());
+    }
+}
+
+public enum DeliveryOutcome { Recorded, AlreadyRecorded }
+```
+
+**What it shows.** `TryInsertUniqueAsync` is the framework idiom for "insert unless a unique constraint says it already exists". The success path returns `Result.Ok(entity)` and the entity has its EF-populated generated values (PK, row version, sequence-assigned columns) in place on the same instance the caller passed in. The duplicate path returns `Result.Fail<TEntity>(Error.Conflict { ReasonCode = "duplicate.key", ConstraintName, ConstraintTableName })` and the helper detaches the attempted entity from the change tracker so a retry with a freshly-constructed entity does not re-flush the original on the next `SaveChangesAsync`. `ConstraintName` and `ConstraintTableName` are best-effort and marked `[JsonIgnore]` on `Error.Conflict` — they are telemetry fields for structured logs, never serialized to API responses; the safe-for-clients message lives in `Detail`. Foreign-key violations, `DbUpdateConcurrencyException`, connection-level exceptions, and `OperationCanceledException` all propagate normally so retry policies still see them. The clean-context precondition (throws `InvalidOperationException` if `ChangeTracker.HasChanges()` is `true` on entry) prevents the failure from being mis-attributed to the inserted entity when unrelated pending changes exist; flush them first or use a fresh context. Pair the helper with `SaveChangesWithRetryAsync` (from `Trellis.EntityFrameworkCore.DbContextRetryExtensions`) when the retry shape is "regenerate a key and try again" rather than "second writer wins" — the two helpers are complementary, not substitutes.
+
+`DbExceptionClassifier.ExtractConstraintIdentity(DbUpdateException)` is the lower-level building block the helper uses; the same identity is also now populated on the `Error.Conflict` returned by `SaveChangesResultAsync` and `SaveChangesWithRetryAsync` for the `duplicate.key` and `referential.integrity` reason codes, so existing code paths get the new telemetry fields for free.
 
 ---
 

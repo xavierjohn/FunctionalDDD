@@ -145,11 +145,27 @@ public static class DbContextRetryExtensions
                 if (!shouldRetry(ex))
                 {
                     if (DbExceptionClassifier.IsDuplicateKey(ex))
+                    {
+                        var (constraintName, constraintTable) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
                         return Result.Fail<Unit>(new Error.Conflict(Resource: null, ReasonCode: "duplicate.key")
-                        { Detail = "A record with the same unique value already exists." });
+                        {
+                            Detail = "A record with the same unique value already exists.",
+                            ConstraintName = constraintName,
+                            ConstraintTableName = constraintTable,
+                        });
+                    }
+
                     if (DbExceptionClassifier.IsForeignKeyViolation(ex))
+                    {
+                        var (constraintName, constraintTable) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
                         return Result.Fail<Unit>(new Error.Conflict(Resource: null, ReasonCode: "referential.integrity")
-                        { Detail = "Operation violates a referential integrity constraint." });
+                        {
+                            Detail = "Operation violates a referential integrity constraint.",
+                            ConstraintName = constraintName,
+                            ConstraintTableName = constraintTable,
+                        });
+                    }
+
                     throw;
                 }
 

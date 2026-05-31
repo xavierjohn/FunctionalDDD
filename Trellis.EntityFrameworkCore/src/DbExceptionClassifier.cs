@@ -1,5 +1,6 @@
 ﻿namespace Trellis.EntityFrameworkCore;
 
+using System.Text.RegularExpressions;
 using Microsoft.EntityFrameworkCore;
 
 /// <summary>
@@ -133,6 +134,69 @@ public static class DbExceptionClassifier
         return inner.Message;
     }
 
+    /// <summary>
+    /// Attempts to extract the database constraint identity (constraint name and table name)
+    /// associated with a <see cref="DbUpdateException"/>, on a best-effort basis across
+    /// SQL Server, PostgreSQL, SQLite, and MySQL/MariaDB providers. Returns
+    /// <c>(null, null)</c> when no identity can be determined (unknown provider, missing
+    /// inner exception, message format the parser does not recognise, localised provider
+    /// message, etc.).
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Typed extraction is preferred where the provider exposes the names as properties
+    /// (PostgreSQL's <c>PostgresException.ConstraintName</c> / <c>TableName</c>); the
+    /// SQL Server / SQLite / MySQL paths parse the message because those providers do
+    /// not expose typed identity properties.
+    /// </para>
+    /// <para>
+    /// <b>Telemetry-only.</b> Constraint and table names can reveal schema details and
+    /// should not be surfaced directly in API responses. Use the returned values for
+    /// structured logging and observability dimensions (for example as the
+    /// <see cref="Error.Conflict.ConstraintName"/> / <see cref="Error.Conflict.ConstraintTableName"/>
+    /// payload on the <see cref="Error.Conflict"/> produced by
+    /// <c>DbContext.TryInsertUniqueAsync</c>).
+    /// </para>
+    /// </remarks>
+    /// <param name="ex">The <see cref="DbUpdateException"/> to extract identity from.</param>
+    /// <returns>
+    /// A tuple of <c>(ConstraintName, TableName)</c> where each element may independently
+    /// be <see langword="null"/> if the provider did not surface it or the message could
+    /// not be parsed.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="ex"/> is null.</exception>
+    public static (string? ConstraintName, string? TableName) ExtractConstraintIdentity(DbUpdateException ex)
+    {
+        ArgumentNullException.ThrowIfNull(ex);
+
+        var inner = ex.InnerException;
+        if (inner is null)
+            return (null, null);
+
+        try
+        {
+            var typeName = inner.GetType().Name;
+            var message = inner.Message ?? string.Empty;
+
+            return typeName switch
+            {
+                "PostgresException" => ExtractPostgresIdentity(inner),
+                "SqlException" => ParseSqlServerMessage(message),
+                "SqliteException" => ParseSqliteMessage(message),
+                "MySqlException" => ParseMySqlMessage(message),
+                _ => (null, null),
+            };
+        }
+        catch (Exception parseException) when (
+            parseException is not OutOfMemoryException
+            and not StackOverflowException)
+        {
+            // Defensive: a malformed message or a property surface that throws on access
+            // must not propagate out of a diagnostic helper used inside an exception handler.
+            return (null, null);
+        }
+    }
+
     private static bool TryGetSqlServerNumber(Exception ex, out int number)
     {
         number = 0;
@@ -182,5 +246,107 @@ public static class DbExceptionClassifier
         }
 
         return false;
+    }
+
+    private static (string? ConstraintName, string? TableName) ExtractPostgresIdentity(Exception inner)
+    {
+        var type = inner.GetType();
+        var name = type.GetProperty("ConstraintName")?.GetValue(inner) as string;
+        var table = type.GetProperty("TableName")?.GetValue(inner) as string;
+        var schema = type.GetProperty("SchemaName")?.GetValue(inner) as string;
+
+        if (string.IsNullOrEmpty(name))
+            name = null;
+
+        string? qualifiedTable = (string.IsNullOrEmpty(schema), string.IsNullOrEmpty(table)) switch
+        {
+            (false, false) => $"{schema}.{table}",
+            (true, false) => table,
+            _ => null,
+        };
+
+        return (name, qualifiedTable);
+    }
+
+    // SQL Server 2627: "Violation of <KIND> constraint '<name>'. Cannot insert duplicate key in object '<table>'."
+    // SQL Server 2601: "Cannot insert duplicate key row in object '<table>' with unique index '<name>'."
+    // SQL Server 547 (FK): "The INSERT/UPDATE/DELETE statement conflicted with the (REFERENCE|FOREIGN KEY) constraint '<name>'. The conflict occurred in database '<db>', table '<table>', column '<col>'."
+    private static readonly Regex SqlServer2627Regex = new(
+        @"constraint\s+'(?<name>[^']+)'\.\s*Cannot\s+insert\s+duplicate\s+key\s+in\s+object\s+'(?<table>[^']+)'",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
+        TimeSpan.FromMilliseconds(50));
+
+    private static readonly Regex SqlServer2601Regex = new(
+        @"Cannot\s+insert\s+duplicate\s+key\s+row\s+in\s+object\s+'(?<table>[^']+)'\s+with\s+unique\s+index\s+'(?<name>[^']+)'",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
+        TimeSpan.FromMilliseconds(50));
+
+    private static readonly Regex SqlServerFkRegex = new(
+        @"(?:FOREIGN\s+KEY|REFERENCE)\s+constraint\s+[""'](?<name>[^""']+)[""'].*?table\s+[""'](?<table>[^""']+)[""']",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant | RegexOptions.Singleline,
+        TimeSpan.FromMilliseconds(50));
+
+    private static (string? ConstraintName, string? TableName) ParseSqlServerMessage(string message)
+    {
+        if (string.IsNullOrEmpty(message))
+            return (null, null);
+
+        var match = SqlServer2627Regex.Match(message);
+        if (match.Success)
+            return (match.Groups["name"].Value, match.Groups["table"].Value);
+
+        match = SqlServer2601Regex.Match(message);
+        if (match.Success)
+            return (match.Groups["name"].Value, match.Groups["table"].Value);
+
+        match = SqlServerFkRegex.Match(message);
+        if (match.Success)
+            return (match.Groups["name"].Value, match.Groups["table"].Value);
+
+        return (null, null);
+    }
+
+    // SQLite "UNIQUE constraint failed: <Table>.<Column>[, <Table>.<Column>...]"
+    // SQLite "PRIMARY KEY constraint failed: <Table>.<Column>"
+    // SQLite "FOREIGN KEY constraint failed" (no table info — refuse to guess).
+    private static readonly Regex SqliteUniqueOrPkRegex = new(
+        @"(?:UNIQUE|PRIMARY\s+KEY)\s+constraint\s+failed:\s*(?<table>[^.\s,]+)\.",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
+        TimeSpan.FromMilliseconds(50));
+
+    private static (string? ConstraintName, string? TableName) ParseSqliteMessage(string message)
+    {
+        if (string.IsNullOrEmpty(message))
+            return (null, null);
+
+        var match = SqliteUniqueOrPkRegex.Match(message);
+        if (match.Success)
+            return (ConstraintName: null, TableName: match.Groups["table"].Value);
+
+        return (null, null);
+    }
+
+    // MySQL 8 / MariaDB 10.6+: "Duplicate entry '<value>' for key '<table>.<key>'"
+    // Older MySQL: "Duplicate entry '<value>' for key '<key>'"
+    private static readonly Regex MySqlDuplicateEntryRegex = new(
+        @"Duplicate\s+entry\s+'[^']*'\s+for\s+key\s+'(?<key>[^']+)'",
+        RegexOptions.IgnoreCase | RegexOptions.CultureInvariant,
+        TimeSpan.FromMilliseconds(50));
+
+    private static (string? ConstraintName, string? TableName) ParseMySqlMessage(string message)
+    {
+        if (string.IsNullOrEmpty(message))
+            return (null, null);
+
+        var match = MySqlDuplicateEntryRegex.Match(message);
+        if (!match.Success)
+            return (null, null);
+
+        var key = match.Groups["key"].Value;
+        var dot = key.IndexOf('.');
+        if (dot > 0 && dot < key.Length - 1)
+            return (ConstraintName: key[(dot + 1)..], TableName: key[..dot]);
+
+        return (ConstraintName: key, TableName: null);
     }
 }
