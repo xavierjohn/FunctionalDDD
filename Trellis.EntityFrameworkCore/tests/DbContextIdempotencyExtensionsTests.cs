@@ -221,6 +221,31 @@ public sealed class DbContextIdempotencyExtensionsTests : IDisposable
     }
 
     [Fact]
+    public async Task TryInsertUniqueAsync_PreviouslyTrackedUnchangedEntity_RestoredToUnchangedOnDuplicate()
+    {
+        // When a caller passes an entity that is already tracked as Unchanged (e.g., it
+        // was loaded for inspection, or a previous TryInsertUniqueAsync persisted it and
+        // left it tracked), context.Add flips its state to Added. If the resulting INSERT
+        // fails with a duplicate-key violation, the helper must restore the entry to its
+        // prior state (Unchanged) — not leave it as Added, which would silently re-insert
+        // on the next SaveChangesAsync, and not detach it, which would lose tracking of a
+        // row the caller did not stage for removal.
+        var ct = TestContext.Current.CancellationToken;
+        var seed = NewCustomer("Alice", "rehydrate@example.com");
+        (await _context.TryInsertUniqueAsync(seed, ct)).IsSuccess.Should().BeTrue();
+        _context.Entry(seed).State.Should().Be(EntityState.Unchanged);
+        _context.ChangeTracker.HasChanges().Should().BeFalse();
+
+        var result = await _context.TryInsertUniqueAsync(seed, ct);
+
+        result.IsSuccess.Should().BeFalse();
+        _context.Entry(seed).State.Should().Be(EntityState.Unchanged,
+            because: "an entry that transitioned from Unchanged to Added during this call must be restored, not left Added or detached");
+        _context.ChangeTracker.HasChanges().Should().BeFalse(
+            because: "no stray Added state should remain after the duplicate cleanup");
+    }
+
+    [Fact]
     public async Task TryInsertUniqueAsync_NullContext_ThrowsArgumentNullException()
     {
         DbContext? nullContext = null;

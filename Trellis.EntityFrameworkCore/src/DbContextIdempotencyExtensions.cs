@@ -37,8 +37,12 @@ public static class DbContextIdempotencyExtensions
     /// provider-reported <see cref="Error.Conflict.ConstraintName"/> and
     /// <see cref="Error.Conflict.ConstraintTableName"/> populated on a best-effort
     /// basis (see <see cref="DbExceptionClassifier.ExtractConstraintIdentity(DbUpdateException)"/>).
-    /// The added entity is detached from the change tracker on this path so a caller
-    /// retrying with a freshly-constructed entity does not re-flush the original.
+    /// On this path the change tracker is left exactly as the caller saw it on entry:
+    /// every entry this call newly attached as <see cref="EntityState.Added"/> (the
+    /// root plus any owned / dependent / join entries reached through the navigation
+    /// graph) is detached, and any already-tracked entry that
+    /// <see cref="DbContext.Add(object)"/> flipped to <see cref="EntityState.Added"/>
+    /// (e.g., an entity the context loaded earlier) is restored to its prior state.
     /// </para>
     /// </returns>
     /// <remarks>
@@ -101,27 +105,36 @@ public static class DbContextIdempotencyExtensions
         // does not leave the entity (or its owned/dependent graph) attached as Added.
         cancellationToken.ThrowIfCancellationRequested();
 
-        // Snapshot which entries already existed in the tracker so we can detach ONLY the
-        // entries introduced by context.Add(entity) on failure. context.Add(entity) walks
-        // the navigation graph and may attach owned entities, dependents, and join
-        // entities as Added. Leaving any of them tracked after a duplicate failure would
-        // (a) trip the HasChanges() guard on a retry call and (b) cause the next
-        // SaveChangesAsync to insert stale dependents.
+        // Snapshot the prior state of every entry currently in the tracker so we can
+        // restore — not just detach — entries whose state transitions to Added as a
+        // side effect of context.Add(entity). context.Add(entity) walks the navigation
+        // graph and may both (a) attach new owned / dependent / join entities as Added
+        // and (b) flip already-tracked Unchanged entities to Added. Leaving any of them
+        // tracked after a duplicate failure would (i) trip the HasChanges() guard on a
+        // retry call and (ii) cause the next SaveChangesAsync to insert (or re-insert)
+        // them.
         //
         // HasChanges() above is true only when at least one tracked entry has a non-
-        // Unchanged state; pre-existing Unchanged tracked entities (e.g., parent rows
-        // loaded for FK validation) are allowed and must not be detached.
-        var preExisting = new HashSet<object>(ReferenceEqualityComparer.Instance);
+        // Unchanged state; given the guard, every entry currently in the tracker is
+        // Unchanged. Capturing the actual prior state keeps the cleanup correct if a
+        // future change to the guard ever admits other non-Modified states.
+        var priorStates = new Dictionary<object, EntityState>(ReferenceEqualityComparer.Instance);
         foreach (var existingEntry in context.ChangeTracker.Entries())
-            preExisting.Add(existingEntry.Entity);
+            priorStates[existingEntry.Entity] = existingEntry.State;
 
         context.Add(entity);
 
-        var addedByThisCall = new List<EntityEntry>();
+        var introducedAdded = new List<EntityEntry>();
+        var transitionedToAdded = new List<(EntityEntry Entry, EntityState PriorState)>();
         foreach (var trackedEntry in context.ChangeTracker.Entries())
         {
-            if (trackedEntry.State == EntityState.Added && !preExisting.Contains(trackedEntry.Entity))
-                addedByThisCall.Add(trackedEntry);
+            if (trackedEntry.State != EntityState.Added)
+                continue;
+
+            if (priorStates.TryGetValue(trackedEntry.Entity, out var priorState))
+                transitionedToAdded.Add((trackedEntry, priorState));
+            else
+                introducedAdded.Add(trackedEntry);
         }
 
         try
@@ -131,14 +144,24 @@ public static class DbContextIdempotencyExtensions
         }
         catch (DbUpdateException ex) when (DbExceptionClassifier.IsDuplicateKey(ex))
         {
-            // Detach every entry this call introduced (root + owned/dependent graph) so
-            // a caller retrying with a freshly-built instance does not re-flush the
+            // Detach every entry this call newly attached (root + owned/dependent graph)
+            // so a caller retrying with a freshly-built instance does not re-flush the
             // original on the next SaveChangesAsync, and so unrelated code reading the
             // context does not see stale Added entries.
-            foreach (var added in addedByThisCall)
+            foreach (var added in introducedAdded)
             {
                 if (added.State == EntityState.Added)
                     added.State = EntityState.Detached;
+            }
+
+            // Restore — do not detach — entries that were already tracked before this
+            // call and were flipped to Added by context.Add. Detaching would lose
+            // tracking of a row the caller did not stage for removal; leaving them
+            // Added would cause silent re-insert attempts on the next SaveChangesAsync.
+            foreach (var (entry, priorState) in transitionedToAdded)
+            {
+                if (entry.State == EntityState.Added)
+                    entry.State = priorState;
             }
 
             var (constraintName, tableName) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
