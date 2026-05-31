@@ -246,6 +246,77 @@ public sealed class DbContextIdempotencyExtensionsTests : IDisposable
     }
 
     [Fact]
+    public async Task TryInsertUniqueAsync_CancellationDuringSave_CleansUpAddedGraph()
+    {
+        // A pre-cancelled token is observed before the change tracker is mutated, but
+        // cancellation that arrives during SaveChangesAsync (mid-save) propagates out
+        // of EF Core as OperationCanceledException. The helper must clean up the
+        // entries it attached before rethrowing, otherwise a later SaveChangesAsync on
+        // the same DI-scoped DbContext would silently insert the cancelled entity, and
+        // HasChanges() would block any retry by tripping the clean-context guard.
+        using var connection = new SqliteConnection("DataSource=:memory:");
+        connection.Open();
+        var options = new DbContextOptionsBuilder<TestDbContext>()
+            .UseSqlite(connection)
+            .AddInterceptors(new CancelDuringSaveInterceptor())
+            .IgnoreManyServiceProvidersCreatedWarning()
+            .Options;
+        using var ctx = new TestDbContext(options);
+        ctx.Database.EnsureCreated();
+        var customer = NewCustomer("Cancel", "midsave@example.com");
+
+        var act = async () => await ctx.TryInsertUniqueAsync(customer, TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
+        ctx.Entry(customer).State.Should().Be(EntityState.Detached,
+            because: "OperationCanceledException raised during SaveChangesAsync must not leave the entity attached as Added");
+        ctx.ChangeTracker.HasChanges().Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task TryInsertUniqueAsync_CancellationDuringSave_RestoresTransitionedEntries()
+    {
+        // Same scenario as above, but the entity was already tracked as Unchanged when
+        // TryInsertUniqueAsync was called and context.Add flipped it to Added. The
+        // cancellation-during-save cleanup must mirror the duplicate-key cleanup:
+        // entries it newly attached are detached, entries it transitioned are restored.
+        var ct = TestContext.Current.CancellationToken;
+        using var seedConnection = new SqliteConnection("DataSource=:memory:");
+        seedConnection.Open();
+        using (var seedCtx = new TestDbContext(seedConnection))
+        {
+            seedCtx.Database.EnsureCreated();
+            (await seedCtx.TryInsertUniqueAsync(NewCustomer("Seed", "midsave-restore@example.com"), ct))
+                .IsSuccess.Should().BeTrue();
+        }
+
+        var options = new DbContextOptionsBuilder<TestDbContext>()
+            .UseSqlite(seedConnection)
+            .AddInterceptors(new CancelDuringSaveInterceptor())
+            .IgnoreManyServiceProvidersCreatedWarning()
+            .Options;
+        using var ctx = new TestDbContext(options);
+        var loaded = (await ctx.Customers.ToListAsync(ct)).Single();
+        ctx.Entry(loaded).State.Should().Be(EntityState.Unchanged);
+
+        var act = async () => await ctx.TryInsertUniqueAsync(loaded, ct);
+
+        await act.Should().ThrowAsync<OperationCanceledException>();
+        ctx.Entry(loaded).State.Should().Be(EntityState.Unchanged,
+            because: "transitioned entries must be restored to their prior state on the cancellation cleanup path too");
+        ctx.ChangeTracker.HasChanges().Should().BeFalse();
+    }
+
+    private sealed class CancelDuringSaveInterceptor : Microsoft.EntityFrameworkCore.Diagnostics.SaveChangesInterceptor
+    {
+        public override ValueTask<Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult<int>> SavingChangesAsync(
+            Microsoft.EntityFrameworkCore.Diagnostics.DbContextEventData eventData,
+            Microsoft.EntityFrameworkCore.Diagnostics.InterceptionResult<int> result,
+            CancellationToken cancellationToken = default) =>
+            throw new OperationCanceledException("Simulated cancellation during SaveChangesAsync.");
+    }
+
+    [Fact]
     public async Task TryInsertUniqueAsync_NullContext_ThrowsArgumentNullException()
     {
         DbContext? nullContext = null;

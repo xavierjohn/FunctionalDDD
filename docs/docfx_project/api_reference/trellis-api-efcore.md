@@ -3,7 +3,7 @@ package: Trellis.EntityFrameworkCore
 namespaces: [Trellis.EntityFrameworkCore]
 types: [DbContextExtensions, DbContextIdempotencyExtensions, DbContextOptionsBuilderExtensions, DbContextRetryExtensions, DbExceptionClassifier, "EfUnitOfWork<TContext>", EntityTimestampInterceptor, IUnitOfWork, MaybeEntityTypeBuilderExtensions, MaybeModelExtensions, MaybePropertyMapping, MaybeQueryableExtensions, MaybeQueryInterceptor, MaybeUpdateExtensions, ModelConfigurationBuilderExtensions, OwnedEntityAttribute, QueryableExtensions, "RepositoryBase<TAggregate,TId>", ScalarValueQueryInterceptor, "TransactionalCommandBehavior<TMessage,TResponse>", TrellisPersistenceMappingException, "TrellisScalarConverter<TModel,TProvider>", UnitOfWorkServiceCollectionExtensions]
 version: v3
-last_verified: 2026-05-06
+last_verified: 2026-05-31
 audience: [llm]
 ---
 # Trellis.EntityFrameworkCore

@@ -52,7 +52,16 @@ public static class DbContextIdempotencyExtensions
     /// <see cref="DbUpdateConcurrencyException"/>, foreign-key violations, other
     /// <see cref="DbUpdateException"/> variants, connection/timeout exceptions, and
     /// <see cref="OperationCanceledException"/> — propagate to the caller so that
-    /// global handlers and retry policies see them.
+    /// global handlers and retry policies see them. When
+    /// <see cref="OperationCanceledException"/> is raised from
+    /// <see cref="DbContext.SaveChangesAsync(CancellationToken)"/> (the
+    /// <paramref name="cancellationToken"/> tripped mid-save) the helper still
+    /// performs the same change-tracker cleanup it performs on the duplicate-key
+    /// path before rethrowing, so a cancelled call leaves the change tracker
+    /// exactly as the caller saw it on entry — a later
+    /// <see cref="DbContext.SaveChangesAsync(CancellationToken)"/> on the same
+    /// DI-scoped context will not silently insert the cancelled entity, and the
+    /// clean-context guard will not block a retry on the same context.
     /// </para>
     /// <para>
     /// <b>Clean-context requirement.</b> The helper requires the <see cref="DbContext"/>
@@ -144,10 +153,36 @@ public static class DbContextIdempotencyExtensions
         }
         catch (DbUpdateException ex) when (DbExceptionClassifier.IsDuplicateKey(ex))
         {
-            // Detach every entry this call newly attached (root + owned/dependent graph)
-            // so a caller retrying with a freshly-built instance does not re-flush the
-            // original on the next SaveChangesAsync, and so unrelated code reading the
-            // context does not see stale Added entries.
+            RestoreChangeTracker(introducedAdded, transitionedToAdded);
+
+            var (constraintName, tableName) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
+            return Result.Fail<TEntity>(new Error.Conflict(
+                Resource: null,
+                ReasonCode: "duplicate.key")
+            {
+                Detail = "A record with the same unique value already exists.",
+                ConstraintName = constraintName,
+                ConstraintTableName = tableName,
+            });
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancellation raised by SaveChangesAsync (token cancelled mid-save) must
+            // not leave the entries this call attached as Added: a later
+            // SaveChangesAsync on the same DI-scoped DbContext would otherwise silently
+            // insert the cancelled entity, and the clean-context guard would block any
+            // retry on the same context because HasChanges() would now be true.
+            RestoreChangeTracker(introducedAdded, transitionedToAdded);
+            throw;
+        }
+
+        static void RestoreChangeTracker(
+            List<EntityEntry> introducedAdded,
+            List<(EntityEntry Entry, EntityState PriorState)> transitionedToAdded)
+        {
+            // Detach every entry this call newly attached (root + owned/dependent
+            // graph) so a caller retrying with a freshly-built instance does not
+            // re-flush the original on the next SaveChangesAsync.
             foreach (var added in introducedAdded)
             {
                 if (added.State == EntityState.Added)
@@ -163,16 +198,6 @@ public static class DbContextIdempotencyExtensions
                 if (entry.State == EntityState.Added)
                     entry.State = priorState;
             }
-
-            var (constraintName, tableName) = DbExceptionClassifier.ExtractConstraintIdentity(ex);
-            return Result.Fail<TEntity>(new Error.Conflict(
-                Resource: null,
-                ReasonCode: "duplicate.key")
-            {
-                Detail = "A record with the same unique value already exists.",
-                ConstraintName = constraintName,
-                ConstraintTableName = tableName,
-            });
         }
     }
 }

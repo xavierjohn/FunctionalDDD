@@ -4,7 +4,7 @@ namespaces: [Trellis, Trellis.Asp, Trellis.EntityFrameworkCore, Trellis.Mediator
 types: [recipes]
 related_docs: [trellis-api-core.md, trellis-api-asp.md, trellis-api-efcore.md, trellis-api-mediator.md]
 version: v3
-last_verified: 2026-05-01
+last_verified: 2026-05-31
 audience: [llm]
 ---
 # Trellis Cross-Package Cookbook

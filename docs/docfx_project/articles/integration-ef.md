@@ -3,7 +3,7 @@ title: Entity Framework Core Integration
 package: Trellis.EntityFrameworkCore
 topics: [efcore, repository, unit-of-work, savechanges, owned-entity, maybe, etag, conventions]
 related_api_reference: [trellis-api-efcore.md, trellis-api-core.md]
-last_verified: 2026-05-01
+last_verified: 2026-05-31
 audience: [developer]
 ---
 # Entity Framework Core Integration
@@ -383,7 +383,7 @@ Footguns the API enforces or surfaces:
 
 - **The helper requires a clean change tracker.** `TryInsertUniqueAsync` throws `InvalidOperationException` when `context.ChangeTracker.HasChanges()` is `true` on entry, because the helper cannot otherwise tell whether the duplicate-key violation came from the entity it added or from a sibling pending change. Flush unrelated changes first, or use a freshly-resolved scoped `DbContext` instance.
 - **Detach scope is the graph the call attached.** `context.Add(entity)` walks navigations and may attach owned and dependent entities as `Added`. On the duplicate path, the helper detaches every entry it newly attached (root plus owned / dependent / join entries) so a retry with a freshly-constructed entity does not re-flush stale dependents. If `context.Add` flipped an already-tracked entity from another state to `Added` (e.g., the caller passed an instance the context loaded earlier), the helper restores it to its prior state instead of detaching it, so the caller does not lose tracking of a row it did not stage for removal.
-- **Only duplicate-key violations are caught.** Foreign-key violations, `DbUpdateConcurrencyException`, connection failures wrapped in `DbUpdateException`, and `OperationCanceledException` all propagate so retry policies and global handlers still see them.
+- **Only duplicate-key violations are caught.** Foreign-key violations, `DbUpdateConcurrencyException`, connection failures wrapped in `DbUpdateException`, and `OperationCanceledException` all propagate so retry policies and global handlers still see them. When `OperationCanceledException` is raised from `SaveChangesAsync` (mid-save cancellation), the helper still performs the same change-tracker cleanup it performs on the duplicate-key path before rethrowing, so the cancelled call leaves the change tracker exactly as the caller saw it on entry and a retry on the same DI-scoped context is not blocked by `HasChanges() == true`.
 - **The duplicate `Error.Conflict` carries constraint identity.** `ConstraintName` and `ConstraintTableName` are populated from `DbExceptionClassifier.ExtractConstraintIdentity` on a best-effort basis. They are marked `[JsonIgnore]` — telemetry for structured logs, never serialized to API responses. The safe-for-clients message stays in `Detail` (`"A record with the same unique value already exists."`).
 - **Cancellation is checked before mutating the change tracker.** A pre-cancelled token throws `OperationCanceledException` after argument validation, before `context.Add`, so the change tracker is not mutated when the caller has already cancelled.
 
