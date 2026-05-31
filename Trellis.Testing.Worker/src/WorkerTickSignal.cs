@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 /// Parallel to <see cref="DomainEventCapture"/>: the signal list is guarded by an internal
 /// lock and waiters follow the snapshot-then-register-then-recheck pattern to avoid races
 /// between worker-side <see cref="SignalAsync(string, CancellationToken)"/> calls and
-/// test-side <see cref="WaitForAsync(string?, CancellationToken)"/> calls.
+/// test-side <see cref="WaitForAsync(string?, int, CancellationToken)"/> calls.
 /// </remarks>
 internal sealed class WorkerTickSignal : IWorkerTickSignal
 {
@@ -28,6 +28,28 @@ internal sealed class WorkerTickSignal : IWorkerTickSignal
             return [.. _signals];
     }
 
+    public int Count
+    {
+        get
+        {
+            lock (_gate)
+                return _signals.Count;
+        }
+    }
+
+    public int CountOf(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        lock (_gate)
+        {
+            var count = 0;
+            foreach (var s in _signals)
+                if (string.Equals(s, name, StringComparison.Ordinal))
+                    count++;
+            return count;
+        }
+    }
+
     public ValueTask SignalAsync(CancellationToken cancellationToken = default) =>
         SignalAsync(string.Empty, cancellationToken);
 
@@ -37,14 +59,16 @@ internal sealed class WorkerTickSignal : IWorkerTickSignal
         cancellationToken.ThrowIfCancellationRequested();
 
         List<Waiter>? released = null;
+        int releasedIndex = 0;
 
         lock (_gate)
         {
             _signals.Add(name);
+            releasedIndex = _signals.Count - 1;
 
             for (var i = _waiters.Count - 1; i >= 0; i--)
             {
-                if (_waiters[i].Matches(name))
+                if (_waiters[i].Matches(name, releasedIndex))
                 {
                     released ??= [];
                     released.Add(_waiters[i]);
@@ -55,36 +79,36 @@ internal sealed class WorkerTickSignal : IWorkerTickSignal
 
         if (released is not null)
             foreach (var waiter in released)
-                waiter.Complete();
+                waiter.Complete(releasedIndex);
 
         return ValueTask.CompletedTask;
     }
 
-    public Task WaitForAsync(string? name, CancellationToken cancellationToken)
+    public Task<int> WaitForAsync(string? name, int afterIndexExclusive, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        TaskCompletionSource tcs;
+        TaskCompletionSource<int> tcs;
         Waiter waiter;
 
         lock (_gate)
         {
-            foreach (var captured in _signals)
+            for (var i = Math.Max(0, afterIndexExclusive + 1); i < _signals.Count; i++)
             {
-                if (name is null || string.Equals(captured, name, StringComparison.Ordinal))
-                    return Task.CompletedTask;
+                if (name is null || string.Equals(_signals[i], name, StringComparison.Ordinal))
+                    return Task.FromResult(i);
             }
 
-            tcs = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-            waiter = new Waiter(tcs, name);
+            tcs = new TaskCompletionSource<int>(TaskCreationOptions.RunContinuationsAsynchronously);
+            waiter = new Waiter(tcs, name, afterIndexExclusive);
             _waiters.Add(waiter);
         }
 
         return WaitWithCancellationAsync(tcs, waiter, cancellationToken);
     }
 
-    private async Task WaitWithCancellationAsync(
-        TaskCompletionSource tcs,
+    private async Task<int> WaitWithCancellationAsync(
+        TaskCompletionSource<int> tcs,
         Waiter waiter,
         CancellationToken cancellationToken)
     {
@@ -97,7 +121,7 @@ internal sealed class WorkerTickSignal : IWorkerTickSignal
                 w.Cancel();
         }, (this, waiter));
 
-        await tcs.Task.ConfigureAwait(false);
+        return await tcs.Task.ConfigureAwait(false);
     }
 
     private bool TryRemoveWaiter(Waiter waiter)
@@ -106,12 +130,13 @@ internal sealed class WorkerTickSignal : IWorkerTickSignal
             return _waiters.Remove(waiter);
     }
 
-    private sealed class Waiter(TaskCompletionSource tcs, string? expectedName)
+    private sealed class Waiter(TaskCompletionSource<int> tcs, string? expectedName, int afterIndexExclusive)
     {
-        public bool Matches(string name) =>
-            expectedName is null || string.Equals(name, expectedName, StringComparison.Ordinal);
+        public bool Matches(string name, int signalIndex) =>
+            signalIndex > afterIndexExclusive &&
+            (expectedName is null || string.Equals(name, expectedName, StringComparison.Ordinal));
 
-        public void Complete() => tcs.TrySetResult();
+        public void Complete(int index) => tcs.TrySetResult(index);
 
         public void Cancel() => tcs.TrySetCanceled();
     }

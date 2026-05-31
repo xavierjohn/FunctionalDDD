@@ -478,6 +478,15 @@ Key rules:
 - `AutoStart` defaults to `false`. Call `await harness.StartAsync(ct)` after configuring any post-build wait subscriptions; flip `opts.AutoStart = true` when the test does not need to subscribe ahead of the first tick.
 - **Avoid the startup race.** `IHost.StartAsync` returns once the worker's `ExecuteAsync` has been scheduled — not after the worker has registered its first `Task.Delay` / `PeriodicTimer` callback with the `FakeTimeProvider`. A test that calls `await harness.StartAsync(); harness.Time.Advance(period);` back-to-back can race the worker and time out. Either call `await harness.SettleAsync(cancellationToken: ct)` (real-time yield, defaults to 200ms) after `StartAsync`, or — for deterministic tests — have the worker call `IWorkerTickSignal.SignalAsync("ready", ct)` at the top of `ExecuteAsync` and use `await harness.WaitForTickAsync("ready", cancellationToken: ct)` instead.
 - When the worker has no domain-visible outcome (a no-op probe, an infrastructure-only tick), resolve the optional `IWorkerTickSignal` from DI and call `SignalAsync(name, ct)` at the end of each tick. Tests then call `await harness.WaitForTickAsync(name, timeout, ct)`. Prefer `WaitForEventAsync<TEvent>` when the tick already emits a domain event.
+- **Waiting for successive ticks of the same name.** `WaitForTickAsync(name, ...)` returns immediately if a matching tick is anywhere in the captured history — that's intended for the deterministic-ready pattern (the worker signals once at startup, the test waits once). For workers that emit the same tick name on every iteration, capture the previous tick's index and pass it as `after:` so the next wait blocks until a **new** tick arrives:
+
+  ```csharp
+  var first = await harness.WaitForTickAsync("probe", cancellationToken: ct);
+  harness.Time.Advance(TimeSpan.FromMinutes(1));
+  var second = await harness.WaitForTickAsync("probe", after: first, cancellationToken: ct);
+  ```
+
+  Use `harness.TickCount` / `harness.TickCountOf(name)` to snapshot a cursor before `Time.Advance(...)` when you don't already have a returned index. Without the cursor, a back-to-back `WaitForTickAsync("probe")` would re-match the first recorded tick and silently pass even when the new `Advance` never produced a second one.
 
 Full surface: [`trellis-api-testing-worker.md`](../api_reference/trellis-api-testing-worker.md).
 

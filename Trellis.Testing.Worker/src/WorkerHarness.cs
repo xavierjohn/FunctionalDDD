@@ -332,31 +332,88 @@ public sealed class WorkerHarness<[System.Diagnostics.CodeAnalysis.DynamicallyAc
     }
 
     /// <summary>
+    /// Returns the total number of tick signals captured so far (across all names). Useful
+    /// for capturing a cursor before advancing time so a subsequent <see cref="WaitForTickAsync(int, TimeSpan?, CancellationToken)"/>
+    /// waits for a NEW tick rather than matching one that was already in the history.
+    /// </summary>
+    public int TickCount => _tickSignal.Count;
+
+    /// <summary>
+    /// Returns the number of tick signals captured so far with the given <paramref name="name"/>.
+    /// Useful for capturing a per-name cursor before advancing time so a subsequent
+    /// <see cref="WaitForTickAsync(string, int, TimeSpan?, CancellationToken)"/> waits for a new
+    /// tick rather than re-matching a historical one.
+    /// </summary>
+    /// <param name="name">The tick name to count.</param>
+    public int TickCountOf(string name) => _tickSignal.CountOf(name);
+
+    /// <summary>
     /// Waits until <see cref="IWorkerTickSignal.SignalAsync(CancellationToken)"/> or
     /// <see cref="IWorkerTickSignal.SignalAsync(string, CancellationToken)"/> has been called at least once.
-    /// Returns immediately if a signal arrived before the call.
+    /// Returns immediately if a signal arrived before the call. Use the
+    /// <see cref="WaitForTickAsync(int, TimeSpan?, CancellationToken)"/> overload to wait for a tick
+    /// that arrives AFTER an explicit cursor when running multi-tick scenarios.
     /// </summary>
     /// <param name="timeout">Optional override of <see cref="WorkerHarnessOptions.DefaultWaitTimeout"/>. Measured in real time.</param>
     /// <param name="cancellationToken">A token to observe while waiting.</param>
+    /// <returns>The index of the tick that satisfied the wait. Pass that value to a subsequent <see cref="WaitForTickAsync(int, TimeSpan?, CancellationToken)"/> call as <c>after</c> to wait for the next tick.</returns>
     /// <exception cref="WorkerHarnessTimeoutException">Thrown when no signal arrives before the timeout elapses.</exception>
-    public Task WaitForTickAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
-        WaitForTickCoreAsync(name: null, timeout, cancellationToken);
+    public Task<int> WaitForTickAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
+        WaitForTickCoreAsync(name: null, afterIndexExclusive: -1, timeout, cancellationToken);
 
     /// <summary>
-    /// Waits until a tick signal with the specified <paramref name="name"/> arrives.
+    /// Waits for a tick signal of any name that arrives strictly AFTER the given <paramref name="after"/>
+    /// index. The typical pattern is to capture <see cref="TickCount"/> minus one before advancing
+    /// time, then pass it here so the wait only matches a tick produced by the new <c>Advance</c>.
+    /// </summary>
+    /// <param name="after">The exclusive lower bound on the tick index — only ticks with a higher index satisfy the wait. Pass <c>-1</c> to wait for any tick (equivalent to the zero-argument overload).</param>
+    /// <param name="timeout">Optional override of <see cref="WorkerHarnessOptions.DefaultWaitTimeout"/>. Measured in real time.</param>
+    /// <param name="cancellationToken">A token to observe while waiting.</param>
+    /// <returns>The index of the tick that satisfied the wait.</returns>
+    /// <exception cref="WorkerHarnessTimeoutException">Thrown when no qualifying tick arrives before the timeout elapses.</exception>
+    public Task<int> WaitForTickAsync(int after, TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
+        WaitForTickCoreAsync(name: null, afterIndexExclusive: after, timeout, cancellationToken);
+
+    /// <summary>
+    /// Waits until a tick signal with the specified <paramref name="name"/> arrives. Returns
+    /// immediately if a matching signal is already in the history. Use the
+    /// <see cref="WaitForTickAsync(string, int, TimeSpan?, CancellationToken)"/> overload when the
+    /// worker emits the same tick name on every iteration so successive waits do not match older
+    /// recorded ticks.
     /// </summary>
     /// <param name="name">The expected tick name; the harness compares with ordinal equality.</param>
     /// <param name="timeout">Optional override of <see cref="WorkerHarnessOptions.DefaultWaitTimeout"/>. Measured in real time.</param>
     /// <param name="cancellationToken">A token to observe while waiting.</param>
+    /// <returns>The index of the tick that satisfied the wait.</returns>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="name"/> is <see langword="null"/>.</exception>
     /// <exception cref="WorkerHarnessTimeoutException">Thrown when no matching tick arrives before the timeout elapses.</exception>
-    public Task WaitForTickAsync(string name, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
+    public Task<int> WaitForTickAsync(string name, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(name);
-        return WaitForTickCoreAsync(name, timeout, cancellationToken);
+        return WaitForTickCoreAsync(name, afterIndexExclusive: -1, timeout, cancellationToken);
     }
 
-    private async Task WaitForTickCoreAsync(string? name, TimeSpan? timeout, CancellationToken cancellationToken)
+    /// <summary>
+    /// Waits for a tick signal of the given <paramref name="name"/> that arrives strictly AFTER
+    /// the given <paramref name="after"/> index. Use this for workers that emit the same tick
+    /// name every iteration: capture <see cref="TickCount"/> minus one before advancing time
+    /// (or use the index returned by the previous <c>WaitForTickAsync</c> call), then pass it
+    /// here so successive waits do not match an older recorded tick.
+    /// </summary>
+    /// <param name="name">The expected tick name; the harness compares with ordinal equality.</param>
+    /// <param name="after">The exclusive lower bound on the tick index. Pass <c>-1</c> to wait for any matching tick (equivalent to the cursor-less overload).</param>
+    /// <param name="timeout">Optional override of <see cref="WorkerHarnessOptions.DefaultWaitTimeout"/>. Measured in real time.</param>
+    /// <param name="cancellationToken">A token to observe while waiting.</param>
+    /// <returns>The index of the tick that satisfied the wait.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="name"/> is <see langword="null"/>.</exception>
+    /// <exception cref="WorkerHarnessTimeoutException">Thrown when no qualifying tick arrives before the timeout elapses.</exception>
+    public Task<int> WaitForTickAsync(string name, int after, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        return WaitForTickCoreAsync(name, afterIndexExclusive: after, timeout, cancellationToken);
+    }
+
+    private async Task<int> WaitForTickCoreAsync(string? name, int afterIndexExclusive, TimeSpan? timeout, CancellationToken cancellationToken)
     {
         var effectiveTimeout = timeout ?? _defaultWaitTimeout;
         using var timeoutCts = new CancellationTokenSource(effectiveTimeout);
@@ -364,7 +421,7 @@ public sealed class WorkerHarness<[System.Diagnostics.CodeAnalysis.DynamicallyAc
 
         try
         {
-            await _tickSignal.WaitForAsync(name, linkedCts.Token).ConfigureAwait(false);
+            return await _tickSignal.WaitForAsync(name, afterIndexExclusive, linkedCts.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
         {

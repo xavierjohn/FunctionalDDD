@@ -230,6 +230,119 @@ public class WorkerHarnessTests
     }
 
     [Fact]
+    public async Task WaitForTickAsync_returns_immediately_for_signal_already_in_history()
+    {
+        await using var harness = await CreateMinimalHarnessAsync(TimeSpan.FromMinutes(2));
+
+        await harness.StartAsync(TestContext.Current.CancellationToken);
+        await harness.SettleAsync(cancellationToken: TestContext.Current.CancellationToken);
+
+        harness.Time.Advance(TimeSpan.FromMinutes(2));
+        var firstIndex = await harness.WaitForTickAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+
+        // No new tick produced — but the cursor-less overload still returns immediately because
+        // the previous tick is in the history. This is intentional for the deterministic-ready
+        // single-tick use case; periodic workers must use the cursor overload below.
+        var sameIndex = await harness.WaitForTickAsync(TimeSpan.FromMilliseconds(50), TestContext.Current.CancellationToken);
+        sameIndex.Should().Be(firstIndex);
+    }
+
+    [Fact]
+    public async Task WaitForTickAsync_with_after_cursor_waits_for_next_signal_and_times_out_when_none_arrives()
+    {
+        await using var harness = await CreateMinimalHarnessAsync(TimeSpan.FromMinutes(2));
+
+        await harness.StartAsync(TestContext.Current.CancellationToken);
+        await harness.SettleAsync(cancellationToken: TestContext.Current.CancellationToken);
+
+        harness.Time.Advance(TimeSpan.FromMinutes(2));
+        var cursor = await harness.WaitForTickAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+
+        // No second Advance — the after-cursor overload must wait for a NEW tick and time out
+        // rather than re-matching the recorded one.
+        var act = async () => await harness.WaitForTickAsync(
+            after: cursor,
+            timeout: TimeSpan.FromMilliseconds(100),
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<WorkerHarnessTimeoutException>();
+    }
+
+    [Fact]
+    public async Task WaitForTickAsync_with_after_cursor_releases_on_next_signal()
+    {
+        await using var harness = await CreateMinimalHarnessAsync(TimeSpan.FromMinutes(2));
+
+        await harness.StartAsync(TestContext.Current.CancellationToken);
+        await harness.SettleAsync(cancellationToken: TestContext.Current.CancellationToken);
+
+        harness.Time.Advance(TimeSpan.FromMinutes(2));
+        var firstIndex = await harness.WaitForTickAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+
+        // Advance time to produce the second tick, then wait for any tick after the first.
+        harness.Time.Advance(TimeSpan.FromMinutes(2));
+        var secondIndex = await harness.WaitForTickAsync(
+            after: firstIndex,
+            timeout: TimeSpan.FromSeconds(5),
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        secondIndex.Should().BeGreaterThan(firstIndex);
+        harness.TickCount.Should().BeGreaterThanOrEqualTo(secondIndex + 1);
+    }
+
+    [Fact]
+    public async Task WaitForTickAsync_with_named_after_cursor_waits_for_next_named_signal()
+    {
+        const string named = "reminder-job";
+
+        await using var harness = await WorkerHarness<TestWorker>.CreateAsync(
+            ConfigureMinimalWorker(TimeSpan.FromMinutes(1), tickName: named),
+            TestContext.Current.CancellationToken);
+
+        await harness.StartAsync(TestContext.Current.CancellationToken);
+        await harness.SettleAsync(cancellationToken: TestContext.Current.CancellationToken);
+
+        harness.Time.Advance(TimeSpan.FromMinutes(1));
+        var firstIndex = await harness.WaitForTickAsync(named, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        harness.TickCountOf(named).Should().BeGreaterThanOrEqualTo(1);
+
+        // Without the cursor the second wait would return immediately even with no new tick;
+        // with the cursor it must wait for a new tick produced by the next Advance.
+        harness.Time.Advance(TimeSpan.FromMinutes(1));
+        var secondIndex = await harness.WaitForTickAsync(
+            named,
+            after: firstIndex,
+            timeout: TimeSpan.FromSeconds(5),
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        secondIndex.Should().BeGreaterThan(firstIndex);
+    }
+
+    [Fact]
+    public async Task WaitForTickAsync_with_after_cursor_returns_immediately_when_qualifying_signal_already_present()
+    {
+        await using var harness = await CreateMinimalHarnessAsync(TimeSpan.FromMinutes(2));
+
+        await harness.StartAsync(TestContext.Current.CancellationToken);
+        await harness.SettleAsync(cancellationToken: TestContext.Current.CancellationToken);
+
+        // Produce two ticks before any wait. Then capture cursor = first index and assert
+        // the after-cursor wait sees the SECOND tick already in history (no blocking).
+        harness.Time.Advance(TimeSpan.FromMinutes(2));
+        await harness.WaitForTickAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+        harness.Time.Advance(TimeSpan.FromMinutes(2));
+        await harness.SettleAsync(cancellationToken: TestContext.Current.CancellationToken);
+
+        harness.TickCount.Should().BeGreaterThanOrEqualTo(2);
+        var secondIndex = await harness.WaitForTickAsync(
+            after: 0,
+            timeout: TimeSpan.FromMilliseconds(100),
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        secondIndex.Should().BeGreaterThan(0);
+    }
+
+    [Fact]
     public async Task SeedAsync_runs_before_host_starts_and_inside_dedicated_scope()
     {
         var seedRan = false;

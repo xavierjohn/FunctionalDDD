@@ -70,8 +70,12 @@ The `TWorker` type parameter carries `[DynamicallyAccessedMembers(PublicConstruc
 | `public IReadOnlyList<IDomainEvent> AllEvents { get; }` | `IReadOnlyList<IDomainEvent>` | Snapshot of every captured event regardless of type. |
 | `public Task<TEvent> WaitForEventAsync<TEvent>(TimeSpan? timeout = null, CancellationToken cancellationToken = default) where TEvent : IDomainEvent` | `Task<TEvent>` | Returns the first event of type `TEvent`. Returns immediately if one was captured before the call. Throws `WorkerHarnessTimeoutException` on timeout. |
 | `public Task<TEvent> WaitForEventAsync<TEvent>(Func<TEvent, bool> predicate, TimeSpan? timeout = null, CancellationToken cancellationToken = default) where TEvent : IDomainEvent` | `Task<TEvent>` | Same, but only events satisfying `predicate` complete the wait. |
-| `public Task WaitForTickAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default)` | `Task` | Completes when any tick is signaled. Returns immediately if a tick was recorded before the call. Throws `WorkerHarnessTimeoutException` on timeout. |
-| `public Task WaitForTickAsync(string name, TimeSpan? timeout = null, CancellationToken cancellationToken = default)` | `Task` | Completes when a tick with the supplied `name` is signaled (ordinal equality). |
+| `public Task<int> WaitForTickAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default)` | `Task<int>` | Completes when any tick is signaled. Returns immediately if a tick was recorded before the call. Returns the index of the satisfying tick. Throws `WorkerHarnessTimeoutException` on timeout. |
+| `public Task<int> WaitForTickAsync(int after, TimeSpan? timeout = null, CancellationToken cancellationToken = default)` | `Task<int>` | Completes when any tick with an index strictly greater than `after` is signaled. Pass the index returned by an earlier call (or `-1` to wait for any tick). Use for periodic workers where the same name is emitted on every iteration. |
+| `public Task<int> WaitForTickAsync(string name, TimeSpan? timeout = null, CancellationToken cancellationToken = default)` | `Task<int>` | Completes when a tick with the supplied `name` is signaled (ordinal equality). Returns immediately if a matching tick is anywhere in the recorded history. |
+| `public Task<int> WaitForTickAsync(string name, int after, TimeSpan? timeout = null, CancellationToken cancellationToken = default)` | `Task<int>` | Completes when a tick with `name` is signaled at an index strictly greater than `after`. Use for periodic workers so successive calls do not re-match an older recorded tick. |
+| `public int TickCount { get; }` | `int` | Total number of ticks captured so far (across all names). Snapshot a cursor before `Time.Advance(...)` so a follow-up `WaitForTickAsync(after: cursor - 1, ...)` waits for the new tick. |
+| `public int TickCountOf(string name)` | `int` | Number of ticks captured so far with the given `name`. Useful for snapshotting a per-name cursor. |
 | `public ValueTask DisposeAsync()` | `ValueTask` | Stops the host (capped at a 10-second real-time budget) and disposes the underlying `IHost`. Idempotent. |
 
 `Events<TEvent>()` and `WaitForEventAsync<TEvent>` both use runtime `is` matching, so derived events appear in queries for their base type.
@@ -202,10 +206,17 @@ public sealed class HealthProbeWorker(IServiceProvider services, TimeProvider ti
     }
 }
 
-// In the test:
+// In the test — capture a cursor BEFORE each Advance so successive waits do not re-match
+// the previous "probe" tick (HealthProbeWorker emits the same name on every iteration):
+var cursor = harness.TickCountOf("probe") - 1;
 harness.Time.Advance(TimeSpan.FromSeconds(30));
-await harness.WaitForTickAsync("probe", TimeSpan.FromSeconds(5), cancellationToken);
+cursor = await harness.WaitForTickAsync("probe", after: cursor, TimeSpan.FromSeconds(5), cancellationToken);
+
+harness.Time.Advance(TimeSpan.FromSeconds(30));
+cursor = await harness.WaitForTickAsync("probe", after: cursor, TimeSpan.FromSeconds(5), cancellationToken);
 ```
+
+`WaitForTickAsync(name, ...)` without `after:` returns immediately whenever a matching tick is anywhere in the history. That is the right shape for the deterministic-ready pattern (the worker signals once at startup, the test waits once). For periodic workers — where the same tick name is emitted every iteration — always thread the returned index back into the next call as `after:`, or capture `harness.TickCountOf(name) - 1` before `Time.Advance(...)`. Otherwise a second `WaitForTickAsync("probe")` would re-match the first recorded tick and silently pass even when the new `Advance` never produced one.
 
 ## See also
 
