@@ -477,8 +477,21 @@ public class WorkerHarnessTests
         await harness.StartAsync(TestContext.Current.CancellationToken);
         await harness.SettleAsync(cancellationToken: TestContext.Current.CancellationToken);
 
+        // The capture handler is registered ahead of any user-registered handler in DI
+        // order, so WaitForEventAsync can be released by the capture handler before the
+        // publish loop has invoked userHandler. Anchor the assertion on the worker's tick
+        // signal instead: TestWorker signals only AFTER PublishAsync returns, so once
+        // WaitForTickAsync completes every handler in the publish loop has run.
+        var tickCursor = harness.LastTickIndexOf(string.Empty);
+
         harness.Time.Advance(TimeSpan.FromMinutes(1));
         var captured = await harness.WaitForEventAsync<TestTickCompletedEvent>(
+            TimeSpan.FromSeconds(5),
+            TestContext.Current.CancellationToken);
+
+        await harness.WaitForTickAsync(
+            string.Empty,
+            after: tickCursor,
             TimeSpan.FromSeconds(5),
             TestContext.Current.CancellationToken);
 

@@ -2179,31 +2179,43 @@ Together with the duplicate-product case (two lines for the same product whose s
 **Problem.** A periodic worker reads pending work, dispatches a side effect, and emits a domain event per item. Integration tests must drive the worker forward deterministically (no `Task.Delay`), capture the domain events the worker raised, and stop the host cleanly — without re-implementing the `IHost` + `FakeTimeProvider` + `IActorProvider` + `IDomainEventHandler<T>` plumbing in every test fixture.
 
 ```csharp
-// The worker under test — signals a named tick at the top of each iteration so tests
-// can wait deterministically instead of sleeping. The tick is what makes the test
-// non-flaky: the harness records the signal and the test awaits it through
-// WaitForTickAsync rather than guessing how long the worker needs.
+// The worker under test. BackgroundService is registered as a singleton hosted service,
+// so it resolves scoped services through an IServiceScopeFactory rather than capturing
+// them in the constructor. IWorkerTickSignal is the harness-only observation primitive;
+// production hosts do not register an implementation, so the worker injects it as an
+// optional dependency and no-ops when absent.
 public sealed class HealthProbeWorker(
-    IWorkerTickSignal tick,
+    IServiceScopeFactory scopeFactory,
     TimeProvider time,
-    IMediator mediator,
-    IHealthProbeRepository repo) : BackgroundService
+    IWorkerTickSignal? tick = null) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
         {
-            await tick.SignalAsync("probe", stoppingToken).ConfigureAwait(false);
+            try { await Task.Delay(TimeSpan.FromMinutes(5), time, stoppingToken).ConfigureAwait(false); }
+            catch (OperationCanceledException) { return; }
+
+            await using var scope = scopeFactory.CreateAsyncScope();
+            var mediator  = scope.ServiceProvider.GetRequiredService<IMediator>();
+            var publisher = scope.ServiceProvider.GetRequiredService<IDomainEventPublisher>();
+            var repo      = scope.ServiceProvider.GetRequiredService<IHealthProbeRepository>();
 
             foreach (var probe in await repo.GetDuePendingAsync(stoppingToken).ConfigureAwait(false))
             {
                 var outcome = await mediator.Send(new RunProbeCommand(probe.Id), stoppingToken).ConfigureAwait(false);
                 if (outcome.IsSuccess)
-                    await mediator.Publish(new ProbeCompletedDomainEvent(probe.Id, time.GetUtcNow()), stoppingToken).ConfigureAwait(false);
+                    await publisher.PublishAsync(
+                        new ProbeCompletedDomainEvent(probe.Id, time.GetUtcNow()),
+                        stoppingToken).ConfigureAwait(false);
             }
 
-            try { await Task.Delay(TimeSpan.FromMinutes(5), time, stoppingToken).ConfigureAwait(false); }
-            catch (OperationCanceledException) { return; }
+            // Signal AFTER work + publish completes so WaitForTickAsync is a true
+            // completion barrier — by the time the tick fires, every captured event for
+            // this iteration has already been recorded by the harness's open-generic
+            // IDomainEventHandler<>.
+            if (tick is not null)
+                await tick.SignalAsync("probe", stoppingToken).ConfigureAwait(false);
         }
     }
 }
@@ -2218,9 +2230,14 @@ public class HealthProbeWorkerTests
         {
             opts.ConfigureServices(s =>
             {
+                // WorkerHarness deliberately does not call AddMediator(...) or
+                // AddDomainEventDispatch(); a worker test re-uses the production
+                // composition root so the test exercises the same wiring the production
+                // host uses. Forgetting either registration would surface as
+                // GetRequiredService throwing at scope resolution.
+                s.AddMediator(options => options.Assemblies = [typeof(RunProbeCommand).Assembly]);
+                s.AddDomainEventDispatch();
                 s.AddSingleton<IHealthProbeRepository, FakeHealthProbeRepository>();
-                // RunProbeCommand handler is part of the worker's normal DI surface.
-                s.AddTransient<IRequestHandler<RunProbeCommand, Result<Unit>>, RunProbeHandler>();
             });
             opts.SeedAsync(async (sp, ct) =>
             {
@@ -2231,27 +2248,31 @@ public class HealthProbeWorkerTests
 
         await harness.StartAsync(TestContext.Current.CancellationToken);
 
-        // Capture the global signal index of the most recent "probe" tick BEFORE advancing
-        // time. That is the cursor — tests must wait for a NEW tick strictly after this
-        // index, not for any tick already in the recorded history. LastTickIndexOf returns
-        // the global signal index (-1 if none); TickCountOf is a per-name count and is NOT
-        // a valid cursor when other tick names interleave.
+        // Snapshot the most recent "probe" tick BEFORE advancing time. The cursor is the
+        // global signal index (LastTickIndexOf returns -1 when nothing has signaled yet);
+        // WaitForTickAsync(after: cursor, ...) will block until a tick with a STRICTLY
+        // greater global index fires, so the wait can never observe a tick already in
+        // the recorded history. Do not use TickCountOf as a cursor — it is a per-name
+        // count, not the global signal index, and will race when other tick names
+        // interleave.
         var cursor = harness.LastTickIndexOf("probe");
 
-        // Advance the FakeTimeProvider past the worker's 5-minute Task.Delay. The advance
-        // resumes the delay; the worker loops and signals the next "probe" tick.
+        // Advance the FakeTimeProvider past the worker's 5-minute Task.Delay. Advance is
+        // deterministic; the worker's Task.Delay(interval, time, ct) resumes and runs the
+        // iteration. WaitForTickAsync's timeout measures real time and is NOT consumed
+        // by the call to Advance.
         harness.Time.Advance(TimeSpan.FromMinutes(5));
-        cursor = await harness.WaitForTickAsync("probe", after: cursor, TimeSpan.FromSeconds(2));
+        await harness.WaitForTickAsync("probe", after: cursor, TimeSpan.FromSeconds(2));
 
-        // The worker raised one ProbeCompletedDomainEvent for the seeded probe.
-        var completed = await harness.WaitForEventAsync<ProbeCompletedDomainEvent>(TimeSpan.FromSeconds(2));
-        completed.ProbeId.Should().Be(/* seeded probe id */);
+        // Once WaitForTickAsync returns, PublishAsync for this iteration has already
+        // returned (the worker signals AFTER the publish loop), so the captured-event
+        // list is fully populated and the synchronous read is race-free.
         harness.Events<ProbeCompletedDomainEvent>().Should().HaveCount(1);
     }
 }
 ```
 
-**What it shows.** `WorkerHarness<TWorker>.CreateAsync(...)` builds an `IHost` with `TWorker` registered as the sole hosted service, wires `TimeProvider` to `FakeTimeProvider`, registers a `TestActorProvider` returning `WorkerHarnessOptions.SystemActor`, and installs an open-generic `IDomainEventHandler<>` that captures every published event for `harness.Events<TEvent>()` and `harness.WaitForEventAsync<TEvent>()`. `harness.Time.Advance(...)` is the deterministic equivalent of `Task.Delay` — the worker's `Task.Delay(interval, time, ct)` resumes synchronously and loops. Tests should pair an `Advance` with `WaitForTickAsync(name, after: cursor, ...)` so the wait observes the *next* tick rather than racing with the one already in the history; `LastTickIndexOf(name)` is the right baseline-cursor source. The harness's `DisposeAsync` stops the host with a real-time cap; if `StartAsync` itself throws, the harness drives a best-effort `StopAsync` so any earlier-registered `IHostedService` that succeeded still observes its stop hook.
+**What it shows.** `WorkerHarness<TWorker>.CreateAsync(...)` builds an `IHost` with `TWorker` registered as the sole hosted service, wires `TimeProvider` to `FakeTimeProvider`, registers a `TestActorProvider` returning `WorkerHarnessOptions.SystemActor`, and installs an open-generic `IDomainEventHandler<>` that captures every published event for `harness.Events<TEvent>()` and `harness.WaitForEventAsync<TEvent>()`. The harness does **not** register `AddMediator(...)` or `AddDomainEventDispatch()` — those are part of the production composition root and belong in the test's `ConfigureServices` callback so the worker exercises the same wiring it uses in production. `harness.Time.Advance(...)` is the deterministic equivalent of `Task.Delay` — the worker's `Task.Delay(interval, time, ct)` resumes synchronously and runs the next iteration. Tests should pair `Advance` with `WaitForTickAsync(name, after: cursor, ...)` so the wait observes the *next* tick rather than racing with one already in the history; `LastTickIndexOf(name)` is the right baseline-cursor source. The harness's `DisposeAsync` stops the host with a real-time cap; if `StartAsync` itself throws, the harness drives a best-effort `StopAsync` so any earlier-registered `IHostedService` that succeeded still observes its stop hook.
 
 `Trellis.Testing.Worker` references `Trellis.Testing` transitively, so handler-test assertions like `Should().BeSuccess()` and `FakeRepository<,>` are available from the same test project without an extra package.
 
