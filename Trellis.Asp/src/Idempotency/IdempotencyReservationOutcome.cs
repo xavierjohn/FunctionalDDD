@@ -44,13 +44,16 @@ public abstract record IdempotencyReservationOutcome
     public sealed record Replay(IdempotencyResponseSnapshot Snapshot) : IdempotencyReservationOutcome;
 
     /// <summary>
-    /// A completed snapshot exists for this key+scope but its stored fingerprint does not
-    /// match the current request's fingerprint. The middleware translates this into the
-    /// configured <see cref="IdempotencyOptions.MismatchStatusCode"/> (default 422).
+    /// A snapshot or in-flight reservation exists for this key+scope but the request's
+    /// fingerprint does not match the stored one. The middleware translates this into the
+    /// configured <see cref="IdempotencyOptions.MismatchStatusCode"/> (default 422). Returned
+    /// both for completed snapshots (replay would not match) and for an in-flight reservation
+    /// whose fingerprint differs from the new request — the latter prevents the second caller
+    /// from taking over the slot with a different body.
     /// </summary>
     /// <param name="StoredFingerprint">
-    /// Fingerprint of the request that originally created the stored snapshot, exposed for
-    /// diagnostic logging only. Never echoed to clients.
+    /// Fingerprint of the request that originally created the stored snapshot or holds the
+    /// in-flight reservation, exposed for diagnostic logging only. Never echoed to clients.
     /// </param>
     public sealed record BodyHashMismatch(string StoredFingerprint) : IdempotencyReservationOutcome;
 }

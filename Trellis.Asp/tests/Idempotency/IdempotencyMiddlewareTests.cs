@@ -522,4 +522,114 @@ public sealed class IdempotencyMiddlewareTests
             "responses that wrote trailers cannot be replayed by the snapshot writer, so they must not be cached");
         executions.Should().Be(2, "the handler must execute on each retry when trailers were written");
     }
+
+    [Fact]
+    public async Task Scoped_store_registration_is_resolved_per_request()
+    {
+        var instanceCount = 0;
+        var shared = new InMemoryIdempotencyStore(new IdempotencyOptions(), TimeProvider.System);
+
+        var builder = Host.CreateDefaultBuilder()
+            .ConfigureWebHostDefaults(web => web
+                .UseTestServer()
+                .UseDefaultServiceProvider(opts =>
+                {
+                    opts.ValidateScopes = true;
+                    opts.ValidateOnBuild = true;
+                })
+                .ConfigureServices(s =>
+                {
+                    s.AddRouting();
+                    s.AddTrellisIdempotency();
+                    s.AddScoped<IIdempotencyStore>(_ =>
+                    {
+                        Interlocked.Increment(ref instanceCount);
+                        return new DelegatingIdempotencyStore(shared);
+                    });
+                })
+                .Configure(app =>
+                {
+                    app.UseRouting();
+                    app.UseTrellisIdempotency();
+                    app.UseEndpoints(endpoints => endpoints.MapPost("/idempotent-scoped", async ctx =>
+                    {
+                        ctx.Response.StatusCode = 201;
+                        ctx.Response.ContentType = "application/json";
+                        await ctx.Response.WriteAsync("{\"created\":true}", ctx.RequestAborted);
+                    }).WithMetadata(new IdempotentAttribute()));
+                }));
+
+        using var host = await builder.StartAsync(TestContext.Current.CancellationToken);
+        var client = host.GetTestClient();
+
+        var first = JsonBody("{}");
+        first.Headers.Add(KeyHeader, Guid.NewGuid().ToString());
+        var firstResp = await client.PostAsync("/idempotent-scoped", first, TestContext.Current.CancellationToken);
+        firstResp.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var second = JsonBody("{}");
+        second.Headers.Add(KeyHeader, Guid.NewGuid().ToString());
+        var secondResp = await client.PostAsync("/idempotent-scoped", second, TestContext.Current.CancellationToken);
+        secondResp.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        instanceCount.Should().Be(2,
+            "a scoped IIdempotencyStore registration must be resolved fresh per request via InvokeAsync parameter injection rather than being root-captured by the middleware constructor");
+    }
+
+    [Fact]
+    public async Task Handler_writing_via_body_writer_without_flush_replays_full_body()
+    {
+        var payload = Encoding.UTF8.GetBytes("{\"hello\":\"world\"}");
+
+        using var host = await BuildHost(configureEndpoints: endpoints =>
+            endpoints.MapPost("/pipewriter", ctx =>
+            {
+                ctx.Response.StatusCode = 200;
+                ctx.Response.ContentType = "application/json";
+                var mem = ctx.Response.BodyWriter.GetMemory(payload.Length);
+                payload.CopyTo(mem);
+                ctx.Response.BodyWriter.Advance(payload.Length);
+
+                // Intentionally do NOT call FlushAsync on BodyWriter: the captured snapshot
+                // would be empty unless the middleware flushes the cached PipeWriter before
+                // reading the capture buffer.
+                return Task.CompletedTask;
+            }).WithMetadata(new IdempotentAttribute()));
+
+        var client = host.GetTestClient();
+        var key = Guid.NewGuid().ToString();
+
+        var first = JsonBody("{}");
+        first.Headers.Add(KeyHeader, key);
+        var firstResp = await client.PostAsync("/pipewriter", first, TestContext.Current.CancellationToken);
+        firstResp.StatusCode.Should().Be(HttpStatusCode.OK);
+        var firstBody = await firstResp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        firstBody.Should().Be("{\"hello\":\"world\"}");
+
+        var second = JsonBody("{}");
+        second.Headers.Add(KeyHeader, key);
+        var secondResp = await client.PostAsync("/pipewriter", second, TestContext.Current.CancellationToken);
+        secondResp.StatusCode.Should().Be(HttpStatusCode.OK);
+        secondResp.Headers.GetValues("Idempotent-Replayed").Should().Contain("true");
+        var secondBody = await secondResp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        secondBody.Should().Be(
+            "{\"hello\":\"world\"}",
+            "responses written via Response.BodyWriter.GetMemory + Advance without explicit FlushAsync must still be captured into the snapshot for replay");
+    }
+
+    private sealed class DelegatingIdempotencyStore : IIdempotencyStore
+    {
+        private readonly IIdempotencyStore inner;
+
+        public DelegatingIdempotencyStore(IIdempotencyStore inner) => this.inner = inner;
+
+        public ValueTask<IdempotencyReservationOutcome> TryReserveAsync(string scope, string key, string fingerprint, CancellationToken cancellationToken) =>
+            this.inner.TryReserveAsync(scope, key, fingerprint, cancellationToken);
+
+        public ValueTask CompleteAsync(string scope, string key, string reservationId, IdempotencyResponseSnapshot snapshot, CancellationToken cancellationToken) =>
+            this.inner.CompleteAsync(scope, key, reservationId, snapshot, cancellationToken);
+
+        public ValueTask AbandonAsync(string scope, string key, string reservationId, CancellationToken cancellationToken) =>
+            this.inner.AbandonAsync(scope, key, reservationId, cancellationToken);
+    }
 }

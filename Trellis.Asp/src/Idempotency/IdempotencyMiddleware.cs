@@ -21,10 +21,19 @@ using Microsoft.Extensions.Options;
 /// <c>IIdempotencyStore</c> to either reserve, replay, conflict, or reject the request.
 /// </summary>
 /// <remarks>
+/// <para>
 /// The middleware is fail-open by design for endpoints that did not opt in: if the
 /// <c>IdempotentAttribute</c> metadata is absent the request flows through untouched. The
 /// store is consulted exclusively for opted-in endpoints carrying a parseable Idempotency-Key
 /// header.
+/// </para>
+/// <para>
+/// <see cref="IIdempotencyStore"/> and <see cref="IIdempotencyScopeResolver"/> are resolved
+/// per-request from <see cref="HttpContext.RequestServices"/> via <c>InvokeAsync</c> parameter
+/// injection, so registrations with <see cref="Microsoft.Extensions.DependencyInjection.ServiceLifetime.Scoped"/>
+/// (for example an EF-backed store that depends on a scoped <c>DbContext</c>) compose cleanly
+/// without being captured by the middleware's singleton instance.
+/// </para>
 /// </remarks>
 public sealed partial class IdempotencyMiddleware
 {
@@ -32,36 +41,38 @@ public sealed partial class IdempotencyMiddleware
 
     private readonly RequestDelegate next;
     private readonly IdempotencyOptions options;
-    private readonly IIdempotencyStore store;
-    private readonly IIdempotencyScopeResolver scopeResolver;
     private readonly ILogger<IdempotencyMiddleware> logger;
 
     /// <summary>Initializes a new instance of the <see cref="IdempotencyMiddleware"/> class.</summary>
     public IdempotencyMiddleware(
         RequestDelegate next,
         IOptions<IdempotencyOptions> options,
-        IIdempotencyStore store,
-        IIdempotencyScopeResolver scopeResolver,
         ILogger<IdempotencyMiddleware> logger)
     {
         ArgumentNullException.ThrowIfNull(next);
         ArgumentNullException.ThrowIfNull(options);
-        ArgumentNullException.ThrowIfNull(store);
-        ArgumentNullException.ThrowIfNull(scopeResolver);
         ArgumentNullException.ThrowIfNull(logger);
 
         this.next = next;
         this.options = options.Value;
-        this.store = store;
-        this.scopeResolver = scopeResolver;
         this.logger = logger;
     }
 
     /// <summary>Processes a single HTTP request.</summary>
     /// <param name="context">The current HTTP context.</param>
-    public async Task InvokeAsync(HttpContext context)
+    /// <param name="store">
+    /// The idempotency store. Resolved per-request from <see cref="HttpContext.RequestServices"/>
+    /// so scoped registrations compose cleanly.
+    /// </param>
+    /// <param name="scopeResolver">
+    /// The scope resolver. Resolved per-request from <see cref="HttpContext.RequestServices"/>
+    /// so scoped registrations (for example a tenant-aware resolver) compose cleanly.
+    /// </param>
+    public async Task InvokeAsync(HttpContext context, IIdempotencyStore store, IIdempotencyScopeResolver scopeResolver)
     {
         ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(store);
+        ArgumentNullException.ThrowIfNull(scopeResolver);
 
         var endpoint = context.GetEndpoint();
         var idempotentMeta = endpoint?.Metadata.GetMetadata<IdempotentAttribute>();
@@ -121,14 +132,14 @@ public sealed partial class IdempotencyMiddleware
         context.Request.Body = new MemoryStream(bodyBuffer);
 
         var fingerprint = IdempotencyFingerprint.Compute(context, bodyBuffer, this.options);
-        var scope = await this.scopeResolver.ResolveAsync(context, context.RequestAborted).ConfigureAwait(false);
+        var scope = await scopeResolver.ResolveAsync(context, context.RequestAborted).ConfigureAwait(false);
 
-        var outcome = await this.store.TryReserveAsync(scope, key, fingerprint, context.RequestAborted).ConfigureAwait(false);
+        var outcome = await store.TryReserveAsync(scope, key, fingerprint, context.RequestAborted).ConfigureAwait(false);
 
         switch (outcome)
         {
             case IdempotencyReservationOutcome.Reserved reserved:
-                await this.ExecuteAndCaptureAsync(context, scope, key, reserved.ReservationId, fingerprint).ConfigureAwait(false);
+                await this.ExecuteAndCaptureAsync(context, store, scope, key, reserved.ReservationId, fingerprint).ConfigureAwait(false);
                 return;
 
             case IdempotencyReservationOutcome.AlreadyInFlight inFlight:
@@ -272,7 +283,7 @@ public sealed partial class IdempotencyMiddleware
         "Trailer",
     };
 
-    private async Task ExecuteAndCaptureAsync(HttpContext context, string scope, string key, string reservationId, string fingerprint)
+    private async Task ExecuteAndCaptureAsync(HttpContext context, IIdempotencyStore store, string scope, string key, string reservationId, string fingerprint)
     {
         var originalBodyFeature = context.Features.Get<IHttpResponseBodyFeature>();
         if (originalBodyFeature is null)
@@ -284,11 +295,11 @@ public sealed partial class IdempotencyMiddleware
             }
             catch
             {
-                await this.SafeAbandonAsync(scope, key, reservationId).ConfigureAwait(false);
+                await SafeAbandonAsync(store, this.logger, scope, key, reservationId).ConfigureAwait(false);
                 throw;
             }
 
-            await this.SafeAbandonAsync(scope, key, reservationId).ConfigureAwait(false);
+            await SafeAbandonAsync(store, this.logger, scope, key, reservationId).ConfigureAwait(false);
             return;
         }
 
@@ -321,8 +332,29 @@ public sealed partial class IdempotencyMiddleware
         catch
         {
             context.Features.Set<IHttpResponseBodyFeature>(originalBodyFeature);
-            await this.SafeAbandonAsync(scope, key, reservationId).ConfigureAwait(false);
+            await SafeAbandonAsync(store, this.logger, scope, key, reservationId).ConfigureAwait(false);
             throw;
+        }
+
+        // Drain any bytes the handler wrote via Response.BodyWriter without an explicit
+        // FlushAsync. Without this, those bytes would sit in the cached PipeWriter buffer
+        // until Dispose() runs (after the snapshot is read) — the client would still receive
+        // them, but the persisted snapshot body would be empty or truncated. Use the bounded
+        // FinalizationTimeout token rather than context.RequestAborted so a late client
+        // disconnect does not leak a reservation we still need to abandon.
+        using (var flushCts = new CancellationTokenSource(FinalizationTimeout))
+        {
+            try
+            {
+                await capture.FlushCachedWriterAsync(flushCts.Token).ConfigureAwait(false);
+            }
+            catch (Exception ex)
+            {
+                LogCaptureFlushFailed(this.logger, ex, key);
+                context.Features.Set<IHttpResponseBodyFeature>(originalBodyFeature);
+                await SafeAbandonAsync(store, this.logger, scope, key, reservationId).ConfigureAwait(false);
+                return;
+            }
         }
 
         context.Features.Set<IHttpResponseBodyFeature>(originalBodyFeature);
@@ -333,7 +365,7 @@ public sealed partial class IdempotencyMiddleware
             // Capture aborted (response too large, SendFileAsync, or explicit abort) — abandon
             // the reservation so the next retry can re-execute.
             LogCaptureAbandoned(this.logger, key);
-            await this.SafeAbandonAsync(scope, key, reservationId).ConfigureAwait(false);
+            await SafeAbandonAsync(store, this.logger, scope, key, reservationId).ConfigureAwait(false);
             return;
         }
 
@@ -360,7 +392,7 @@ public sealed partial class IdempotencyMiddleware
             // status + headers + body), so any response that wrote trailers is treated as
             // non-cacheable and the reservation is released for retry.
             LogTrailersAbandoned(this.logger, key);
-            await this.SafeAbandonAsync(scope, key, reservationId).ConfigureAwait(false);
+            await SafeAbandonAsync(store, this.logger, scope, key, reservationId).ConfigureAwait(false);
             return;
         }
 
@@ -369,7 +401,7 @@ public sealed partial class IdempotencyMiddleware
             // 5xx responses are treated as transient per the IIdempotencyStore.AbandonAsync
             // contract: caching them would deny the client a real retry that might succeed.
             LogServerErrorAbandoned(this.logger, key, headerSnapshot.StatusCode);
-            await this.SafeAbandonAsync(scope, key, reservationId).ConfigureAwait(false);
+            await SafeAbandonAsync(store, this.logger, scope, key, reservationId).ConfigureAwait(false);
             return;
         }
 
@@ -382,7 +414,7 @@ public sealed partial class IdempotencyMiddleware
         using var cts = new CancellationTokenSource(FinalizationTimeout);
         try
         {
-            await this.store.CompleteAsync(scope, key, reservationId, snapshot, cts.Token).ConfigureAwait(false);
+            await store.CompleteAsync(scope, key, reservationId, snapshot, cts.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -394,16 +426,16 @@ public sealed partial class IdempotencyMiddleware
         }
     }
 
-    private async Task SafeAbandonAsync(string scope, string key, string reservationId)
+    private static async Task SafeAbandonAsync(IIdempotencyStore store, ILogger<IdempotencyMiddleware> logger, string scope, string key, string reservationId)
     {
         using var cts = new CancellationTokenSource(FinalizationTimeout);
         try
         {
-            await this.store.AbandonAsync(scope, key, reservationId, cts.Token).ConfigureAwait(false);
+            await store.AbandonAsync(scope, key, reservationId, cts.Token).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            LogAbandonFailed(this.logger, ex, key);
+            LogAbandonFailed(logger, ex, key);
         }
     }
 
@@ -436,6 +468,9 @@ public sealed partial class IdempotencyMiddleware
 
     [LoggerMessage(EventId = 7, Level = LogLevel.Information, Message = "Idempotency reservation abandoned for key {Key}: handler returned status {StatusCode} (5xx responses are treated as transient)")]
     static partial void LogServerErrorAbandoned(ILogger logger, string key, int statusCode);
+
+    [LoggerMessage(EventId = 8, Level = LogLevel.Warning, Message = "Idempotency reservation abandoned for key {Key}: flushing the captured response body writer failed")]
+    static partial void LogCaptureFlushFailed(ILogger logger, Exception ex, string key);
 
     private sealed class HeaderSnapshot
     {

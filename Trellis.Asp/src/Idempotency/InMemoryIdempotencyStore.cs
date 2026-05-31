@@ -10,7 +10,8 @@ using System.Threading.Tasks;
 /// In-memory <see cref="IIdempotencyStore"/> implementation backed by a
 /// <see cref="ConcurrentDictionary{TKey,TValue}"/>. Intended for unit / integration tests and
 /// for single-instance development hosts; not safe across multiple instances or process
-/// restarts. Production hosts should register the EF-backed store (see <c>Trellis.EntityFrameworkCore</c>).
+/// restarts. Production hosts that need cross-instance persistence should supply their own
+/// <see cref="IIdempotencyStore"/> implementation backed by shared storage.
 /// </summary>
 /// <remarks>
 /// <para>

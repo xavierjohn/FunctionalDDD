@@ -18,6 +18,14 @@ public static class IdempotencyApplicationBuilderExtensions
     /// </summary>
     /// <param name="app">The application builder.</param>
     /// <returns>The application builder for chaining.</returns>
+    /// <remarks>
+    /// Store registration is verified via <see cref="IServiceProviderIsService"/> without
+    /// resolving the service, so scoped <see cref="IIdempotencyStore"/> implementations (for
+    /// example an EF-backed store that depends on a scoped <c>DbContext</c>) are validated at
+    /// startup without being captured by the root provider. Containers that do not implement
+    /// <see cref="IServiceProviderIsService"/> skip the registration check; missing
+    /// registrations surface as a per-request resolution error when the middleware runs.
+    /// </remarks>
     public static IApplicationBuilder UseTrellisIdempotency(this IApplicationBuilder app)
     {
         ArgumentNullException.ThrowIfNull(app);
@@ -30,8 +38,8 @@ public static class IdempotencyApplicationBuilderExtensions
                 "Call services.AddTrellisIdempotency() at startup before mounting the middleware.");
         }
 
-        var store = app.ApplicationServices.GetService<IIdempotencyStore>();
-        if (store is null)
+        var checker = app.ApplicationServices.GetService<IServiceProviderIsService>();
+        if (checker is not null && !checker.IsService(typeof(IIdempotencyStore)))
         {
             throw new InvalidOperationException(
                 "UseTrellisIdempotency() requires an IIdempotencyStore. " +

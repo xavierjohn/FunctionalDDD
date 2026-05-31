@@ -83,6 +83,24 @@ public sealed class CapturingResponseBodyFeature : IHttpResponseBodyFeature, IDi
     public byte[]? GetCapturedBytes() => this.CaptureAborted ? null : this.capture.ToArray();
 
     /// <summary>
+    /// Flushes the cached <see cref="PipeWriter"/> (if the handler ever requested it) so any
+    /// bytes the handler wrote via <c>Response.BodyWriter</c> without calling
+    /// <c>FlushAsync</c> drain through the underlying tee stream — landing in both the client
+    /// response and the in-memory capture buffer — before a caller reads
+    /// <see cref="GetCapturedBytes"/>. Safe to call when the writer was never requested.
+    /// </summary>
+    /// <param name="cancellationToken">A bounded token that aborts the flush if it stalls.</param>
+    public async ValueTask FlushCachedWriterAsync(CancellationToken cancellationToken)
+    {
+        if (this.cachedWriter is null)
+        {
+            return;
+        }
+
+        await this.cachedWriter.FlushAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
     /// Marks capture as aborted from an external observer (for example, when the middleware
     /// detects that response trailers were written or that <c>HasStarted</c> was set before
     /// the wrapper was installed).
