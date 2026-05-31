@@ -90,7 +90,7 @@ public sealed class WorkerHarnessOptions
 | Member | Type | Description |
 | --- | --- | --- |
 | `public static readonly DateTimeOffset DefaultTestStartInstant` | `DateTimeOffset` | `2024-01-01T00:00:00Z`. Matches `Trellis.Testing.AspNetCore.WebApplicationFactoryTimeExtensions.DefaultTestStartInstant`. |
-| `Actor SystemActor { get; set; }` | `Actor` | The actor returned by the harness's `TestActorProvider`. Defaults to `Actor.Create("system")` with no permissions. |
+| `Actor SystemActor { get; set; }` | `Actor` | The actor returned by the harness's `TestActorProvider`. Defaults to `Actor.Create("system", new HashSet<string>())` — an empty-permission system actor. |
 | `DateTimeOffset InitialTime { get; set; }` | `DateTimeOffset` | The instant the harness's `FakeTimeProvider` reports at start. Defaults to `DefaultTestStartInstant`. |
 | `TimeSpan DefaultWaitTimeout { get; set; }` | `TimeSpan` | Fallback timeout for `WaitForEventAsync` / `WaitForTickAsync` when the caller does not supply one. Real time. Defaults to 5 seconds. |
 | `bool AutoStart { get; set; }` | `bool` | When `true`, `CreateAsync` also calls `host.StartAsync()` before returning. Defaults to `false`. |

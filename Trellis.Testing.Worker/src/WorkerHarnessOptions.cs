@@ -43,8 +43,9 @@ public sealed class WorkerHarnessOptions
     /// <summary>
     /// The actor the harness's <see cref="TestActorProvider"/> returns by default. Worker
     /// tests typically use a system-actor identity carrying the permissions the worker's
-    /// command handlers require. Defaults to <c>Actor.Create("system")</c> with no
-    /// permissions — override before the harness is built when tests need specific permissions.
+    /// command handlers require. Defaults to <c>Actor.Create("system", new HashSet&lt;string&gt;())</c>
+    /// — an empty-permission system actor; override before the harness is built when tests
+    /// need specific permissions.
     /// </summary>
     public Actor SystemActor { get; set; } = Actor.Create("system", new HashSet<string>());
 
