@@ -2,7 +2,7 @@
 title: Integration Testing
 package: Trellis.Testing
 topics: [testing, assertions, result, maybe, fakerepository, webfactory, actor-headers]
-related_api_reference: [trellis-api-testing-reference.md, trellis-api-testing-aspnetcore.md, trellis-api-core.md]
+related_api_reference: [trellis-api-testing-reference.md, trellis-api-testing-aspnetcore.md, trellis-api-testing-worker.md, trellis-api-core.md]
 last_verified: 2026-05-01
 audience: [developer]
 ---
@@ -27,6 +27,7 @@ audience: [developer]
 | Pin time deterministically in integration tests | `factory.WithFakeTimeProvider(out var fake)` | [WebApplicationFactory helpers](#webapplicationfactory-helpers) |
 | Replay a `.http` file against the test host | `HttpFileParser.ParseFile` + `HttpFileRunner.RunAsync` + `HttpFileAssertions.AssertExpectationsMet` | [`trellis-api-testing-aspnetcore.md`](../api_reference/trellis-api-testing-aspnetcore.md#http-file-replay-helpers) |
 | Acquire a real Entra token in gated E2E tests | `MsalTestTokenProvider` + `factory.CreateClientWithEntraTokenAsync(...)` | [`trellis-api-testing-aspnetcore.md`](../api_reference/trellis-api-testing-aspnetcore.md#msal--entra-e2e-token-helpers) |
+| Test a `BackgroundService` with deterministic time + event capture | `WorkerHarness<TWorker>.CreateAsync(...)` + `Time.Advance(...)` + `WaitForEventAsync<TEvent>(...)` | [Background workers](#background-workers) |
 
 ## Use this guide when
 
@@ -54,6 +55,7 @@ audience: [developer]
 | `ServiceCollectionDbProviderExtensions` | `Trellis.Testing.AspNetCore` | `ReplaceDbProvider<TContext>(...)` for SQLite/in-memory swaps. |
 | `MsalTestTokenProvider` (+ `MsalTestOptions`, `TestUserCredentials`) | `Trellis.Testing.AspNetCore` | MSAL ROPC token acquisition for gated E2E tests against a dedicated test tenant. |
 | `HttpFileParser` / `HttpFileRunner` / `HttpFileAssertions` | `Trellis.Testing.AspNetCore.Http` | Parse, run, and assert `.http` files against a `WebApplicationFactory` client. |
+| `WorkerHarness<TWorker>` (+ `WorkerHarnessOptions`, `IWorkerTickSignal`, `WorkerHarnessTimeoutException`) | `Trellis.Testing.Worker` | Integration-test harness for `BackgroundService` workers: `FakeTimeProvider`, `TestActorProvider`, domain-event capture, race-proof `WaitForEventAsync` / `WaitForTickAsync`. |
 
 Full signatures: [trellis-api-testing-reference.md](../api_reference/trellis-api-testing-reference.md).
 
@@ -427,6 +429,58 @@ var handler = new PlaceOrderHandler(repo, actors);
     .Should().BeFailureOfType<Error.Conflict>();
 ```
 
+## Background workers
+
+`Trellis.Testing.Worker` builds an `IHost` around a `BackgroundService`, wires a `FakeTimeProvider`, registers a `TestActorProvider` for the worker's `IActorProvider`, and inserts an open-generic capture handler into the mediator's `IDomainEventHandler<>` pipeline. Tests advance the clock, then await the first domain event or a named tick signal.
+
+```csharp
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Trellis.Authorization;
+using Trellis.Mediator;
+using Trellis.Testing.Worker;
+
+await using var harness = await WorkerHarness<SubscriptionRenewalWorker>.CreateAsync(opts =>
+{
+    opts.SystemActor = Actor.Create(
+        "subscription-renewal-worker",
+        new HashSet<string>(["Subscriptions.Read", "Subscriptions.Write"]));
+
+    opts.ConfigureServices(services =>
+    {
+        services.AddDomainEventDispatch();
+        services.AddDbContext<RemindersDbContext>(o => o.UseSqlite(connection));
+        services.AddScoped<ISubscriptionsRepository, SubscriptionsRepository>();
+    });
+
+    opts.SeedAsync((sp, ct) =>
+        sp.GetRequiredService<RemindersDbContext>().SeedTestSubscriptionsAsync(ct));
+});
+
+await harness.StartAsync(TestContext.Current.CancellationToken);
+await harness.SettleAsync(cancellationToken: TestContext.Current.CancellationToken);
+
+harness.Time.Advance(TimeSpan.FromHours(24));
+
+var reminder = await harness.WaitForEventAsync<RenewalReminderQueued>(
+    TimeSpan.FromSeconds(5),
+    TestContext.Current.CancellationToken);
+
+reminder.SubscriptionId.Should().Be(expectedId);
+harness.Events<RenewalReminderQueued>().Should().HaveCount(1);
+```
+
+Key rules:
+
+- The harness owns `AddHostedService<TWorker>()`. Adding the worker again inside `ConfigureServices` fails fast — the harness throws `InvalidOperationException` at `CreateAsync` so a test never runs two copies of the worker.
+- The harness does **not** call `AddDomainEventDispatch()` for you. Worker tests are integration tests of the production composition root; include the same mediator-dispatch registration the worker's production host uses inside `ConfigureServices`. Without it, `WaitForEventAsync` times out with a diagnostic message that calls this out.
+- Wait timeouts run on real time. `Time.Advance(...)` drives the worker's `Task.Delay` / `PeriodicTimer` continuations; it does not consume the wait budget.
+- `AutoStart` defaults to `false`. Call `await harness.StartAsync(ct)` after configuring any post-build wait subscriptions; flip `opts.AutoStart = true` when the test does not need to subscribe ahead of the first tick.
+- **Avoid the startup race.** `IHost.StartAsync` returns once the worker's `ExecuteAsync` has been scheduled — not after the worker has registered its first `Task.Delay` / `PeriodicTimer` callback with the `FakeTimeProvider`. A test that calls `await harness.StartAsync(); harness.Time.Advance(period);` back-to-back can race the worker and time out. Either call `await harness.SettleAsync(ct: ct)` (real-time yield, defaults to 200ms) after `StartAsync`, or — for deterministic tests — have the worker call `IWorkerTickSignal.SignalAsync("ready", ct)` at the top of `ExecuteAsync` and use `await harness.WaitForTickAsync("ready", ct: ct)` instead.
+- When the worker has no domain-visible outcome (a no-op probe, an infrastructure-only tick), resolve the optional `IWorkerTickSignal` from DI and call `SignalAsync(name, ct)` at the end of each tick. Tests then call `await harness.WaitForTickAsync(name, timeout, ct)`. Prefer `WaitForEventAsync<TEvent>` when the tick already emits a domain event.
+
+Full surface: [`trellis-api-testing-worker.md`](../api_reference/trellis-api-testing-worker.md).
+
 ## Practical guidance
 
 - **Prefer fakes over mocks for repositories.** `FakeRepository` reproduces real not-found behavior, unique constraints, and domain-event capture; mocks usually drift from the real `IRepository` contract.
@@ -442,6 +496,7 @@ var handler = new PlaceOrderHandler(repo, actors);
 
 - API surface (assertions, fakes, actor provider): [`trellis-api-testing-reference.md`](../api_reference/trellis-api-testing-reference.md)
 - API surface (WebApplicationFactory, `.http` replay, MSAL): [`trellis-api-testing-aspnetcore.md`](../api_reference/trellis-api-testing-aspnetcore.md)
+- API surface (background-worker harness): [`trellis-api-testing-worker.md`](../api_reference/trellis-api-testing-worker.md)
 - `Result<T>`, `Maybe<T>`, closed `Error` ADT, `ResourceRef`: [`trellis-api-core.md`](../api_reference/trellis-api-core.md)
 - Authorization primitives (`Actor`, `IActorProvider`): [`trellis-api-authorization.md`](../api_reference/trellis-api-authorization.md)
 - Cookbook recipes (incl. **Recipe 16 — Unit of work in handlers**): [`trellis-api-cookbook.md`](../api_reference/trellis-api-cookbook.md)

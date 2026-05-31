@@ -1,0 +1,435 @@
+namespace Trellis.Testing.Worker;
+
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Time.Testing;
+using Trellis.Authorization;
+using Trellis.Mediator;
+
+/// <summary>
+/// Integration-test harness for a <see cref="BackgroundService"/> worker. Builds an
+/// <see cref="IHost"/> with a deterministic <see cref="FakeTimeProvider"/>, a configurable
+/// <see cref="TestActorProvider"/>, and a domain-event capture wired through the Trellis
+/// mediator pipeline so tests can advance time, wait for specific events or named tick
+/// signals, and assert what the worker emitted.
+/// </summary>
+/// <typeparam name="TWorker">The <see cref="BackgroundService"/> implementation under test.</typeparam>
+/// <remarks>
+/// <para>
+/// The harness owns hosted-service registration for <typeparamref name="TWorker"/>. A test
+/// that also registers <typeparamref name="TWorker"/> as an <see cref="IHostedService"/>
+/// in its <see cref="WorkerHarnessOptions.ConfigureServices(System.Action{IServiceCollection})"/>
+/// callback will fail fast at <see cref="CreateAsync(System.Action{WorkerHarnessOptions}?, System.Threading.CancellationToken)"/>
+/// time so the test does not silently run two copies of the worker.
+/// </para>
+/// <para>
+/// The harness does <b>not</b> register <c>AddDomainEventDispatch()</c>. Worker tests are
+/// integration tests of the production composition root — the same registration the worker's
+/// production host uses should appear in the test's
+/// <see cref="WorkerHarnessOptions.ConfigureServices(System.Action{IServiceCollection})"/>
+/// callback. Without it, the open-generic capture handler is registered but the mediator
+/// pipeline never publishes events, so <see cref="Events{TEvent}()"/> would remain empty
+/// even when the worker raises events on its aggregates.
+/// </para>
+/// <para>
+/// Wait timeouts measure <b>real time</b>, not the harness's fake clock — calling
+/// <see cref="Time"/>.<c>Advance(...)</c> does not consume the timeout budget. The fake clock
+/// only drives the worker's <c>Task.Delay</c> / <c>PeriodicTimer</c> continuations.
+/// </para>
+/// </remarks>
+public sealed class WorkerHarness<[System.Diagnostics.CodeAnalysis.DynamicallyAccessedMembers(System.Diagnostics.CodeAnalysis.DynamicallyAccessedMemberTypes.PublicConstructors)] TWorker> : IAsyncDisposable
+    where TWorker : BackgroundService
+{
+    private readonly IHost _host;
+    private readonly DomainEventCapture _capture;
+    private readonly WorkerTickSignal _tickSignal;
+    private readonly TimeSpan _defaultWaitTimeout;
+    private int _started;
+    private int _disposed;
+
+    private WorkerHarness(
+        IHost host,
+        FakeTimeProvider time,
+        TestActorProvider actor,
+        DomainEventCapture capture,
+        WorkerTickSignal tickSignal,
+        TimeSpan defaultWaitTimeout)
+    {
+        _host = host;
+        Time = time;
+        Actor = actor;
+        _capture = capture;
+        _tickSignal = tickSignal;
+        _defaultWaitTimeout = defaultWaitTimeout;
+    }
+
+    /// <summary>The underlying <see cref="IHost"/>; exposed for advanced scenarios that need direct lifecycle access.</summary>
+    public IHost Host => _host;
+
+    /// <summary>The root <see cref="IServiceProvider"/> of the worker host. Tests typically create their own scope from this when resolving scoped services after the host starts.</summary>
+    public IServiceProvider Services => _host.Services;
+
+    /// <summary>The harness-managed <see cref="FakeTimeProvider"/> registered as the singleton <see cref="TimeProvider"/>. Tests advance time via <see cref="FakeTimeProvider.Advance(TimeSpan)"/> to drive the worker's <c>Task.Delay</c> / <c>PeriodicTimer</c> continuations.</summary>
+    public FakeTimeProvider Time { get; }
+
+    /// <summary>The harness-managed <see cref="TestActorProvider"/>. Tests can call <see cref="TestActorProvider.WithActor(Actor)"/> inside a scope to override the default system actor for a specific command flow.</summary>
+    public TestActorProvider Actor { get; }
+
+    /// <summary>The <see cref="IWorkerTickSignal"/> instance registered with the host. Tests typically observe it via <see cref="WaitForTickAsync(TimeSpan?, CancellationToken)"/> rather than calling it directly.</summary>
+    public IWorkerTickSignal TickSignal => _tickSignal;
+
+    /// <summary>
+    /// Builds the harness: applies defaults, runs the
+    /// <see cref="WorkerHarnessOptions.ConfigureServices(System.Action{IServiceCollection})"/>
+    /// callbacks, registers <typeparamref name="TWorker"/> as a hosted service, builds the host,
+    /// runs the <see cref="WorkerHarnessOptions.SeedAsync(System.Func{IServiceProvider, CancellationToken, Task})"/>
+    /// callbacks, and starts the host when <see cref="WorkerHarnessOptions.AutoStart"/> is set.
+    /// </summary>
+    /// <param name="configure">Optional configuration delegate.</param>
+    /// <param name="cancellationToken">A token to observe during host build, seeding, and (when applicable) start.</param>
+    /// <returns>An initialized harness ready for time advances, event waits, and tick waits.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when an <see cref="IHostedService"/> for <typeparamref name="TWorker"/> is already registered by a user <see cref="WorkerHarnessOptions.ConfigureServices(System.Action{IServiceCollection})"/> callback.</exception>
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Design",
+        "CA1000:Do not declare static members on generic types",
+        Justification = "WorkerHarness<TWorker>.CreateAsync is the discoverable factory entry point; collocating it with the generic type keeps the call-site shape WorkerHarness<MyWorker>.CreateAsync(...) symmetric with WebApplicationFactory<TEntryPoint>.")]
+    public static async Task<WorkerHarness<TWorker>> CreateAsync(
+        Action<WorkerHarnessOptions>? configure = null,
+        CancellationToken cancellationToken = default)
+    {
+        var options = new WorkerHarnessOptions();
+        configure?.Invoke(options);
+
+        var time = new FakeTimeProvider(options.InitialTime);
+        var capture = new DomainEventCapture();
+        var tickSignal = new WorkerTickSignal();
+        var actor = new TestActorProvider(options.SystemActor);
+
+        var builder = Microsoft.Extensions.Hosting.Host.CreateApplicationBuilder();
+
+        builder.Services.AddSingleton<TimeProvider>(time);
+        builder.Services.AddSingleton(capture);
+        builder.Services.AddSingleton<IWorkerTickSignal>(tickSignal);
+        // Scoped to match production IActorProvider registrations; the AsyncLocal flow in
+        // TestActorProvider means a single shared instance still gives each scope its own
+        // ambient actor when tests use WithActor(...).
+        builder.Services.Replace(ServiceDescriptor.Scoped<IActorProvider>(_ => actor));
+
+        // Open-generic capture handler: DI closes IDomainEventHandler<X> against this
+        // implementation for every concrete X the publisher resolves, alongside any
+        // production handler the user registered for the same event.
+        builder.Services.Add(ServiceDescriptor.Scoped(
+            typeof(IDomainEventHandler<>),
+            typeof(DomainEventCaptureHandler<>)));
+
+        foreach (var configureServices in options.ConfigureServicesDelegates)
+            configureServices(builder.Services);
+
+        foreach (var configureLogging in options.ConfigureLoggingDelegates)
+            configureLogging(builder.Logging);
+
+        ThrowIfWorkerAlreadyRegistered(builder.Services);
+        builder.Services.AddHostedService<TWorker>();
+
+        var host = builder.Build();
+
+        var harness = new WorkerHarness<TWorker>(
+            host,
+            time,
+            actor,
+            capture,
+            tickSignal,
+            options.DefaultWaitTimeout);
+
+        try
+        {
+            foreach (var seed in options.SeedDelegates)
+            {
+                await using var scope = host.Services.CreateAsyncScope();
+                await seed(scope.ServiceProvider, cancellationToken).ConfigureAwait(false);
+            }
+
+            if (options.AutoStart)
+                await harness.StartAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            await harness.DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
+
+        return harness;
+    }
+
+    /// <summary>
+    /// Starts the worker host. Safe to call multiple times — subsequent calls are no-ops.
+    /// </summary>
+    /// <param name="cancellationToken">A token to observe during start.</param>
+    /// <remarks>
+    /// <para>
+    /// <see cref="IHost.StartAsync(CancellationToken)"/> returns as soon as the
+    /// <see cref="BackgroundService"/>'s <see cref="BackgroundService.ExecuteAsync(CancellationToken)"/>
+    /// has been scheduled onto the thread pool, NOT after the worker has registered its first
+    /// <see cref="Task.Delay(TimeSpan, TimeProvider, CancellationToken)"/> /
+    /// <see cref="System.Threading.PeriodicTimer"/> callback with the harness's
+    /// <see cref="FakeTimeProvider"/>. A test that calls
+    /// <c>await harness.StartAsync(); harness.Time.Advance(period);</c> back-to-back can race
+    /// the worker: the <c>Advance</c> fires before any callback is registered, the worker
+    /// then registers <c>Task.Delay(period, FakeTime, ct)</c> with a deadline of
+    /// <c>(now + period)</c>, and the test times out waiting for a tick that needs another
+    /// <c>Advance(period)</c> to fire.
+    /// </para>
+    /// <para>
+    /// Two ways to avoid the race:
+    /// <list type="number">
+    ///   <item><description>(Deterministic) Have the worker call
+    ///     <see cref="IWorkerTickSignal.SignalAsync(string, CancellationToken)"/> with a known
+    ///     name (e.g. <c>"ready"</c>) at the top of <c>ExecuteAsync</c> before the first
+    ///     <see cref="Task.Delay(TimeSpan, TimeProvider, CancellationToken)"/>. Tests await
+    ///     <see cref="WaitForTickAsync(string, TimeSpan?, CancellationToken)"/> for that name
+    ///     before advancing time.</description></item>
+    ///   <item><description>(Lazy) Call <see cref="SettleAsync(TimeSpan?, CancellationToken)"/>
+    ///     after <c>StartAsync</c>. This is a real-time yield so the worker's first scheduling
+    ///     turn lands before the test advances the clock. Convenient for one-off tests but
+    ///     adds wall-clock latency.</description></item>
+    /// </list>
+    /// </para>
+    /// </remarks>
+    public async Task StartAsync(CancellationToken cancellationToken = default)
+    {
+        if (Interlocked.Exchange(ref _started, 1) == 1)
+            return;
+        await _host.StartAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Yields real time so the worker's <see cref="BackgroundService.ExecuteAsync(CancellationToken)"/>
+    /// can take its first scheduling turn — typically enough for it to register its initial
+    /// <see cref="Task.Delay(TimeSpan, TimeProvider, CancellationToken)"/> /
+    /// <see cref="System.Threading.PeriodicTimer"/> callback with the harness's
+    /// <see cref="FakeTimeProvider"/>. Call after <see cref="StartAsync(CancellationToken)"/>
+    /// when the worker has no other readiness signal.
+    /// </summary>
+    /// <param name="duration">Optional real-time settle duration. Defaults to 200ms.</param>
+    /// <param name="cancellationToken">A token to observe during the yield.</param>
+    /// <remarks>
+    /// For a deterministic alternative, have the worker call
+    /// <see cref="IWorkerTickSignal.SignalAsync(string, CancellationToken)"/> with a known
+    /// name at the top of <c>ExecuteAsync</c> and use
+    /// <see cref="WaitForTickAsync(string, TimeSpan?, CancellationToken)"/> instead.
+    /// </remarks>
+    public Task SettleAsync(TimeSpan? duration = null, CancellationToken cancellationToken = default) =>
+        Task.Delay(duration ?? TimeSpan.FromMilliseconds(200), cancellationToken);
+
+    /// <summary>
+    /// Stops the worker host. Safe to call multiple times — subsequent calls are no-ops.
+    /// </summary>
+    /// <param name="cancellationToken">A token to observe during stop.</param>
+    public async Task StopAsync(CancellationToken cancellationToken = default)
+    {
+        if (Volatile.Read(ref _started) == 0)
+            return;
+        await _host.StopAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Returns every captured event of type <typeparamref name="TEvent"/> in the order they were dispatched.
+    /// </summary>
+    /// <typeparam name="TEvent">The event type to filter by; uses runtime <c>is</c> matching so derived events appear in queries for their base type.</typeparam>
+    public IReadOnlyList<TEvent> Events<TEvent>() where TEvent : IDomainEvent =>
+        _capture.SnapshotOf<TEvent>();
+
+    /// <summary>
+    /// Returns every captured domain event regardless of type, in dispatch order.
+    /// </summary>
+    public IReadOnlyList<IDomainEvent> AllEvents => _capture.Snapshot();
+
+    /// <summary>
+    /// Waits until a domain event of type <typeparamref name="TEvent"/> is captured (or returns
+    /// immediately if one was captured before the call). Returns the matching event so the test
+    /// does not have to re-query <see cref="Events{TEvent}()"/>.
+    /// </summary>
+    /// <typeparam name="TEvent">The expected event type.</typeparam>
+    /// <param name="timeout">Optional override of <see cref="WorkerHarnessOptions.DefaultWaitTimeout"/>. Measured in real time.</param>
+    /// <param name="cancellationToken">A token to observe while waiting.</param>
+    /// <returns>The first matching event.</returns>
+    /// <exception cref="WorkerHarnessTimeoutException">Thrown when no matching event arrives before the timeout elapses.</exception>
+    public Task<TEvent> WaitForEventAsync<TEvent>(
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+        where TEvent : IDomainEvent
+        => WaitForEventCoreAsync<TEvent>(predicate: null, timeout, cancellationToken);
+
+    /// <summary>
+    /// Waits until a domain event of type <typeparamref name="TEvent"/> satisfying
+    /// <paramref name="predicate"/> is captured.
+    /// </summary>
+    /// <typeparam name="TEvent">The expected event type.</typeparam>
+    /// <param name="predicate">Filter applied to candidate events. The first event that returns <see langword="true"/> completes the wait.</param>
+    /// <param name="timeout">Optional override of <see cref="WorkerHarnessOptions.DefaultWaitTimeout"/>. Measured in real time.</param>
+    /// <param name="cancellationToken">A token to observe while waiting.</param>
+    /// <returns>The first matching event.</returns>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="predicate"/> is <see langword="null"/>.</exception>
+    /// <exception cref="WorkerHarnessTimeoutException">Thrown when no matching event arrives before the timeout elapses.</exception>
+    public async Task<TEvent> WaitForEventAsync<TEvent>(
+        Func<TEvent, bool> predicate,
+        TimeSpan? timeout = null,
+        CancellationToken cancellationToken = default)
+        where TEvent : IDomainEvent
+    {
+        ArgumentNullException.ThrowIfNull(predicate);
+        return await WaitForEventCoreAsync<TEvent>(predicate, timeout, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    private async Task<TEvent> WaitForEventCoreAsync<TEvent>(
+        Func<TEvent, bool>? predicate,
+        TimeSpan? timeout,
+        CancellationToken cancellationToken)
+        where TEvent : IDomainEvent
+    {
+        var effectiveTimeout = timeout ?? _defaultWaitTimeout;
+        using var timeoutCts = new CancellationTokenSource(effectiveTimeout);
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+
+        try
+        {
+            return await _capture.WaitForAsync(predicate, linkedCts.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+        {
+            throw BuildEventTimeoutException<TEvent>(effectiveTimeout, predicate is not null);
+        }
+    }
+
+    /// <summary>
+    /// Waits until <see cref="IWorkerTickSignal.SignalAsync(CancellationToken)"/> or
+    /// <see cref="IWorkerTickSignal.SignalAsync(string, CancellationToken)"/> has been called at least once.
+    /// Returns immediately if a signal arrived before the call.
+    /// </summary>
+    /// <param name="timeout">Optional override of <see cref="WorkerHarnessOptions.DefaultWaitTimeout"/>. Measured in real time.</param>
+    /// <param name="cancellationToken">A token to observe while waiting.</param>
+    /// <exception cref="WorkerHarnessTimeoutException">Thrown when no signal arrives before the timeout elapses.</exception>
+    public Task WaitForTickAsync(TimeSpan? timeout = null, CancellationToken cancellationToken = default) =>
+        WaitForTickCoreAsync(name: null, timeout, cancellationToken);
+
+    /// <summary>
+    /// Waits until a tick signal with the specified <paramref name="name"/> arrives.
+    /// </summary>
+    /// <param name="name">The expected tick name; the harness compares with ordinal equality.</param>
+    /// <param name="timeout">Optional override of <see cref="WorkerHarnessOptions.DefaultWaitTimeout"/>. Measured in real time.</param>
+    /// <param name="cancellationToken">A token to observe while waiting.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="name"/> is <see langword="null"/>.</exception>
+    /// <exception cref="WorkerHarnessTimeoutException">Thrown when no matching tick arrives before the timeout elapses.</exception>
+    public Task WaitForTickAsync(string name, TimeSpan? timeout = null, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        return WaitForTickCoreAsync(name, timeout, cancellationToken);
+    }
+
+    private async Task WaitForTickCoreAsync(string? name, TimeSpan? timeout, CancellationToken cancellationToken)
+    {
+        var effectiveTimeout = timeout ?? _defaultWaitTimeout;
+        using var timeoutCts = new CancellationTokenSource(effectiveTimeout);
+        using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutCts.Token);
+
+        try
+        {
+            await _tickSignal.WaitForAsync(name, linkedCts.Token).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (timeoutCts.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
+        {
+            throw BuildTickTimeoutException(name, effectiveTimeout);
+        }
+    }
+
+    /// <summary>
+    /// Stops the host (if started) and disposes the underlying <see cref="IHost"/>.
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (Interlocked.Exchange(ref _disposed, 1) == 1)
+            return;
+
+        try
+        {
+            if (Volatile.Read(ref _started) == 1)
+            {
+                // The host may have been stopped already; StopAsync is idempotent at the
+                // host level too. Cap stop with a short real-time budget so a misbehaving
+                // worker does not hang test teardown forever.
+                using var stopCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                try { await _host.StopAsync(stopCts.Token).ConfigureAwait(false); }
+                catch (OperationCanceledException) { /* tests should still tear down */ }
+            }
+        }
+        finally
+        {
+            if (_host is IAsyncDisposable hostAsync)
+                await hostAsync.DisposeAsync().ConfigureAwait(false);
+            else
+                _host.Dispose();
+        }
+    }
+
+    private WorkerHarnessTimeoutException BuildEventTimeoutException<TEvent>(TimeSpan timeout, bool hadPredicate)
+        where TEvent : IDomainEvent
+    {
+        var capturedSameType = _capture.SnapshotOf<TEvent>().Count;
+        var capturedTotal = _capture.Snapshot().Count;
+
+        var detail = hadPredicate
+            ? $"No event of type '{typeof(TEvent).Name}' matched the predicate within {timeout}."
+            : $"No event of type '{typeof(TEvent).Name}' was captured within {timeout}.";
+
+        return new WorkerHarnessTimeoutException(
+            $"{detail} Captured {capturedSameType} event(s) of this type and {capturedTotal} domain event(s) in total. " +
+            "If the worker is expected to emit this event after Time.Advance(...), confirm that the production " +
+            "composition root registers AddDomainEventDispatch() (or one of the assembly-scanning overloads) so the " +
+            "mediator publishes events. Worker-harness tests inherit the production registration; the harness does " +
+            "not register domain-event dispatch on its own.");
+    }
+
+    private WorkerHarnessTimeoutException BuildTickTimeoutException(string? name, TimeSpan timeout)
+    {
+        var signals = _tickSignal.Snapshot();
+        var signalSummary = signals.Count == 0
+            ? "no tick signals recorded"
+            : $"recorded tick names: [{string.Join(", ", signals.Select(s => string.IsNullOrEmpty(s) ? "<empty>" : s))}]";
+
+        var detail = name is null
+            ? $"No worker tick signal arrived within {timeout}."
+            : $"No worker tick signal named '{name}' arrived within {timeout}.";
+
+        return new WorkerHarnessTimeoutException(
+            $"{detail} {signalSummary}. The worker must resolve IWorkerTickSignal from DI and call " +
+            "SignalAsync(...) at the end of each tick for this primitive to release. Prefer " +
+            "WaitForEventAsync<TEvent> when the tick emits a domain event.");
+    }
+
+    private static void ThrowIfWorkerAlreadyRegistered(IServiceCollection services)
+    {
+        var workerType = typeof(TWorker);
+        foreach (var descriptor in services)
+        {
+            if (descriptor.ServiceType != typeof(IHostedService))
+                continue;
+
+            if (descriptor.ImplementationType == workerType ||
+                descriptor.ImplementationInstance?.GetType() == workerType)
+            {
+                throw new InvalidOperationException(
+                    $"WorkerHarness<{workerType.Name}> owns the IHostedService registration for the worker under test, " +
+                    $"but '{workerType.FullName}' was already registered as an IHostedService inside ConfigureServices(...). " +
+                    "Remove the duplicate AddHostedService call from the test's ConfigureServices callback — the harness " +
+                    "registers the worker for you.");
+            }
+        }
+    }
+}
