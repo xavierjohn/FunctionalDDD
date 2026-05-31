@@ -1,7 +1,7 @@
 ﻿---
 package: Trellis.Asp
-namespaces: [Trellis.Asp, Trellis.Asp.Authorization, Trellis.Asp.ModelBinding, Trellis.Asp.Routing, Trellis.Asp.Validation]
-types: [TrellisHttpResult, ToHttpResponse, AsActionResult, HttpResponseOptionsBuilder<T>, CacheControl, MaybePrimitiveJsonConverter<T>, MaybePrimitiveJsonConverterFactory, MaybePrimitiveModelBinder<T>, MaybePrimitives, ClaimsActorProvider, EntraActorProvider, DevelopmentActorProvider, CachingActorProvider, AddTrellisProblemDetails, UseTrellisProblemDetails, ResourceCollectionNameRegistry, ResourceCollectionNameOverride, AddResourceCollectionName, AddResourceCollectionNames]
+namespaces: [Trellis.Asp, Trellis.Asp.Authorization, Trellis.Asp.Idempotency, Trellis.Asp.ModelBinding, Trellis.Asp.Routing, Trellis.Asp.Validation]
+types: [TrellisHttpResult, ToHttpResponse, AsActionResult, HttpResponseOptionsBuilder<T>, CacheControl, MaybePrimitiveJsonConverter<T>, MaybePrimitiveJsonConverterFactory, MaybePrimitiveModelBinder<T>, MaybePrimitives, ClaimsActorProvider, EntraActorProvider, DevelopmentActorProvider, CachingActorProvider, AddTrellisProblemDetails, UseTrellisProblemDetails, ResourceCollectionNameRegistry, ResourceCollectionNameOverride, AddResourceCollectionName, AddResourceCollectionNames, IdempotentAttribute, IdempotencyOptions, IIdempotencyStore, InMemoryIdempotencyStore, IIdempotencyScopeResolver, AddTrellisIdempotency, AddInMemoryIdempotencyStore, UseTrellisIdempotency]
 version: v3
 last_verified: 2026-05-01
 audience: [llm]
@@ -42,6 +42,7 @@ See also: [trellis-api-cookbook.md](trellis-api-cookbook.md) — recipes using t
 | Compose a system actor for background workers | `AddTrellisWorkerActor` | [`Trellis.Asp.Authorization`](#namespace-trellisaspauthorization) |
 | Bind scalar value objects from routes/query/body | `AddTrellisAsp()` plus route constraints / validation middleware as needed | [`Trellis.Asp.ModelBinding`](#namespace-trellisaspmodelbinding), [`Trellis.Asp.Validation`](#namespace-trellisaspvalidation) |
 | Add Trellis ProblemDetails recipe (trace id from `Activity.Current`, friendly 500 detail, `allow` extension on 405) | `services.AddTrellisProblemDetails()` plus `app.UseTrellisProblemDetails()` (or `options.UseProblemDetails()` via [`Trellis.ServiceDefaults`](trellis-api-servicedefaults.md#trellisservicebuilder)) | [`ServiceCollectionExtensions`](#servicecollectionextensions), [`ApplicationBuilderExtensions`](#applicationbuilderextensions) |
+| Add the IETF `Idempotency-Key` middleware to opted-in `POST` / `PATCH` endpoints | `services.AddTrellisIdempotency(...)` (or `options.UseIdempotency(...)`), `services.AddInMemoryIdempotencyStore()`, `app.UseTrellisIdempotency()`, and mark each opted-in endpoint with `[Idempotent]` | [`Trellis.Asp.Idempotency`](#namespace-trellisaspidempotency), Cookbook [Recipe 28](trellis-api-cookbook.md#recipe-28--ietf-idempotency-key-middleware-on-post--patch-with-usetrellisidempotency) |
 
 ## Endpoint checklist for generated APIs
 
@@ -401,6 +402,8 @@ The main DI surface for `Trellis.Asp` (in folder `Extensions/`).
 | `public static IServiceCollection AddResourceCollectionName(this IServiceCollection services, string resourceType, string collectionName)` | `IServiceCollection` | Same as the typed overload but takes the `ResourceRef.Type` string directly — for cases where the consumer wants to bind a type name that does not exist as a CLR type, or to keep registration centralised. Validates the `collectionName` is a safe single URL path segment. |
 | `public static IServiceCollection AddResourceCollectionNames(this IServiceCollection services, Assembly assembly)` | `IServiceCollection` | Scans the supplied assembly for types decorated with `[ResourceCollectionName]` and registers one `ResourceCollectionNameOverride` per type. Marked `[RequiresUnreferencedCode]` because it uses reflection over the assembly's types; AOT/trim-published apps should prefer the explicit `AddResourceCollectionName<T>(...)` overload. Conflicting registrations (same type name → different collection names) throw at registry activation; identical registrations coalesce silently. |
 | `public static IServiceCollection AddResourceCollectionNames(this IServiceCollection services, params Assembly[] assemblies)` | `IServiceCollection` | Convenience overload that scans each supplied assembly in order via the single-`Assembly` overload. Identical overrides across assemblies coalesce silently when the registry is activated; conflicting overrides throw. |
+| `public static IServiceCollection AddTrellisIdempotency(this IServiceCollection services, Action<IdempotencyOptions>? configure = null)` | `IServiceCollection` | Registers `IdempotencyOptions` (with the optional `configure` callback), the default `IIdempotencyScopeResolver` (per-actor, falling back to anonymous), and an internal marker that `UseTrellisIdempotency()` uses to detect the wiring at startup. **Does not register a store** — composition is explicit; call `AddInMemoryIdempotencyStore()` for dev / tests, or register an EF-backed store for multi-instance production hosts. Composition-root consumers can opt in via the `options.UseIdempotency(...)` slot on [`TrellisServiceBuilder`](trellis-api-servicedefaults.md#trellisservicebuilder). |
+| `public static IServiceCollection AddInMemoryIdempotencyStore(this IServiceCollection services)` | `IServiceCollection` | Registers `InMemoryIdempotencyStore` as the singleton `IIdempotencyStore`. Single-process only; multi-instance hosts need a shared store. |
 
 ### `ApplicationBuilderExtensions`
 
@@ -415,6 +418,78 @@ The middleware pipeline surface for `Trellis.Asp` (in folder `Extensions/`).
 | Signature | Returns | Description |
 | --- | --- | --- |
 | `public static IApplicationBuilder UseTrellisProblemDetails(this IApplicationBuilder app)` | `IApplicationBuilder` | Wires the canonical ProblemDetails request pipeline: `UseExceptionHandler()` then `UseStatusCodePages()`. Must be registered **early** in the pipeline — `UseStatusCodePages` only rewrites status-code responses produced by middleware registered after it (routing, authorization, endpoint execution). Pair with `services.AddTrellisProblemDetails()` so the rewritten responses pick up Trellis defaults (trace id, friendly 500 detail, 405 `allow` array). |
+| `public static IApplicationBuilder UseTrellisIdempotency(this IApplicationBuilder app)` | `IApplicationBuilder` | Mounts `IdempotencyMiddleware` in the request pipeline. The middleware is a no-op on endpoints that do not carry `IdempotentAttribute` and on methods outside `IdempotencyOptions.Methods` (default `POST` and `PATCH`). Throws `InvalidOperationException` at startup if `services.AddTrellisIdempotency(...)` or an `IIdempotencyStore` registration is missing — there is no quiet-degrade path. Mount after routing and before endpoint authorization so opted-in endpoints' metadata is resolvable. |
+
+### Namespace `Trellis.Asp.Idempotency`
+
+Opt-in IETF `Idempotency-Key` middleware for `POST` / `PATCH` retry safety. See cookbook [Recipe 28](trellis-api-cookbook.md#recipe-28--ietf-idempotency-key-middleware-on-post--patch-with-usetrellisidempotency).
+
+### `IdempotentAttribute`
+
+**Declaration**
+
+```csharp
+[AttributeUsage(AttributeTargets.Method | AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
+public sealed class IdempotentAttribute : Attribute
+```
+
+Endpoint marker. Apply to a controller action (or attach as endpoint metadata in Minimal API: `.WithMetadata(new IdempotentAttribute())`) to opt the endpoint into the idempotency middleware. Endpoints without the attribute pass through.
+
+### `IdempotencyOptions`
+
+**Declaration**
+
+```csharp
+public sealed class IdempotencyOptions
+```
+
+| Member | Default | Description |
+| --- | --- | --- |
+| `HeaderName` | `"Idempotency-Key"` | HTTP header carrying the IETF [`sf-string`](https://www.rfc-editor.org/rfc/rfc8941) idempotency key. |
+| `Ttl` | `24 h` | Time a completed snapshot is retained before it is evicted and the key can be reused. |
+| `ReservationTimeout` | `30 s` | Time an in-flight reservation is held before the store may sweep it (so a crashed handler does not block retries forever). |
+| `MaxKeyLength` | `200` | Hard cap on parsed key length; longer keys produce `400 Bad Request`. |
+| `MaxRequestBodyBytes` | `1 MiB` | Hard cap on the buffered request body that contributes to the fingerprint; larger bodies produce `413 Payload Too Large`. |
+| `MaxResponseBodyBytes` | `1 MiB` | Hard cap on the captured response body; exceeding aborts capture and records no snapshot (the next retry re-executes). |
+| `MismatchStatusCode` | `422` | Status returned when the same key arrives with a different body fingerprint. |
+| `Methods` | `{ POST, PATCH }` | Methods the middleware acts on; other methods (`GET`, `PUT`, `DELETE`) pass through. |
+| `AdditionalFingerprintHeaders` | empty | Extra request headers included in the fingerprint (for example a tenant header) when their semantics affect the request identity. |
+
+### `IIdempotencyStore`
+
+**Declaration**
+
+```csharp
+public interface IIdempotencyStore
+```
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `ValueTask<IdempotencyReservationOutcome> TryReserveAsync(string scope, string key, string fingerprint, CancellationToken ct)` | one of `Reserved(reservationId)`, `AlreadyInFlight(retryAfter)`, `Replay(snapshot)`, `BodyHashMismatch(storedFingerprint)` | CAS reservation. The reservation token is an opaque `string`; pass it back to `CompleteAsync` / `AbandonAsync`. |
+| `ValueTask CompleteAsync(string scope, string key, string reservationId, IdempotencyResponseSnapshot snapshot, CancellationToken ct)` | `ValueTask` | Records the response snapshot under the reservation. Conditional on the reservation token (CAS) so a stale completer cannot finalise a reservation the sweeper already abandoned. |
+| `ValueTask AbandonAsync(string scope, string key, string reservationId, CancellationToken ct)` | `ValueTask` | Releases a reservation without a snapshot so the next retry can re-reserve. Called on any failure path (exception, response-too-large, `SendFileAsync`, abort). |
+
+### `InMemoryIdempotencyStore`
+
+**Declaration**
+
+```csharp
+public sealed class InMemoryIdempotencyStore : IIdempotencyStore
+```
+
+Single-process `ConcurrentDictionary`-backed store. Register with `services.AddInMemoryIdempotencyStore()` for dev / single-instance hosts and tests. **Not safe across multiple instances or process restarts** — production hosts that retry across replicas need an EF-backed store that implements the same CAS contract.
+
+### `IIdempotencyScopeResolver`
+
+**Declaration**
+
+```csharp
+public interface IIdempotencyScopeResolver
+```
+
+| Signature | Returns | Description |
+| --- | --- | --- |
+| `ValueTask<string> ResolveAsync(HttpContext context, CancellationToken ct)` | `ValueTask<string>` | Returns an isolation scope (tenant id, actor id, anonymous). Two requests carrying the same key under different scopes never collide. Default registration is `DefaultIdempotencyScopeResolver`, which resolves `IActorProvider` from request services and uses the current actor's id (falling back to anonymous when no provider is registered or no actor is resolved). `ActorIdempotencyScopeResolver` is also shipped for hosts that want a hard dependency on `IActorProvider`. Replace with a custom implementation for multi-tenant hosts. |
 
 ### Namespace `Trellis.Asp.Authorization`
 

@@ -244,6 +244,37 @@ public class TrellisServiceBuilderTests
             "the marker-sentinel idempotency must apply across builder + direct composition");
     }
 
+    [Fact]
+    public void UseIdempotency_RegistersOptionsAndMarker()
+    {
+        var services = new ServiceCollection();
+        services.AddTrellis(options => options.UseIdempotency(opt => opt.HeaderName = "X-Custom-Key"));
+
+        using var sp = services.BuildServiceProvider();
+        var opts = sp.GetRequiredService<IOptions<Trellis.Asp.Idempotency.IdempotencyOptions>>().Value;
+        opts.HeaderName.Should().Be("X-Custom-Key");
+
+        services.Should().Contain(
+            d => string.Equals(d.ServiceType.Name, "IdempotencyMarker", StringComparison.Ordinal),
+            "the marker is required so UseTrellisIdempotency() can detect builder-based wiring");
+
+        services.Should().Contain(
+            d => d.ServiceType == typeof(Trellis.Asp.Idempotency.IIdempotencyScopeResolver),
+            "a default scope resolver must be registered by AddTrellisIdempotency");
+    }
+
+    [Fact]
+    public void UseIdempotency_DoesNotRegisterAStore()
+    {
+        // The builder slot deliberately does not pick a store. Hosts opt into the in-memory
+        // store (or an EF-backed store) explicitly so test/dev composition is not silently
+        // inherited in production.
+        var services = new ServiceCollection();
+        services.AddTrellis(options => options.UseIdempotency());
+
+        services.Should().NotContain(d => d.ServiceType == typeof(Trellis.Asp.Idempotency.IIdempotencyStore));
+    }
+
     private sealed class TestDbContext : DbContext
     {
         public TestDbContext(DbContextOptions<TestDbContext> options)
