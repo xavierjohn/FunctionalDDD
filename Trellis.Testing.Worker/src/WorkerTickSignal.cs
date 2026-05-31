@@ -50,6 +50,18 @@ internal sealed class WorkerTickSignal : IWorkerTickSignal
         }
     }
 
+    public int LastIndexOf(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        lock (_gate)
+        {
+            for (var i = _signals.Count - 1; i >= 0; i--)
+                if (string.Equals(_signals[i], name, StringComparison.Ordinal))
+                    return i;
+            return -1;
+        }
+    }
+
     public ValueTask SignalAsync(CancellationToken cancellationToken = default) =>
         SignalAsync(string.Empty, cancellationToken);
 

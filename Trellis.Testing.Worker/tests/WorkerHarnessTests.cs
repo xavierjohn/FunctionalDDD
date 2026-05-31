@@ -305,6 +305,7 @@ public class WorkerHarnessTests
         harness.Time.Advance(TimeSpan.FromMinutes(1));
         var firstIndex = await harness.WaitForTickAsync(named, TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
         harness.TickCountOf(named).Should().BeGreaterThanOrEqualTo(1);
+        harness.LastTickIndexOf(named).Should().Be(firstIndex);
 
         // Without the cursor the second wait would return immediately even with no new tick;
         // with the cursor it must wait for a new tick produced by the next Advance.
@@ -316,6 +317,60 @@ public class WorkerHarnessTests
             cancellationToken: TestContext.Current.CancellationToken);
 
         secondIndex.Should().BeGreaterThan(firstIndex);
+    }
+
+    [Fact]
+    public async Task LastTickIndexOf_returns_global_index_of_most_recent_matching_signal_with_interleaved_names()
+    {
+        await using var harness = await CreateMinimalHarnessAsync();
+        var signal = harness.TickSignal;
+
+        await signal.SignalAsync("other", TestContext.Current.CancellationToken);    // global 0
+        await signal.SignalAsync("probe", TestContext.Current.CancellationToken);    // global 1
+        await signal.SignalAsync("other", TestContext.Current.CancellationToken);    // global 2
+        await signal.SignalAsync("probe", TestContext.Current.CancellationToken);    // global 3
+
+        harness.TickCount.Should().Be(4);
+        harness.TickCountOf("probe").Should().Be(2);
+        harness.LastTickIndexOf("probe").Should().Be(3);
+        harness.LastTickIndexOf("missing").Should().Be(-1);
+
+        // Pass LastTickIndexOf("probe") as the after-cursor; the next matching probe must come
+        // strictly after global index 3. With TickCountOf - 1 the cursor would have been 1 and
+        // the wait would have returned immediately with the probe at index 3 — the very bug
+        // the cursor API is meant to prevent.
+        var act = async () => await harness.WaitForTickAsync(
+            "probe",
+            after: harness.LastTickIndexOf("probe"),
+            timeout: TimeSpan.FromMilliseconds(100),
+            cancellationToken: TestContext.Current.CancellationToken);
+
+        await act.Should().ThrowAsync<WorkerHarnessTimeoutException>();
+
+        // And the new probe (global 4) does release the wait when it arrives.
+        await signal.SignalAsync("probe", TestContext.Current.CancellationToken);
+        harness.LastTickIndexOf("probe").Should().Be(4);
+    }
+
+    [Fact]
+    public async Task CreateAsync_throws_when_worker_is_already_registered_via_AddHostedService_factory_overload()
+    {
+        // AddHostedService<TWorker>(sp => factory(sp)) stores the descriptor as
+        // ImplementationFactory rather than ImplementationType; the guard must still detect it.
+        var act = async () => await WorkerHarness<TestWorker>.CreateAsync(
+            opts =>
+            {
+                ApplyMinimalRegistrations(opts);
+                opts.ConfigureServices(s => s.AddHostedService<TestWorker>(sp => new TestWorker(
+                    sp.GetRequiredService<IServiceScopeFactory>(),
+                    sp.GetRequiredService<TimeProvider>(),
+                    sp.GetRequiredService<IWorkerTickSignal>(),
+                    sp.GetRequiredService<TestWorkerOptions>())));
+            },
+            TestContext.Current.CancellationToken);
+
+        var ex = await act.Should().ThrowAsync<InvalidOperationException>();
+        ex.Which.Message.Should().Contain(nameof(TestWorker));
     }
 
     [Fact]

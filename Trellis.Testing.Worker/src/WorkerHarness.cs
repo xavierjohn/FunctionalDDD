@@ -332,20 +332,37 @@ public sealed class WorkerHarness<[System.Diagnostics.CodeAnalysis.DynamicallyAc
     }
 
     /// <summary>
-    /// Returns the total number of tick signals captured so far (across all names). Useful
-    /// for capturing a cursor before advancing time so a subsequent <see cref="WaitForTickAsync(int, TimeSpan?, CancellationToken)"/>
-    /// waits for a NEW tick rather than matching one that was already in the history.
+    /// Returns the total number of tick signals captured so far (across all names). The value
+    /// minus one is the global index of the most recent signal — pass that as <c>after</c> to
+    /// a cursor-less <see cref="WaitForTickAsync(int, TimeSpan?, CancellationToken)"/> call to
+    /// wait for the next tick. For successive named-tick waits, prefer threading the index
+    /// returned by the previous <see cref="WaitForTickAsync(string, TimeSpan?, CancellationToken)"/>
+    /// call (or capturing <see cref="LastTickIndexOf(string)"/>) over computing a cursor from
+    /// <see cref="TickCountOf(string)"/>, which is a per-name count and not a global index.
     /// </summary>
     public int TickCount => _tickSignal.Count;
 
     /// <summary>
     /// Returns the number of tick signals captured so far with the given <paramref name="name"/>.
-    /// Useful for capturing a per-name cursor before advancing time so a subsequent
-    /// <see cref="WaitForTickAsync(string, int, TimeSpan?, CancellationToken)"/> waits for a new
-    /// tick rather than re-matching a historical one.
+    /// Useful for assertions such as <c>harness.TickCountOf("probe").Should().Be(3)</c>. Do
+    /// <strong>not</strong> use this as a cursor for <see cref="WaitForTickAsync(string, int, TimeSpan?, CancellationToken)"/>:
+    /// the <c>after</c> parameter is a global signal index, and with interleaved tick names
+    /// a per-name count can fall below the global index of an already-recorded matching
+    /// signal — producing a wait that returns immediately for an old tick. Use
+    /// <see cref="LastTickIndexOf(string)"/> for a baseline named cursor instead.
     /// </summary>
     /// <param name="name">The tick name to count.</param>
     public int TickCountOf(string name) => _tickSignal.CountOf(name);
+
+    /// <summary>
+    /// Returns the global signal index of the most recently captured tick with the given
+    /// <paramref name="name"/>, or <c>-1</c> if no such tick has been recorded. Pass the
+    /// returned value as <c>after</c> to <see cref="WaitForTickAsync(string, int, TimeSpan?, CancellationToken)"/>
+    /// to wait for the NEXT tick with that name, even when other tick names are interleaved
+    /// in the history.
+    /// </summary>
+    /// <param name="name">The tick name to look up.</param>
+    public int LastTickIndexOf(string name) => _tickSignal.LastIndexOf(name);
 
     /// <summary>
     /// Waits until <see cref="IWorkerTickSignal.SignalAsync(CancellationToken)"/> or
@@ -501,8 +518,7 @@ public sealed class WorkerHarness<[System.Diagnostics.CodeAnalysis.DynamicallyAc
             if (descriptor.ServiceType != typeof(IHostedService))
                 continue;
 
-            if (descriptor.ImplementationType == workerType ||
-                descriptor.ImplementationInstance?.GetType() == workerType)
+            if (DescriptorRegistersWorker(descriptor, workerType))
             {
                 throw new InvalidOperationException(
                     $"WorkerHarness<{workerType.Name}> owns the IHostedService registration for the worker under test, " +
@@ -511,5 +527,33 @@ public sealed class WorkerHarness<[System.Diagnostics.CodeAnalysis.DynamicallyAc
                     "registers the worker for you.");
             }
         }
+    }
+
+    private static bool DescriptorRegistersWorker(ServiceDescriptor descriptor, Type workerType)
+    {
+        if (descriptor.ImplementationType == workerType)
+            return true;
+
+        if (descriptor.ImplementationInstance?.GetType() == workerType)
+            return true;
+
+        var factory = descriptor.ImplementationFactory;
+        if (factory is null)
+            return false;
+
+        // AddHostedService<TWorker>(sp => ...) stores the factory as
+        // Func<IServiceProvider, TWorker> (implicitly cast to Func<IServiceProvider, object>);
+        // the runtime delegate type preserves the closed generic argument.
+        var factoryType = factory.GetType();
+        if (factoryType.IsGenericType)
+        {
+            var args = factoryType.GetGenericArguments();
+            if (args.Length == 2 && args[1] == workerType)
+                return true;
+        }
+
+        // Hand-rolled Func<IServiceProvider, object> lambdas lose the worker type in the
+        // delegate signature; the method's declared return type is the next-best signal.
+        return factory.Method.ReturnType == workerType;
     }
 }
