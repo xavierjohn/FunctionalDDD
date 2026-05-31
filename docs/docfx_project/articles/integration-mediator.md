@@ -702,7 +702,7 @@ public async ValueTask<Result<Reminder>> Handle(
 }
 ```
 
-`Error.IsTransient()` / `IsPermanent()` / `IsFailFast()` / `Classify()` (the `ErrorRetryExtensions` helpers in the `Trellis` namespace) is the canonical worker-side retry classifier. It covers `Error.Unavailable` and `Error.RateLimited` as transient, folds in `Error.Unexpected` (so an unanticipated exception in a downstream gateway doesn't permanently park the message), separates `Error.AuthenticationRequired` as fail-fast (halt the batch — not the same as a per-item permanent failure), and handles `Error.Aggregate` with max-severity semantics. The hand-written `is Error.Unavailable or Error.RateLimited` switch is incomplete on every axis and should not be repeated.
+The `ErrorRetryExtensions` helpers in the `Trellis` namespace (`Error.IsTransient()`, `IsPermanent()`, `IsFailFast()`, `Classify()`) are the canonical worker-side retry classifier. They cover `Error.Unavailable` and `Error.RateLimited` as transient, fold in `Error.Unexpected` (so an unanticipated exception in a downstream gateway doesn't permanently park the message), separate `Error.AuthenticationRequired` as fail-fast (halt the batch — not the same as a per-item permanent failure), and handle `Error.Aggregate` with max-severity semantics. The hand-written `is Error.Unavailable or Error.RateLimited` switch is incomplete on every axis and should not be repeated.
 
 Pipeline behavior at this point:
 
