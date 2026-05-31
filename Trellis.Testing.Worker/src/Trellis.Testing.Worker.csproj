@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <LangVersion>14.0</LangVersion>
+    <AssemblyName>Trellis.Testing.Worker</AssemblyName>
+    <RootNamespace>Trellis.Testing.Worker</RootNamespace>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>true</IsPackable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IsAotCompatible>true</IsAotCompatible>
+
+    <PackageId>Trellis.Testing.Worker</PackageId>
+    <Description>Integration-test harness for BackgroundService workers built on Trellis - prewired IHost, FakeTimeProvider, TestActorProvider, domain-event capture, and tick-completion primitives</Description>
+    <PackageTags>trellis;functional-programming;testing;backgroundservice;worker;integration-testing;hosting;domain-events;ddd</PackageTags>
+    <PackageReadmeFile>NUGET_README.md</PackageReadmeFile>
+    <TrellisApiRefName>testing-worker</TrellisApiRefName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Trellis.Core\src\Trellis.Core.csproj" />
+    <ProjectReference Include="..\..\Trellis.Authorization\src\Trellis.Authorization.csproj" />
+    <ProjectReference Include="..\..\Trellis.Mediator\src\Trellis.Mediator.csproj" />
+    <ProjectReference Include="..\..\Trellis.Testing\src\Trellis.Testing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../NUGET_README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

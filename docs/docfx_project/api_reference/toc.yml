@@ -32,6 +32,8 @@
       href: trellis-api-testing-reference.md
     - name: Trellis.Testing.AspNetCore
       href: trellis-api-testing-aspnetcore.md
+    - name: Trellis.Testing.Worker
+      href: trellis-api-testing-worker.md
 - name: Value-object taxonomy
   href: trellis-value-object-taxonomy.md
 - name: Analyzer surface

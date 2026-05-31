@@ -15,6 +15,7 @@
             "Trellis.ServiceDefaults/src/Trellis.ServiceDefaults.csproj",
             "Trellis.Testing/src/Trellis.Testing.csproj",
             "Trellis.Testing.AspNetCore/src/Trellis.Testing.AspNetCore.csproj",
+            "Trellis.Testing.Worker/src/Trellis.Testing.Worker.csproj",
             "Trellis.StateMachine/src/Trellis.StateMachine.csproj",
             "Trellis.Authorization/src/Trellis.Authorization.csproj",
             "Trellis.Mediator/src/Trellis.Mediator.csproj",
