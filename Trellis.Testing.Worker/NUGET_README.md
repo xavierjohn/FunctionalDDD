@@ -11,7 +11,6 @@ dotnet add package Trellis.Testing.Worker
 
 ## Quick Example
 ```csharp
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Trellis.Authorization;
 using Trellis.Mediator;
@@ -28,14 +27,13 @@ await using var harness = await WorkerHarness<SubscriptionRenewalWorker>.CreateA
     {
         services.AddLogging();
         services.AddDomainEventDispatch();   // same registration as production
-        services.AddDbContextFactory<SubscriptionDb>(o => o.UseSqlite("DataSource=:memory:"));
+        services.AddSingleton<ISubscriptionRepository, FakeSubscriptionRepository>();
         services.AddScoped<IExternalGateway, FakeExternalGateway>();
     });
     opts.SeedAsync(async (sp, ct) =>
     {
-        var db = await sp.GetRequiredService<IDbContextFactory<SubscriptionDb>>().CreateDbContextAsync(ct);
-        db.Subscriptions.Add(new Subscription { RenewsAt = opts.InitialTime.AddDays(1) });
-        await db.SaveChangesAsync(ct);
+        var repo = sp.GetRequiredService<ISubscriptionRepository>();
+        await repo.AddAsync(new Subscription { RenewsAt = opts.InitialTime.AddDays(1) }, ct);
     });
 });
 
@@ -51,6 +49,12 @@ reminded.SubscriptionId.Should().Be(expectedId);
 > `IWorkerTickSignal.SignalAsync("ready", ct)` at the top of `ExecuteAsync` before its first
 > `Task.Delay`, then replace `await harness.SettleAsync()` with
 > `await harness.WaitForTickAsync("ready")` — no real-time yield, no flakiness.
+>
+> **Wiring EF Core with SQLite?** Don't pair `AddDbContextFactory<T>` with
+> `Data Source=:memory:` — every new connection opens a fresh database, so the seed and the
+> worker see different empty stores. Use a shared/open `SqliteConnection` (see the
+> [integration-testing article](https://xavierjohn.github.io/Trellis/articles/integration-testing.html#background-workers))
+> or a temp-file SQLite database.
 
 ## Key Features
 - **`IHost` with a deterministic `FakeTimeProvider`** — advance the clock with `harness.Time.Advance(...)` to drive `Task.Delay(interval, timeProvider, ct)` continuations on demand.

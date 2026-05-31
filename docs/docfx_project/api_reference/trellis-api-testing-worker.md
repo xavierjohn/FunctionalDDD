@@ -42,7 +42,7 @@ Use this package from test projects only. It depends on `Microsoft.Extensions.Ho
 - The harness does **not** call `AddDomainEventDispatch()` on your behalf. Worker tests are integration tests of the production composition root, so include the same mediator-dispatch registration the worker's production host uses inside `ConfigureServices`. Without it the capture handler is registered but the mediator pipeline never publishes events, and `WaitForEventAsync` will time out with a diagnostic that calls this out.
 - Wait timeouts measure **real time**, not the harness's fake clock. Calling `harness.Time.Advance(...)` does not consume the wait budget. The fake clock only drives the worker's `Task.Delay` / `PeriodicTimer` continuations.
 - `AutoStart` defaults to `false` so tests can subscribe to events / configure waits before the worker starts producing them.
-- **Startup race.** `IHost.StartAsync` returns once `ExecuteAsync` is scheduled, not once the worker has registered its first `Task.Delay` callback with the `FakeTimeProvider`. Either call `await harness.SettleAsync(ct: ct)` (real-time yield, default 200ms) after `StartAsync`, or — deterministically — have the worker call `IWorkerTickSignal.SignalAsync("ready", ct)` at the top of `ExecuteAsync` and `await harness.WaitForTickAsync("ready", ct: ct)` instead.
+- **Startup race.** `IHost.StartAsync` returns once `ExecuteAsync` is scheduled, not once the worker has registered its first `Task.Delay` callback with the `FakeTimeProvider`. Either call `await harness.SettleAsync(cancellationToken: ct)` (real-time yield, default 200ms) after `StartAsync`, or — deterministically — have the worker call `IWorkerTickSignal.SignalAsync("ready", ct)` at the top of `ExecuteAsync` and `await harness.WaitForTickAsync("ready", cancellationToken: ct)` instead.
 
 ## API
 
@@ -179,23 +179,32 @@ await using var harness = await WorkerHarness<SubscriptionRenewalWorker>.CreateA
 
 ### Wait for a named tick when the worker emits no domain event
 
+The harness always registers `IWorkerTickSignal` for its own process — but the production
+worker's host typically does **not** register it (the signal is a test-only concern). Resolve
+it with `GetService<IWorkerTickSignal>()` rather than constructor-injecting `IWorkerTickSignal?`,
+because .NET DI does not treat nullable annotations as optional dependencies; constructor
+injection of an unregistered service fails activation in production.
+
 ```csharp
-public sealed class HealthProbeWorker(IWorkerTickSignal? ticks) : BackgroundService
+public sealed class HealthProbeWorker(IServiceProvider services, TimeProvider time) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        // Resolved once at start-up; null in production (not registered), non-null in tests.
+        var ticks = services.GetService<IWorkerTickSignal>();
+
         while (!stoppingToken.IsCancellationRequested)
         {
             await ProbeAsync(stoppingToken);
             if (ticks is not null) await ticks.SignalAsync("probe", stoppingToken);
-            await Task.Delay(TimeSpan.FromSeconds(30), TimeProvider, stoppingToken);
+            await Task.Delay(TimeSpan.FromSeconds(30), time, stoppingToken);
         }
     }
 }
 
 // In the test:
 harness.Time.Advance(TimeSpan.FromSeconds(30));
-await harness.WaitForTickAsync("probe", TimeSpan.FromSeconds(5), ct);
+await harness.WaitForTickAsync("probe", TimeSpan.FromSeconds(5), cancellationToken);
 ```
 
 ## See also

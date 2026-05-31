@@ -203,9 +203,21 @@ public sealed class WorkerHarness<[System.Diagnostics.CodeAnalysis.DynamicallyAc
     /// </remarks>
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
-        if (Interlocked.Exchange(ref _started, 1) == 1)
+        // Reserve the "started" slot before delegating to the host so a concurrent caller
+        // sees the state transition. If StartAsync throws (e.g. a worker dependency cannot
+        // resolve), restore the slot so a retry actually re-invokes the host and DisposeAsync
+        // does not attempt to stop a host that never started.
+        if (Interlocked.CompareExchange(ref _started, 1, 0) != 0)
             return;
-        await _host.StartAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await _host.StartAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            Volatile.Write(ref _started, 0);
+            throw;
+        }
     }
 
     /// <summary>
@@ -233,9 +245,20 @@ public sealed class WorkerHarness<[System.Diagnostics.CodeAnalysis.DynamicallyAc
     /// <param name="cancellationToken">A token to observe during stop.</param>
     public async Task StopAsync(CancellationToken cancellationToken = default)
     {
-        if (Volatile.Read(ref _started) == 0)
+        // Transition started→stopped atomically so a concurrent caller observes the change
+        // and DisposeAsync does not double-stop the host. Restore the flag if the host's
+        // own StopAsync throws so the caller can retry.
+        if (Interlocked.CompareExchange(ref _started, 0, 1) != 1)
             return;
-        await _host.StopAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await _host.StopAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            Volatile.Write(ref _started, 1);
+            throw;
+        }
     }
 
     /// <summary>
@@ -359,7 +382,7 @@ public sealed class WorkerHarness<[System.Diagnostics.CodeAnalysis.DynamicallyAc
 
         try
         {
-            if (Volatile.Read(ref _started) == 1)
+            if (Interlocked.CompareExchange(ref _started, 0, 1) == 1)
             {
                 // The host may have been stopped already; StopAsync is idempotent at the
                 // host level too. Cap stop with a short real-time budget so a misbehaving

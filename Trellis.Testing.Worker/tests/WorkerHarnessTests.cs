@@ -341,6 +341,51 @@ public class WorkerHarnessTests
         lifetime.ApplicationStopped.IsCancellationRequested.Should().BeTrue();
     }
 
+    [Fact]
+    public async Task StopAsync_clears_started_state_so_DisposeAsync_does_not_stop_the_host_again()
+    {
+        var tracker = new LifecycleTrackerHostedService();
+        await using var harness = await WorkerHarness<TestWorker>.CreateAsync(
+            opts =>
+            {
+                ApplyMinimalRegistrations(opts);
+                opts.AutoStart = true;
+                opts.ConfigureServices(s => s.AddSingleton<IHostedService>(tracker));
+            },
+            TestContext.Current.CancellationToken);
+
+        await WaitForApplicationStartedAsync(
+            harness.Services.GetRequiredService<IHostApplicationLifetime>(),
+            TestContext.Current.CancellationToken);
+
+        await harness.StopAsync(TestContext.Current.CancellationToken);
+        tracker.StopCount.Should().Be(1);
+
+        await harness.DisposeAsync();
+        tracker.StopCount.Should().Be(1,
+            "explicit StopAsync must clear the started flag so DisposeAsync does not double-stop the host");
+    }
+
+    [Fact]
+    public async Task StartAsync_failure_clears_started_state_so_DisposeAsync_does_not_stop_an_unstarted_host()
+    {
+        var tracker = new LifecycleTrackerHostedService { ThrowOnNextStart = true };
+        var harness = await WorkerHarness<TestWorker>.CreateAsync(
+            opts =>
+            {
+                ApplyMinimalRegistrations(opts);
+                opts.ConfigureServices(s => s.AddSingleton<IHostedService>(tracker));
+            },
+            TestContext.Current.CancellationToken);
+
+        var act = async () => await harness.StartAsync(TestContext.Current.CancellationToken);
+        await act.Should().ThrowAsync<InvalidOperationException>();
+
+        await harness.DisposeAsync();
+        tracker.StopCount.Should().Be(0,
+            "a failed StartAsync must reset the started flag so DisposeAsync does not stop a host that never finished starting");
+    }
+
     private static Task<WorkerHarness<TestWorker>> CreateMinimalHarnessAsync(TimeSpan? interval = null) =>
         WorkerHarness<TestWorker>.CreateAsync(
             ConfigureMinimalWorker(interval),
@@ -394,6 +439,31 @@ public class WorkerHarnessTests
         {
             Received.Add(domainEvent);
             return ValueTask.CompletedTask;
+        }
+    }
+
+    private sealed class LifecycleTrackerHostedService : IHostedService
+    {
+        public int StartCount;
+        public int StopCount;
+        public bool ThrowOnNextStart;
+
+        public Task StartAsync(CancellationToken cancellationToken)
+        {
+            StartCount++;
+            if (ThrowOnNextStart)
+            {
+                ThrowOnNextStart = false;
+                throw new InvalidOperationException("Lifecycle tracker deliberately failed StartAsync.");
+            }
+
+            return Task.CompletedTask;
+        }
+
+        public Task StopAsync(CancellationToken cancellationToken)
+        {
+            StopCount++;
+            return Task.CompletedTask;
         }
     }
 }
