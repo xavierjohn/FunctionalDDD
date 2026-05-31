@@ -252,8 +252,9 @@ public static class ServiceCollectionExtensions
     /// Thrown when no prior <see cref="IActorProvider"/> registration exists, when more than
     /// one prior <see cref="IActorProvider"/> descriptor is present (registration order is
     /// ambiguous), or when <c>AddTrellisWorkerActor</c> has already been called on this
-    /// collection. A separate <c>IHostedService</c> validator
-    /// (<see cref="WorkerActorRegistrationValidator"/>) also runs at host start and throws if
+    /// collection. A separate <c>IHostedLifecycleService</c> validator
+    /// (<see cref="WorkerActorRegistrationValidator"/>) also runs at host start
+    /// (in <c>StartingAsync</c>, before any <c>IHostedService.StartAsync</c>) and throws if
     /// a later registration overwrote the worker composition.
     /// </exception>
     /// <remarks>
@@ -369,8 +370,10 @@ public static class ServiceCollectionExtensions
         {
             throw new InvalidOperationException(
                 $"AddTrellisWorkerActor requires exactly one prior unkeyed IActorProvider registration but found {existing.Count}. " +
-                "Resolve the ambiguity by removing the duplicate AddXxxActorProvider/AddScoped<IActorProvider> calls before " +
-                "calling AddTrellisWorkerActor; the built-in AddXxxActorProvider helpers Replace the slot so chaining two of them is the usual cause. " +
+                "Resolve the ambiguity by removing the duplicate IActorProvider descriptors before calling AddTrellisWorkerActor. " +
+                "The built-in AddXxxActorProvider helpers use Replace, so chaining them yields a single descriptor; multiple " +
+                "descriptors only arise when a consumer manually appends with services.AddScoped<IActorProvider>() / " +
+                "services.AddTransient<IActorProvider>() / services.AddSingleton<IActorProvider>() (which append rather than Replace). " +
                 "Keyed IActorProvider registrations are ignored and remain untouched.");
         }
 
