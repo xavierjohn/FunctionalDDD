@@ -565,4 +565,85 @@ public class TrellisServiceBuilderTests
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("*caching actor provider*");
     }
+
+    [Fact]
+    public async Task UseWorkerActor_AfterUseClaimsActorProvider_ReturnsSystemActorWhenHttpContextNull()
+    {
+        var services = new ServiceCollection();
+        var systemActor = Actor.Create(
+            id: "system",
+            permissions: new HashSet<string> { "reminders:dispatch" });
+
+        services.AddTrellis(options => options
+            .UseClaimsActorProvider()
+            .UseWorkerActor(systemActor));
+
+        using var sp = services.BuildServiceProvider();
+        using var scope = sp.CreateScope();
+
+        // No HttpContext set on the accessor — simulate background-worker tick.
+        var actor = await scope.ServiceProvider
+            .GetRequiredService<IActorProvider>()
+            .GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        actor.HasValue.Should().BeTrue();
+        actor.Value.Id.Value.Should().Be("system");
+    }
+
+    [Fact]
+    public async Task UseWorkerActor_ComposesAfterCachingWrap_WorkerPathSkipsCaching()
+    {
+        var services = new ServiceCollection();
+        var systemActor = Actor.Create(
+            id: "system",
+            permissions: new HashSet<string> { "reminders:dispatch" });
+
+        services.AddTrellis(options => options
+            .UseClaimsActorProvider()
+            .UseCachingActorProvider<ClaimsActorProvider>()
+            .UseWorkerActor(systemActor));
+
+        using var sp = services.BuildServiceProvider();
+        using var workerScope = sp.CreateScope();
+
+        // Worker tick — null HttpContext must short-circuit to the system actor
+        // without traversing the caching layer.
+        var actor = await workerScope.ServiceProvider
+            .GetRequiredService<IActorProvider>()
+            .GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        actor.HasValue.Should().BeTrue();
+        actor.Value.Id.Value.Should().Be("system");
+    }
+
+    [Fact]
+    public void UseWorkerActor_TwiceOnSameBuilder_Throws()
+    {
+        var services = new ServiceCollection();
+        var systemActor = Actor.Create(
+            id: "system",
+            permissions: new HashSet<string> { "reminders:dispatch" });
+
+        var act = () => services.AddTrellis(options => options
+            .UseClaimsActorProvider()
+            .UseWorkerActor(systemActor)
+            .UseWorkerActor(systemActor));
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*worker actor*");
+    }
+
+    [Fact]
+    public void UseWorkerActor_WithoutPriorActorProvider_ThrowsAtApply()
+    {
+        var services = new ServiceCollection();
+        var systemActor = Actor.Create(
+            id: "system",
+            permissions: new HashSet<string> { "reminders:dispatch" });
+
+        var act = () => services.AddTrellis(options => options.UseWorkerActor(systemActor));
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*requires a prior unkeyed IActorProvider registration*");
+    }
 }

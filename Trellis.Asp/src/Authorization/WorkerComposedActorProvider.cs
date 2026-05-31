@@ -1,0 +1,201 @@
+namespace Trellis.Asp.Authorization;
+
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Trellis.Authorization;
+
+/// <summary>
+/// Composes an HTTP-side <see cref="IActorProvider"/> with a system-actor identity used by
+/// non-HTTP execution contexts (typically a <see cref="BackgroundService"/> tick).
+/// </summary>
+/// <remarks>
+/// <para>
+/// Branches on <see cref="IHttpContextAccessor.HttpContext"/> at request/tick time:
+/// </para>
+/// <list type="bullet">
+///   <item><description>
+///     <b>HttpContext present</b> (HTTP request scope) — delegates to the wrapped inner
+///     provider, preserving the standard claims/bearer/header-derived actor resolution and
+///     the <see cref="Maybe{T}.None"/>-on-anonymous contract that produces
+///     <see cref="Error.AuthenticationRequired"/> (HTTP 401).
+///   </description></item>
+///   <item><description>
+///     <b>HttpContext null</b> (background-worker tick, hosted service, test bootstrap that
+///     opened its own scope without an ambient request) — returns
+///     <see cref="Maybe.From{T}"/> wrapping the configured system actor so the same
+///     mediator pipeline that handles HTTP commands also accepts worker-initiated commands.
+///   </description></item>
+/// </list>
+/// <para>
+/// Register via <see cref="ServiceCollectionExtensions.AddTrellisWorkerActor(IServiceCollection, Actor)"/>
+/// or the matching <c>TrellisServiceBuilder.UseWorkerActor(Actor)</c> slot. The helper takes
+/// the slot currently held by an HTTP-side provider (typically registered by
+/// <see cref="ServiceCollectionExtensions.AddClaimsActorProvider"/>,
+/// <see cref="ServiceCollectionExtensions.AddEntraActorProvider"/>, or
+/// <see cref="ServiceCollectionExtensions.AddDevelopmentActorProvider"/>) and wraps it.
+/// A registration-time validator (<see cref="WorkerActorRegistrationValidator"/>) runs at
+/// host start and throws if a subsequent <c>AddXxxActorProvider</c> or
+/// <c>services.AddScoped&lt;IActorProvider, ...&gt;()</c> call overwrote/appended over the
+/// wrapper — background workers would no longer resolve the configured system actor and
+/// would receive whatever the new provider returns (typically <see cref="Maybe{T}.None"/>
+/// in a tick context, surfacing as <see cref="Error.AuthenticationRequired"/> on the first
+/// command).
+/// </para>
+/// <para>
+/// Implements <see cref="IProvideActorVaryHeaders"/> by delegating to the inner provider so
+/// <see cref="HttpResponseOptionsBuilder{TDomain}.VaryForActor"/> continues to emit correct
+/// <c>Vary</c> headers, and <see cref="IDecoratingActorProvider"/> so diagnostics that walk
+/// to the underlying provider name the actual HTTP-side type rather than the worker wrapper.
+/// </para>
+/// <para>
+/// The inner provider is materialized lazily on first access — worker ticks with a null
+/// <see cref="IHttpContextAccessor.HttpContext"/> never construct the HTTP-side provider or
+/// its dependencies. When the inner is created here (descriptor is
+/// <see cref="ServiceDescriptor.ImplementationFactory"/> or
+/// <see cref="ServiceDescriptor.ImplementationType"/>) the wrapper owns its lifetime and
+/// disposes it on scope end; for singleton <see cref="ServiceDescriptor.ImplementationInstance"/>
+/// registrations the wrapper does not dispose because the consumer registered the instance
+/// for app-lifetime use.
+/// </para>
+/// </remarks>
+internal sealed class WorkerComposedActorProvider : IActorProvider, IProvideActorVaryHeaders, IDecoratingActorProvider, IAsyncDisposable, IDisposable
+{
+    private readonly bool _ownsInner;
+    private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly Actor _systemActor;
+    private readonly Lazy<IActorProvider> _inner;
+    private bool _disposed;
+
+    public WorkerComposedActorProvider(
+        Func<IActorProvider> innerFactory,
+        bool ownsInner,
+        IHttpContextAccessor httpContextAccessor,
+        Actor systemActor)
+    {
+        ArgumentNullException.ThrowIfNull(innerFactory);
+        ArgumentNullException.ThrowIfNull(httpContextAccessor);
+        ArgumentNullException.ThrowIfNull(systemActor);
+
+        _ownsInner = ownsInner;
+        _httpContextAccessor = httpContextAccessor;
+        _systemActor = systemActor;
+        // ExecutionAndPublication: one winning IActorProvider instance across concurrent
+        // VaryByHeaders / GetCurrentActorAsync calls in the same wrapper scope, so the
+        // ownership/disposal accounting matches reality.
+        _inner = new Lazy<IActorProvider>(innerFactory, LazyThreadSafetyMode.ExecutionAndPublication);
+    }
+
+    private IActorProvider Inner => _inner.Value;
+
+    /// <inheritdoc />
+    public Task<Maybe<Actor>> GetCurrentActorAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        return _httpContextAccessor.HttpContext is null
+            ? Task.FromResult(Maybe.From(_systemActor))
+            : Inner.GetCurrentActorAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    /// <remarks>
+    /// Delegates to the inner provider when it implements
+    /// <see cref="IProvideActorVaryHeaders"/>; returns an empty collection otherwise. Empty
+    /// causes <see cref="HttpResponseOptionsBuilder{TDomain}.VaryForActor"/> to throw
+    /// fail-closed, preserving the existing contract for inner providers that have not
+    /// opted into the vary-header capability. Materializes the inner provider on first
+    /// access — only HTTP response paths read this, so worker ticks are unaffected.
+    /// </remarks>
+    public IReadOnlyCollection<string> VaryByHeaders =>
+        Inner is IProvideActorVaryHeaders v ? v.VaryByHeaders : [];
+
+    IActorProvider IDecoratingActorProvider.Inner => Inner;
+
+    public void Dispose()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        if (!_ownsInner || !_inner.IsValueCreated) return;
+
+        switch (_inner.Value)
+        {
+            case IDisposable d:
+                d.Dispose();
+                break;
+            case IAsyncDisposable ad:
+                // Bridge to sync: scope.Dispose() callers (i.e. CreateScope, not
+                // CreateAsyncScope) would otherwise leak an async-only inner.
+                ad.DisposeAsync().AsTask().GetAwaiter().GetResult();
+                break;
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed) return;
+        _disposed = true;
+
+        if (!_ownsInner || !_inner.IsValueCreated) return;
+
+        switch (_inner.Value)
+        {
+            case IAsyncDisposable ad:
+                await ad.DisposeAsync().ConfigureAwait(false);
+                break;
+            case IDisposable d:
+                d.Dispose();
+                break;
+        }
+    }
+}
+
+/// <summary>
+/// Startup-time validator that fails fast if the <see cref="IActorProvider"/> slot no longer
+/// resolves to <see cref="WorkerComposedActorProvider"/>. Catches the lab-documented footgun
+/// where a second <c>AddXxxActorProvider</c> / <c>services.AddScoped&lt;IActorProvider&gt;()</c>
+/// call after <c>AddTrellisWorkerActor</c> silently overwrites the worker composition,
+/// leaving background workers unable to resolve the configured system actor.
+/// </summary>
+internal sealed class WorkerActorRegistrationValidator(IServiceProvider rootServices) : IHostedService
+{
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        using var scope = rootServices.CreateScope();
+        var providers = scope.ServiceProvider.GetServices<IActorProvider>().ToList();
+
+        if (providers.Count != 1 || providers[0] is not WorkerComposedActorProvider)
+        {
+            // GetRequiredService<IActorProvider>() resolves to the LAST registered descriptor
+            // when there are multiple — report that one as the "active" provider rather than [0].
+            var resolvedTypeName = providers.Count == 0
+                ? "(none)"
+                : providers[^1].GetType().Name;
+
+            var allTypes = providers.Count == 0
+                ? "(none)"
+                : string.Join(", ", providers.Select(p => p.GetType().Name));
+
+            throw new InvalidOperationException(
+                $"AddTrellisWorkerActor expects the worker-composed IActorProvider to remain the active registration. " +
+                $"Found {providers.Count} IActorProvider descriptor(s) [{allTypes}]; the active provider type is '{resolvedTypeName}'. " +
+                "An IActorProvider registration was added or replaced AFTER AddTrellisWorkerActor — the worker " +
+                "composition has been overwritten and background-worker ticks will no longer resolve the configured system actor. " +
+                "Call AddTrellisWorkerActor (or UseWorkerActor on TrellisServiceBuilder) after the HTTP-side actor provider " +
+                "and do not modify the IActorProvider slot afterward.");
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+}
+
+/// <summary>
+/// Sentinel type registered by <see cref="ServiceCollectionExtensions.AddTrellisWorkerActor"/>
+/// so the helper can detect repeated calls without invoking captured factories.
+/// </summary>
+internal sealed class WorkerActorRegistrationMarker;
