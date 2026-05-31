@@ -294,11 +294,16 @@ public sealed class TrellisServiceBuilder
     /// against), while HTTP-side lookups flow through caching → inner provider unchanged.
     /// </para>
     /// <para>
-    /// Calling this method requires a previous <c>UseXxxActorProvider(...)</c> call; calling it
-    /// twice throws. A hosted-service validator runs at host start and fails fast if any
-    /// subsequent <c>services.AddScoped&lt;IActorProvider, ...&gt;()</c> registration overwrites
-    /// the wrapper — background-worker ticks would otherwise stop resolving the configured
-    /// system actor and would surface the first dispatched command as
+    /// Calling this method requires that an actor provider slot is selected somewhere in the
+    /// composition — typically via <c>UseClaimsActorProvider</c>, <c>UseEntraActorProvider</c>,
+    /// <c>UseDevelopmentActorProvider</c>, or <see cref="UseCachingActorProvider{T}"/> with a
+    /// custom provider. Because <c>Apply()</c> records selections and runs them in canonical
+    /// order, the chain position of <c>UseWorkerActor(...)</c> relative to those selectors does
+    /// not matter; only that one of them is present. Calling <c>UseWorkerActor</c> twice throws.
+    /// A hosted-service validator runs at host start and fails fast if any subsequent
+    /// <c>services.AddScoped&lt;IActorProvider, ...&gt;()</c> registration overwrites the
+    /// wrapper — background-worker ticks would otherwise stop resolving the configured system
+    /// actor and would surface the first dispatched command as
     /// <see cref="Trellis.Error.AuthenticationRequired"/>.
     /// </para>
     /// </remarks>

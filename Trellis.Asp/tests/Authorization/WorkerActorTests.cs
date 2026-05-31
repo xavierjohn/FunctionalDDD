@@ -1,4 +1,4 @@
-namespace Trellis.Asp.Authorization.Tests;
+﻿namespace Trellis.Asp.Authorization.Tests;
 
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;

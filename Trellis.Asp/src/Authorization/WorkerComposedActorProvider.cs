@@ -1,4 +1,4 @@
-namespace Trellis.Asp.Authorization;
+﻿namespace Trellis.Asp.Authorization;
 
 using System.Collections.Generic;
 using System.Linq;

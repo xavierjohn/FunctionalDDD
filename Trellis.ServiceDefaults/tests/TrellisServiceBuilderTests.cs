@@ -706,4 +706,26 @@ public class TrellisServiceBuilderTests
             .ToList();
         pipeline.Should().EndWith(typeof(TransactionalCommandBehavior<,>));
     }
+
+    [Fact]
+    public async Task UseWorkerActor_ChainedBeforeActorProviderSelector_StillResolves()
+    {
+        // Apply() runs the actor-provider registration before the worker wrap regardless of
+        // chain order. Calling UseWorkerActor BEFORE UseClaimsActorProvider on the builder
+        // must still satisfy the prior-provider requirement at Apply() time.
+        var services = new ServiceCollection();
+        var systemActor = Actor.Create(id: "system", permissions: new HashSet<string> { "reminders:dispatch" });
+
+        services.AddTrellis(options => options
+            .UseWorkerActor(systemActor)
+            .UseClaimsActorProvider());
+
+        using var sp = services.BuildServiceProvider();
+        using var scope = sp.CreateScope();
+
+        var actor = await scope.ServiceProvider.GetRequiredService<IActorProvider>()
+            .GetCurrentActorAsync(TestContext.Current.CancellationToken);
+        actor.Value.Id.Value.Should().Be("system",
+            "builder chain order between UseWorkerActor and UseXxxActorProvider must not matter");
+    }
 }
