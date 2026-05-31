@@ -255,6 +255,27 @@ public sealed class ResponseFailureWriterResourceRefInstanceTests
     }
 
     [Fact]
+    public async Task Weird_percent_escapes_in_path_do_not_throw_and_synthesis_still_runs()
+    {
+        // Instance synthesis is best-effort: a path that looks like a malformed percent-escape
+        // must never surface as a UriFormatException / 500 from the writer. ASP.NET's
+        // Request.GetEncodedPathAndQuery() normalizes the path (bare '%' becomes '%25'), and
+        // .NET's current Uri.UnescapeDataString is permissive, so this end-to-end test passes
+        // today even without the defensive catch — it locks the contract for future runtimes
+        // that may tighten the parser.
+        var ctx = NewContext(path: "/api/documents/foo%ZZbar");
+        var r = Result.Fail<T>(new Error.NotFound(ResourceRef.For("Document", "abc")));
+
+        var act = async () => await r.ToHttpResponse(t => t).ExecuteAsync(ctx);
+        await act.Should().NotThrowAsync();
+
+        ctx.Response.StatusCode.Should().Be(404);
+        using var body = await ReadBody(ctx);
+        body.RootElement.GetProperty("instance").GetString().Should().Be("/documents/abc");
+        body.RootElement.TryGetProperty("request", out _).Should().BeTrue();
+    }
+
+    [Fact]
     public async Task Form_encoded_plus_in_query_matches_id_with_space()
     {
         // ASP.NET Core's query parser treats '+' as space (form-encoded). A request like

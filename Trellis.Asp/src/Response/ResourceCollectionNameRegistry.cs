@@ -13,10 +13,12 @@ using Trellis;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Registered as a singleton by <c>AddResourceCollectionName</c> /
-/// <c>AddResourceCollectionNames</c>. When neither helper is called the registry is not
-/// in DI and <see cref="ResponseFailureWriter"/> falls back to an empty registry — every
-/// resource type is named by the naive plural.
+/// Registered as a singleton via <c>TryAddSingleton</c> by <c>AddTrellisAsp</c>,
+/// <c>AddResourceCollectionName</c>, and <c>AddResourceCollectionNames</c>. Hosts that
+/// call any of these get an empty registry by default — every resource type uses the
+/// naive plural until at least one <see cref="ResourceCollectionNameOverride"/> is also
+/// registered. When none of those helpers are called, the registry is absent from DI and
+/// <see cref="ResponseFailureWriter"/> falls back to an internal empty registry.
 /// </para>
 /// <para>
 /// Override lookups are case-insensitive (<see cref="StringComparer.OrdinalIgnoreCase"/>)
@@ -84,8 +86,11 @@ public sealed class ResourceCollectionNameRegistry
 
     /// <summary>
     /// Resolves the collection segment for a given <see cref="ResourceRef.Type"/> value.
-    /// Returns the registered override when one is present (case-insensitive match);
-    /// otherwise returns the naive plural <c>resourceType.ToLowerInvariant() + "s"</c>.
+    /// Returns the registered override <b>verbatim</b> when one is present (case-insensitive
+    /// lookup, case-preserving result — an override registered as <c>"People"</c> emits
+    /// <c>/People/{id}</c>); otherwise returns the naive plural
+    /// <c>resourceType.ToLowerInvariant() + "s"</c>. Callers wanting a lowercase guarantee
+    /// must lowercase the override at registration time.
     /// </summary>
     /// <param name="resourceType">The resource type name as carried on <see cref="ResourceRef"/>.</param>
     /// <returns>The collection segment to substitute into the synthesised URI.</returns>

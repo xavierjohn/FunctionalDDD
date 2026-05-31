@@ -220,7 +220,21 @@ internal static class ResponseFailureWriter
         if (segment.IndexOf('%') < 0)
             return false;
 
-        var decoded = Uri.UnescapeDataString(segment.ToString());
+        // Instance synthesis is best-effort: a malformed percent-escape in the request
+        // path must never turn a domain failure into a 500. .NET's current Uri.UnescapeDataString
+        // is permissive (returns invalid triplets verbatim), but the contract does not
+        // forbid throwing, so we treat a decode failure as "non-match" rather than letting
+        // it propagate.
+        string decoded;
+        try
+        {
+            decoded = Uri.UnescapeDataString(segment.ToString());
+        }
+        catch (UriFormatException)
+        {
+            return false;
+        }
+
         return string.Equals(decoded, id, StringComparison.Ordinal);
     }
 
