@@ -1,7 +1,7 @@
 ﻿---
 package: Trellis.Core
 namespaces: [Trellis]
-types: [Result, "Result<T>", IResult, "IResult<TValue>", "IFailureFactory<TSelf>", IPersistOnFailure, "Maybe<T>", Maybe, MaybeInvariant, Error, ITransportFault, RetryAdvice, Unit, "Page<T>", Page, Cursor, PageSize, CursorCodec, PageBuilder, "EquatableArray<T>", EquatableArray, ResourceRef, InputPointer, FieldViolation, RuleViolation, IAggregate, "Aggregate<TId>", IEntity, "Entity<TId>", IDomainEvent, ITrackedAggregateSource, ValueObject, "ScalarValueObject<TSelf,T>", "IScalarValue<TSelf,TPrimitive>", "IFormattableScalarValue<TSelf,TPrimitive>", "RequiredString<TSelf>", "RequiredInt<TSelf>", "RequiredLong<TSelf>", "RequiredDecimal<TSelf>", "RequiredBool<TSelf>", "RequiredGuid<TSelf>", "RequiredDateTime<TSelf>", "RequiredEnum<TSelf>", "RequiredEnumJsonConverter<T>", "ParsableJsonConverter<T>", ResultRequiresExplicitHttpMappingConverter, PrimitiveValueObjectTrace, "Specification<T>", TrellisJsonValidationException, RangeAttribute, StringLengthAttribute, NotDefaultAttribute, TrimAttribute, RailwayTrackAttribute, TrackBehavior, EnumValueAttribute, ResultDebugSettings]
+types: [Result, "Result<T>", IResult, "IResult<TValue>", "IFailureFactory<TSelf>", IPersistOnFailure, "Maybe<T>", Maybe, MaybeInvariant, Error, ITransportFault, RetryAdvice, RetryClassification, ErrorRetryExtensions, Unit, "Page<T>", Page, Cursor, PageSize, CursorCodec, PageBuilder, "EquatableArray<T>", EquatableArray, ResourceRef, InputPointer, FieldViolation, RuleViolation, IAggregate, "Aggregate<TId>", IEntity, "Entity<TId>", IDomainEvent, ITrackedAggregateSource, ValueObject, "ScalarValueObject<TSelf,T>", "IScalarValue<TSelf,TPrimitive>", "IFormattableScalarValue<TSelf,TPrimitive>", "RequiredString<TSelf>", "RequiredInt<TSelf>", "RequiredLong<TSelf>", "RequiredDecimal<TSelf>", "RequiredBool<TSelf>", "RequiredGuid<TSelf>", "RequiredDateTime<TSelf>", "RequiredEnum<TSelf>", "RequiredEnumJsonConverter<T>", "ParsableJsonConverter<T>", ResultRequiresExplicitHttpMappingConverter, PrimitiveValueObjectTrace, "Specification<T>", TrellisJsonValidationException, RangeAttribute, StringLengthAttribute, NotDefaultAttribute, TrimAttribute, RailwayTrackAttribute, TrackBehavior, EnumValueAttribute, ResultDebugSettings]
 version: v3
 last_verified: 2026-05-06
 audience: [llm]
@@ -31,6 +31,7 @@ Use this table before searching the long type catalog.
 | Return success/failure without payload | `Result.Ok()` / `Result.Fail(error)` (returns `Result<Unit>`) | [`Result`](#public-static-partial-class-result) |
 | Return success/failure with payload | `Result.Ok(value)` / `Result.Fail<T>(error)` | [`Result<TValue>`](#public-readonly-struct-resulttvalue--iresulttvalue-iequatableresulttvalue-ifailurefactoryresulttvalue-ipersistonfailure) |
 | Fail but still persist staged work (worker pattern) | `Result.FailAfterCommit<T>(error)` / `Result.FailAfterCommit(error)` | [`Result`](#public-static-partial-class-result), [`IPersistOnFailure`](#public-interface-ipersistonfailure) |
+| Classify an `Error` for a worker/consumer retry loop | `error.Classify()` / `error.IsTransient()` / `error.IsPermanent()` / `error.IsFailFast()` / `error.GetRetryAdvice()` | [`Retry classification`](#retry-classification-errorretryextensions) |
 | Turn a boolean guard into a result | `Result.Ensure(condition, error)` or `.Ensure(...)` in a chain | [`Result`](#public-static-partial-class-result), [`Ensure family`](#ensure-family--ensureextensions-ensureextensionsasync-ensureallextensions-ensureallextensionsasync) |
 | Start independent async result-producing operations concurrently | `Result.ParallelAsync(...)`, then combine the returned tasks | [`Result`](#public-static-partial-class-result) |
 | Combine multiple validated *typed* fields into a tuple | static `Result.Combine<T1,T2>(Result<T1>, Result<T2>)` or instance `r1.Combine(r2)`, then `.Map(...)` | [`Combine family`](#combine-family--combineextensions-combineextensionsasync-combineerrorextensions) |
@@ -535,6 +536,34 @@ Domain code treats `ITransportFault` as opaque and does not inspect concrete tra
 `RetryAdvice` is a transport-neutral retry hint: `public readonly record struct RetryAdvice(TimeSpan? After = null, DateTimeOffset? At = null);`. `Error.RateLimited` and `Error.Unavailable` carry it so the boundary can emit `Retry-After` without teaching the domain about HTTP headers.
 
 HTTP-specific status codes, headers, and problem-details `type` tokens are not the domain's responsibility. See [trellis-api-asp.md](trellis-api-asp.md#trellisaspoptions) for the boundary mapping table.
+
+#### Retry classification (ErrorRetryExtensions)
+
+`ErrorRetryExtensions` (static class in the `Trellis` namespace) and the `RetryClassification` enum (`Transient = 0`, `Permanent = 1`, `FailFast = 2`) translate the closed `Error` catalog into the three decisions a worker, message-broker consumer, or outbound-gateway caller has to make on every failed item: retry, give up, or halt the batch.
+
+| Extension on `Error` | Returns | Purpose |
+| --- | --- | --- |
+| `RetryClassification Classify(this Error error)` | `RetryClassification` | Default mapping for every nested `Error` case. Throws `ArgumentNullException` on `null`. |
+| `bool IsTransient(this Error error)` | `bool` | Shorthand for `Classify(error) == RetryClassification.Transient`. |
+| `bool IsPermanent(this Error error)` | `bool` | Shorthand for `Classify(error) == RetryClassification.Permanent`. |
+| `bool IsFailFast(this Error error)` | `bool` | Shorthand for `Classify(error) == RetryClassification.FailFast`. |
+| `RetryAdvice? GetRetryAdvice(this Error error)` | `RetryAdvice?` | Returns advice carried by `Error.RateLimited` / `Error.Unavailable`. Returns `null` for every other case, including `Error.Aggregate` (intentional — see below). |
+
+**Default classification table.** Every non-aggregate nested case of `Error` is enumerated; the catalog is closed so the table is exhaustive at framework-publish time:
+
+| Error case | Classification |
+| --- | --- |
+| `Error.Unavailable`, `Error.RateLimited`, `Error.Unexpected`, `Error.TransportFault` | `Transient` |
+| `Error.AuthenticationRequired` | `FailFast` |
+| `Error.Forbidden`, `Error.InvalidInput`, `Error.InvariantViolation`, `Error.NotFound`, `Error.Gone`, `Error.Conflict` | `Permanent` |
+
+`Error.Aggregate` is classified by max-severity over its inner errors (the constructor flattens nested aggregates, so the inners are never themselves `Aggregate`): `FailFast` if any inner classifies as `FailFast`; otherwise `Permanent` if any inner classifies as `Permanent`; otherwise `Transient`. The rule answers "should I retry the operation that produced this aggregate **as an indivisible unit?**" — a mixed `Aggregate(Permanent, Transient)` is `Permanent` because retrying the unit will not change the permanent inner's outcome. Callers that want per-inner retry granularity must iterate over `agg.Errors` themselves.
+
+**`GetRetryAdvice` for `Error.Aggregate` always returns `null`.** Two reasons: (1) returning the first transient inner's advice would contradict `Classify` whenever the aggregate is `Permanent` or `FailFast`, and (2) under-waiting is order-dependent (a `RateLimited(1s)` followed by a `RateLimited(60s)` would suggest 1 s). Callers that want a merged hint must define their own policy over the inner errors.
+
+**Conflict and eventually-consistent reads.** `Error.Conflict` defaults to `Permanent` because a generic outer retry loop cannot perform the conflict-specific work (rowversion reload, natural-key regeneration) that 409-shaped failures usually require. Domains with a meaningful conflict retry strategy should override locally — branch on the concrete shape first and only call `Classify()` in the fallback arm — or use a dedicated primitive such as `DbContext.SaveChangesWithRetryAsync` (see [trellis-api-efcore.md](trellis-api-efcore.md)). `Error.NotFound` and `Error.Gone` default to `Permanent`; services whose reads are eventually consistent should override the mapping locally rather than expect the framework default to infer their consistency model.
+
+**Why `Error.Unexpected` is `Transient`.** `Error.Unexpected` wraps unhandled exceptions and "this should not have happened" conditions. A retry can hide a deterministic bug or recover a momentary failure; the default favours availability. Producers should reserve `Error.Unexpected` for unknown internal faults and surface deterministic failures as `Error.InvariantViolation`, `Error.InvalidInput`, or `Error.Conflict` instead. Consumers must still cap retries.
 
 #### Supporting types
 
