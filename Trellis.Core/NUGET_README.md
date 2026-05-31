@@ -27,6 +27,7 @@ Result<string> email = Result.Ok("ada@example.com")
 - Build resource-aware HTTP errors tersely with `ResourceRef.For<TResource>(id)`.
 - Define custom `Required*<TSelf>` value objects with source-generated parsing, JSON conversion, and tracing support.
 - Persist staged state alongside a failure with `Result.FailAfterCommit<T>(error)` — opt-in for background-worker handlers that need a permanent-failure transition to commit even though the handler returns a failed result.
+- Classify `Error` values into `Transient` / `Permanent` / `FailFast` retry buckets with `error.Classify()` / `error.IsTransient()` / `error.GetRetryAdvice()` — transport-neutral helpers for worker, consumer, and outbound-gateway retry loops.
 
 ## `Result<T>` is not directly JSON-serializable
 
