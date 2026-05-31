@@ -426,6 +426,32 @@ public class WorkerActorTests
     }
 
     [Fact]
+    public async Task Validator_lifecycle_methods_other_than_StartingAsync_are_noops()
+    {
+        // StartAsync / StartedAsync / StoppingAsync / StopAsync / StoppedAsync exist only to
+        // satisfy the IHostedLifecycleService contract — the actual validation runs in
+        // StartingAsync. They must complete without throwing or doing work even when the
+        // configuration is invalid, so the host shutdown path is not affected by validator
+        // state.
+        var services = new ServiceCollection();
+        services.AddClaimsActorProvider();
+        services.AddTrellisWorkerActor(SystemActor);
+        services.AddScoped<IActorProvider, FakeInnerProvider>(); // would fail StartingAsync
+
+        using var sp = services.BuildServiceProvider();
+        var validator = sp.GetServices<IHostedService>()
+            .OfType<WorkerActorRegistrationValidator>()
+            .Single();
+        var ct = TestContext.Current.CancellationToken;
+
+        await validator.StartAsync(ct);
+        await validator.StartedAsync(ct);
+        await validator.StoppingAsync(ct);
+        await validator.StopAsync(ct);
+        await validator.StoppedAsync(ct);
+    }
+
+    [Fact]
     public async Task Wrapper_disposes_inner_when_registered_via_implementation_type()
     {
         var services = new ServiceCollection();
