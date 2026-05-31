@@ -99,7 +99,7 @@ public sealed class ToHttpResponseTests
     }
 
     [Fact]
-    public async Task Result_failure_populates_instance_from_request_url()
+    public async Task Result_failure_synthesizes_instance_from_resource_ref_when_url_does_not_identify_resource()
     {
         // RFC 9457 §3.1: "instance" identifies the specific occurrence of the problem.
         // When the failing Result carries a ResourceRef whose id is NOT in the request URL,

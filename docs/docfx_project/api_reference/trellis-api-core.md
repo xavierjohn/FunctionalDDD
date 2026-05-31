@@ -1851,16 +1851,16 @@ public sealed class ResourceCollectionNameAttribute : Attribute
 
 Overrides the default URI collection name (`{TypeName.ToLowerInvariant()}s`) used when `Trellis.Asp` synthesises `ProblemDetails.Instance` from a failing `ResourceRef`. Apply to the aggregate type whose default naive plural is wrong or unwanted (for example `[ResourceCollectionName("people")]` on `Person`, or `[ResourceCollectionName("statuses")]` on `Status`).
 
-The attribute validates the supplied name at construction time so misconfiguration fails fast at host start when `services.AddResourceCollectionNames(...)` scans the assembly. The name must be a non-empty single URL path segment containing only RFC 3986 unreserved or sub-delims characters (no `/`, no `?`, no `#`, no whitespace, no percent escapes). When the attribute is absent and no DI override is registered, the writer falls back to `{TypeName.ToLowerInvariant()}s`.
+The attribute validates the supplied name at construction time so misconfiguration fails fast at host start when `services.AddResourceCollectionNames(...)` scans the assembly. The name must be a non-empty single URL path segment composed entirely of RFC 3986 `unreserved` characters: ASCII letters and digits plus `-`, `.`, `_`, and `~`. Reserved characters (`/`, `?`, `#`), percent (`%`), `+`, and whitespace are rejected because the value is emitted unencoded into the synthesised URI. When the attribute is absent and no DI override is registered, the writer falls back to `{TypeName.ToLowerInvariant()}s`.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| `CollectionName` | `string` | The URL collection segment (for example `"people"`). |
+| `Name` | `string` | The URL collection segment (for example `"people"`). |
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public ResourceCollectionNameAttribute(string collectionName)` | `ResourceCollectionNameAttribute` | Throws `ArgumentException` if `collectionName` is null/whitespace or contains characters that are not safe in a single URL path segment. |
-| `public static bool IsSafePathSegment(string value)` | `bool` | Predicate used by the attribute constructor and by `Trellis.Asp.ResourceCollectionNameRegistry` to validate names from DI helpers. Exposed publicly so other layers can apply the same rule. |
+| `public ResourceCollectionNameAttribute(string name)` | `ResourceCollectionNameAttribute` | Throws `ArgumentNullException` if `name` is `null`; throws `ArgumentException` if `name` is empty/whitespace or contains any character outside RFC 3986 `unreserved`. |
+| `public static bool IsSafePathSegment(string? name)` | `bool` | Predicate used by the attribute constructor and by `Trellis.Asp.ResourceCollectionNameRegistry` to validate names from DI helpers. Returns `false` for `null`, empty, or whitespace input. Exposed publicly so other layers can apply the same rule. |
 
 ### `StringExtensions`
 

@@ -64,7 +64,7 @@ public sealed class ResourceCollectionNameRegistry
             if (!ResourceCollectionNameAttribute.IsSafePathSegment(entry.CollectionName))
             {
                 throw new InvalidOperationException(
-                    $"Collection name '{entry.CollectionName}' for resource type '{entry.ResourceType}' must be a single URL-safe path segment (no '/', '?', '#', or whitespace).");
+                    $"Collection name '{entry.CollectionName}' for resource type '{entry.ResourceType}' must be a single URL-safe path segment of RFC 3986 unreserved characters only (ASCII letters and digits, '-', '.', '_', '~').");
             }
 
             if (_overrides.TryGetValue(entry.ResourceType, out var existing))

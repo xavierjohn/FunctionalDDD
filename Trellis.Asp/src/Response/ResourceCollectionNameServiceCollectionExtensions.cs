@@ -52,7 +52,7 @@ public static class ResourceCollectionNameServiceCollectionExtensions
         if (!ResourceCollectionNameAttribute.IsSafePathSegment(collectionName))
         {
             throw new ArgumentException(
-                $"Collection name '{collectionName}' must be a single URL-safe path segment (no '/', '?', '#', or whitespace).",
+                $"Collection name '{collectionName}' must be a single URL-safe path segment of RFC 3986 unreserved characters only (ASCII letters and digits, '-', '.', '_', '~').",
                 nameof(collectionName));
         }
 
@@ -95,6 +95,31 @@ public static class ResourceCollectionNameServiceCollectionExtensions
         }
 
         services.TryAddSingleton<ResourceCollectionNameRegistry>();
+        return services;
+    }
+
+    /// <summary>
+    /// Scans the supplied assemblies for types annotated with
+    /// <see cref="ResourceCollectionNameAttribute"/>. Convenience overload for hosts that
+    /// register overrides from more than one assembly in a single call. Each assembly is
+    /// scanned in order; identical overrides across assemblies coalesce silently when the
+    /// registry is activated, conflicting overrides throw.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="assemblies">The assemblies to scan.</param>
+    /// <returns>The service collection for chaining.</returns>
+    [RequiresUnreferencedCode("Assembly scanning may load types that have been trimmed. For AOT/trimming use AddResourceCollectionName<T>(name) for each override.")]
+    public static IServiceCollection AddResourceCollectionNames(this IServiceCollection services, params Assembly[] assemblies)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        ArgumentNullException.ThrowIfNull(assemblies);
+
+        foreach (var assembly in assemblies)
+        {
+            ArgumentNullException.ThrowIfNull(assembly);
+            services.AddResourceCollectionNames(assembly);
+        }
+
         return services;
     }
 

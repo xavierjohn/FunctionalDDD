@@ -16,9 +16,13 @@ using System;
 /// CLR name is reported by <see cref="ResourceRef.For{TResource}(object?)"/>.
 /// </para>
 /// <para>
-/// <see cref="Name"/> must be a single URL-safe path segment: no <c>/</c>, <c>?</c>, <c>#</c>,
-/// or whitespace. Validation happens in the attribute constructor so a misconfigured override
-/// is surfaced at type-load (not at the first failing request).
+/// <see cref="Name"/> must be a single URL-safe path segment composed of RFC 3986
+/// <c>unreserved</c> characters only: ASCII letters and digits plus <c>-</c>, <c>.</c>,
+/// <c>_</c>, and <c>~</c>. Reserved characters (<c>/</c>, <c>?</c>, <c>#</c>), percent-encoded
+/// triplets (<c>%2F</c>), <c>+</c>, and whitespace are rejected because the value is emitted
+/// unencoded into the synthesised <c>Instance</c> URI and would otherwise change the URI's
+/// shape or meaning. Validation happens in the attribute constructor so a misconfigured
+/// override is surfaced at type-load (not at the first failing request).
 /// </para>
 /// </remarks>
 /// <example>
@@ -37,9 +41,11 @@ public sealed class ResourceCollectionNameAttribute : Attribute
     /// Initialises a new <see cref="ResourceCollectionNameAttribute"/>.
     /// </summary>
     /// <param name="name">The collection-name path segment.</param>
+    /// <exception cref="ArgumentNullException">Thrown when <paramref name="name"/> is <c>null</c>.</exception>
     /// <exception cref="ArgumentException">
-    /// Thrown when <paramref name="name"/> is null, whitespace, or contains a character
-    /// that would split a path segment (<c>/</c>, <c>?</c>, <c>#</c>, or whitespace).
+    /// Thrown when <paramref name="name"/> is empty, whitespace, or contains any character
+    /// outside the RFC 3986 <c>unreserved</c> set (ASCII letters and digits plus
+    /// <c>-</c>, <c>.</c>, <c>_</c>, <c>~</c>).
     /// </exception>
     public ResourceCollectionNameAttribute(string name)
     {
@@ -47,7 +53,7 @@ public sealed class ResourceCollectionNameAttribute : Attribute
         if (!IsSafePathSegment(name))
         {
             throw new ArgumentException(
-                $"Collection name '{name}' must be a single URL-safe path segment (no '/', '?', '#', or whitespace).",
+                $"Collection name '{name}' must be a single URL-safe path segment of RFC 3986 unreserved characters only (ASCII letters and digits, '-', '.', '_', '~').",
                 nameof(name));
         }
 
@@ -55,21 +61,33 @@ public sealed class ResourceCollectionNameAttribute : Attribute
     }
 
     /// <summary>
-    /// Returns <c>true</c> when <paramref name="name"/> is a single URL-safe path segment
-    /// (no <c>/</c>, <c>?</c>, <c>#</c>, or whitespace). Exposed so that other framework
-    /// components consuming a <see cref="ResourceCollectionNameAttribute"/>-equivalent
-    /// override can apply the same validation rule.
+    /// Returns <c>true</c> when <paramref name="name"/> is a non-empty, non-whitespace string
+    /// composed entirely of RFC 3986 <c>unreserved</c> characters (ASCII letters and digits
+    /// plus <c>-</c>, <c>.</c>, <c>_</c>, <c>~</c>). Reserved characters (<c>/</c>, <c>?</c>,
+    /// <c>#</c>), percent (<c>%</c>), <c>+</c>, and any whitespace return <c>false</c>.
+    /// Exposed so that other framework components consuming a
+    /// <see cref="ResourceCollectionNameAttribute"/>-equivalent override can apply the same
+    /// validation rule.
     /// </summary>
-    /// <param name="name">The candidate path segment.</param>
+    /// <param name="name">The candidate path segment. <c>null</c> returns <c>false</c>.</param>
     /// <returns><c>true</c> when the value is safe to use unencoded as a single path segment.</returns>
-    public static bool IsSafePathSegment(string name)
+    public static bool IsSafePathSegment(string? name)
     {
+        if (string.IsNullOrWhiteSpace(name))
+            return false;
+
         foreach (var c in name)
         {
-            if (c == '/' || c == '?' || c == '#' || char.IsWhiteSpace(c))
+            if (!IsUnreserved(c))
                 return false;
         }
 
         return true;
     }
+
+    private static bool IsUnreserved(char c)
+        => c is (>= 'A' and <= 'Z')
+            or (>= 'a' and <= 'z')
+            or (>= '0' and <= '9')
+            or '-' or '.' or '_' or '~';
 }

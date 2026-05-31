@@ -377,6 +377,56 @@ public sealed class ResponseFailureWriterResourceRefInstanceTests
 
         var actEmpty = () => new ResourceCollectionNameAttribute(string.Empty);
         actEmpty.Should().Throw<ArgumentException>();
+
+        var actPercent = () => new ResourceCollectionNameAttribute("peo%2Fple");
+        actPercent.Should().Throw<ArgumentException>();
+
+        var actPlus = () => new ResourceCollectionNameAttribute("peo+ple");
+        actPlus.Should().Throw<ArgumentException>();
+
+        var actColon = () => new ResourceCollectionNameAttribute("ns:people");
+        actColon.Should().Throw<ArgumentException>();
+
+        var actQuery = () => new ResourceCollectionNameAttribute("people?x");
+        actQuery.Should().Throw<ArgumentException>();
+
+        var actFragment = () => new ResourceCollectionNameAttribute("people#x");
+        actFragment.Should().Throw<ArgumentException>();
+
+        var actNull = () => new ResourceCollectionNameAttribute(null!);
+        actNull.Should().Throw<ArgumentNullException>();
+    }
+
+    [Fact]
+    public void IsSafePathSegment_accepts_unreserved_and_rejects_everything_else()
+    {
+        ResourceCollectionNameAttribute.IsSafePathSegment("people").Should().BeTrue();
+        ResourceCollectionNameAttribute.IsSafePathSegment("user-accounts").Should().BeTrue();
+        ResourceCollectionNameAttribute.IsSafePathSegment("v2.objects").Should().BeTrue();
+        ResourceCollectionNameAttribute.IsSafePathSegment("a_b~c").Should().BeTrue();
+        ResourceCollectionNameAttribute.IsSafePathSegment("items42").Should().BeTrue();
+
+        ResourceCollectionNameAttribute.IsSafePathSegment(null).Should().BeFalse();
+        ResourceCollectionNameAttribute.IsSafePathSegment(string.Empty).Should().BeFalse();
+        ResourceCollectionNameAttribute.IsSafePathSegment("   ").Should().BeFalse();
+        ResourceCollectionNameAttribute.IsSafePathSegment("peo%2Fple").Should().BeFalse();
+        ResourceCollectionNameAttribute.IsSafePathSegment("peo+ple").Should().BeFalse();
+        ResourceCollectionNameAttribute.IsSafePathSegment("ns:items").Should().BeFalse();
+        ResourceCollectionNameAttribute.IsSafePathSegment("café").Should().BeFalse();
+    }
+
+    [Fact]
+    public void AddResourceCollectionNames_params_overload_scans_each_assembly()
+    {
+        var services = new ServiceCollection();
+        services.AddResourceCollectionNames(
+            typeof(Sample.AnnotatedPerson).Assembly,
+            typeof(Sample.AnnotatedPerson).Assembly);
+
+        var provider = services.BuildServiceProvider();
+        var registry = provider.GetRequiredService<ResourceCollectionNameRegistry>();
+
+        registry.Resolve("AnnotatedPerson").Should().Be("staff");
     }
 
     [Fact]

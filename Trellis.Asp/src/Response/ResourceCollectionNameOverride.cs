@@ -1,5 +1,7 @@
 ﻿namespace Trellis.Asp;
 
+using Trellis;
+
 /// <summary>
 /// A single resource-type-to-collection-name override registered via
 /// <c>AddResourceCollectionName</c> or discovered by
