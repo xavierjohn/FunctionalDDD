@@ -57,16 +57,17 @@ audience: [developer]
 | `HttpFileParser` / `HttpFileRunner` / `HttpFileAssertions` | `Trellis.Testing.AspNetCore.Http` | Parse, run, and assert `.http` files against a `WebApplicationFactory` client. |
 | `WorkerHarness<TWorker>` (+ `WorkerHarnessOptions`, `IWorkerTickSignal`, `WorkerHarnessTimeoutException`) | `Trellis.Testing.Worker` | Integration-test harness for `BackgroundService` workers: `FakeTimeProvider`, `TestActorProvider`, domain-event capture, race-proof `WaitForEventAsync` / `WaitForTickAsync`. |
 
-Full signatures: [trellis-api-testing-reference.md](../api_reference/trellis-api-testing-reference.md).
+Full signatures: [trellis-api-testing-reference.md](../api_reference/trellis-api-testing-reference.md), [trellis-api-testing-aspnetcore.md](../api_reference/trellis-api-testing-aspnetcore.md), [trellis-api-testing-worker.md](../api_reference/trellis-api-testing-worker.md).
 
 ## Installation
 
 ```bash
 dotnet add package Trellis.Testing
 dotnet add package Trellis.Testing.AspNetCore
+dotnet add package Trellis.Testing.Worker
 ```
 
-`Trellis.Testing.AspNetCore` already references `Trellis.Testing`; install the second package only when the test project owns ASP.NET Core integration tests.
+`Trellis.Testing.AspNetCore` and `Trellis.Testing.Worker` already reference `Trellis.Testing` transitively. Install `Trellis.Testing.AspNetCore` when the project owns ASP.NET Core integration tests, and `Trellis.Testing.Worker` when it has integration tests for `BackgroundService` workers.
 
 ## Quick start
 

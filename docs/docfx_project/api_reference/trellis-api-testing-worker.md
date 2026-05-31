@@ -224,6 +224,7 @@ cursor = await harness.WaitForTickAsync("probe", after: cursor, TimeSpan.FromSec
 ## See also
 
 - [trellis-api-testing-aspnetcore.md](trellis-api-testing-aspnetcore.md) — `WebApplicationFactory<TEntryPoint>` helpers, fake time, and `.http` file replay for HTTP integration tests.
-- [trellis-api-testing-reference.md](trellis-api-testing-reference.md) — core Trellis testing assertions, fake repositories, and test actors.
-- [trellis-api-authorization.md](trellis-api-authorization.md) — `Actor`, `IActorProvider`, `TestActorProvider`, and the `AddTrellisWorkerActor` composition helper for the worker's production host.
+- [trellis-api-testing-reference.md](trellis-api-testing-reference.md) — core Trellis testing assertions, fake repositories, and `TestActorProvider`.
+- [trellis-api-authorization.md](trellis-api-authorization.md) — `Actor` and `IActorProvider`.
+- [trellis-api-asp.md](trellis-api-asp.md) — `AddTrellisWorkerActor` composition helper for the worker's production host.
 - [trellis-api-mediator.md](trellis-api-mediator.md) — `AddDomainEventDispatch`, `IDomainEventHandler<T>`, and the mediator pipeline the harness captures from.
