@@ -535,23 +535,62 @@ public class WorkerHarnessTests
     }
 
     [Fact]
-    public async Task StartAsync_failure_clears_started_state_so_DisposeAsync_does_not_stop_an_unstarted_host()
+    public async Task StartAsync_failure_stops_already_started_hosted_services_so_their_stop_hook_runs()
     {
-        var tracker = new LifecycleTrackerHostedService { ThrowOnNextStart = true };
+        var earlier = new LifecycleTrackerHostedService();
+        var failing = new LifecycleTrackerHostedService { ThrowOnNextStart = true };
         var harness = await WorkerHarness<TestWorker>.CreateAsync(
             opts =>
             {
                 ApplyMinimalRegistrations(opts);
-                opts.ConfigureServices(s => s.AddSingleton<IHostedService>(tracker));
+                // Registration order matters: earlier starts first and succeeds; failing
+                // starts second and throws. Host.StartAsync breaks on the first failure
+                // WITHOUT rolling back already-started services, so the harness must drive
+                // the rollback or the earlier service's stop hook would never run.
+                opts.ConfigureServices(s =>
+                {
+                    s.AddSingleton<IHostedService>(earlier);
+                    s.AddSingleton<IHostedService>(failing);
+                });
             },
             TestContext.Current.CancellationToken);
 
         var act = async () => await harness.StartAsync(TestContext.Current.CancellationToken);
         await act.Should().ThrowAsync<InvalidOperationException>();
 
+        earlier.StartCount.Should().Be(1, "the earlier hosted service must have started before the failure");
+        earlier.StopCount.Should().Be(1,
+            "on partial startup failure the harness must drive StopAsync so already-started services observe their stop hook");
+
         await harness.DisposeAsync();
-        tracker.StopCount.Should().Be(0,
-            "a failed StartAsync must reset the started flag so DisposeAsync does not stop a host that never finished starting");
+        earlier.StopCount.Should().Be(1,
+            "DisposeAsync after a partial start failure must not call StopAsync again on services the harness already stopped");
+    }
+
+    [Fact]
+    public async Task StartAsync_failure_surfaces_original_exception_even_when_cleanup_StopAsync_throws()
+    {
+        var earlier = new LifecycleTrackerHostedService { ThrowOnStop = true };
+        var failing = new LifecycleTrackerHostedService { ThrowOnNextStart = true };
+        var harness = await WorkerHarness<TestWorker>.CreateAsync(
+            opts =>
+            {
+                ApplyMinimalRegistrations(opts);
+                opts.ConfigureServices(s =>
+                {
+                    s.AddSingleton<IHostedService>(earlier);
+                    s.AddSingleton<IHostedService>(failing);
+                });
+            },
+            TestContext.Current.CancellationToken);
+
+        var act = async () => await harness.StartAsync(TestContext.Current.CancellationToken);
+        // The original start failure must be the surfaced exception; a stop exception during
+        // best-effort cleanup must not replace it.
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Lifecycle tracker deliberately failed StartAsync.");
+
+        await harness.DisposeAsync();
     }
 
     private static Task<WorkerHarness<TestWorker>> CreateMinimalHarnessAsync(TimeSpan? interval = null) =>
@@ -615,6 +654,7 @@ public class WorkerHarnessTests
         public int StartCount;
         public int StopCount;
         public bool ThrowOnNextStart;
+        public bool ThrowOnStop;
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
@@ -631,6 +671,9 @@ public class WorkerHarnessTests
         public Task StopAsync(CancellationToken cancellationToken)
         {
             StopCount++;
+            if (ThrowOnStop)
+                throw new InvalidOperationException("Lifecycle tracker deliberately failed StopAsync.");
+
             return Task.CompletedTask;
         }
     }

@@ -168,7 +168,13 @@ public sealed class WorkerHarness<[System.Diagnostics.CodeAnalysis.DynamicallyAc
     }
 
     /// <summary>
-    /// Starts the worker host. Safe to call multiple times — subsequent calls are no-ops.
+    /// Starts the worker host. On the success path, subsequent calls are no-ops and safe to
+    /// repeat. If the underlying <see cref="IHost.StartAsync(CancellationToken)"/> throws, the
+    /// harness drives a best-effort <see cref="IHost.StopAsync(CancellationToken)"/> so any
+    /// hosted services that started before the failure observe their stop hook, and rethrows
+    /// the original exception. After a failed start the harness should be discarded — the
+    /// host's hosted services have already observed a stop transition and re-starting them
+    /// from the same harness is not a supported scenario.
     /// </summary>
     /// <param name="cancellationToken">A token to observe during start.</param>
     /// <remarks>
@@ -204,17 +210,36 @@ public sealed class WorkerHarness<[System.Diagnostics.CodeAnalysis.DynamicallyAc
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
         // Reserve the "started" slot before delegating to the host so a concurrent caller
-        // sees the state transition. If StartAsync throws (e.g. a worker dependency cannot
-        // resolve), restore the slot so a retry actually re-invokes the host and DisposeAsync
-        // does not attempt to stop a host that never started.
+        // sees the state transition.
         if (Interlocked.CompareExchange(ref _started, 1, 0) != 0)
             return;
         try
         {
             await _host.StartAsync(cancellationToken).ConfigureAwait(false);
         }
-        catch
+        catch (Exception startEx)
         {
+            // Host.StartAsync iterates registered IHostedService instances in registration
+            // order and propagates the first StartAsync exception WITHOUT rolling back
+            // already-started services — so an earlier service that holds external resources
+            // would leak them until the DI scope is disposed. Drive a best-effort
+            // _host.StopAsync so those services observe their stop hook. Cap with the same
+            // 10-second real-time budget DisposeAsync uses so a misbehaving service does not
+            // hang the rethrow; capture cleanup exceptions in Data so the original start
+            // failure stays the surfaced exception but a stop-time bug stays diagnosable.
+            // Reset the slot so DisposeAsync does not attempt a second StopAsync on a host
+            // that is already stopped — the harness is not intended to be re-started after a
+            // failed start (see the XML doc on this method).
+            try
+            {
+                using var stopCts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                await _host.StopAsync(stopCts.Token).ConfigureAwait(false);
+            }
+            catch (Exception stopEx)
+            {
+                startEx.Data["WorkerHarness.StartAsync.CleanupStopException"] = stopEx;
+            }
+
             Volatile.Write(ref _started, 0);
             throw;
         }
