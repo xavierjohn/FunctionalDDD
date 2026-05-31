@@ -397,4 +397,129 @@ public sealed class IdempotencyMiddlewareTests
         secondResp.Headers.GetValues("X-Trellis-Replayed").Should().Contain("true");
         secondResp.Headers.Contains("Idempotent-Replayed").Should().BeFalse();
     }
+
+    [Fact]
+    public async Task Server_error_response_is_abandoned_and_retry_re_executes_handler()
+    {
+        var executions = 0;
+        using var host = await BuildHost(configureEndpoints: endpoints =>
+            endpoints.MapPost("/server-error", async ctx =>
+            {
+                Interlocked.Increment(ref executions);
+                ctx.Response.StatusCode = 503;
+                ctx.Response.ContentType = "application/problem+json";
+                await ctx.Response.WriteAsync("{\"detail\":\"transient\"}", ctx.RequestAborted);
+            }).WithMetadata(new IdempotentAttribute()));
+        var client = host.GetTestClient();
+        var key = Guid.NewGuid().ToString();
+
+        var first = JsonBody("{\"x\":1}");
+        first.Headers.Add(KeyHeader, key);
+        var firstResp = await client.PostAsync("/server-error", first, TestContext.Current.CancellationToken);
+        firstResp.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable);
+
+        var second = JsonBody("{\"x\":1}");
+        second.Headers.Add(KeyHeader, key);
+        var secondResp = await client.PostAsync("/server-error", second, TestContext.Current.CancellationToken);
+
+        secondResp.StatusCode.Should().Be(HttpStatusCode.ServiceUnavailable,
+            "transient 5xx responses must not be cached");
+        secondResp.Headers.Contains("Idempotent-Replayed").Should().BeFalse(
+            "the retry must hit the handler again, not replay the original 5xx");
+        executions.Should().Be(2, "the handler must execute on each retry of a 5xx outcome");
+    }
+
+    [Fact]
+    public async Task Bodyless_server_error_is_abandoned_and_retry_re_executes_handler()
+    {
+        var executions = 0;
+        using var host = await BuildHost(configureEndpoints: endpoints =>
+            endpoints.MapPost("/server-error-empty", ctx =>
+            {
+                Interlocked.Increment(ref executions);
+                ctx.Response.StatusCode = 500;
+                return Task.CompletedTask;
+            }).WithMetadata(new IdempotentAttribute()));
+        var client = host.GetTestClient();
+        var key = Guid.NewGuid().ToString();
+
+        var first = JsonBody("{}");
+        first.Headers.Add(KeyHeader, key);
+        var firstResp = await client.PostAsync("/server-error-empty", first, TestContext.Current.CancellationToken);
+        firstResp.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+
+        var second = JsonBody("{}");
+        second.Headers.Add(KeyHeader, key);
+        var secondResp = await client.PostAsync("/server-error-empty", second, TestContext.Current.CancellationToken);
+
+        secondResp.StatusCode.Should().Be(HttpStatusCode.InternalServerError);
+        secondResp.Headers.Contains("Idempotent-Replayed").Should().BeFalse(
+            "5xx detection must work even when the handler never flushed the response body");
+        executions.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task Client_error_response_is_cached_and_replayed()
+    {
+        var executions = 0;
+        using var host = await BuildHost(configureEndpoints: endpoints =>
+            endpoints.MapPost("/client-error", async ctx =>
+            {
+                Interlocked.Increment(ref executions);
+                ctx.Response.StatusCode = 422;
+                ctx.Response.ContentType = "application/problem+json";
+                await ctx.Response.WriteAsync("{\"detail\":\"invalid input\"}", ctx.RequestAborted);
+            }).WithMetadata(new IdempotentAttribute()));
+        var client = host.GetTestClient();
+        var key = Guid.NewGuid().ToString();
+
+        var first = JsonBody("{\"x\":1}");
+        first.Headers.Add(KeyHeader, key);
+        var firstResp = await client.PostAsync("/client-error", first, TestContext.Current.CancellationToken);
+        firstResp.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+
+        var second = JsonBody("{\"x\":1}");
+        second.Headers.Add(KeyHeader, key);
+        var secondResp = await client.PostAsync("/client-error", second, TestContext.Current.CancellationToken);
+
+        secondResp.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+        secondResp.Headers.GetValues("Idempotent-Replayed").Should().Contain("true",
+            "deterministic 4xx outcomes are still cached because retries will produce the same answer");
+        executions.Should().Be(1, "the handler must run only once when a 4xx outcome was cached");
+    }
+
+    [Fact]
+    public async Task Response_with_trailers_is_abandoned_and_retry_re_executes_handler()
+    {
+        var executions = 0;
+        using var host = await BuildHost(configureEndpoints: endpoints =>
+            endpoints.MapPost("/with-trailers", async ctx =>
+            {
+                Interlocked.Increment(ref executions);
+                ctx.Response.StatusCode = 200;
+                ctx.Response.ContentType = "application/json";
+                var trailers = ctx.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpResponseTrailersFeature>();
+                if (trailers is not null)
+                {
+                    trailers.Trailers["X-Trace"] = "abc";
+                }
+
+                await ctx.Response.WriteAsync("{\"ok\":true}", ctx.RequestAborted);
+            }).WithMetadata(new IdempotentAttribute()));
+        var client = host.GetTestClient();
+        var key = Guid.NewGuid().ToString();
+
+        var first = JsonBody("{}");
+        first.Headers.Add(KeyHeader, key);
+        await client.PostAsync("/with-trailers", first, TestContext.Current.CancellationToken);
+
+        var second = JsonBody("{}");
+        second.Headers.Add(KeyHeader, key);
+        var secondResp = await client.PostAsync("/with-trailers", second, TestContext.Current.CancellationToken);
+
+        secondResp.StatusCode.Should().Be(HttpStatusCode.OK);
+        secondResp.Headers.Contains("Idempotent-Replayed").Should().BeFalse(
+            "responses that wrote trailers cannot be replayed by the snapshot writer, so they must not be cached");
+        executions.Should().Be(2, "the handler must execute on each retry when trailers were written");
+    }
 }

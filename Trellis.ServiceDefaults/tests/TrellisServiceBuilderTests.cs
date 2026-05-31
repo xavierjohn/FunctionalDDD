@@ -275,6 +275,24 @@ public class TrellisServiceBuilderTests
         services.Should().NotContain(d => d.ServiceType == typeof(Trellis.Asp.Idempotency.IIdempotencyStore));
     }
 
+    [Fact]
+    public void UseIdempotency_repeated_calls_compose_options_callbacks()
+    {
+        var services = new ServiceCollection();
+        services.AddTrellis(options => options
+            .UseIdempotency(o => o.HeaderName = "X-First")
+            .UseIdempotency()
+            .UseIdempotency(o => o.MaxKeyLength = 99));
+
+        using var sp = services.BuildServiceProvider();
+        var opts = sp.GetRequiredService<IOptions<Trellis.Asp.Idempotency.IdempotencyOptions>>().Value;
+
+        opts.HeaderName.Should().Be("X-First",
+            "the first UseIdempotency callback must not be cleared by a later call");
+        opts.MaxKeyLength.Should().Be(99,
+            "the third UseIdempotency callback must also apply alongside the first");
+    }
+
     private sealed class TestDbContext : DbContext
     {
         public TestDbContext(DbContextOptions<TestDbContext> options)

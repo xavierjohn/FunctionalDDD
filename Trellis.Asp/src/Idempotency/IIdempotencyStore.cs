@@ -31,7 +31,7 @@ public interface IIdempotencyStore
     /// </summary>
     /// <param name="scope">Caller-resolved scope (for example an actor identifier).</param>
     /// <param name="key">Client-supplied idempotency key, post-validation.</param>
-    /// <param name="fingerprint">SHA-256 hex digest of the canonicalised request.</param>
+    /// <param name="fingerprint">SHA-256 URL-safe base64 (no padding) digest of the canonicalised request, as produced by <c>IdempotencyFingerprint.Compute</c>.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     ValueTask<IdempotencyReservationOutcome> TryReserveAsync(
         string scope,

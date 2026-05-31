@@ -353,6 +353,26 @@ public sealed partial class IdempotencyMiddleware
             }
         }
 
+        var trailersFeature = context.Features.Get<IHttpResponseTrailersFeature>();
+        if (trailersFeature?.Trailers is { Count: > 0 })
+        {
+            // Response trailers cannot be replayed by the snapshot writer (which only restores
+            // status + headers + body), so any response that wrote trailers is treated as
+            // non-cacheable and the reservation is released for retry.
+            LogTrailersAbandoned(this.logger, key);
+            await this.SafeAbandonAsync(scope, key, reservationId).ConfigureAwait(false);
+            return;
+        }
+
+        if (headerSnapshot.StatusCode is >= 500 and <= 599)
+        {
+            // 5xx responses are treated as transient per the IIdempotencyStore.AbandonAsync
+            // contract: caching them would deny the client a real retry that might succeed.
+            LogServerErrorAbandoned(this.logger, key, headerSnapshot.StatusCode);
+            await this.SafeAbandonAsync(scope, key, reservationId).ConfigureAwait(false);
+            return;
+        }
+
         var snapshot = new IdempotencyResponseSnapshot(
             StatusCode: headerSnapshot.StatusCode,
             Headers: headerSnapshot.Headers,
@@ -410,6 +430,12 @@ public sealed partial class IdempotencyMiddleware
 
     [LoggerMessage(EventId = 5, Level = LogLevel.Warning, Message = "Idempotency store AbandonAsync failed for key {Key}")]
     static partial void LogAbandonFailed(ILogger logger, Exception ex, string key);
+
+    [LoggerMessage(EventId = 6, Level = LogLevel.Information, Message = "Idempotency reservation abandoned for key {Key}: response wrote trailers, which cannot be replayed")]
+    static partial void LogTrailersAbandoned(ILogger logger, string key);
+
+    [LoggerMessage(EventId = 7, Level = LogLevel.Information, Message = "Idempotency reservation abandoned for key {Key}: handler returned status {StatusCode} (5xx responses are treated as transient)")]
+    static partial void LogServerErrorAbandoned(ILogger logger, string key, int statusCode);
 
     private sealed class HeaderSnapshot
     {

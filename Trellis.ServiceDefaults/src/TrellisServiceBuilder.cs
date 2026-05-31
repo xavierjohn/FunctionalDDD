@@ -102,11 +102,19 @@ public sealed class TrellisServiceBuilder
     /// <c>app.UseTrellisIdempotency()</c> and for registering a store (for example
     /// <c>services.AddInMemoryIdempotencyStore()</c>).
     /// </para>
+    /// <para>
+    /// Calling this method more than once is allowed; the configure delegates are composed in
+    /// call order rather than overwriting, so a library that applies defaults and a host that
+    /// tweaks individual properties can both call <c>UseIdempotency(...)</c> without either
+    /// erasing the other's configuration.
+    /// </para>
     /// </remarks>
     public TrellisServiceBuilder UseIdempotency(Action<Trellis.Asp.Idempotency.IdempotencyOptions>? configure = null)
     {
         _useIdempotency = true;
-        _configureIdempotency = configure;
+        if (configure is not null)
+            _configureIdempotency = Combine(_configureIdempotency, configure);
+
         return this;
     }
 

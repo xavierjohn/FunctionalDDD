@@ -92,6 +92,12 @@ public static class IdempotencyKeyParser
                 return false;
             }
 
+            if (c == '"')
+            {
+                error = $"Idempotency-Key contains unescaped quote at position {i}; embedded quotes must be escaped as \\\".";
+                return false;
+            }
+
             sb.Append(c);
         }
 

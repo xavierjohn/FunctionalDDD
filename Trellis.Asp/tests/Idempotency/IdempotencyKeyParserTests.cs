@@ -39,6 +39,8 @@ public sealed class IdempotencyKeyParserTests
     [InlineData("with space outside quotes")]
     [InlineData("ünicode")]
     [InlineData("\"\\x\"")]
+    [InlineData("\"abc\"junk\"")]
+    [InlineData("\"a\"b\"")]
     public void Invalid_inputs_return_false(string input)
     {
         IdempotencyKeyParser.TryParse(input, out _, out var error).Should().BeFalse();
