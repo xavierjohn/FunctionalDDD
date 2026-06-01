@@ -11,27 +11,27 @@ using Xunit;
 
 // --- Lenient and strict generated Required* test fixtures ---
 
+[AllowEmpty]
 public partial class AspLenientGuid : RequiredGuid<AspLenientGuid> { }
 
-[NotDefault]
 public partial class AspStrictGuid : RequiredGuid<AspStrictGuid> { }
 
+[AllowEmpty, AllowWhitespace, NoTrim]
 public partial class AspLenientString : RequiredString<AspLenientString> { }
 
-[Trim, NotDefault]
 public partial class AspStrictString : RequiredString<AspStrictString> { }
 
+[AllowZero]
 public partial class AspLenientInt : RequiredInt<AspLenientInt> { }
 
-[NotDefault]
 public partial class AspStrictInt : RequiredInt<AspStrictInt> { }
 
 /// <summary>
-/// ASP-boundary regression coverage for the <c>RequiredXxx&lt;T&gt;</c> POLA realignment:
-/// proves that the new attribute-driven validation flows through
+/// ASP-boundary regression coverage for the <c>RequiredXxx&lt;T&gt;</c> strict-by-default behavior:
+/// proves that explicit lenience opt-out attributes flow through
 /// <see cref="ScalarValueModelBinder{TValue, TPrimitive}"/> on the route / query / form / header
-/// path. Lenient (undecorated) types accept the per-type sentinel value via the binder; strict
-/// (<c>[NotDefault]</c>) types reject with the per-type wording.
+/// path. Lenient types accept the per-type sentinel value via the binder; strict default types
+/// reject with the per-type wording.
 /// </summary>
 /// <remarks>
 /// Mirrors the EF rehydration test (<c>RequiredXxxRehydrationLenienceTests</c>) and the
@@ -94,15 +94,14 @@ public class RequiredXxxBinderLenienceTests
     public async Task StrictStringBinder_rejects_empty_string_via_direct_TryCreate()
     {
         // Empty-string handling at the binder layer is short-circuited; the per-type rejection
-        // path is the strict TryCreate (called by the binder when the value provider yields a
-        // non-empty string and we then strip it via [Trim]). Asserting at TryCreate level keeps
-        // this test stable regardless of value-provider short-circuit policy.
+        // path is the strict TryCreate. Asserting at TryCreate level keeps this test stable
+        // regardless of value-provider short-circuit policy.
         var result = AspStrictString.TryCreate("");
         result.IsFailure.Should().BeTrue();
         var ve = (Error.InvalidInput)result.UnwrapError();
         ve.Fields[0].Detail.Should().Be("Asp Strict String cannot be empty.");
 
-        // And via binder for a whitespace-only payload that [Trim] reduces to "":
+        // And via binder for a whitespace-only payload:
         var binder = new ScalarValueModelBinder<AspStrictString, string>();
         var ctx = CreateBindingContext("name", "   ");
 
@@ -110,7 +109,7 @@ public class RequiredXxxBinderLenienceTests
 
         ctx.Result.IsModelSet.Should().BeFalse();
         ctx.ModelState["name"]!.Errors.Should().ContainSingle()
-            .Which.ErrorMessage.Should().Be("Asp Strict String cannot be empty.");
+            .Which.ErrorMessage.Should().Be("Asp Strict String cannot be whitespace-only.");
     }
 
     [Fact]

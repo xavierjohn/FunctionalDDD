@@ -23,11 +23,10 @@ using Trellis;
 /// application service boundary if the two differ.
 /// </para>
 /// <para>
-/// Decorated with <c>[Trim, NotDefault]</c>: the value is trimmed on construction and an
-/// empty or whitespace-only id is rejected. This matches the original
+/// Uses the strict <see cref="RequiredString{TSelf}"/> defaults: the value is trimmed on
+/// construction and an empty or whitespace-only id is rejected. This matches the original
 /// <see cref="Actor"/> constructor's <c>ArgumentException.ThrowIfNullOrWhiteSpace</c>
 /// guard; the trim is a deliberate, documented normalization step on top of that.
 /// </para>
 /// </remarks>
-[Trim, NotDefault]
 public sealed partial class ActorId : RequiredString<ActorId>;

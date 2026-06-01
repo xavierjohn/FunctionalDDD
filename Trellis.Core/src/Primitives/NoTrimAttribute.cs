@@ -3,26 +3,29 @@
 using System;
 
 /// <summary>
-/// Reserved marker for the upcoming <c>Required&lt;TSelf&gt;</c> defaults realignment: when applied to a
-/// partial <see cref="RequiredString{TSelf}"/>-derived class, the generator will skip the
-/// trim-before-validate step once the strict-default emission flip lands. <b>This attribute
-/// has no effect in the current release</b> — today, trim only runs when
-/// <see cref="TrimAttribute"/> is applied explicitly. Declare it now to lock in the verbatim
-/// behavior across the upcoming flip without code churn.
+/// Skips the automatic trim step on a <see cref="RequiredString{TSelf}"/>-derived class.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Once the flip lands, the generator trims by default; this attribute opts out so the input
-/// string is stored verbatim. Use when leading/trailing whitespace is a meaningful part of the
-/// stored value (machine identifiers carrying intentional spacing, raw protocol fragments,
-/// etc.). For most domain strings — names, emails, codes — leaving this attribute off and
-/// letting the generator trim will be the correct choice.
+/// By default the generator trims input before storing it. Apply this attribute to preserve
+/// leading/trailing whitespace verbatim — useful for machine identifiers carrying intentional
+/// spacing, raw protocol fragments, or any case where whitespace is part of the stored value.
+/// </para>
+/// <para>
+/// Does <em>not</em> by itself affect what input is <em>accepted</em>; it only affects what
+/// is <em>stored</em>. Whitespace-only input is still rejected unless paired with
+/// <see cref="AllowWhitespaceAttribute"/>; literal empty input is still rejected unless paired
+/// with <see cref="AllowEmptyAttribute"/>.
+/// </para>
+/// <para>
+/// Only applies to <see cref="RequiredString{TSelf}"/>. Applying to other Required bases
+/// produces a generator error.
 /// </para>
 /// </remarks>
-/// <seealso cref="TrimAttribute"/>
 /// <seealso cref="AllowEmptyAttribute"/>
 /// <seealso cref="AllowWhitespaceAttribute"/>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 public sealed class NoTrimAttribute : Attribute
 {
 }
+

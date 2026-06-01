@@ -27,6 +27,7 @@ var shipping = Money.Create(2.00m, "USD");
 Result<Money> grandTotal = subtotal.Add(shipping);
 
 // Define a custom value object — the source generator emits TryCreate, equality, JSON converters, etc.
+// RequiredString rejects null/empty/whitespace and trims by default; RequiredGuid rejects Guid.Empty.
 public sealed partial class CustomerEmail : RequiredString<CustomerEmail>;
 public sealed partial class OrderId : RequiredGuid<OrderId>;
 ```
@@ -34,6 +35,7 @@ public sealed partial class OrderId : RequiredGuid<OrderId>;
 ## Key Features
 - Ready-to-use value objects for common concepts such as email, URL, money, and percentages.
 - `Trellis.Core` base classes like `RequiredString<CustomerEmail>` and `RequiredGuid<OrderId>` for custom domain types.
+- Strict-by-default generated validation, with per-base opt-outs such as `[AllowEmpty]`, `[AllowWhitespace]`, `[NoTrim]`, `[AllowZero]`, and `[AllowMinValue]` when legacy or integration values must remain valid.
 - Validation and parsing rules that stay with the type instead of leaking into handlers and controllers.
 
 ## Documentation

@@ -4,28 +4,27 @@ using System;
 using Trellis.Testing;
 using Xunit;
 
-// Plain RequiredDateTimeOffset — lenient default (only null rejected).
-public partial class EventOccurredAt : RequiredDateTimeOffset<EventOccurredAt> { }
+// RequiredDateTimeOffset with [AllowMinValue] — opts out of strict MinValue rejection.
+[AllowMinValue] public partial class EventOccurredAt : RequiredDateTimeOffset<EventOccurredAt> { }
 
-// Strict RequiredDateTimeOffset — [NotDefault] rejects DateTimeOffset.MinValue.
-[NotDefault]
+// Strict RequiredDateTimeOffset — default rejects DateTimeOffset.MinValue.
 public partial class StrictOccurredAt : RequiredDateTimeOffset<StrictOccurredAt> { }
 
 // Numeric convenience attributes on the three numeric Required bases.
 [Positive] public partial class PositiveInt : RequiredInt<PositiveInt> { }
-[NonNegative] public partial class NonNegativeInt : RequiredInt<NonNegativeInt> { }
+[AllowZero, NonNegative] public partial class NonNegativeInt : RequiredInt<NonNegativeInt> { }
 [Negative] public partial class NegativeInt : RequiredInt<NegativeInt> { }
-[NonPositive] public partial class NonPositiveInt : RequiredInt<NonPositiveInt> { }
+[AllowZero, NonPositive] public partial class NonPositiveInt : RequiredInt<NonPositiveInt> { }
 
 [Positive] public partial class PositiveLong : RequiredLong<PositiveLong> { }
-[NonNegative] public partial class NonNegativeLong : RequiredLong<NonNegativeLong> { }
+[AllowZero, NonNegative] public partial class NonNegativeLong : RequiredLong<NonNegativeLong> { }
 [Negative] public partial class NegativeLong : RequiredLong<NegativeLong> { }
-[NonPositive] public partial class NonPositiveLong : RequiredLong<NonPositiveLong> { }
+[AllowZero, NonPositive] public partial class NonPositiveLong : RequiredLong<NonPositiveLong> { }
 
 [Positive] public partial class PositiveDecimal : RequiredDecimal<PositiveDecimal> { }
-[NonNegative] public partial class NonNegativeDecimal : RequiredDecimal<NonNegativeDecimal> { }
+[AllowZero, NonNegative] public partial class NonNegativeDecimal : RequiredDecimal<NonNegativeDecimal> { }
 [Negative] public partial class NegativeDecimal : RequiredDecimal<NegativeDecimal> { }
-[NonPositive] public partial class NonPositiveDecimal : RequiredDecimal<NonPositiveDecimal> { }
+[AllowZero, NonPositive] public partial class NonPositiveDecimal : RequiredDecimal<NonPositiveDecimal> { }
 
 /// <summary>
 /// Tests for the additive Required<T> primitives added in PR2a:
@@ -40,7 +39,7 @@ public class RequiredDateTimeOffsetAndNumericConvenienceTests
     // ---------- RequiredDateTimeOffset ----------
 
     [Fact]
-    public void TryCreate_LenientDateTimeOffset_AcceptsPresentValue()
+    public void TryCreate_AllowMinValueDateTimeOffset_AcceptsPresentValue()
     {
         var now = DateTimeOffset.UtcNow;
         var result = EventOccurredAt.TryCreate(now);
@@ -49,7 +48,7 @@ public class RequiredDateTimeOffsetAndNumericConvenienceTests
     }
 
     [Fact]
-    public void TryCreate_LenientDateTimeOffset_AcceptsMinValue()
+    public void TryCreate_AllowMinValueDateTimeOffset_AcceptsMinValue()
     {
         var result = EventOccurredAt.TryCreate(DateTimeOffset.MinValue);
         result.IsSuccess.Should().BeTrue();
@@ -57,14 +56,14 @@ public class RequiredDateTimeOffsetAndNumericConvenienceTests
     }
 
     [Fact]
-    public void TryCreate_LenientDateTimeOffset_RejectsNull()
+    public void TryCreate_AllowMinValueDateTimeOffset_RejectsNull()
     {
         var result = EventOccurredAt.TryCreate((DateTimeOffset?)null);
         result.IsFailure.Should().BeTrue();
     }
 
     [Fact]
-    public void TryCreate_LenientDateTimeOffsetFromString_PreservesOffsetOnRoundTrip()
+    public void TryCreate_AllowMinValueDateTimeOffsetFromString_PreservesOffsetOnRoundTrip()
     {
         var fixedOffset = new DateTimeOffset(2026, 6, 1, 12, 30, 0, TimeSpan.FromHours(-5));
         var parsed = EventOccurredAt.TryCreate(fixedOffset.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
@@ -74,7 +73,7 @@ public class RequiredDateTimeOffsetAndNumericConvenienceTests
     }
 
     [Fact]
-    public void TryCreate_StrictDateTimeOffsetWithNotDefault_RejectsMinValue()
+    public void TryCreate_StrictDateTimeOffset_RejectsMinValue()
     {
         var result = StrictOccurredAt.TryCreate(DateTimeOffset.MinValue);
         result.IsFailure.Should().BeTrue();
@@ -82,7 +81,7 @@ public class RequiredDateTimeOffsetAndNumericConvenienceTests
     }
 
     [Fact]
-    public void TryCreate_StrictDateTimeOffsetWithNotDefault_AcceptsPresentValue()
+    public void TryCreate_StrictDateTimeOffset_AcceptsPresentValue()
     {
         var now = DateTimeOffset.UtcNow;
         var result = StrictOccurredAt.TryCreate(now);

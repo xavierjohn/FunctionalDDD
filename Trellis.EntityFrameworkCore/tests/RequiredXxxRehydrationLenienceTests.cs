@@ -4,28 +4,28 @@ using System;
 using Trellis;
 using Xunit;
 
-// Lenient and strict variants for the POLA realignment rehydration test.
+// Lenient and strict variants for the strict-by-default rehydration test.
+[AllowEmpty]
 public partial class LenientEfGuid : RequiredGuid<LenientEfGuid> { }
 
-[NotDefault]
 public partial class StrictEfGuid : RequiredGuid<StrictEfGuid> { }
 
+[AllowMinValue]
 public partial class LenientEfDateTime : RequiredDateTime<LenientEfDateTime> { }
 
-[NotDefault]
 public partial class StrictEfDateTime : RequiredDateTime<StrictEfDateTime> { }
 
+[AllowEmpty, AllowWhitespace, NoTrim]
 public partial class LenientEfString : RequiredString<LenientEfString> { }
 
-[Trim, NotDefault]
 public partial class StrictEfString : RequiredString<StrictEfString> { }
 
 /// <summary>
-/// Regression coverage for the POLA realignment EF read-path impact: <see cref="TrellisScalarConverter{TModel, TProvider}"/>
-/// calls <c>TryCreate</c> to materialize every row, so lenient-by-default Required types no longer
-/// throw <c>TrellisPersistenceMappingException</c> when a column legitimately contains the
-/// sentinel value (<c>Guid.Empty</c>, <c>DateTime.MinValue</c>, <c>""</c>). Strict types decorated
-/// with <c>[NotDefault]</c> retain the database-invariant guarantee.
+/// Regression coverage for the strict-by-default EF read-path impact: <see cref="TrellisScalarConverter{TModel, TProvider}"/>
+/// calls <c>TryCreate</c> to materialize every row, so opt-out Required types still do not throw
+/// <c>TrellisPersistenceMappingException</c> when a legacy column legitimately contains the
+/// sentinel value (<c>Guid.Empty</c>, <c>DateTime.MinValue</c>, <c>""</c>). Strict default types
+/// retain the database-invariant guarantee.
 /// </summary>
 /// <remarks>
 /// Exercises the converter directly via <c>ValueConverter&lt;,&gt;.ConvertFromProvider</c> rather

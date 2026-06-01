@@ -29,10 +29,16 @@ public class RequiredPartialClassInfoEqualityTests
         string[]? nestingParents = null,
         string? typePath = null,
         bool hasNotDefault = false,
-        bool hasTrim = false) =>
+        bool hasTrim = false,
+        bool hasAllowEmpty = false,
+        bool hasAllowWhitespace = false,
+        bool hasNoTrim = false,
+        bool hasAllowZero = false,
+        bool hasAllowMinValue = false) =>
         new(@namespace, className, classBase, accessibility, maxLength, minLength,
             rangeMin, rangeMax, rangeLongMin, rangeLongMax, rangeDoubleMin, rangeDoubleMax,
-            nestingParents, typePath, hasNotDefault, hasTrim);
+            nestingParents, typePath, hasNotDefault, hasTrim, hasAllowEmpty, hasAllowWhitespace,
+            hasNoTrim, hasAllowZero, hasAllowMinValue);
 
     [Fact]
     public void Identical_infos_are_equal_and_have_same_hash()
@@ -80,6 +86,24 @@ public class RequiredPartialClassInfoEqualityTests
         var after = Make(classBase: "RequiredString", hasNotDefault: true, hasTrim: true);
         before.Equals(after).Should().BeFalse();
         before.GetHashCode().Should().NotBe(after.GetHashCode());
+    }
+
+    [Fact]
+    public void Differing_HasAllowZero_makes_infos_unequal()
+    {
+        var strict = Make(classBase: "RequiredInt", hasAllowZero: false);
+        var lenient = Make(classBase: "RequiredInt", hasAllowZero: true);
+        strict.Equals(lenient).Should().BeFalse();
+        strict.GetHashCode().Should().NotBe(lenient.GetHashCode());
+    }
+
+    [Fact]
+    public void Differing_HasAllowMinValue_makes_infos_unequal()
+    {
+        var strict = Make(classBase: "RequiredDateTime", hasAllowMinValue: false);
+        var lenient = Make(classBase: "RequiredDateTime", hasAllowMinValue: true);
+        strict.Equals(lenient).Should().BeFalse();
+        strict.GetHashCode().Should().NotBe(lenient.GetHashCode());
     }
 
     [Fact]

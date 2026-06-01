@@ -8,7 +8,7 @@ using Trellis.Testing;
 /// <summary>
 /// RequiredString with regex pattern validation via ValidateAdditional.
 /// </summary>
-[Trim, NotDefault, StringLength(10)]
+[StringLength(10)]
 public partial class Sku : RequiredString<Sku>
 {
     static partial void ValidateAdditional(string value, string fieldName, ref string? errorMessage)
@@ -21,7 +21,6 @@ public partial class Sku : RequiredString<Sku>
 /// <summary>
 /// RequiredString without ValidateAdditional — ensures the hook is truly optional.
 /// </summary>
-[Trim, NotDefault]
 public partial class PlainName : RequiredString<PlainName> { }
 
 /// <summary>
@@ -50,6 +49,7 @@ public partial class EvenPercentage : RequiredInt<EvenPercentage>
 /// <summary>
 /// RequiredInt without [Range] + custom positive-only validation.
 /// </summary>
+[AllowZero]
 public partial class PositiveScore : RequiredInt<PositiveScore>
 {
     static partial void ValidateAdditional(int value, string fieldName, ref string? errorMessage)
@@ -62,6 +62,7 @@ public partial class PositiveScore : RequiredInt<PositiveScore>
 /// <summary>
 /// RequiredDecimal with custom two-decimal-places validation.
 /// </summary>
+[AllowZero]
 public partial class PreciseAmount : RequiredDecimal<PreciseAmount>
 {
     static partial void ValidateAdditional(decimal value, string fieldName, ref string? errorMessage)
@@ -111,7 +112,7 @@ public class ValidateAdditionalTests
         var result = Sku.TryCreate(null);
         result.IsFailure.Should().BeTrue();
         var validation = (Error.InvalidInput)result.UnwrapError();
-        validation.Fields[0].Detail.Should().Be("Sku cannot be empty.");
+        validation.Fields[0].Detail.Should().Be("Sku cannot be null.");
     }
 
     [Fact]
@@ -223,7 +224,7 @@ public class ValidateAdditionalTests
     [Fact]
     public void PositiveScore_Zero_AcceptedByAdditionalValidation()
     {
-        // Zero passes built-in (no zero-check), but ValidateAdditional allows it (< 0 check)
+        // [AllowZero] permits zero, and ValidateAdditional allows it (< 0 check).
         var result = PositiveScore.TryCreate(0);
         result.IsSuccess.Should().BeTrue();
         result.Unwrap().Value.Should().Be(0);
@@ -271,7 +272,7 @@ public class ValidateAdditionalTests
     [Fact]
     public void PreciseAmount_Zero_PassesAllValidation()
     {
-        // Zero passes built-in (no zero-check) and ValidateAdditional (0.00 has 2 decimal places)
+        // [AllowZero] permits zero, and ValidateAdditional allows it (0.00 has 2 decimal places).
         var result = PreciseAmount.TryCreate(0m);
         result.IsSuccess.Should().BeTrue();
         result.Unwrap().Value.Should().Be(0m);

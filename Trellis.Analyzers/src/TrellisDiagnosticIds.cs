@@ -135,14 +135,9 @@ public static class TrellisDiagnosticIds
     /// <summary>TRLS039 — Scalar value object wraps a primitive that is not supported by the AOT-safe JSON converter generator.</summary>
     public const string UnsupportedScalarValuePrimitiveForAotJson = "TRLS039";
 
-    /// <summary>TRLS040 — <c>[NotDefault]</c> is not supported on <c>RequiredBool&lt;T&gt;</c> (a bool that rejects <c>false</c> would be degenerate).</summary>
-    public const string NotDefaultOnRequiredBool = "TRLS040";
-
-    /// <summary>TRLS041 — <c>[Trim]</c> is only valid on <c>RequiredString&lt;T&gt;</c>-derived types.</summary>
-    public const string TrimOnNonStringRequired = "TRLS041";
-
-    /// <summary>TRLS042 — <c>[NotDefault]</c> is not supported on <c>RequiredEnum&lt;T&gt;</c> (smart-enum has no CLR <c>default(T)</c>).</summary>
-    public const string NotDefaultOnRequiredEnum = "TRLS042";
+    // TRLS040, TRLS041, TRLS042 were retired in the v3 defaults flip: [NotDefault] and [Trim]
+    // are now vestigial no-ops universally, surfaced via TRLS046/TRLS047 informational diagnostics
+    // rather than per-base errors. The IDs are intentionally not reused.
 
     /// <summary>TRLS043 — Numeric convenience attribute (<c>[Positive]</c>, <c>[NonNegative]</c>, <c>[Negative]</c>, or <c>[NonPositive]</c>) applied to a non-numeric Required base.</summary>
     public const string NumericConvenienceOnNonNumeric = "TRLS043";
@@ -152,4 +147,28 @@ public static class TrellisDiagnosticIds
 
     /// <summary>TRLS045 — Numeric convenience attribute combined with an explicit <c>[Range]</c> on the same class; the combination would silently disable the convenience sign check.</summary>
     public const string NumericConvenienceWithExplicitRange = "TRLS045";
+
+    /// <summary>TRLS046 — <c>[NotDefault]</c> is vestigial under the v3 strict-by-default Required model.</summary>
+    public const string NotDefaultIsVestigial = "TRLS046";
+
+    /// <summary>TRLS047 — <c>[Trim]</c> is vestigial on <c>RequiredString&lt;T&gt;</c> under the v3 trim-by-default model.</summary>
+    public const string TrimIsVestigial = "TRLS047";
+
+    /// <summary>TRLS048 — <c>[AllowZero]</c> applied to a non-numeric Required base.</summary>
+    public const string AllowZeroOnNonNumericRequired = "TRLS048";
+
+    /// <summary>TRLS049 — <c>[AllowEmpty]</c> applied to a numeric or date Required base.</summary>
+    public const string AllowEmptyOnNumericOrDateRequired = "TRLS049";
+
+    /// <summary>TRLS050 — <c>[AllowMinValue]</c> applied to a non-date Required base.</summary>
+    public const string AllowMinValueOnNonDateRequired = "TRLS050";
+
+    /// <summary>TRLS051 — <c>[AllowWhitespace]</c> applied to a non-string Required base.</summary>
+    public const string AllowWhitespaceOnNonStringRequired = "TRLS051";
+
+    /// <summary>TRLS052 — <c>[NoTrim]</c> applied to a non-string Required base.</summary>
+    public const string NoTrimOnNonStringRequired = "TRLS052";
+
+    /// <summary>TRLS053 — Contradictory Required attribute combination.</summary>
+    public const string ContradictoryRequiredAttributeCombination = "TRLS053";
 }

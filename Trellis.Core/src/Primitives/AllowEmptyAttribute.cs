@@ -3,29 +3,41 @@
 using System;
 
 /// <summary>
-/// Reserved marker for the upcoming <c>Required&lt;TSelf&gt;</c> defaults realignment: when applied to a
-/// partial <see cref="RequiredString{TSelf}"/>-derived class, the generator will permit empty
-/// strings (<c>""</c>) to satisfy the "required" validation once the strict-default emission
-/// flip lands. <b>This attribute has no effect in the current release</b> — declare it now to
-/// keep existing code lenient through the upcoming flip without code churn.
+/// Permits the per-base "empty" sentinel on a <see cref="RequiredString{TSelf}"/> or
+/// <see cref="RequiredGuid{TSelf}"/>-derived class:
+/// <list type="bullet">
+///   <item><see cref="RequiredString{TSelf}"/> — permits <see cref="string.Empty"/> as the final value.</item>
+///   <item><see cref="RequiredGuid{TSelf}"/> — permits <see cref="System.Guid.Empty"/> as the final value.</item>
+/// </list>
 /// </summary>
 /// <remarks>
 /// <para>
-/// Once the flip lands, the generator's default rejects empty strings on
-/// <see cref="RequiredString{TSelf}"/>; with this attribute, only <c>null</c> is rejected and
-/// the empty string is accepted as a valid value. Useful for boundary types that legitimately
-/// carry an empty payload (sparse extension fields at integration seams, response bodies that
-/// may be empty by protocol, etc.). For most domain types, leaving this attribute off and
-/// letting the generator reject empty strings will be the correct choice.
+/// By default the generator rejects each base's BCL "empty" sentinel. Apply this attribute
+/// when the empty value is a legitimate domain value (sparse extension fields at integration
+/// seams, response bodies that may be empty by protocol, etc.).
 /// </para>
 /// <para>
-/// Does <em>not</em> permit whitespace-only input on its own; combine with
-/// <see cref="AllowWhitespaceAttribute"/> when whitespace-only strings should also be accepted.
+/// On <see cref="RequiredString{TSelf}"/>: permits the post-trim final string to be empty.
+/// Does <em>not</em> by itself permit whitespace-only input — combine with
+/// <see cref="AllowWhitespaceAttribute"/> when whitespace-only strings should also be
+/// accepted. The trim step still runs unless <see cref="NoTrimAttribute"/> is also applied.
+/// </para>
+/// <para>
+/// On <see cref="RequiredGuid{TSelf}"/>: permits <c>Guid.Empty</c> (the all-zero GUID) as a
+/// valid stored value.
+/// </para>
+/// <para>
+/// Only applies to <see cref="RequiredString{TSelf}"/> and <see cref="RequiredGuid{TSelf}"/>.
+/// Applying to numeric Required bases (use <see cref="AllowZeroAttribute"/>) or
+/// date Required bases (use <see cref="AllowMinValueAttribute"/>) produces a generator error.
 /// </para>
 /// </remarks>
 /// <seealso cref="AllowWhitespaceAttribute"/>
 /// <seealso cref="NoTrimAttribute"/>
+/// <seealso cref="AllowZeroAttribute"/>
+/// <seealso cref="AllowMinValueAttribute"/>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 public sealed class AllowEmptyAttribute : Attribute
 {
 }
+

@@ -176,6 +176,18 @@ internal class RequiredPartialClassInfo : IEquatable<RequiredPartialClassInfo>
     public readonly bool HasNoTrim;
 
     /// <summary>
+    /// Gets whether the target class is annotated with <c>[AllowZero]</c>.
+    /// When true, numeric Required bases accept zero under the strict-by-default model.
+    /// </summary>
+    public readonly bool HasAllowZero;
+
+    /// <summary>
+    /// Gets whether the target class is annotated with <c>[AllowMinValue]</c>.
+    /// When true, date/time Required bases accept their CLR minimum value under the strict-by-default model.
+    /// </summary>
+    public readonly bool HasAllowMinValue;
+
+    /// <summary>
     /// Gets whether the target class is annotated with <c>[AllowDefault]</c>.
     /// Reserved for future use by the generator to opt-out of CLR-default rejection on
     /// <c>RequiredGuid</c> / <c>RequiredDateTime</c> / <c>RequiredDateTimeOffset</c>-derived
@@ -242,6 +254,8 @@ internal class RequiredPartialClassInfo : IEquatable<RequiredPartialClassInfo>
     /// <param name="hasAllowEmpty">True when the target carries <c>[AllowEmpty]</c>.</param>
     /// <param name="hasAllowWhitespace">True when the target carries <c>[AllowWhitespace]</c>.</param>
     /// <param name="hasNoTrim">True when the target carries <c>[NoTrim]</c>.</param>
+    /// <param name="hasAllowZero">True when the target carries <c>[AllowZero]</c>.</param>
+    /// <param name="hasAllowMinValue">True when the target carries <c>[AllowMinValue]</c>.</param>
     /// <param name="hasAllowDefault">True when the target carries <c>[AllowDefault]</c>.</param>
     /// <param name="hasPositive">True when the target carries <c>[Positive]</c>.</param>
     /// <param name="hasNonNegative">True when the target carries <c>[NonNegative]</c>.</param>
@@ -268,6 +282,8 @@ internal class RequiredPartialClassInfo : IEquatable<RequiredPartialClassInfo>
         bool hasAllowEmpty = false,
         bool hasAllowWhitespace = false,
         bool hasNoTrim = false,
+        bool hasAllowZero = false,
+        bool hasAllowMinValue = false,
         bool hasAllowDefault = false,
         bool hasPositive = false,
         bool hasNonNegative = false,
@@ -294,6 +310,8 @@ internal class RequiredPartialClassInfo : IEquatable<RequiredPartialClassInfo>
         HasAllowEmpty = hasAllowEmpty;
         HasAllowWhitespace = hasAllowWhitespace;
         HasNoTrim = hasNoTrim;
+        HasAllowZero = hasAllowZero;
+        HasAllowMinValue = hasAllowMinValue;
         HasAllowDefault = hasAllowDefault;
         HasPositive = hasPositive;
         HasNonNegative = hasNonNegative;
@@ -324,6 +342,8 @@ internal class RequiredPartialClassInfo : IEquatable<RequiredPartialClassInfo>
             && HasAllowEmpty == other.HasAllowEmpty
             && HasAllowWhitespace == other.HasAllowWhitespace
             && HasNoTrim == other.HasNoTrim
+            && HasAllowZero == other.HasAllowZero
+            && HasAllowMinValue == other.HasAllowMinValue
             && HasAllowDefault == other.HasAllowDefault
             && HasPositive == other.HasPositive
             && HasNonNegative == other.HasNonNegative
@@ -358,6 +378,8 @@ internal class RequiredPartialClassInfo : IEquatable<RequiredPartialClassInfo>
             hash = (hash * 31) + HasAllowEmpty.GetHashCode();
             hash = (hash * 31) + HasAllowWhitespace.GetHashCode();
             hash = (hash * 31) + HasNoTrim.GetHashCode();
+            hash = (hash * 31) + HasAllowZero.GetHashCode();
+            hash = (hash * 31) + HasAllowMinValue.GetHashCode();
             hash = (hash * 31) + HasAllowDefault.GetHashCode();
             hash = (hash * 31) + HasPositive.GetHashCode();
             hash = (hash * 31) + HasNonNegative.GetHashCode();

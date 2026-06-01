@@ -4,11 +4,9 @@ using System.Globalization;
 using System.Text.Json;
 using Trellis.Testing;
 
-[Trim, NotDefault]
 public partial class TrackingId : RequiredString<TrackingId>
 {
 }
-[Trim, NotDefault]
 internal partial class InternalTrackingId : RequiredString<InternalTrackingId>
 {
 }
@@ -16,15 +14,15 @@ internal partial class InternalTrackingId : RequiredString<InternalTrackingId>
 public class RequiredStringTests
 {
     [Theory]
-    [MemberData(nameof(GetBadString))]
-    public void Cannot_create_empty_RequiredString(string? input)
+    [MemberData(nameof(GetBadStringWithMessages))]
+    public void Cannot_create_invalid_RequiredString(string? input, string expectedDetail)
     {
         var trackingId1 = TrackingId.TryCreate(input, null);
         trackingId1.IsFailure.Should().BeTrue();
         trackingId1.UnwrapError().Should().BeOfType<Error.InvalidInput>();
         var validation = (Error.InvalidInput)trackingId1.UnwrapError();
         validation.Fields[0].Field.Path.Should().Be("/trackingId");
-        validation.Fields[0].Detail.Should().Be("Tracking Id cannot be empty.");
+        validation.Fields[0].Detail.Should().Be(expectedDetail);
         validation.Fields[0].ReasonCode.Should().Be("validation.error");
     }
 
@@ -128,8 +126,8 @@ public class RequiredStringTests
     }
 
     [Theory]
-    [MemberData(nameof(GetBadString))]
-    public void Cannot_create_RequiredString_from_try_parsing_invalid_string(string? input)
+    [MemberData(nameof(GetBadStringWithMessages))]
+    public void Cannot_create_RequiredString_from_try_parsing_invalid_string(string? input, string _)
     {
         // Arrange
 
@@ -156,8 +154,8 @@ public class RequiredStringTests
     }
 
     [Theory]
-    [MemberData(nameof(GetBadString))]
-    public void Cannot_create_RequiredString_from_parsing_invalid_string(string? input)
+    [MemberData(nameof(GetBadStringWithMessages))]
+    public void Cannot_create_RequiredString_from_parsing_invalid_string(string? input, string expectedDetail)
     {
         // Arrange
 
@@ -166,7 +164,7 @@ public class RequiredStringTests
 
         // Assert
         act.Should().Throw<FormatException>()
-            .WithMessage("Tracking Id cannot be empty.");
+            .WithMessage(expectedDetail);
     }
 
     [Fact]
@@ -234,14 +232,15 @@ public class RequiredStringTests
 
         result.IsSuccess.Should().BeTrue();
         result.Unwrap().Value.Should().Be("ABC123",
-            "RequiredString should trim leading and trailing whitespace per its XML documentation");
+            "RequiredString should trim leading and trailing whitespace by default");
     }
 
-    public static TheoryData<string?> GetBadString() =>
-      new TheoryData<string?>
+    public static TheoryData<string?, string> GetBadStringWithMessages() =>
+      new TheoryData<string?, string>
       {
-              default(string),
-              string.Empty
+              { default(string), "Tracking Id cannot be null." },
+              { string.Empty, "Tracking Id cannot be empty." },
+              { "   ", "Tracking Id cannot be whitespace-only." }
       };
 
     #region StartsWith, Contains, EndsWith, Length

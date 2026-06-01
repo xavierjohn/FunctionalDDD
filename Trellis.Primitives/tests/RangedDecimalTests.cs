@@ -16,14 +16,14 @@ public partial class FractionalPrice : RequiredDecimal<FractionalPrice> { }
 /// <summary>
 /// Test value object with large range using double min/max values.
 /// </summary>
-[Range(-1e15, 1e15)]
+[AllowZero, Range(-1e15, 1e15)]
 public partial class LargeRangeDecimal : RequiredDecimal<LargeRangeDecimal> { }
 
 /// <summary>
 /// Test value object with scientific-notation range values.
 /// 1e20 produces "1E+20" from double.ToString() which is not a valid decimal literal.
 /// </summary>
-[Range(0, 1e20)]
+[AllowZero, Range(0, 1e20)]
 public partial class ScientificNotationDecimal : RequiredDecimal<ScientificNotationDecimal> { }
 
 /// <summary>
@@ -43,7 +43,7 @@ public class RangedDecimalTests
     [Fact]
     public void TryCreate_BelowMinimum_ReturnsFailure()
     {
-        var result = TestPrice.TryCreate(0m);
+        var result = TestPrice.TryCreate(0.5m);
         result.IsFailure.Should().BeTrue();
         var validation = (Error.InvalidInput)result.UnwrapError();
         validation.Fields[0].Detail.Should().Be("Test Price must be at least 1.");
@@ -68,7 +68,7 @@ public class RangedDecimalTests
     [Fact]
     public void TryCreate_FromString_OutOfRange_ReturnsFailure()
     {
-        var result = TestPrice.TryCreate("0");
+        var result = TestPrice.TryCreate("0.5");
         result.IsFailure.Should().BeTrue();
     }
 
@@ -176,7 +176,7 @@ public class RangedDecimalTests
 
     #endregion
 
-    #region LargeRangeDecimal — [Range(-1e15, 1e15)]
+    #region LargeRangeDecimal — [AllowZero, Range(-1e15, 1e15)]
 
     [Fact]
     public void LargeRangeDecimal_AtMinBoundary_ReturnsSuccess()
@@ -217,7 +217,7 @@ public class RangedDecimalTests
 
     #endregion
 
-    #region ScientificNotationDecimal — [Range(0, 1e20)] — validates no scientific notation in generated code
+    #region ScientificNotationDecimal — [AllowZero, Range(0, 1e20)] — validates no scientific notation in generated code
 
     [Fact]
     public void ScientificNotationDecimal_WithinRange_ReturnsSuccess()
