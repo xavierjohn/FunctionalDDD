@@ -50,7 +50,7 @@ return EmailAddress.TryCreate(request.Email)
 - DDD building blocks: `Aggregate`, `Entity`, `ValueObject`, `Specification`, and domain events.
 - ASP.NET Core, EF Core, Mediator, HttpClient, FluentValidation, and Stateless integrations.
 - Roslyn analyzers and test helpers that keep teams on the happy path.
-- AOT-friendly, allocation-conscious APIs built for modern .NET.
+- AOT-friendly, allocation-conscious APIs built for modern .NET. (Per-package APIs are AOT- and trim-safe; the optional `Trellis.ServiceDefaults` composition builder exposes both AOT-safe per-type overloads — e.g. `UseFluentValidation<TValidator, TMessage>()` — and assembly-scanning overloads annotated with `[RequiresUnreferencedCode]` / `[RequiresDynamicCode]` so the AOT analyzer surfaces the choice at the consumer's call site. `Trellis.EntityFrameworkCore` follows EF Core's own AOT policy and is intentionally excluded from the AOT publish gate.)
 
 ## Quick Start
 

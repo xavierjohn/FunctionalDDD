@@ -5,10 +5,10 @@
     <PackageTags>trellis;service-defaults;composition;aspnetcore;cqrs;mediator;entity-framework-core;fluentvalidation</PackageTags>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <TrellisApiRefName>servicedefaults</TrellisApiRefName>
-    <IsAotCompatible>false</IsAotCompatible>
-    <IsTrimmable>false</IsTrimmable>
-    <EnableAotAnalyzer>false</EnableAotAnalyzer>
-    <EnableTrimAnalyzer>false</EnableTrimAnalyzer>
+    <IsAotCompatible>true</IsAotCompatible>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableAotAnalyzer>true</EnableAotAnalyzer>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
   </PropertyGroup>
   <ItemGroup>
     <None Include="../NUGET_README.md" Pack="true" PackagePath="\" />

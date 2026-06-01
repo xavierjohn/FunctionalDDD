@@ -2,9 +2,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
+using global::FluentValidation;
+using global::Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Trellis;
 using Trellis.Asp;
 using Trellis.Asp.Authorization;
 using Trellis.Asp.Idempotency;
@@ -29,6 +33,9 @@ public sealed class TrellisServiceBuilder
     private readonly List<Assembly> _fluentValidationAssemblies = [];
     private readonly List<Assembly> _resourceAuthorizationAssemblies = [];
     private readonly List<Assembly> _domainEventAssemblies = [];
+    private readonly List<Action<IServiceCollection>> _typedFluentValidatorRegistrations = [];
+    private readonly List<Action<IServiceCollection>> _typedResourceAuthorizationRegistrations = [];
+    private readonly List<Action<IServiceCollection>> _typedDomainEventHandlerRegistrations = [];
     private Action<TrellisAspOptions>? _configureAsp;
     private Action<TrellisMediatorTelemetryOptions>? _configureMediatorTelemetry;
     private Action<IServiceCollection>? _actorProviderRegistration;
@@ -138,6 +145,22 @@ public sealed class TrellisServiceBuilder
     /// Registers the FluentValidation adapter and optionally scans validator assemblies.
     /// Implies <see cref="UseMediator"/>.
     /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Calling without arguments registers only the adapter (AOT-friendly); pair with
+    /// <see cref="UseFluentValidation{TValidator, TMessage}()"/> or per-validator
+    /// <c>services.AddScoped&lt;IValidator&lt;TMessage&gt;, TValidator&gt;()</c> calls.
+    /// </para>
+    /// <para>
+    /// Calling with one or more assemblies scans them for concrete <see cref="IValidator{T}"/>
+    /// implementations at startup; the scan uses reflection and is therefore not AOT- or
+    /// trim-safe. The <see cref="RequiresUnreferencedCodeAttribute"/> and
+    /// <see cref="RequiresDynamicCodeAttribute"/> annotations on this overload surface the
+    /// limitation at the consumer's call site when the AOT analyzer is enabled.
+    /// </para>
+    /// </remarks>
+    [RequiresUnreferencedCode("Scans assemblies for IValidator<T> implementations. Use UseFluentValidation() with UseFluentValidation<TValidator, TMessage>() for AOT/trim scenarios.")]
+    [RequiresDynamicCode("Constructs closed generic IValidator<T> service types at runtime. Use UseFluentValidation() with UseFluentValidation<TValidator, TMessage>() for AOT scenarios.")]
     public TrellisServiceBuilder UseFluentValidation(params Assembly[] assemblies)
     {
         ArgumentNullException.ThrowIfNull(assemblies);
@@ -150,13 +173,55 @@ public sealed class TrellisServiceBuilder
     }
 
     /// <summary>
+    /// Registers only the FluentValidation adapter (no assembly scanning). AOT- and trim-safe.
+    /// Pair with <see cref="UseFluentValidation{TValidator, TMessage}()"/> per validator, or with
+    /// explicit <c>services.AddScoped&lt;IValidator&lt;TMessage&gt;, TValidator&gt;()</c> calls
+    /// outside the builder. Implies <see cref="UseMediator"/>.
+    /// </summary>
+    public TrellisServiceBuilder UseFluentValidation()
+    {
+        _useFluentValidation = true;
+        _useMediator = true;
+        return this;
+    }
+
+    /// <summary>
+    /// AOT-safe per-validator registration. Registers <typeparamref name="TValidator"/> as the
+    /// <see cref="IValidator{T}"/> for <typeparamref name="TMessage"/> and ensures the
+    /// FluentValidation adapter and Mediator behaviors are wired. Implies <see cref="UseMediator"/>.
+    /// </summary>
+    /// <typeparam name="TValidator">The concrete validator type implementing <see cref="IValidator{TMessage}"/>.</typeparam>
+    /// <typeparam name="TMessage">The message type the validator validates.</typeparam>
+    public TrellisServiceBuilder UseFluentValidation<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] TValidator,
+        TMessage>()
+        where TValidator : class, IValidator<TMessage>
+    {
+        _useFluentValidation = true;
+        _useMediator = true;
+        _typedFluentValidatorRegistrations.Add(static services =>
+            services.AddScoped<IValidator<TMessage>, TValidator>());
+        return this;
+    }
+
+    /// <summary>
     /// Registers resource authorization behaviors and resource loaders discovered in assemblies.
     /// Implies <see cref="UseMediator"/>.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Passing no assemblies keeps the resource-authorization pipeline available for explicit
-    /// registrations without performing assembly scanning.
+    /// registrations without performing assembly scanning. Use this overload + the
+    /// <see cref="UseResourceAuthorization{TMessage, TResource, TResponse}()"/> per-command
+    /// typed overload for AOT/trim scenarios.
+    /// </para>
+    /// <para>
+    /// Calling with one or more assemblies scans them at startup; the scan uses reflection and
+    /// is not AOT- or trim-safe. The annotation surfaces the limitation at the call site.
+    /// </para>
     /// </remarks>
+    [RequiresUnreferencedCode("Scans assemblies for IAuthorizeResource<TResource> command types. Use UseResourceAuthorization() with UseResourceAuthorization<TMessage, TResource, TResponse>() for AOT/trim scenarios.")]
+    [RequiresDynamicCode("Constructs closed generic ResourceAuthorizationBehavior<,,> service types at runtime. Use UseResourceAuthorization() with UseResourceAuthorization<TMessage, TResource, TResponse>() for AOT scenarios.")]
     public TrellisServiceBuilder UseResourceAuthorization(params Assembly[] assemblies)
     {
         ArgumentNullException.ThrowIfNull(assemblies);
@@ -165,6 +230,42 @@ public sealed class TrellisServiceBuilder
 
         _useResourceAuthorization = true;
         _useMediator = true;
+        return this;
+    }
+
+    /// <summary>
+    /// Enables resource authorization without assembly scanning. AOT- and trim-safe. Pair with
+    /// <see cref="UseResourceAuthorization{TMessage, TResource, TResponse}()"/> per command, or
+    /// with explicit <c>services.AddResourceAuthorization&lt;TMessage, TResource, TResponse&gt;()</c>
+    /// calls outside the builder. Implies <see cref="UseMediator"/>.
+    /// </summary>
+    public TrellisServiceBuilder UseResourceAuthorization()
+    {
+        _useResourceAuthorization = true;
+        _useMediator = true;
+        return this;
+    }
+
+    /// <summary>
+    /// AOT-safe per-command resource-authorization registration. Registers the closed-generic
+    /// <c>ResourceAuthorizationBehavior&lt;TMessage, TResource, TResponse&gt;</c> for the named
+    /// command and ensures the resource-authorization pipeline is enabled. Implies
+    /// <see cref="UseMediator"/>.
+    /// </summary>
+    /// <typeparam name="TMessage">The command type implementing <see cref="IAuthorizeResource{TResource}"/>.</typeparam>
+    /// <typeparam name="TResource">The resource type the command authorizes against.</typeparam>
+    /// <typeparam name="TResponse">The command's response type.</typeparam>
+    public TrellisServiceBuilder UseResourceAuthorization<
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.Interfaces)] TMessage,
+        TResource,
+        TResponse>()
+        where TMessage : IAuthorizeResource<TResource>, IMessage
+        where TResponse : IResult, IFailureFactory<TResponse>
+    {
+        _useResourceAuthorization = true;
+        _useMediator = true;
+        _typedResourceAuthorizationRegistrations.Add(static services =>
+            services.AddResourceAuthorization<TMessage, TResource, TResponse>());
         return this;
     }
 
@@ -200,11 +301,23 @@ public sealed class TrellisServiceBuilder
     /// Implies <see cref="UseMediator"/> and is always applied after all other behavior registrations.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Calling this method more than once — with the same <typeparamref name="TContext"/> or
     /// a different one — throws <see cref="InvalidOperationException"/>. The Trellis pipeline
     /// supports exactly one transactional <see cref="IUnitOfWork"/> per composition; chaining
     /// two calls (e.g. for a read/write context split) is always misconfiguration.
+    /// </para>
+    /// <para>
+    /// This method is annotated <see cref="RequiresUnreferencedCodeAttribute"/> /
+    /// <see cref="RequiresDynamicCodeAttribute"/> because the underlying
+    /// <c>Trellis.EntityFrameworkCore</c> package is intentionally opted out of AOT and trim
+    /// (EF Core's own runtime requires reflection over entity types and query expression trees).
+    /// AOT consumers can still register Trellis ASP / Mediator / FluentValidation through this
+    /// builder; the unit-of-work slot is the seam where the AOT contract ends.
+    /// </para>
     /// </remarks>
+    [RequiresUnreferencedCode("Trellis.EntityFrameworkCore is not AOT- or trim-compatible because EF Core requires reflection over entity types and query expression trees. AOT consumers should compose their data access layer outside of this builder.")]
+    [RequiresDynamicCode("Trellis.EntityFrameworkCore is not AOT-compatible because EF Core requires runtime code generation for query compilation. AOT consumers should compose their data access layer outside of this builder.")]
     public TrellisServiceBuilder UseEntityFrameworkUnitOfWork<TContext>()
         where TContext : DbContext
     {
@@ -222,13 +335,21 @@ public sealed class TrellisServiceBuilder
     /// <see cref="IDomainEventHandler{TEvent}"/> implementations. Implies <see cref="UseMediator"/>.
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Passing no assemblies registers the behavior + default <see cref="IDomainEventPublisher"/>
     /// without scanning; pair with explicit
-    /// <c>services.AddDomainEventHandler&lt;TEvent, THandler&gt;()</c> calls (AOT-friendly).
-    /// The dispatch behavior runs after <c>ValidationBehavior</c> and before
-    /// <c>TransactionalCommandBehavior</c> in the pipeline, so events fire after the
-    /// transaction commits.
+    /// <c>services.AddDomainEventHandler&lt;TEvent, THandler&gt;()</c> calls or the typed builder
+    /// overload <see cref="UseDomainEvents{TEvent, THandler}()"/> (AOT-friendly). The dispatch
+    /// behavior runs after <c>ValidationBehavior</c> and before <c>TransactionalCommandBehavior</c>
+    /// in the pipeline, so events fire after the transaction commits.
+    /// </para>
+    /// <para>
+    /// Calling with one or more assemblies scans them at startup; the scan uses reflection and
+    /// is not AOT- or trim-safe.
+    /// </para>
     /// </remarks>
+    [RequiresUnreferencedCode("Scans assemblies for IDomainEventHandler<TEvent> implementations. Use UseDomainEvents() with UseDomainEvents<TEvent, THandler>() for AOT/trim scenarios.")]
+    [RequiresDynamicCode("Constructs closed generic IDomainEventHandler<TEvent> service types at runtime. Use UseDomainEvents() with UseDomainEvents<TEvent, THandler>() for AOT scenarios.")]
     public TrellisServiceBuilder UseDomainEvents(params Assembly[] assemblies)
     {
         ArgumentNullException.ThrowIfNull(assemblies);
@@ -247,24 +368,66 @@ public sealed class TrellisServiceBuilder
     }
 
     /// <summary>
+    /// Registers the domain-event dispatch behavior without assembly scanning. AOT- and
+    /// trim-safe. Pair with <see cref="UseDomainEvents{TEvent, THandler}()"/> per handler, or
+    /// with explicit <c>services.AddDomainEventHandler&lt;TEvent, THandler&gt;()</c> calls
+    /// outside the builder. Implies <see cref="UseMediator"/>. Mutually exclusive with
+    /// <see cref="UseTrackedAggregateDomainEvents()"/>.
+    /// </summary>
+    public TrellisServiceBuilder UseDomainEvents()
+    {
+        if (_useTrackedAggregateDomainEvents)
+            throw new InvalidOperationException(
+                "UseDomainEvents and UseTrackedAggregateDomainEvents are mutually exclusive. " +
+                "Pick the response-shape dispatch (UseDomainEvents) or the tracked-aggregate " +
+                "auto-dispatch (UseTrackedAggregateDomainEvents), not both.");
+
+        _useDomainEvents = true;
+        _useMediator = true;
+        return this;
+    }
+
+    /// <summary>
+    /// AOT-safe per-handler domain-event registration. Registers <typeparamref name="THandler"/>
+    /// as an <see cref="IDomainEventHandler{TEvent}"/> for <typeparamref name="TEvent"/> and
+    /// ensures the dispatch behavior is wired. Implies <see cref="UseMediator"/>. Mutually
+    /// exclusive with <see cref="UseTrackedAggregateDomainEvents()"/>.
+    /// </summary>
+    /// <typeparam name="TEvent">The domain event type.</typeparam>
+    /// <typeparam name="THandler">The handler implementation type.</typeparam>
+    public TrellisServiceBuilder UseDomainEvents<
+        TEvent,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] THandler>()
+        where TEvent : IDomainEvent
+        where THandler : class, IDomainEventHandler<TEvent>
+    {
+        if (_useTrackedAggregateDomainEvents)
+            throw new InvalidOperationException(
+                "UseDomainEvents and UseTrackedAggregateDomainEvents are mutually exclusive. " +
+                "Pick the response-shape dispatch (UseDomainEvents) or the tracked-aggregate " +
+                "auto-dispatch (UseTrackedAggregateDomainEvents), not both.");
+
+        _useDomainEvents = true;
+        _useMediator = true;
+        _typedDomainEventHandlerRegistrations.Add(static services =>
+            services.AddDomainEventHandler<TEvent, THandler>());
+        return this;
+    }
+
+    /// <summary>
     /// Registers the tracked-aggregate domain-event dispatch behavior and (optionally) scans
     /// assemblies for <see cref="IDomainEventHandler{TEvent}"/> implementations. Implies
     /// <see cref="UseMediator"/>. Mutually exclusive with <see cref="UseDomainEvents(Assembly[])"/>.
     /// </summary>
     /// <remarks>
     /// <para>
-    /// The tracked-aggregate behavior auto-dispatches events from every aggregate the unit of
-    /// work tracked at commit time, regardless of the command's response shape (works for
-    /// outcome-DTO handlers, <c>Result&lt;Unit&gt;</c> commands, and so on). It requires an
-    /// <see cref="ITrackedAggregateSource"/> registration — the default EF Core unit of work
-    /// (<c>UseEntityFrameworkUnitOfWork&lt;TContext&gt;()</c>) wires this automatically.
-    /// </para>
-    /// <para>
-    /// Calling this method and <see cref="UseDomainEvents(Assembly[])"/> on the same builder
-    /// throws because the two dispatch strategies would double-fire on
-    /// <c>Result&lt;TAggregate&gt;</c> handlers.
+    /// See <see cref="UseTrackedAggregateDomainEvents()"/> for the AOT-friendly parameterless
+    /// overload. Calling with one or more assemblies scans them at startup; the scan uses
+    /// reflection and is not AOT- or trim-safe.
     /// </para>
     /// </remarks>
+    [RequiresUnreferencedCode("Scans assemblies for IDomainEventHandler<TEvent> implementations. Use UseTrackedAggregateDomainEvents() with UseTrackedAggregateDomainEvents<TEvent, THandler>() for AOT/trim scenarios.")]
+    [RequiresDynamicCode("Constructs closed generic IDomainEventHandler<TEvent> service types at runtime. Use UseTrackedAggregateDomainEvents() with UseTrackedAggregateDomainEvents<TEvent, THandler>() for AOT scenarios.")]
     public TrellisServiceBuilder UseTrackedAggregateDomainEvents(params Assembly[] assemblies)
     {
         ArgumentNullException.ThrowIfNull(assemblies);
@@ -279,6 +442,53 @@ public sealed class TrellisServiceBuilder
 
         _useTrackedAggregateDomainEvents = true;
         _useMediator = true;
+        return this;
+    }
+
+    /// <summary>
+    /// Registers the tracked-aggregate domain-event dispatch behavior without assembly
+    /// scanning. AOT- and trim-safe. Pair with <see cref="UseTrackedAggregateDomainEvents{TEvent, THandler}()"/>
+    /// per handler, or with explicit <c>services.AddDomainEventHandler&lt;TEvent, THandler&gt;()</c>
+    /// calls outside the builder. Implies <see cref="UseMediator"/>. Mutually exclusive with
+    /// <see cref="UseDomainEvents()"/>.
+    /// </summary>
+    public TrellisServiceBuilder UseTrackedAggregateDomainEvents()
+    {
+        if (_useDomainEvents)
+            throw new InvalidOperationException(
+                "UseTrackedAggregateDomainEvents and UseDomainEvents are mutually exclusive. " +
+                "Pick the tracked-aggregate auto-dispatch (UseTrackedAggregateDomainEvents) or the " +
+                "response-shape dispatch (UseDomainEvents), not both.");
+
+        _useTrackedAggregateDomainEvents = true;
+        _useMediator = true;
+        return this;
+    }
+
+    /// <summary>
+    /// AOT-safe per-handler tracked-aggregate domain-event registration. Registers
+    /// <typeparamref name="THandler"/> as an <see cref="IDomainEventHandler{TEvent}"/> for
+    /// <typeparamref name="TEvent"/> and ensures the tracked dispatch behavior is wired.
+    /// Implies <see cref="UseMediator"/>. Mutually exclusive with <see cref="UseDomainEvents()"/>.
+    /// </summary>
+    /// <typeparam name="TEvent">The domain event type.</typeparam>
+    /// <typeparam name="THandler">The handler implementation type.</typeparam>
+    public TrellisServiceBuilder UseTrackedAggregateDomainEvents<
+        TEvent,
+        [DynamicallyAccessedMembers(DynamicallyAccessedMemberTypes.PublicConstructors)] THandler>()
+        where TEvent : IDomainEvent
+        where THandler : class, IDomainEventHandler<TEvent>
+    {
+        if (_useDomainEvents)
+            throw new InvalidOperationException(
+                "UseTrackedAggregateDomainEvents and UseDomainEvents are mutually exclusive. " +
+                "Pick the tracked-aggregate auto-dispatch (UseTrackedAggregateDomainEvents) or the " +
+                "response-shape dispatch (UseDomainEvents), not both.");
+
+        _useTrackedAggregateDomainEvents = true;
+        _useMediator = true;
+        _typedDomainEventHandlerRegistrations.Add(static services =>
+            services.AddDomainEventHandler<TEvent, THandler>());
         return this;
     }
 
@@ -350,6 +560,10 @@ public sealed class TrellisServiceBuilder
         return this;
     }
 
+    [UnconditionalSuppressMessage("Trimming", "IL2026:RequiresUnreferencedCode",
+        Justification = "Apply() only invokes the assembly-scanning AddTrellisFluentValidation / AddResourceAuthorization / AddDomainEventDispatch overloads when the consumer explicitly passed assemblies to the matching builder method, which has already surfaced the IL2026/IL3050 warning at the consumer's call site.")]
+    [UnconditionalSuppressMessage("AOT", "IL3050:RequiresDynamicCode",
+        Justification = "Apply() only invokes the assembly-scanning AddTrellisFluentValidation / AddResourceAuthorization / AddDomainEventDispatch overloads when the consumer explicitly passed assemblies to the matching builder method, which has already surfaced the IL2026/IL3050 warning at the consumer's call site.")]
     internal void Apply()
     {
         if (_useAsp)
@@ -381,10 +595,16 @@ public sealed class TrellisServiceBuilder
         if (_useResourceAuthorization && _resourceAuthorizationAssemblies.Count > 0)
             _services.AddResourceAuthorization([.. _resourceAuthorizationAssemblies]);
 
+        foreach (var register in _typedResourceAuthorizationRegistrations)
+            register(_services);
+
         if (_useFluentValidation && _fluentValidationAssemblies.Count == 0)
             _services.AddTrellisFluentValidation();
         else if (_useFluentValidation)
             _services.AddTrellisFluentValidation([.. _fluentValidationAssemblies]);
+
+        foreach (var register in _typedFluentValidatorRegistrations)
+            register(_services);
 
         if (_useDomainEvents && _domainEventAssemblies.Count == 0)
             _services.AddDomainEventDispatch();
@@ -403,6 +623,9 @@ public sealed class TrellisServiceBuilder
             if (_domainEventAssemblies.Count > 0)
                 _services.AddDomainEventDispatch([.. _domainEventAssemblies]);
         }
+
+        foreach (var register in _typedDomainEventHandlerRegistrations)
+            register(_services);
 
         _unitOfWorkRegistration?.Invoke(_services);
     }
