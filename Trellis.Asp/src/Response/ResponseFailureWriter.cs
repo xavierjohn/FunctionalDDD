@@ -202,7 +202,15 @@ internal static class ResponseFailureWriter
             if (pair.Length == 0)
                 continue;
             var eq = pair.IndexOf('=');
-            var value = eq < 0 ? pair : pair[(eq + 1)..];
+            if (eq < 0)
+            {
+                // Key-only query parameter (no '='): RFC 3986 allows this, and a domain
+                // resource id is never expressed as a bare query key. Skip the pair so the
+                // id-in-URL check does not treat the key itself as a value match.
+                continue;
+            }
+
+            var value = pair[(eq + 1)..];
             if (QueryValueMatchesId(value, id))
                 return true;
         }

@@ -1,9 +1,7 @@
-﻿namespace Trellis.Asp.Tests;
+namespace Trellis.Asp.Tests;
 
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
 using FluentAssertions;
@@ -289,6 +287,22 @@ public sealed class ResponseFailureWriterResourceRefInstanceTests
         using var body = await ReadBody(ctx);
         body.RootElement.GetProperty("instance").GetString().Should().Be("/api/documents?title=a+b");
         body.RootElement.TryGetProperty("request", out _).Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task Key_only_query_pair_does_not_suppress_instance_synthesis()
+    {
+        // A query string like "?abc-123" carries a key-only parameter (no value). It does
+        // NOT identify a resource by id, so the id-in-URL check must skip it and synthesis
+        // must still fire.
+        var ctx = NewContext(path: "/api/orders", query: "?abc-123");
+        var r = Result.Fail<T>(new Error.NotFound(ResourceRef.For("Customer", "abc-123")));
+
+        await r.ToHttpResponse(t => t).ExecuteAsync(ctx);
+
+        using var body = await ReadBody(ctx);
+        body.RootElement.GetProperty("instance").GetString().Should().Be("/customers/abc-123");
+        body.RootElement.GetProperty("request").GetString().Should().Be("/api/orders?abc-123");
     }
 
     [Fact]

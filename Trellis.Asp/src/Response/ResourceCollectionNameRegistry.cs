@@ -13,12 +13,13 @@ using Trellis;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Registered as a singleton via <c>TryAddSingleton</c> by <c>AddTrellisAsp</c>,
-/// <c>AddResourceCollectionName</c>, and <c>AddResourceCollectionNames</c>. Hosts that
-/// call any of these get an empty registry by default — every resource type uses the
-/// naive plural until at least one <see cref="ResourceCollectionNameOverride"/> is also
-/// registered. When none of those helpers are called, the registry is absent from DI and
-/// <see cref="ResponseFailureWriter"/> falls back to an internal empty registry.
+/// Registered as a singleton via <c>TryAddSingleton</c> by <c>AddTrellisAsp</c> (which
+/// leaves the registry empty by default), and pre-populated with the supplied overrides by
+/// <c>AddResourceCollectionName</c> and <c>AddResourceCollectionNames</c>. Resource types
+/// without an override fall back to the naive plural; calling <c>AddTrellisAsp</c> alone
+/// means every type uses the naive plural. When none of those helpers are called, the
+/// registry is absent from DI and <see cref="ResponseFailureWriter"/> falls back to an
+/// internal empty registry.
 /// </para>
 /// <para>
 /// Override lookups are case-insensitive (<see cref="StringComparer.OrdinalIgnoreCase"/>)
