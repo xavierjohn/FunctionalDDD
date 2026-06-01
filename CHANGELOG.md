@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation — owner-by-id authorization quick-start
+
+- **`docs/docfx_project/api_reference/trellis-api-authorization.md`** — new "Owner check quick-start — copy this" section at the top of the document, before the Patterns Index. Names the canonical owner-on-loaded-resource pattern (`IAuthorizeResource<TResource>` + `IIdentifyResource<TResource, TId>` so the framework reuses `SharedResourceLoaderById<TResource, TId>`) and shows the complete copy-paste setup. The Patterns Index gains a top-of-table row pointing back at the quick-start.
+- **`docs/docfx_project/api_reference/trellis-api-cookbook.md`** — Recipe 7 reordered so the canonical owner case appears first (with explanatory comments naming it as "the 90% case"), then the static-permission gate. Recipe 24's decision matrix gains an explicit "Owner-by-id check on the command's resource (the 90% case)" row at the top so consumers debugging an authorization path land on the simplest match first.
+
 ### Documentation — `FailAfterCommit` composition anti-pattern
 
 - **`Trellis.Core`** — `Result.FailAfterCommit<T>(error)` XML remarks now explicitly call out that the helper is a *leaf* worker-handler operation and must not be threaded through `Combine` / `TraverseAll` / `SequenceAll` / `WhenAllAsync`. The `PersistOnFailure` flag OR-accumulates onto aggregated failures, which silently commits the staged permanent-failure mutation alongside any other legs' outcomes — almost never what the handler author intended. The new guidance directs authors to restructure such handlers so the aggregating step runs to its terminal outcome first and `FailAfterCommit` is invoked as a terminal step (or in a follow-up command).

@@ -446,7 +446,7 @@ app.MapGet("/blobs/{id:guid}", async (Guid id, IBlobRepository repo, Cancellatio
 
 ## Recipe 7 — Authorization: `IActorProvider` + `IAuthorize` + resource-based auth
 
-**Problem.** Static (permission) authorization on a delete command, plus resource-based ownership check on an update command — all via the mediator pipeline.
+**Problem.** Resource-based ownership check on an update command (the 90% case) plus a static permission gate on a delete command, all via the mediator pipeline.
 
 ```csharp
 using Trellis;
@@ -454,11 +454,9 @@ using Trellis.Asp.Authorization;
 using Trellis.Authorization;
 using Trellis.Primitives;
 
-public sealed record DeleteOrderCommand(OrderId OrderId) : ICommand<Result<Unit>>, IAuthorize
-{
-    public IReadOnlyList<string> RequiredPermissions => ["orders:delete"];
-}
-
+// CANONICAL OWNER CHECK — the 90% case. Implement IAuthorizeResource<TResource> for the
+// owner rule and IIdentifyResource<TResource, TId> so the framework reuses the shared
+// SharedResourceLoaderById<TResource, TId> instead of requiring a per-command loader.
 public sealed record UpdateOrderCommand(OrderId OrderId, Money NewTotal)
     : ICommand<Result<Unit>>, IAuthorizeResource<Order>, IIdentifyResource<Order, OrderId>
 {
@@ -471,6 +469,14 @@ public sealed record UpdateOrderCommand(OrderId OrderId, Money NewTotal)
         resource.OwnerId == actor.Id || actor.Permissions.Contains("orders:write")
             ? Result.Ok()
             : Result.Fail(new Error.Forbidden(PolicyId: "orders.owner", Resource: ResourceRef.For<Order>(OrderId)));
+}
+
+// Static permission gate (no resource load needed): every actor with the named permission
+// can run the command. Use IAuthorize when the authorization decision does not depend on
+// any resource state.
+public sealed record DeleteOrderCommand(OrderId OrderId) : ICommand<Result<Unit>>, IAuthorize
+{
+    public IReadOnlyList<string> RequiredPermissions => ["orders:delete"];
 }
 
 // DI wiring
@@ -488,7 +494,9 @@ services.AddResourceAuthorization(
     typeof(OrderResourceLoader).Assembly);      // ACL assembly (IResourceLoader<,> implementations)
 ```
 
-**What it shows.** `IAuthorize` enforces an AND-permission gate via `AuthorizationBehavior<,>`. `IAuthorizeResource<TResource>` runs *after* `IResourceLoader<TMessage, TResource>` produces the loaded resource, then calls `Authorize(actor, resource)`. Combining `IAuthorizeResource<TResource>` with `IIdentifyResource<TResource, TId>` lets the framework reuse the shared `SharedResourceLoaderById<TResource, TId>` instead of requiring a per-command loader.
+**What it shows.** Lead with `IAuthorizeResource<TResource>` + `IIdentifyResource<TResource, TId>` for the owner-on-loaded-resource case — that pair covers most domain authorization decisions, and the framework wires up `SharedResourceLoaderById<TResource, TId>` automatically so no per-command loader is needed. Fall back to `IAuthorize` for static permission gates that do not require a resource load. `IAuthorizeResource<TResource>` runs *after* the resource loader produces the loaded resource, then calls `Authorize(actor, resource)`; `IAuthorize` enforces an AND-permission gate via `AuthorizationBehavior<,>` before the handler runs.
+
+For the AOT-safe per-command registration shape (`AddResourceAuthorization<TMessage, TResource, TResponse>()`) and the equivalent `TrellisServiceBuilder.UseResourceAuthorization<TMessage, TResource, TResponse>()` slot, see [`trellis-api-servicedefaults.md`](trellis-api-servicedefaults.md#trellisservicebuilder). For multi-hop authorization (the resource the actor must own is reached via one or more navigation hops), see [Recipe 24](#recipe-24--indirect-multi-hop-resource-authorization).
 
 ---
 
@@ -1830,7 +1838,8 @@ The naive workaround is a per-handler ownership guard (e.g. cricket's old `Match
 
 | Scenario | Recipe |
 |---|---|
-| Authorize against the resource the command identifies | `IAuthorizeResource<T>` (Recipe 7) |
+| **Owner-by-id check on the command's resource (the 90% case)** | `IAuthorizeResource<T>` + `IIdentifyResource<T, TId>` → framework reuses `SharedResourceLoaderById<T, TId>` (Recipe 7) |
+| Authorize against the resource the command identifies (custom loader) | `IAuthorizeResource<T>` + custom `IResourceLoader<TMessage, T>` (Recipe 7) |
 | Authorize against a single related resource one FK hop away | `IAuthorizeResourceVia<TOwner>` + `IIdentifyRelatedResource<TOwner, TOwnerId>` on the leaf |
 | Authorize against a set of related resources (cricket fan-out, OR-ownership) | `IAuthorizeResourceVia<TOwner>` + `IIdentifyRelatedResources<TOwner, TOwnerId>` on the leaf |
 | Authorize against a resource at the end of a chain (`Match → Team → Tournament`) | `IAuthorizeResourceVia<TFinalOwner>` + `IIdentifyRelatedResource<,>` declared on each intermediate entity |
