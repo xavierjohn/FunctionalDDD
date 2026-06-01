@@ -23,7 +23,7 @@ See also: [trellis-api-cookbook.md](trellis-api-cookbook.md) — recipes using t
 - You are implementing static permission authorization through `IAuthorize`.
 - You are implementing resource-based authorization through `IAuthorizeResource<TResource>` and want the canonical guard shape.
 
-## Owner check in 8 lines — copy this
+## Owner check quick-start — copy this
 
 The 90% case is "the command's resource id is loaded, and the actor must be the owner (or hold an admin permission)." For that shape, implement two interfaces — `IAuthorizeResource<TResource>` for the owner check and `IIdentifyResource<TResource, TId>` so the framework reuses the shared `SharedResourceLoaderById<TResource, TId>` instead of requiring a per-command loader.
 
@@ -41,7 +41,9 @@ public sealed record CancelOrderCommand(OrderId OrderId)
     public IResult Authorize(Actor actor, Order resource) =>
         resource.OwnerId == actor.Id || actor.HasPermission("orders:admin")
             ? Result.Ok()
-            : Result.Fail(new Error.Forbidden("orders.owner", ResourceRef.For<Order>(OrderId)));
+            : Result.Fail(new Error.Forbidden(
+                PolicyId: "orders.owner",
+                Resource: ResourceRef.For<Order>(OrderId)));
 }
 
 // DI (composition root):
@@ -61,7 +63,7 @@ For multi-hop authorization (the resource the actor must own is reached via one 
 
 | Goal | Canonical API / pattern | See |
 |---|---|---|
-| **Owner check on the command's resource (the 90% case)** | Implement `IAuthorizeResource<TResource>` + `IIdentifyResource<TResource, TId>`; the framework loads via `SharedResourceLoaderById<TResource, TId>` and calls `Authorize(actor, resource)` | [Owner check in 8 lines](#owner-check-in-8-lines--copy-this) |
+| **Owner check on the command's resource (the 90% case)** | Implement `IAuthorizeResource<TResource>` + `IIdentifyResource<TResource, TId>`; the framework loads via `SharedResourceLoaderById<TResource, TId>` and calls `Authorize(actor, resource)` | [Owner check quick-start](#owner-check-quick-start--copy-this) |
 | Represent the current user/service | `Actor` | [`Actor`](#actor) |
 | Check granted permissions with explicit deny override | `actor.HasPermission(...)`, `HasAllPermissions(...)`, `HasAnyPermission(...)` | [`Actor`](#actor) |
 | Resolve actor for a request/message | `IActorProvider.GetCurrentActorAsync(...)` | [`IActorProvider`](#iactorprovider) |
