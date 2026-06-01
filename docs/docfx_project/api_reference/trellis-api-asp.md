@@ -448,7 +448,7 @@ public sealed class IdempotencyOptions
 | `HeaderName` | `"Idempotency-Key"` | HTTP header carrying the IETF [`sf-string`](https://www.rfc-editor.org/rfc/rfc8941) idempotency key. |
 | `ReplayHeaderName` | `"Idempotent-Replayed"` | Response header added to replayed responses so clients can detect that the body came from a cached snapshot rather than a fresh handler invocation. |
 | `Ttl` | `24 h` | Time a completed snapshot is retained before it is evicted and the key can be reused. |
-| `ReservationTimeout` | `30 s` | Time an in-flight reservation is held before the store may sweep it (so a crashed handler does not block retries forever). |
+| `ReservationTimeout` | `30 s` | Time after which a same-key retry with a matching fingerprint may atomically take over an in-flight reservation (CAS) so a crashed handler does not block retries forever. Stores MUST NOT delete outstanding reservations on this timeout; takeover replaces the entry under a new reservation token, which invalidates the previous token for `CompleteAsync` / `AbandonAsync`. |
 | `MaxKeyLength` | `200` | Hard cap on parsed key length; longer keys produce `400 Bad Request`. |
 | `MaxRequestBodyBytes` | `1 MiB` | Hard cap on the buffered request body that contributes to the fingerprint; larger bodies produce `413 Payload Too Large`. |
 | `MaxResponseBodyBytes` | `1 MiB` | Hard cap on the captured response body; exceeding aborts capture and records no snapshot (the next retry re-executes). |
@@ -469,7 +469,7 @@ public interface IIdempotencyStore
 | Signature | Returns | Description |
 | --- | --- | --- |
 | `ValueTask<IdempotencyReservationOutcome> TryReserveAsync(string scope, string key, string fingerprint, CancellationToken ct)` | one of `Reserved(reservationId)`, `AlreadyInFlight(retryAfter)`, `Replay(snapshot)`, `BodyHashMismatch(storedFingerprint)` | CAS reservation. The reservation token is an opaque `string`; pass it back to `CompleteAsync` / `AbandonAsync`. |
-| `ValueTask CompleteAsync(string scope, string key, string reservationId, IdempotencyResponseSnapshot snapshot, CancellationToken ct)` | `ValueTask` | Records the response snapshot under the reservation. Conditional on the reservation token (CAS) so a stale completer cannot finalise a reservation the sweeper already abandoned. |
+| `ValueTask CompleteAsync(string scope, string key, string reservationId, IdempotencyResponseSnapshot snapshot, CancellationToken ct)` | `ValueTask` | Records the response snapshot under the reservation. Conditional on the reservation token (CAS) so a slow original handler whose reservation has been atomically taken over by a same-key retry cannot finalise the entry under the now-invalid token. |
 | `ValueTask AbandonAsync(string scope, string key, string reservationId, CancellationToken ct)` | `ValueTask` | Releases a reservation without a snapshot so the next retry can re-reserve. Called on any failure path (exception, response-too-large, `SendFileAsync`, abort, **5xx response status**, **response trailers**). |
 
 ### `InMemoryIdempotencyStore`
