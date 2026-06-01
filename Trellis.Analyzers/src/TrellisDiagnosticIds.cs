@@ -152,4 +152,28 @@ public static class TrellisDiagnosticIds
 
     /// <summary>TRLS045 — Numeric convenience attribute combined with an explicit <c>[Range]</c> on the same class; the combination would silently disable the convenience sign check.</summary>
     public const string NumericConvenienceWithExplicitRange = "TRLS045";
+
+    /// <summary>TRLS046 — <c>[NotDefault]</c> is vestigial under the v3 strict-by-default Required model.</summary>
+    public const string NotDefaultIsVestigial = "TRLS046";
+
+    /// <summary>TRLS047 — <c>[Trim]</c> is vestigial on <c>RequiredString&lt;T&gt;</c> under the v3 trim-by-default model.</summary>
+    public const string TrimIsVestigial = "TRLS047";
+
+    /// <summary>TRLS048 — <c>[AllowZero]</c> applied to a non-numeric Required base.</summary>
+    public const string AllowZeroOnNonNumericRequired = "TRLS048";
+
+    /// <summary>TRLS049 — <c>[AllowEmpty]</c> applied to a numeric or date Required base.</summary>
+    public const string AllowEmptyOnNumericOrDateRequired = "TRLS049";
+
+    /// <summary>TRLS050 — <c>[AllowMinValue]</c> applied to a non-date Required base.</summary>
+    public const string AllowMinValueOnNonDateRequired = "TRLS050";
+
+    /// <summary>TRLS051 — <c>[AllowWhitespace]</c> applied to a non-string Required base.</summary>
+    public const string AllowWhitespaceOnNonStringRequired = "TRLS051";
+
+    /// <summary>TRLS052 — <c>[NoTrim]</c> applied to a non-string Required base.</summary>
+    public const string NoTrimOnNonStringRequired = "TRLS052";
+
+    /// <summary>TRLS053 — Contradictory Required attribute combination.</summary>
+    public const string ContradictoryRequiredAttributeCombination = "TRLS053";
 }
