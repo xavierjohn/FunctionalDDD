@@ -1,7 +1,7 @@
 ﻿---
 package: Trellis.Core
 namespaces: [Trellis]
-types: [Result, "Result<T>", IResult, "IResult<TValue>", "IFailureFactory<TSelf>", IPersistOnFailure, "Maybe<T>", Maybe, MaybeInvariant, Error, ITransportFault, RetryAdvice, RetryClassification, ErrorRetryExtensions, Unit, "Page<T>", Page, Cursor, PageSize, CursorCodec, PageBuilder, "EquatableArray<T>", EquatableArray, ResourceRef, InputPointer, FieldViolation, RuleViolation, IAggregate, "Aggregate<TId>", IEntity, "Entity<TId>", IDomainEvent, ITrackedAggregateSource, ValueObject, "ScalarValueObject<TSelf,T>", "IScalarValue<TSelf,TPrimitive>", "IFormattableScalarValue<TSelf,TPrimitive>", "RequiredString<TSelf>", "RequiredInt<TSelf>", "RequiredLong<TSelf>", "RequiredDecimal<TSelf>", "RequiredBool<TSelf>", "RequiredGuid<TSelf>", "RequiredDateTime<TSelf>", "RequiredEnum<TSelf>", "RequiredEnumJsonConverter<T>", "ParsableJsonConverter<T>", ResultRequiresExplicitHttpMappingConverter, PrimitiveValueObjectTrace, "Specification<T>", TrellisJsonValidationException, RangeAttribute, StringLengthAttribute, NotDefaultAttribute, TrimAttribute, RailwayTrackAttribute, TrackBehavior, EnumValueAttribute, ResourceCollectionNameAttribute, ResultDebugSettings]
+types: [Result, "Result<T>", IResult, "IResult<TValue>", "IFailureFactory<TSelf>", IPersistOnFailure, "Maybe<T>", Maybe, MaybeInvariant, Error, ITransportFault, RetryAdvice, RetryClassification, ErrorRetryExtensions, Unit, "Page<T>", Page, Cursor, PageSize, CursorCodec, PageBuilder, "EquatableArray<T>", EquatableArray, ResourceRef, InputPointer, FieldViolation, RuleViolation, IAggregate, "Aggregate<TId>", IEntity, "Entity<TId>", IDomainEvent, ITrackedAggregateSource, ValueObject, "ScalarValueObject<TSelf,T>", "IScalarValue<TSelf,TPrimitive>", "IFormattableScalarValue<TSelf,TPrimitive>", "RequiredString<TSelf>", "RequiredInt<TSelf>", "RequiredLong<TSelf>", "RequiredDecimal<TSelf>", "RequiredBool<TSelf>", "RequiredGuid<TSelf>", "RequiredDateTime<TSelf>", "RequiredDateTimeOffset<TSelf>", "RequiredEnum<TSelf>", "RequiredEnumJsonConverter<T>", "ParsableJsonConverter<T>", ResultRequiresExplicitHttpMappingConverter, PrimitiveValueObjectTrace, "Specification<T>", TrellisJsonValidationException, RangeAttribute, StringLengthAttribute, NotDefaultAttribute, TrimAttribute, AllowEmptyAttribute, AllowWhitespaceAttribute, NoTrimAttribute, AllowDefaultAttribute, PositiveAttribute, NonNegativeAttribute, NegativeAttribute, NonPositiveAttribute, RailwayTrackAttribute, TrackBehavior, EnumValueAttribute, ResourceCollectionNameAttribute, ResultDebugSettings]
 version: v3
 last_verified: 2026-05-06
 audience: [llm]
@@ -1742,10 +1742,15 @@ Every `Required*<TSelf>` base now follows the same rule: **the generated `TryCre
 | `RequiredString<TSelf>` | `null` | `""` (after `[Trim]` if present; per-type message "cannot be empty.") |
 | `RequiredGuid<TSelf>` | `null` | `Guid.Empty` (per-type message "cannot be Guid.Empty.") |
 | `RequiredDateTime<TSelf>` | `null` | `DateTime.MinValue` (per-type message "cannot be DateTime.MinValue.") |
+| `RequiredDateTimeOffset<TSelf>` | `null` | `DateTimeOffset.MinValue` (per-type message "cannot be DateTimeOffset.MinValue.") |
 | `RequiredBool<TSelf>` | `null` | **compile-time error** (TRLS040 — a bool that rejects `false` is degenerate). |
 | `RequiredEnum<TSelf>` | `null` and unknown member name | **compile-time error** (TRLS042 — smart-enum has no CLR default). |
 
-Generated `TryCreate` validation order: `null → [Trim] → [NotDefault] → [StringLength] / [Range] → ValidateAdditional`. With `[Trim]` absent, `[StringLength]` measures the raw input.
+Generated `TryCreate` validation order: `null → [Trim] → [NotDefault] → [StringLength] / [Range] / sign-check → ValidateAdditional`. With `[Trim]` absent, `[StringLength]` measures the raw input.
+
+Numeric Required bases (`RequiredInt`, `RequiredLong`, `RequiredDecimal`) accept four convenience sign-check attributes — `[Positive]`, `[NonNegative]`, `[Negative]`, `[NonPositive]` — mutually exclusive with each other. `RequiredInt` and `RequiredLong` translate them into the equivalent `[Range]` bounds; `RequiredDecimal` emits a direct sign comparison (the full `decimal` range exceeds what `double`-backed `[Range]` could express). Applying a convenience attribute to a non-numeric base is TRLS043; applying more than one is TRLS044.
+
+The `[AllowEmpty]`, `[AllowWhitespace]`, `[NoTrim]`, and `[AllowDefault]` marker attributes are recognised by the generator in this release for future-compatibility but have no emission effect today. They become consumer-visible when the strict-default emission flip lands in the following release; declare them now if you want existing code to stay lenient through the flip.
 
 The `[NotDefault]` rule also drives the EF Core `TrellisScalarConverter` read path: rows containing the per-type sentinel value materialize successfully for lenient types and throw `TrellisPersistenceMappingException` for strict types. Add `[NotDefault]` to any `RequiredGuid` / `RequiredDateTime` used as an `Aggregate<TId>` / `Entity<TId>` ID or as an EF-mapped property to keep the strict-on-rehydration guarantee.
 

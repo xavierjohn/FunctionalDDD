@@ -144,6 +144,9 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
         public const string NotDefaultOnRequiredBool = "TRLS040";
         public const string TrimOnNonStringRequired = "TRLS041";
         public const string NotDefaultOnRequiredEnum = "TRLS042";
+        public const string NumericConvenienceOnNonNumeric = "TRLS043";
+        public const string NumericConvenienceConflict = "TRLS044";
+        public const string NumericConvenienceWithExplicitRange = "TRLS045";
     }
 
     /// <summary>
@@ -224,6 +227,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                 "RequiredLong" => "long",
                 "RequiredBool" => "bool",
                 "RequiredDateTime" => "DateTime",
+                "RequiredDateTimeOffset" => "DateTimeOffset",
                 "RequiredEnum" => "enum",
                 _ => null
             };
@@ -235,7 +239,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                     new DiagnosticDescriptor(
                         id: Ids.UnsupportedRequiredBaseType,
                         title: "Unsupported base type for RequiredPartialClassGenerator",
-                        messageFormat: "Class '{0}' inherits from unsupported base type '{1}'. Supported bases: RequiredGuid, RequiredString, RequiredInt, RequiredDecimal, RequiredLong, RequiredBool, RequiredDateTime, RequiredEnum.",
+                        messageFormat: "Class '{0}' inherits from unsupported base type '{1}'. Supported bases: RequiredGuid, RequiredString, RequiredInt, RequiredDecimal, RequiredLong, RequiredBool, RequiredDateTime, RequiredDateTimeOffset, RequiredEnum.",
                         category: "Trellis",
                         DiagnosticSeverity.Warning,
                         isEnabledByDefault: true),
@@ -263,7 +267,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             // Build up the source code
             // Note: The base class is already declared in the user's partial class.
             // We only generate the additional members and interfaces.
-            var isFormattable = g.ClassBase is "RequiredInt" or "RequiredDecimal" or "RequiredLong" or "RequiredDateTime";
+            var isFormattable = g.ClassBase is "RequiredInt" or "RequiredDecimal" or "RequiredLong" or "RequiredDateTime" or "RequiredDateTimeOffset";
             var formattableInterface = isFormattable
                 ? $", IFormattableScalarValue<{g.ClassName}, {classType}>"
                 : "";
@@ -339,6 +343,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                 "RequiredLong" => GenerateLongMethods(g, context),
                 "RequiredBool" => GenerateBoolMethods(g),
                 "RequiredDateTime" => GenerateDateTimeMethods(g),
+                "RequiredDateTimeOffset" => GenerateDateTimeOffsetMethods(g),
                 _ => null
             };
 
@@ -632,6 +637,73 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                 location: null,
                 g.ClassName,
                 g.ClassBase));
+            ok = false;
+        }
+
+        // Numeric convenience attrs ([Positive] / [NonNegative] / [Negative] / [NonPositive])
+        // only make sense on numeric Required bases (Int, Long, Decimal).
+        var numericConvenienceCount = (g.HasPositive ? 1 : 0)
+            + (g.HasNonNegative ? 1 : 0)
+            + (g.HasNegative ? 1 : 0)
+            + (g.HasNonPositive ? 1 : 0);
+        var isNumericBase = g.ClassBase is "RequiredInt" or "RequiredLong" or "RequiredDecimal";
+
+        if (numericConvenienceCount > 0 && !isNumericBase)
+        {
+            var attrName = g.HasPositive ? "[Positive]"
+                : g.HasNonNegative ? "[NonNegative]"
+                : g.HasNegative ? "[Negative]"
+                : "[NonPositive]";
+            context.ReportDiagnostic(Diagnostic.Create(
+                new DiagnosticDescriptor(
+                    id: Ids.NumericConvenienceOnNonNumeric,
+                    title: "Numeric convenience attribute on non-numeric Required base",
+                    messageFormat: "Class '{0}' has {1} but inherits from '{2}'. The numeric convenience attributes ([Positive], [NonNegative], [Negative], [NonPositive]) only apply to RequiredInt, RequiredLong, and RequiredDecimal.",
+                    category: "Trellis",
+                    DiagnosticSeverity.Error,
+                    isEnabledByDefault: true),
+                location: null,
+                g.ClassName,
+                attrName,
+                g.ClassBase));
+            ok = false;
+        }
+
+        if (numericConvenienceCount > 1)
+        {
+            context.ReportDiagnostic(Diagnostic.Create(
+                new DiagnosticDescriptor(
+                    id: Ids.NumericConvenienceConflict,
+                    title: "Conflicting numeric convenience attributes",
+                    messageFormat: "Class '{0}' carries more than one of [Positive] / [NonNegative] / [Negative] / [NonPositive]. Pick exactly one — the sign constraints are mutually exclusive.",
+                    category: "Trellis",
+                    DiagnosticSeverity.Error,
+                    isEnabledByDefault: true),
+                location: null,
+                g.ClassName));
+            ok = false;
+        }
+
+        // Convenience attr + explicit [Range] is a conflict because explicit [Range] silently
+        // overrides the convenience sign check during synthesis. Emit TRLS045 instead of
+        // letting `[Positive, Range(0, 100)]` silently accept 0.
+        if (numericConvenienceCount > 0 && g.HasExplicitRange && isNumericBase)
+        {
+            var attrName = g.HasPositive ? "[Positive]"
+                : g.HasNonNegative ? "[NonNegative]"
+                : g.HasNegative ? "[Negative]"
+                : "[NonPositive]";
+            context.ReportDiagnostic(Diagnostic.Create(
+                new DiagnosticDescriptor(
+                    id: Ids.NumericConvenienceWithExplicitRange,
+                    title: "Numeric convenience attribute combined with explicit [Range]",
+                    messageFormat: "Class '{0}' has {1} combined with an explicit [Range]. The combination would silently disable the convenience sign check — pick one. Use [Range] alone for bounded values, or {1} alone for an unbounded sign constraint.",
+                    category: "Trellis",
+                    DiagnosticSeverity.Error,
+                    isEnabledByDefault: true),
+                location: null,
+                g.ClassName,
+                attrName));
             ok = false;
         }
 
@@ -1002,6 +1074,14 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                 .Ensure(_ => parsedDecimal != 0m, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
             : "";
 
+        // Convenience sign-check attributes ([Positive] / [NonNegative] / [Negative] /
+        // [NonPositive]) are emitted as direct sign comparisons rather than as Range bounds
+        // because the decimal value range (±7.9e28) exceeds what double can round-trip
+        // safely through FormatDecimalLiteral. The check is appended after notDefaultIfCheck
+        // so a [NotDefault]+[Positive]-style stack still surfaces the strictest message first.
+        (string ifCheck, string nullableEnsure, string parsedEnsure) signCheck =
+            BuildDecimalConvenienceSignCheck(g);
+
         // Validate [Range] constraints are consistent
         if (hasRange && rangeMinD > rangeMaxD)
         {
@@ -1137,7 +1217,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
         public static Result<{g.ClassName}> TryCreate(decimal value, string? fieldName = null)
         {{
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
-            var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");{notDefaultIfCheck}
+            var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");{notDefaultIfCheck}{signCheck.ifCheck}
             string? additionalError = null;
             ValidateAdditional(value, field, ref additionalError);
             if (additionalError is not null)
@@ -1150,7 +1230,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
             var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
             var validated = valueOrNothing
-                .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }}))){notDefaultNullableEnsure};
+                .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }}))){notDefaultNullableEnsure}{signCheck.nullableEnsure};
             if (validated.TryGetValue(out var value))
             {{
                 string? additionalError = null;
@@ -1168,7 +1248,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             decimal parsedDecimal = 0m;
             var validated = stringOrNull
                 .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})))
-                .Ensure(x => decimal.TryParse(x, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out parsedDecimal), _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid decimal."" }}))){notDefaultParsedEnsure};
+                .Ensure(x => decimal.TryParse(x, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out parsedDecimal), _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid decimal."" }}))){notDefaultParsedEnsure}{signCheck.parsedEnsure};
             if (validated.IsSuccess)
             {{
                 string? additionalError = null;
@@ -1236,6 +1316,36 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
         }}";
 
         return result;
+    }
+
+    private static (string ifCheck, string nullableEnsure, string parsedEnsure) BuildDecimalConvenienceSignCheck(RequiredPartialClassInfo g)
+    {
+        // Pick the active convenience attribute (mutual exclusion is enforced by
+        // ValidateAttributeUsage); if multiple slipped through, ValidateAttributeUsage already
+        // emitted TRLS044 and generation will be skipped, so the order below is defensive.
+        if (!g.HasPositive && !g.HasNonNegative && !g.HasNegative && !g.HasNonPositive)
+            return ("", "", "");
+
+        string compareOp;
+        string message;
+        if (g.HasPositive) { compareOp = "<= 0m"; message = $"{g.ClassName.SplitPascalCase()} must be positive."; }
+        else if (g.HasNonNegative) { compareOp = "< 0m"; message = $"{g.ClassName.SplitPascalCase()} must be zero or positive."; }
+        else if (g.HasNegative) { compareOp = ">= 0m"; message = $"{g.ClassName.SplitPascalCase()} must be negative."; }
+        else /* HasNonPositive */ { compareOp = "> 0m"; message = $"{g.ClassName.SplitPascalCase()} must be zero or negative."; }
+
+        var detail = $@"""{message}""";
+
+        var ifCheck = $@"
+            if (value {compareOp})
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {detail} }})));";
+
+        var nullableEnsure = $@"
+                .Ensure(x => !(x {compareOp}), _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {detail} }})))";
+
+        var parsedEnsure = $@"
+                .Ensure(_ => !(parsedDecimal {compareOp}), _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {detail} }})))";
+
+        return (ifCheck, nullableEnsure, parsedEnsure);
     }
 
     private static string? GenerateLongMethods(RequiredPartialClassInfo g, SourceProductionContext context)
@@ -1693,6 +1803,128 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
         }}";
     }
 
+    private static string GenerateDateTimeOffsetMethods(RequiredPartialClassInfo g)
+    {
+        var notDefaultDetail = $@"""{g.ClassName.SplitPascalCase()} cannot be DateTimeOffset.MinValue.""";
+        var notDefaultCheck = g.HasNotDefault
+            ? $@"
+            if (value == DateTimeOffset.MinValue)
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})));"
+            : "";
+        var notDefaultNullableEnsure = g.HasNotDefault
+            ? $@"
+                .Ensure(x => x != DateTimeOffset.MinValue, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
+            : "";
+        var notDefaultParsedEnsure = g.HasNotDefault
+            ? $@"
+                .Ensure(_ => parsedDateTimeOffset != DateTimeOffset.MinValue, _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})))"
+            : "";
+
+        return $@"
+
+        /// <summary>
+        /// Optional validation hook. Implement this partial method to add custom validation.
+        /// Called after built-in validations pass.
+        /// </summary>
+        /// <param name=""value"">The validated DateTimeOffset value.</param>
+        /// <param name=""fieldName"">The normalized field name for error messages.</param>
+        /// <param name=""errorMessage"">Set to a non-null string to reject the value.</param>
+        static partial void ValidateAdditional(DateTimeOffset value, string fieldName, ref string? errorMessage);
+
+        /// <summary>
+        /// Creates a validated instance from a DateTimeOffset.
+        /// Required by IScalarValue interface for model binding and JSON deserialization.
+        /// </summary>
+        /// <param name=""value"">The DateTimeOffset value to validate.</param>
+        /// <param name=""fieldName"">Optional field name for validation error messages.</param>
+        /// <returns>Success with the value object, or Failure with validation errors.</returns>
+        public static Result<{g.ClassName}> TryCreate(DateTimeOffset value, string? fieldName = null)
+        {{
+            using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
+            var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");{notDefaultCheck}
+            string? additionalError = null;
+            ValidateAdditional(value, field, ref additionalError);
+            if (additionalError is not null)
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+            return Result.Ok(new {g.ClassName}(value));
+        }}
+
+        public static Result<{g.ClassName}> TryCreate(DateTimeOffset? valueOrNothing, string? fieldName = null)
+        {{
+            using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
+            var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
+            var validated = valueOrNothing
+                .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }}))){notDefaultNullableEnsure};
+            if (validated.TryGetValue(out var value))
+            {{
+                string? additionalError = null;
+                ValidateAdditional(value, field, ref additionalError);
+                if (additionalError is not null)
+                    return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+            }}
+            return validated.Map(val => new {g.ClassName}(val));
+        }}
+
+        public static Result<{g.ClassName}> TryCreate(string? stringOrNull, string? fieldName = null)
+        {{
+            using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
+            var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
+            DateTimeOffset parsedDateTimeOffset = default;
+            var validated = stringOrNull
+                .ToResult(() => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})))
+                .Ensure(x => DateTimeOffset.TryParse(x, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out parsedDateTimeOffset), _ => new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid date/time with offset."" }}))){notDefaultParsedEnsure};
+            if (validated.IsSuccess)
+            {{
+                string? additionalError = null;
+                ValidateAdditional(parsedDateTimeOffset, field, ref additionalError);
+                if (additionalError is not null)
+                    return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = additionalError }})));
+            }}
+            return validated.Map(_ => new {g.ClassName}(parsedDateTimeOffset));
+        }}
+
+        /// <summary>
+        /// Attempts to create a validated instance from a string using the specified format provider.
+        /// Use for culture-sensitive parsing of DateTimeOffset values.
+        /// </summary>
+        /// <param name=""value"">The string value to parse.</param>
+        /// <param name=""provider"">The format provider for culture-sensitive parsing. Defaults to InvariantCulture when null.</param>
+        /// <param name=""fieldName"">Optional field name for validation error messages.</param>
+        /// <returns>Success with the value object, or Failure with validation errors.</returns>
+        public static Result<{g.ClassName}> TryCreate(string? value, IFormatProvider? provider, string? fieldName = null)
+        {{
+            using var activity = PrimitiveValueObjectTrace.ActivitySource.StartActivity(""{g.ClassName}.TryCreate"");
+            var field = fieldName.NormalizeFieldName(""{g.ClassName.ToCamelCase()}"");
+            if (value is null)
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""{g.ClassName.SplitPascalCase()} cannot be empty."" }})));
+            if (!DateTimeOffset.TryParse(value, provider ?? System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out var parsed))
+                return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = ""Value must be a valid date/time with offset."" }})));
+            return TryCreate(parsed, fieldName);
+        }}
+
+        /// <summary>
+        /// Creates a validated instance from a DateTimeOffset. Throws if validation fails.
+        /// </summary>
+        public static new {g.ClassName} Create(DateTimeOffset value)
+        {{
+            var result = TryCreate(value, null);
+            return result.Match(
+                onSuccess: created => created,
+                onFailure: error => throw new InvalidOperationException($""Failed to create {g.ClassName}: {{error.GetDisplayMessage()}}""));
+        }}
+
+        /// <summary>
+        /// Creates a validated instance from a string by parsing it as a DateTimeOffset. Throws if validation or parsing fails.
+        /// </summary>
+        public static {g.ClassName} Create(string stringValue)
+        {{
+            var result = TryCreate(stringValue, null);
+            return result.Match(
+                onSuccess: created => created,
+                onFailure: error => throw new InvalidOperationException($""Failed to create {g.ClassName}: {{error.GetDisplayMessage()}}""));
+        }}";
+    }
+
     /// <summary>
     /// Extracts metadata from class declarations to determine which classes need code generation.
     /// </summary>
@@ -1808,12 +2040,22 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                 }
             }
 
-            // Read [NotDefault] and [Trim] attributes — apply across the Required family with
-            // per-base-type validity enforced separately (see TRLS040/TRLS041 generator diagnostics
-            // and the matching TRLS analyzer entries). We still harvest them on every base so the
-            // diagnostic emit step can see "presence on disallowed base" and fire.
+            // Read [NotDefault], [Trim], the new opt-out marker attributes
+            // ([AllowEmpty], [AllowWhitespace], [NoTrim], [AllowDefault]), and the new numeric
+            // convenience attributes ([Positive], [NonNegative], [Negative], [NonPositive]).
+            // The opt-out markers are recognized in this release but only consumed once the
+            // strict-default emission flip lands; they are no-ops on emission today. The
+            // numeric convenience attributes synthesize equivalent [Range] bounds below.
             bool hasNotDefault = false;
             bool hasTrim = false;
+            bool hasAllowEmpty = false;
+            bool hasAllowWhitespace = false;
+            bool hasNoTrim = false;
+            bool hasAllowDefault = false;
+            bool hasPositive = false;
+            bool hasNonNegative = false;
+            bool hasNegative = false;
+            bool hasNonPositive = false;
             foreach (var attr in classSymbol.GetAttributes())
             {
                 if (attr.AttributeClass?.ContainingNamespace?.ToDisplayString() != "Trellis")
@@ -1826,13 +2068,106 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                     case "TrimAttribute":
                         hasTrim = true;
                         break;
+                    case "AllowEmptyAttribute":
+                        hasAllowEmpty = true;
+                        break;
+                    case "AllowWhitespaceAttribute":
+                        hasAllowWhitespace = true;
+                        break;
+                    case "NoTrimAttribute":
+                        hasNoTrim = true;
+                        break;
+                    case "AllowDefaultAttribute":
+                        hasAllowDefault = true;
+                        break;
+                    case "PositiveAttribute":
+                        hasPositive = true;
+                        break;
+                    case "NonNegativeAttribute":
+                        hasNonNegative = true;
+                        break;
+                    case "NegativeAttribute":
+                        hasNegative = true;
+                        break;
+                    case "NonPositiveAttribute":
+                        hasNonPositive = true;
+                        break;
                 }
             }
 
-            classToGenerate.Add(new RequiredPartialClassInfo(@namespace, className, @base, accessibility, maxLength, minLength, rangeMin, rangeMax, rangeLongMin, rangeLongMax, rangeDoubleMin, rangeDoubleMax, nestingParents, typePath, hasNotDefault, hasTrim));
+            // Synthesize [Range] bounds from numeric convenience attributes when no explicit
+            // [Range] was supplied. Explicit [Range] silently wins on synthesis, but the
+            // (explicit + convenience) combination is itself a conflict — ValidateAttributeUsage
+            // emits TRLS045 and skips generation so the silent-disable footgun is never reachable
+            // in compiled code.
+            var hasExplicitRange = rangeMin.HasValue || rangeMax.HasValue
+                || rangeLongMin.HasValue || rangeLongMax.HasValue
+                || rangeDoubleMin.HasValue || rangeDoubleMax.HasValue;
+            ApplyNumericConvenienceRange(
+                @base,
+                hasPositive, hasNonNegative, hasNegative, hasNonPositive,
+                ref rangeMin, ref rangeMax,
+                ref rangeLongMin, ref rangeLongMax,
+                ref rangeDoubleMin, ref rangeDoubleMax);
+
+            classToGenerate.Add(new RequiredPartialClassInfo(
+                @namespace, className, @base, accessibility,
+                maxLength, minLength,
+                rangeMin, rangeMax,
+                rangeLongMin, rangeLongMax,
+                rangeDoubleMin, rangeDoubleMax,
+                nestingParents, typePath,
+                hasNotDefault, hasTrim,
+                hasAllowEmpty, hasAllowWhitespace, hasNoTrim, hasAllowDefault,
+                hasPositive, hasNonNegative, hasNegative, hasNonPositive,
+                hasExplicitRange));
         }
 
         return classToGenerate;
+    }
+
+    /// <summary>
+    /// Translates the convenience numeric attributes (<c>[Positive]</c>, <c>[NonNegative]</c>,
+    /// <c>[Negative]</c>, <c>[NonPositive]</c>) into the underlying <c>[Range]</c>-equivalent
+    /// bounds the existing emission already understands, but only when no explicit <c>[Range]</c>
+    /// is present for the corresponding numeric base. Explicit <c>[Range]</c> always wins —
+    /// conflict diagnostics are emitted by <see cref="ValidateAttributeUsage"/> later.
+    /// </summary>
+    private static void ApplyNumericConvenienceRange(
+        string @base,
+        bool hasPositive, bool hasNonNegative, bool hasNegative, bool hasNonPositive,
+        ref int? rangeMin, ref int? rangeMax,
+        ref long? rangeLongMin, ref long? rangeLongMax,
+        ref double? rangeDoubleMin, ref double? rangeDoubleMax)
+    {
+        if (!hasPositive && !hasNonNegative && !hasNegative && !hasNonPositive)
+            return;
+
+        if (@base == "RequiredInt")
+        {
+            if (rangeMin.HasValue || rangeMax.HasValue) return;
+            if (hasPositive) { rangeMin = 1; rangeMax = int.MaxValue; }
+            else if (hasNonNegative) { rangeMin = 0; rangeMax = int.MaxValue; }
+            else if (hasNegative) { rangeMin = int.MinValue; rangeMax = -1; }
+            else if (hasNonPositive) { rangeMin = int.MinValue; rangeMax = 0; }
+        }
+        else if (@base == "RequiredLong")
+        {
+            if (rangeLongMin.HasValue || rangeLongMax.HasValue) return;
+            if (hasPositive) { rangeLongMin = 1L; rangeLongMax = long.MaxValue; }
+            else if (hasNonNegative) { rangeLongMin = 0L; rangeLongMax = long.MaxValue; }
+            else if (hasNegative) { rangeLongMin = long.MinValue; rangeLongMax = -1L; }
+            else if (hasNonPositive) { rangeLongMin = long.MinValue; rangeLongMax = 0L; }
+        }
+        else if (@base == "RequiredDecimal")
+        {
+            // Convenience attrs on Decimal are handled as direct sign-checks in
+            // GenerateDecimalMethods (see DecimalConvenienceSignCheck below) — not as Range
+            // bounds — because the decimal value range (±7.9e28) exceeds what double can
+            // round-trip safely through FormatDecimalLiteral, which would falsely trip TRLS034.
+        }
+        // For non-numeric bases the convenience attrs are no-ops; ValidateAttributeUsage emits
+        // a diagnostic when they appear on a base that does not support them (see TRLS04x).
     }
 
     private static string[] GetNestingParents(INamedTypeSymbol classSymbol)

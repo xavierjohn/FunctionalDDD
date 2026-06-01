@@ -155,6 +155,72 @@ internal class RequiredPartialClassInfo : IEquatable<RequiredPartialClassInfo>
     public readonly bool HasTrim;
 
     /// <summary>
+    /// Gets whether the target class is annotated with <c>[AllowEmpty]</c>.
+    /// Reserved for future use by the generator to opt-out of empty-string rejection on
+    /// <c>RequiredString</c>-derived types when the strict default lands.
+    /// </summary>
+    public readonly bool HasAllowEmpty;
+
+    /// <summary>
+    /// Gets whether the target class is annotated with <c>[AllowWhitespace]</c>.
+    /// Reserved for future use by the generator to opt-out of whitespace-only rejection on
+    /// <c>RequiredString</c>-derived types when the strict default lands.
+    /// </summary>
+    public readonly bool HasAllowWhitespace;
+
+    /// <summary>
+    /// Gets whether the target class is annotated with <c>[NoTrim]</c>.
+    /// Reserved for future use by the generator to opt-out of automatic trim on
+    /// <c>RequiredString</c>-derived types when the trim-by-default behavior lands.
+    /// </summary>
+    public readonly bool HasNoTrim;
+
+    /// <summary>
+    /// Gets whether the target class is annotated with <c>[AllowDefault]</c>.
+    /// Reserved for future use by the generator to opt-out of CLR-default rejection on
+    /// <c>RequiredGuid</c> / <c>RequiredDateTime</c> / <c>RequiredDateTimeOffset</c>-derived
+    /// types when the strict default lands.
+    /// </summary>
+    public readonly bool HasAllowDefault;
+
+    /// <summary>
+    /// Gets whether the target class is annotated with <c>[Positive]</c>.
+    /// When true on a numeric Required base, the generator synthesizes a <c>[Range]</c>-equivalent
+    /// constraint that rejects values <c>&lt;= 0</c>.
+    /// </summary>
+    public readonly bool HasPositive;
+
+    /// <summary>
+    /// Gets whether the target class is annotated with <c>[NonNegative]</c>.
+    /// When true on a numeric Required base, the generator synthesizes a <c>[Range]</c>-equivalent
+    /// constraint that rejects values <c>&lt; 0</c>.
+    /// </summary>
+    public readonly bool HasNonNegative;
+
+    /// <summary>
+    /// Gets whether the target class is annotated with <c>[Negative]</c>.
+    /// When true on a numeric Required base, the generator synthesizes a <c>[Range]</c>-equivalent
+    /// constraint that rejects values <c>&gt;= 0</c>.
+    /// </summary>
+    public readonly bool HasNegative;
+
+    /// <summary>
+    /// Gets whether the target class is annotated with <c>[NonPositive]</c>.
+    /// When true on a numeric Required base, the generator synthesizes a <c>[Range]</c>-equivalent
+    /// constraint that rejects values <c>&gt; 0</c>.
+    /// </summary>
+    public readonly bool HasNonPositive;
+
+    /// <summary>
+    /// Gets whether the target class had an explicit <c>[Range]</c> attribute before any
+    /// convenience-attribute synthesis. Used by <c>ValidateAttributeUsage</c> to detect the
+    /// conflict between an explicit <c>[Range]</c> and a numeric convenience attribute
+    /// (<c>[Positive]</c> etc.) on the same class — the combination would otherwise silently
+    /// disable the convenience sign check.
+    /// </summary>
+    public readonly bool HasExplicitRange;
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="RequiredPartialClassInfo"/> class.
     /// </summary>
     /// <param name="nameSpace">The namespace of the partial class.</param>
@@ -173,6 +239,15 @@ internal class RequiredPartialClassInfo : IEquatable<RequiredPartialClassInfo>
     /// <param name="typePath">A unique namespace-qualified type path used for generated hint names.</param>
     /// <param name="hasNotDefault">True when the target carries <c>[NotDefault]</c>.</param>
     /// <param name="hasTrim">True when the target carries <c>[Trim]</c>.</param>
+    /// <param name="hasAllowEmpty">True when the target carries <c>[AllowEmpty]</c>.</param>
+    /// <param name="hasAllowWhitespace">True when the target carries <c>[AllowWhitespace]</c>.</param>
+    /// <param name="hasNoTrim">True when the target carries <c>[NoTrim]</c>.</param>
+    /// <param name="hasAllowDefault">True when the target carries <c>[AllowDefault]</c>.</param>
+    /// <param name="hasPositive">True when the target carries <c>[Positive]</c>.</param>
+    /// <param name="hasNonNegative">True when the target carries <c>[NonNegative]</c>.</param>
+    /// <param name="hasNegative">True when the target carries <c>[Negative]</c>.</param>
+    /// <param name="hasNonPositive">True when the target carries <c>[NonPositive]</c>.</param>
+    /// <param name="hasExplicitRange">True when the target had an explicit <c>[Range]</c> before convenience-attribute synthesis.</param>
     public RequiredPartialClassInfo(
         string nameSpace,
         string className,
@@ -189,7 +264,16 @@ internal class RequiredPartialClassInfo : IEquatable<RequiredPartialClassInfo>
         string[]? nestingParents = null,
         string? typePath = null,
         bool hasNotDefault = false,
-        bool hasTrim = false)
+        bool hasTrim = false,
+        bool hasAllowEmpty = false,
+        bool hasAllowWhitespace = false,
+        bool hasNoTrim = false,
+        bool hasAllowDefault = false,
+        bool hasPositive = false,
+        bool hasNonNegative = false,
+        bool hasNegative = false,
+        bool hasNonPositive = false,
+        bool hasExplicitRange = false)
     {
         NameSpace = nameSpace;
         ClassName = className;
@@ -207,6 +291,15 @@ internal class RequiredPartialClassInfo : IEquatable<RequiredPartialClassInfo>
         TypePath = typePath ?? (string.IsNullOrEmpty(nameSpace) ? className : $"{nameSpace}.{className}");
         HasNotDefault = hasNotDefault;
         HasTrim = hasTrim;
+        HasAllowEmpty = hasAllowEmpty;
+        HasAllowWhitespace = hasAllowWhitespace;
+        HasNoTrim = hasNoTrim;
+        HasAllowDefault = hasAllowDefault;
+        HasPositive = hasPositive;
+        HasNonNegative = hasNonNegative;
+        HasNegative = hasNegative;
+        HasNonPositive = hasNonPositive;
+        HasExplicitRange = hasExplicitRange;
     }
 
     public bool Equals(RequiredPartialClassInfo? other)
@@ -228,6 +321,15 @@ internal class RequiredPartialClassInfo : IEquatable<RequiredPartialClassInfo>
             && RangeDoubleMax == other.RangeDoubleMax
             && HasNotDefault == other.HasNotDefault
             && HasTrim == other.HasTrim
+            && HasAllowEmpty == other.HasAllowEmpty
+            && HasAllowWhitespace == other.HasAllowWhitespace
+            && HasNoTrim == other.HasNoTrim
+            && HasAllowDefault == other.HasAllowDefault
+            && HasPositive == other.HasPositive
+            && HasNonNegative == other.HasNonNegative
+            && HasNegative == other.HasNegative
+            && HasNonPositive == other.HasNonPositive
+            && HasExplicitRange == other.HasExplicitRange
             && TypePath == other.TypePath
             && NestingParents.SequenceEqual(other.NestingParents);
     }
@@ -253,6 +355,15 @@ internal class RequiredPartialClassInfo : IEquatable<RequiredPartialClassInfo>
             hash = (hash * 31) + RangeDoubleMax.GetHashCode();
             hash = (hash * 31) + HasNotDefault.GetHashCode();
             hash = (hash * 31) + HasTrim.GetHashCode();
+            hash = (hash * 31) + HasAllowEmpty.GetHashCode();
+            hash = (hash * 31) + HasAllowWhitespace.GetHashCode();
+            hash = (hash * 31) + HasNoTrim.GetHashCode();
+            hash = (hash * 31) + HasAllowDefault.GetHashCode();
+            hash = (hash * 31) + HasPositive.GetHashCode();
+            hash = (hash * 31) + HasNonNegative.GetHashCode();
+            hash = (hash * 31) + HasNegative.GetHashCode();
+            hash = (hash * 31) + HasNonPositive.GetHashCode();
+            hash = (hash * 31) + HasExplicitRange.GetHashCode();
             hash = (hash * 31) + StringComparer.Ordinal.GetHashCode(TypePath);
             return hash;
         }
