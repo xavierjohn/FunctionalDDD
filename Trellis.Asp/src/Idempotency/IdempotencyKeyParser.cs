@@ -101,6 +101,12 @@ public static class IdempotencyKeyParser
             sb.Append(c);
         }
 
+        if (sb.Length == 0)
+        {
+            error = "Idempotency-Key quoted value is empty.";
+            return false;
+        }
+
         key = sb.ToString();
         return true;
     }

@@ -41,6 +41,7 @@ public sealed class IdempotencyKeyParserTests
     [InlineData("\"\\x\"")]
     [InlineData("\"abc\"junk\"")]
     [InlineData("\"a\"b\"")]
+    [InlineData("\"\"")]
     public void Invalid_inputs_return_false(string input)
     {
         IdempotencyKeyParser.TryParse(input, out _, out var error).Should().BeFalse();

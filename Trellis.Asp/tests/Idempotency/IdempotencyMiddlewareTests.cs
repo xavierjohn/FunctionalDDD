@@ -692,6 +692,94 @@ public sealed class IdempotencyMiddlewareTests
         }
     }
 
+    [Fact]
+    public async Task Empty_quoted_idempotency_key_is_rejected_with_400()
+    {
+        using var host = await BuildHost();
+        var client = host.GetTestClient();
+
+        var content = JsonBody("{}");
+        content.Headers.TryAddWithoutValidation(KeyHeader, "\"\"");
+        var response = await client.PostAsync("/idempotent", content, TestContext.Current.CancellationToken);
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        body.Should().Contain("idempotency.key_invalid",
+            "an empty quoted RFC 8941 sf-string parses to a zero-length key; every request sending Idempotency-Key: \"\" would otherwise share the same (scope, empty) store slot and silently replay each other's responses");
+    }
+
+    [Fact]
+    public async Task Store_is_not_resolved_for_requests_that_bypass_idempotency()
+    {
+        var storeResolveCount = 0;
+        var resolverResolveCount = 0;
+        var shared = new InMemoryIdempotencyStore(new IdempotencyOptions(), TimeProvider.System);
+
+        var builder = Host.CreateDefaultBuilder()
+            .ConfigureWebHostDefaults(web => web
+                .UseTestServer()
+                .ConfigureServices(s =>
+                {
+                    s.AddRouting();
+                    s.AddTrellisIdempotency();
+                    s.AddScoped<IIdempotencyStore>(_ =>
+                    {
+                        Interlocked.Increment(ref storeResolveCount);
+                        return new DelegatingIdempotencyStore(shared);
+                    });
+                    s.AddScoped<IIdempotencyScopeResolver>(_ =>
+                    {
+                        Interlocked.Increment(ref resolverResolveCount);
+                        return new DelegatingIdempotencyScopeResolver();
+                    });
+                })
+                .Configure(app =>
+                {
+                    app.UseRouting();
+                    app.UseTrellisIdempotency();
+                    app.UseEndpoints(endpoints =>
+                    {
+                        endpoints.MapPost("/passthrough", async ctx =>
+                        {
+                            ctx.Response.StatusCode = 200;
+                            await ctx.Response.WriteAsync("ok", ctx.RequestAborted);
+                        });
+
+                        endpoints.MapGet("/idempotent-get", async ctx =>
+                        {
+                            ctx.Response.StatusCode = 200;
+                            await ctx.Response.WriteAsync("get-ok", ctx.RequestAborted);
+                        }).WithMetadata(new IdempotentAttribute());
+                    });
+                }));
+
+        using var host = await builder.StartAsync(TestContext.Current.CancellationToken);
+        var client = host.GetTestClient();
+
+        // Bypass 1: endpoint without [Idempotent] metadata.
+        var passthroughResp = await client.PostAsync("/passthrough", JsonBody("{}"), TestContext.Current.CancellationToken);
+        passthroughResp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        // Bypass 2: [Idempotent] endpoint but the request method (GET) is not in the
+        // configured Methods set (default: POST + PATCH). Send a real key with it to
+        // prove the pre-checks short-circuit even when a parseable key is present.
+        var getReq = new HttpRequestMessage(HttpMethod.Get, "/idempotent-get");
+        getReq.Headers.Add(KeyHeader, Guid.NewGuid().ToString());
+        var getResp = await client.SendAsync(getReq, TestContext.Current.CancellationToken);
+        getResp.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        storeResolveCount.Should().Be(0,
+            "requests that the middleware short-circuits (no [Idempotent] metadata or non-mutating method) must not trigger IIdempotencyStore construction; eagerly resolving via InvokeAsync parameter injection forces every pass-through request to pay store construction cost (and to create a scoped EF-backed DbContext) for nothing");
+        resolverResolveCount.Should().Be(0,
+            "the same lazy-resolution requirement applies to IIdempotencyScopeResolver: a tenant-aware resolver may depend on its own scoped services (e.g. an EF lookup or external identity call) and must not be constructed for pass-through requests");
+    }
+
+    private sealed class DelegatingIdempotencyScopeResolver : IIdempotencyScopeResolver
+    {
+        public ValueTask<string> ResolveAsync(HttpContext context, CancellationToken cancellationToken) =>
+            ValueTask.FromResult("test-scope");
+    }
+
     private sealed class DelegatingIdempotencyStore : IIdempotencyStore
     {
         private readonly IIdempotencyStore inner;

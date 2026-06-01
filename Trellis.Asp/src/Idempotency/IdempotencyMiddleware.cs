@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -29,10 +30,12 @@ using Microsoft.Extensions.Options;
 /// </para>
 /// <para>
 /// <see cref="IIdempotencyStore"/> and <see cref="IIdempotencyScopeResolver"/> are resolved
-/// per-request from <see cref="HttpContext.RequestServices"/> via <c>InvokeAsync</c> parameter
-/// injection, so registrations with <see cref="Microsoft.Extensions.DependencyInjection.ServiceLifetime.Scoped"/>
-/// (for example an EF-backed store that depends on a scoped <c>DbContext</c>) compose cleanly
-/// without being captured by the middleware's singleton instance.
+/// per-request via <see cref="Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService{T}(IServiceProvider)"/>
+/// on <see cref="HttpContext.RequestServices"/> only after the endpoint is confirmed to opt
+/// in and the request has a usable key and fingerprint. This lazy resolution preserves the
+/// per-request scope for registrations with <see cref="Microsoft.Extensions.DependencyInjection.ServiceLifetime.Scoped"/>
+/// (for example an EF-backed store that depends on a scoped <c>DbContext</c>) while avoiding
+/// the cost of constructing those services for pass-through requests.
 /// </para>
 /// </remarks>
 public sealed partial class IdempotencyMiddleware
@@ -60,19 +63,17 @@ public sealed partial class IdempotencyMiddleware
 
     /// <summary>Processes a single HTTP request.</summary>
     /// <param name="context">The current HTTP context.</param>
-    /// <param name="store">
-    /// The idempotency store. Resolved per-request from <see cref="HttpContext.RequestServices"/>
-    /// so scoped registrations compose cleanly.
-    /// </param>
-    /// <param name="scopeResolver">
-    /// The scope resolver. Resolved per-request from <see cref="HttpContext.RequestServices"/>
-    /// so scoped registrations (for example a tenant-aware resolver) compose cleanly.
-    /// </param>
-    public async Task InvokeAsync(HttpContext context, IIdempotencyStore store, IIdempotencyScopeResolver scopeResolver)
+    /// <remarks>
+    /// <see cref="IIdempotencyStore"/> and <see cref="IIdempotencyScopeResolver"/> are resolved
+    /// explicitly from <see cref="HttpContext.RequestServices"/> only after the endpoint is
+    /// confirmed to opt in and the request has both a usable key and a fingerprint. Resolving
+    /// them as <c>InvokeAsync</c> parameters would force ASP.NET Core to construct them for
+    /// every request — including pass-through requests on non-opted-in endpoints — which is
+    /// wasteful when an EF-backed store creates a scoped <c>DbContext</c> per request.
+    /// </remarks>
+    public async Task InvokeAsync(HttpContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
-        ArgumentNullException.ThrowIfNull(store);
-        ArgumentNullException.ThrowIfNull(scopeResolver);
 
         var endpoint = context.GetEndpoint();
         var idempotentMeta = endpoint?.Metadata.GetMetadata<IdempotentAttribute>();
@@ -132,6 +133,13 @@ public sealed partial class IdempotencyMiddleware
         context.Request.Body = new MemoryStream(bodyBuffer);
 
         var fingerprint = IdempotencyFingerprint.Compute(context, bodyBuffer, this.options);
+
+        // Resolve store and scope resolver lazily, after pre-checks have decided that this
+        // request needs idempotency. Eager InvokeAsync parameter injection would build them
+        // (and any scoped EF-backed DbContext) for every request that ultimately passes through.
+        var store = context.RequestServices.GetRequiredService<IIdempotencyStore>();
+        var scopeResolver = context.RequestServices.GetRequiredService<IIdempotencyScopeResolver>();
+
         var scope = await scopeResolver.ResolveAsync(context, context.RequestAborted).ConfigureAwait(false);
 
         var outcome = await store.TryReserveAsync(scope, key, fingerprint, context.RequestAborted).ConfigureAwait(false);
