@@ -35,7 +35,7 @@ public static class IdempotencyServiceCollectionExtensions
         }
 
         services.TryAddSingleton<IIdempotencyScopeResolver, DefaultIdempotencyScopeResolver>();
-        services.AddSingleton<IdempotencyMarker>();
+        services.TryAddSingleton<IdempotencyMarker>();
 
         return services;
     }

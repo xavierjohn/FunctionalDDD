@@ -271,6 +271,20 @@ public sealed class IdempotencyMiddlewareTests
     }
 
     [Fact]
+    public void AddTrellisIdempotency_is_idempotent_for_marker_registration()
+    {
+        var services = new ServiceCollection();
+
+        services.AddTrellisIdempotency();
+        services.AddTrellisIdempotency();
+        services.AddTrellisIdempotency();
+
+        services
+            .Count(d => d.ServiceType == typeof(IdempotencyServiceCollectionExtensions.IdempotencyMarker))
+            .Should().Be(1);
+    }
+
+    [Fact]
     public async Task SetCookie_header_is_filtered_from_snapshot_by_default()
     {
         using var host = await BuildHost(configureEndpoints: endpoints =>
