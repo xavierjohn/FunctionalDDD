@@ -2,6 +2,7 @@
 using Scalar.AspNetCore;
 using Trellis.Asp;
 using Trellis.Asp.Authorization;
+using Trellis.Asp.Idempotency;
 using Trellis.Asp.Routing;
 using Trellis.Showcase.Application;
 using Trellis.Showcase.Application.Persistence;
@@ -45,6 +46,12 @@ if (builder.Environment.IsDevelopment())
     builder.Services.AddDevelopmentActorProvider();
 builder.Services.AddAuthorization();
 
+// Opt-in IETF Idempotency-Key middleware. Endpoints opt in per-action by carrying
+// [Idempotent]; everything else is unaffected. The in-memory store is fine for
+// samples — production hosts would register a distributed store implementation.
+builder.Services.AddTrellisIdempotency();
+builder.Services.AddInMemoryIdempotencyStore();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -62,6 +69,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseScalarValueValidation();
 app.UseAuthorization();
+app.UseTrellisIdempotency();
 app.MapControllers();
 
 app.Run();
