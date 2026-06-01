@@ -266,6 +266,12 @@ Opt-in marker carried by result types whose **failure** outcome should still tri
 | `TransactionalCommandBehavior` (`Trellis.EntityFrameworkCore`) | Commits staged changes on success **or** persist-on-failure. Commit error on a persist-on-failure outcome replaces the handler error in the returned response. |
 | `DomainEventDispatchBehavior` (`Trellis.Mediator`) | Treats persist-on-failure as failure: events are **not** dispatched. Events the handler raised on aggregates remain on those in-memory instances and are discarded with the request scope — they are not a durable retry buffer. Model post-failure side effects via an outbox row or a dedicated follow-up command. |
 
+#### Anti-pattern — composing `FailAfterCommit` with aggregating operators
+
+`Result.FailAfterCommit<T>(error)` is a **leaf** worker-handler operation: it converts a single aggregate's transient external rejection into a persisted `permanently_failed` state and returns. Threading that result through `Combine` / `TraverseAll` / `SequenceAll` / `WhenAllAsync` OR-accumulates the `PersistOnFailure` flag onto the aggregated failure — `TransactionalCommandBehavior` then commits the staged permanent-failure mutation alongside whatever the other legs produced, which is almost never what the handler author intended.
+
+**Restructure** such handlers so the aggregating step runs to its terminal outcome first and `FailAfterCommit` is invoked at the end (or in a follow-up command), never as a leg inside a multi-aggregate composition. See [`trellis-api-anti-patterns.md`](trellis-api-anti-patterns.md#no-analyzer--resultfailaftercommit-composed-with-aggregating-operators) for the WRONG / FIX gallery entry.
+
 ---
 
 ### `public readonly struct Result<TValue> : IResult<TValue>, IEquatable<Result<TValue>>, IFailureFactory<Result<TValue>>, IPersistOnFailure`

@@ -81,6 +81,19 @@ public static partial class Result
     /// without an upstream source (e.g., <c>Ensure</c> evaluating <c>false</c> on a previously
     /// successful value, <c>EnsureNotNull</c>'s value-was-null branch) do <em>not</em> set the flag.
     /// </para>
+    /// <para>
+    /// <strong>Do not compose <c>FailAfterCommit</c> with aggregating operators.</strong>
+    /// <c>FailAfterCommit</c> is a <em>leaf</em> worker-handler operation: it converts a single
+    /// aggregate's transient external rejection into a persisted <c>permanently_failed</c> state
+    /// and returns. Threading that result through <c>Combine</c>, <c>TraverseAll</c>,
+    /// <c>SequenceAll</c>, or <c>WhenAllAsync</c> — composing it with the outcomes of other,
+    /// independent operations — is outside the supported pattern. The OR-accumulated flag will
+    /// then commit the staged permanent-failure mutation alongside whatever the other legs
+    /// produced, which is unlikely to match the handler author's intent. Restructure such
+    /// handlers so the aggregating step runs to its terminal outcome first and
+    /// <c>FailAfterCommit</c> is invoked at the end (or in a follow-up command), never as a
+    /// leg inside a multi-aggregate composition.
+    /// </para>
     /// </remarks>
     public static Result<TValue> FailAfterCommit<TValue>(Error error)
     {
