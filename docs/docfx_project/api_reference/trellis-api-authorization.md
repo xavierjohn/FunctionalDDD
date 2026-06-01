@@ -23,10 +23,45 @@ See also: [trellis-api-cookbook.md](trellis-api-cookbook.md) — recipes using t
 - You are implementing static permission authorization through `IAuthorize`.
 - You are implementing resource-based authorization through `IAuthorizeResource<TResource>` and want the canonical guard shape.
 
+## Owner check in 8 lines — copy this
+
+The 90% case is "the command's resource id is loaded, and the actor must be the owner (or hold an admin permission)." For that shape, implement two interfaces — `IAuthorizeResource<TResource>` for the owner check and `IIdentifyResource<TResource, TId>` so the framework reuses the shared `SharedResourceLoaderById<TResource, TId>` instead of requiring a per-command loader.
+
+```csharp
+using Trellis;
+using Trellis.Authorization;
+
+public sealed record CancelOrderCommand(OrderId OrderId)
+    : ICommand<Result<Unit>>,
+      IAuthorizeResource<Order>,
+      IIdentifyResource<Order, OrderId>
+{
+    public OrderId GetResourceId() => OrderId;
+
+    public IResult Authorize(Actor actor, Order resource) =>
+        resource.OwnerId == actor.Id || actor.HasPermission("orders:admin")
+            ? Result.Ok()
+            : Result.Fail(new Error.Forbidden("orders.owner", ResourceRef.For<Order>(OrderId)));
+}
+
+// DI (composition root):
+services.AddResourceAuthorization<CancelOrderCommand, Order, Result<Unit>>();
+// One per command — AOT-safe; or use the assembly-scanning overload.
+```
+
+That's it. The mediator pipeline:
+
+1. resolves the actor via the registered `IActorProvider`,
+2. loads the `Order` by `OrderId` via the shared `SharedResourceLoaderById<Order, OrderId>` (auto-registered when the command implements `IIdentifyResource<Order, OrderId>`),
+3. calls `Authorize(actor, order)`.
+
+For multi-hop authorization (the resource the actor must own is reached via one or more navigation hops, including the cricket "actor owns home OR away team" shape), use `IAuthorizeResourceVia<TOwner>` with `IIdentifyRelatedResource[s]<TRelated, TId>` along the path — see cookbook [Recipe 24](trellis-api-cookbook.md#recipe-24--indirect-multi-hop-resource-authorization).
+
 ## Patterns Index
 
 | Goal | Canonical API / pattern | See |
 |---|---|---|
+| **Owner check on the command's resource (the 90% case)** | Implement `IAuthorizeResource<TResource>` + `IIdentifyResource<TResource, TId>`; the framework loads via `SharedResourceLoaderById<TResource, TId>` and calls `Authorize(actor, resource)` | [Owner check in 8 lines](#owner-check-in-8-lines--copy-this) |
 | Represent the current user/service | `Actor` | [`Actor`](#actor) |
 | Check granted permissions with explicit deny override | `actor.HasPermission(...)`, `HasAllPermissions(...)`, `HasAnyPermission(...)` | [`Actor`](#actor) |
 | Resolve actor for a request/message | `IActorProvider.GetCurrentActorAsync(...)` | [`IActorProvider`](#iactorprovider) |
