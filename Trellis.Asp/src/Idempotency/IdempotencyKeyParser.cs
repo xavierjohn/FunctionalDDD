@@ -11,29 +11,30 @@ public static class IdempotencyKeyParser
 {
     /// <summary>Attempts to parse a header value into a normalized idempotency key.</summary>
     /// <param name="raw">The raw header value as received from the request.</param>
+    /// <param name="headerName">The configured header name, used in diagnostic messages.</param>
     /// <param name="key">The parsed key with quoting and escaping removed.</param>
     /// <param name="error">An English diagnostic message when parsing fails.</param>
     /// <returns><see langword="true"/> on success; <see langword="false"/> otherwise.</returns>
-    public static bool TryParse(string? raw, out string key, out string? error)
+    public static bool TryParse(string? raw, string headerName, out string key, out string? error)
     {
         key = string.Empty;
         error = null;
 
         if (string.IsNullOrEmpty(raw))
         {
-            error = "Idempotency-Key header value is empty.";
+            error = $"{headerName} header value is empty.";
             return false;
         }
 
         if (raw[0] == '"')
         {
-            return TryParseQuoted(raw, out key, out error);
+            return TryParseQuoted(raw, headerName, out key, out error);
         }
 
-        return TryParseToken(raw, out key, out error);
+        return TryParseToken(raw, headerName, out key, out error);
     }
 
-    private static bool TryParseToken(string raw, out string key, out string? error)
+    private static bool TryParseToken(string raw, string headerName, out string key, out string? error)
     {
         key = string.Empty;
         error = null;
@@ -42,7 +43,7 @@ public static class IdempotencyKeyParser
         {
             if (!IsTokenChar(raw[i]))
             {
-                error = $"Idempotency-Key contains invalid character at position {i}.";
+                error = $"{headerName} contains invalid character at position {i}.";
                 return false;
             }
         }
@@ -51,14 +52,14 @@ public static class IdempotencyKeyParser
         return true;
     }
 
-    private static bool TryParseQuoted(string raw, out string key, out string? error)
+    private static bool TryParseQuoted(string raw, string headerName, out string key, out string? error)
     {
         key = string.Empty;
         error = null;
 
         if (raw.Length < 2 || raw[^1] != '"')
         {
-            error = "Idempotency-Key quoted value is not terminated.";
+            error = $"{headerName} quoted value is not terminated.";
             return false;
         }
 
@@ -70,14 +71,14 @@ public static class IdempotencyKeyParser
             {
                 if (i + 1 >= raw.Length - 1)
                 {
-                    error = "Idempotency-Key trailing escape is incomplete.";
+                    error = $"{headerName} trailing escape is incomplete.";
                     return false;
                 }
 
                 var next = raw[i + 1];
                 if (next is not '"' and not '\\')
                 {
-                    error = $"Idempotency-Key invalid escape sequence at position {i}.";
+                    error = $"{headerName} invalid escape sequence at position {i}.";
                     return false;
                 }
 
@@ -88,13 +89,13 @@ public static class IdempotencyKeyParser
 
             if (c is < (char)0x20 or >= (char)0x7F)
             {
-                error = $"Idempotency-Key contains non-printable ASCII at position {i}.";
+                error = $"{headerName} contains non-printable ASCII at position {i}.";
                 return false;
             }
 
             if (c == '"')
             {
-                error = $"Idempotency-Key contains unescaped quote at position {i}; embedded quotes must be escaped as \\\".";
+                error = $"{headerName} contains unescaped quote at position {i}; embedded quotes must be escaped as \\\".";
                 return false;
             }
 
@@ -103,7 +104,7 @@ public static class IdempotencyKeyParser
 
         if (sb.Length == 0)
         {
-            error = "Idempotency-Key quoted value is empty.";
+            error = $"{headerName} quoted value is empty.";
             return false;
         }
 

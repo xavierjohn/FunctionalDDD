@@ -105,20 +105,20 @@ public sealed partial class IdempotencyMiddleware
         if (rawValues.Count > 1)
         {
             await WriteProblemAsync(context, 400, "idempotency.key_duplicate",
-                "Multiple Idempotency-Key headers were received.").ConfigureAwait(false);
+                $"Multiple {_options.HeaderName} headers were received.").ConfigureAwait(false);
             return;
         }
 
-        if (!IdempotencyKeyParser.TryParse(rawValues[0], out var key, out var parseError))
+        if (!IdempotencyKeyParser.TryParse(rawValues[0], _options.HeaderName, out var key, out var parseError))
         {
-            await WriteProblemAsync(context, 400, "idempotency.key_invalid", parseError ?? "Invalid Idempotency-Key header.").ConfigureAwait(false);
+            await WriteProblemAsync(context, 400, "idempotency.key_invalid", parseError ?? $"Invalid {_options.HeaderName} header.").ConfigureAwait(false);
             return;
         }
 
         if (key.Length > _options.MaxKeyLength)
         {
             await WriteProblemAsync(context, 400, "idempotency.key_too_long",
-                $"Idempotency-Key length {key.Length} exceeds maximum {_options.MaxKeyLength}.").ConfigureAwait(false);
+                $"{_options.HeaderName} length {key.Length} exceeds maximum {_options.MaxKeyLength}.").ConfigureAwait(false);
             return;
         }
 
@@ -151,7 +151,7 @@ public sealed partial class IdempotencyMiddleware
                 return;
 
             case IdempotencyReservationOutcome.AlreadyInFlight inFlight:
-                await WriteInFlightAsync(context, inFlight.RetryAfter).ConfigureAwait(false);
+                await WriteInFlightAsync(context, inFlight.RetryAfter, _options.HeaderName).ConfigureAwait(false);
                 return;
 
             case IdempotencyReservationOutcome.Replay replay:
@@ -163,7 +163,7 @@ public sealed partial class IdempotencyMiddleware
                     context,
                     _options.MismatchStatusCode,
                     "idempotency.key_reused_with_different_body",
-                    "An Idempotency-Key was reused with a different request body or headers.").ConfigureAwait(false);
+                    $"The {_options.HeaderName} value was reused with a different request body or headers.").ConfigureAwait(false);
                 return;
 
             default:
@@ -212,7 +212,7 @@ public sealed partial class IdempotencyMiddleware
         await context.Response.Body.WriteAsync(json, context.RequestAborted).ConfigureAwait(false);
     }
 
-    private static async Task WriteInFlightAsync(HttpContext context, TimeSpan retryAfter)
+    private static async Task WriteInFlightAsync(HttpContext context, TimeSpan retryAfter, string headerName)
     {
         if (context.Response.HasStarted)
         {
@@ -226,7 +226,7 @@ public sealed partial class IdempotencyMiddleware
         context.Response.Headers["Retry-After"] = seconds.ToString(CultureInfo.InvariantCulture);
 
         var json = SerializeProblemDocument(409, "Conflict",
-            "A request with this Idempotency-Key is already in flight.",
+            $"A request with this {headerName} is already in flight.",
             context.Request.GetEncodedPathAndQuery(),
             "idempotency.in_flight");
         await context.Response.Body.WriteAsync(json, context.RequestAborted).ConfigureAwait(false);

@@ -788,6 +788,166 @@ public sealed class IdempotencyMiddlewareTests
             "the same lazy-resolution requirement applies to IIdempotencyScopeResolver: a tenant-aware resolver may depend on its own scoped services (e.g. an EF lookup or external identity call) and must not be constructed for pass-through requests");
     }
 
+    // ---------------------------------------------------------------------
+    // Problem-detail messages must reference the configured HeaderName
+    // ---------------------------------------------------------------------
+    // When the application customizes IdempotencyOptions.HeaderName (e.g. to
+    // "X-My-Idem-Key"), every diagnostic the middleware emits to the client
+    // must reference that configured name. Hard-coded "Idempotency-Key" in any
+    // 400/409/422 problem-detail body would point clients at a header that
+    // does not exist on their wire contract.
+
+    private const string CustomKeyHeader = "X-Custom-Idem-Key";
+
+    private static void UseCustomHeader(IdempotencyOptions o) => o.HeaderName = CustomKeyHeader;
+
+    private static void AssertProblemReferencesConfiguredHeader(string body)
+    {
+        body.Should().Contain(CustomKeyHeader,
+            $"problem-detail messages must reference the configured HeaderName ({CustomKeyHeader}) so clients are told which header is at fault");
+        body.Should().NotContain("Idempotency-Key",
+            "the default header name must not leak into a problem-detail body when the application configured a custom HeaderName");
+    }
+
+    [Fact]
+    public async Task Missing_header_problem_detail_uses_configured_HeaderName()
+    {
+        using var host = await BuildHost(configureOptions: UseCustomHeader);
+        var client = host.GetTestClient();
+
+        var resp = await client.PostAsync("/idempotent", JsonBody("{}"), TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        body.Should().Contain("idempotency.key_required");
+        AssertProblemReferencesConfiguredHeader(body);
+    }
+
+    [Fact]
+    public async Task Duplicate_header_problem_detail_uses_configured_HeaderName()
+    {
+        using var host = await BuildHost(configureOptions: UseCustomHeader);
+        var client = host.GetTestClient();
+
+        var content = JsonBody("{}");
+        content.Headers.TryAddWithoutValidation(CustomKeyHeader, "key-one");
+        content.Headers.TryAddWithoutValidation(CustomKeyHeader, "key-two");
+        var resp = await client.PostAsync("/idempotent", content, TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        body.Should().Contain("idempotency.key_duplicate");
+        AssertProblemReferencesConfiguredHeader(body);
+    }
+
+    [Fact]
+    public async Task Invalid_key_problem_detail_uses_configured_HeaderName()
+    {
+        using var host = await BuildHost(configureOptions: UseCustomHeader);
+        var client = host.GetTestClient();
+
+        var content = JsonBody("{}");
+        content.Headers.TryAddWithoutValidation(CustomKeyHeader, "bad key with space");
+        var resp = await client.PostAsync("/idempotent", content, TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        body.Should().Contain("idempotency.key_invalid");
+        AssertProblemReferencesConfiguredHeader(body);
+    }
+
+    [Fact]
+    public async Task Key_too_long_problem_detail_uses_configured_HeaderName()
+    {
+        using var host = await BuildHost(configureOptions: o =>
+        {
+            o.HeaderName = CustomKeyHeader;
+            o.MaxKeyLength = 10;
+        });
+        var client = host.GetTestClient();
+
+        var content = JsonBody("{}");
+        content.Headers.Add(CustomKeyHeader, new string('a', 20));
+        var resp = await client.PostAsync("/idempotent", content, TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        var body = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        body.Should().Contain("idempotency.key_too_long");
+        AssertProblemReferencesConfiguredHeader(body);
+    }
+
+    [Fact]
+    public async Task Mismatch_problem_detail_uses_configured_HeaderName()
+    {
+        using var host = await BuildHost(configureOptions: UseCustomHeader);
+        var client = host.GetTestClient();
+        var key = Guid.NewGuid().ToString();
+
+        var first = JsonBody("{\"x\":1}");
+        first.Headers.Add(CustomKeyHeader, key);
+        await client.PostAsync("/idempotent", first, TestContext.Current.CancellationToken);
+
+        var second = JsonBody("{\"x\":2}");
+        second.Headers.Add(CustomKeyHeader, key);
+        var resp = await client.PostAsync("/idempotent", second, TestContext.Current.CancellationToken);
+
+        resp.StatusCode.Should().Be(HttpStatusCode.UnprocessableEntity);
+        var body = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        body.Should().Contain("idempotency.key_reused_with_different_body");
+        AssertProblemReferencesConfiguredHeader(body);
+    }
+
+    [Fact]
+    public async Task In_flight_problem_detail_uses_configured_HeaderName()
+    {
+        var handlerEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var host = await BuildHost(
+            configureEndpoints: endpoints =>
+                endpoints.MapPost("/slow-custom", async ctx =>
+                {
+                    handlerEntered.TrySetResult();
+                    await gate.Task.WaitAsync(ctx.RequestAborted);
+                    ctx.Response.StatusCode = 201;
+                    ctx.Response.ContentType = "application/json";
+                    await ctx.Response.WriteAsync("{\"created\":true}", ctx.RequestAborted);
+                }).WithMetadata(new IdempotentAttribute()),
+            configureOptions: UseCustomHeader);
+        var client = host.GetTestClient();
+        var key = Guid.NewGuid().ToString();
+        Task<HttpResponseMessage>? firstTask = null;
+
+        try
+        {
+            var first = JsonBody("{}");
+            first.Headers.Add(CustomKeyHeader, key);
+            firstTask = client.PostAsync("/slow-custom", first, TestContext.Current.CancellationToken);
+
+            await handlerEntered.Task.WaitAsync(TestContext.Current.CancellationToken);
+
+            var second = JsonBody("{}");
+            second.Headers.Add(CustomKeyHeader, key);
+            var secondResp = await client.PostAsync("/slow-custom", second, TestContext.Current.CancellationToken);
+
+            secondResp.StatusCode.Should().Be(HttpStatusCode.Conflict);
+            var body = await secondResp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            body.Should().Contain("idempotency.in_flight");
+            AssertProblemReferencesConfiguredHeader(body);
+
+            gate.SetResult();
+            await firstTask;
+        }
+        finally
+        {
+            gate.TrySetResult();
+            if (firstTask is not null)
+            {
+                try { (await firstTask).Dispose(); }
+                catch { /* ignored */ }
+            }
+        }
+    }
+
     private sealed class DelegatingIdempotencyScopeResolver : IIdempotencyScopeResolver
     {
         public ValueTask<string> ResolveAsync(HttpContext context, CancellationToken cancellationToken) =>
