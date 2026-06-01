@@ -3,19 +3,28 @@
 using System;
 
 /// <summary>
-/// Reserved marker for the upcoming <c>Required&lt;TSelf&gt;</c> defaults realignment: when applied to a
-/// partial <see cref="RequiredString{TSelf}"/>-derived class, the generator will permit
-/// whitespace-only strings to satisfy the "required" validation once the strict-default
-/// emission flip lands. <b>This attribute has no effect in the current release</b> — declare it
-/// now to keep existing code lenient through the upcoming flip without code churn.
+/// Permits whitespace-only input on a <see cref="RequiredString{TSelf}"/>-derived class.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Once the flip lands, the generator's default rejects whitespace-only input (after the
-/// default trim runs; opt out of the trim with <see cref="NoTrimAttribute"/> to keep raw
-/// whitespace). Allowing whitespace-only input does not by itself allow empty input — combine
-/// with <see cref="AllowEmptyAttribute"/> when both should be accepted. Combine with
-/// <see cref="NoTrimAttribute"/> to preserve whitespace verbatim instead of trimming first.
+/// By default the generator rejects whitespace-only input. Apply this attribute when
+/// whitespace-only strings are a legitimate domain value at integration seams.
+/// </para>
+/// <para>
+/// Important interaction with trim: by default the generator trims input after validating
+/// it. When <c>[AllowWhitespace]</c> is applied without <see cref="NoTrimAttribute"/>,
+/// whitespace-only input is <em>accepted</em> but then normalized to <see cref="string.Empty"/>
+/// by the trim step. If whitespace should be preserved verbatim, combine with
+/// <see cref="NoTrimAttribute"/>.
+/// </para>
+/// <para>
+/// Does <em>not</em> by itself permit literal empty input (<see cref="string.Empty"/>); combine
+/// with <see cref="AllowEmptyAttribute"/> when both literal empty and whitespace-only should
+/// be accepted.
+/// </para>
+/// <para>
+/// Only applies to <see cref="RequiredString{TSelf}"/>. Applying to other Required bases
+/// produces a generator error.
 /// </para>
 /// </remarks>
 /// <seealso cref="AllowEmptyAttribute"/>
@@ -24,3 +33,4 @@ using System;
 public sealed class AllowWhitespaceAttribute : Attribute
 {
 }
+

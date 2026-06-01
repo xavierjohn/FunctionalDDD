@@ -3,49 +3,30 @@
 using System;
 
 /// <summary>
-/// Marks a partial <see cref="RequiredString{TSelf}"/>-derived class so the source generator
-/// trims the input string before any subsequent validation runs.
+/// <strong>Vestigial under the post-v3 defaults.</strong> Previously the opt-in to trim
+/// before validation on <see cref="RequiredString{TSelf}"/>. After the v3 defaults
+/// realignment, trim runs by default on <see cref="RequiredString{TSelf}"/>, so this
+/// attribute is now a no-op. Existing decorations stay valid (the generator silently ignores
+/// them) so legacy fixtures continue to compile; a generator diagnostic flags them as
+/// redundant.
 /// </summary>
 /// <remarks>
 /// <para>
-/// Removed from the default <see cref="RequiredString{TSelf}"/> behavior (which previously
-/// always trimmed) so the type does exactly what its attributes declare and nothing more.
-/// Apply <c>[Trim]</c> when leading / trailing whitespace must be stripped before storage.
+/// Migration: remove <c>[Trim]</c> from existing classes — the trim behavior it used to opt
+/// into is now the default. To <em>opt out</em> of automatic trim, use
+/// <see cref="NoTrimAttribute"/>.
 /// </para>
 /// <para>
-/// Validation order in the generated <c>TryCreate</c>:
-/// <list type="number">
-///   <item>Null check (always).</item>
-///   <item><see cref="TrimAttribute"/> (if present).</item>
-///   <item><see cref="NotDefaultAttribute"/> (if present).</item>
-///   <item><see cref="StringLengthAttribute"/> (if present, measures the post-trim value).</item>
-///   <item>Consumer <c>ValidateAdditional</c> override.</item>
-/// </list>
-/// </para>
-/// <para>
-/// <c>[Trim]</c> on its own (without <see cref="NotDefaultAttribute"/>) trims and stores the
-/// result verbatim, even if the result is <see cref="string.Empty"/>. Combine with
-/// <c>[NotDefault]</c> to reject empty / whitespace-only input — that is the recommended
-/// default for any string mapped to a database column.
-/// </para>
-/// <para>
-/// Not supported on non-string Required types (<c>RequiredInt</c>, <c>RequiredGuid</c>, etc.).
-/// The source generator emits a diagnostic and the <c>TRLS</c> analyzer surfaces the same
-/// error in the IDE.
+/// The attribute is kept defined (rather than deleted outright) so the v3 migration is a
+/// no-op for fixtures that previously decorated with <c>[Trim]</c> — they continue to express
+/// the trim behavior they always wanted, just via the new default instead of an attribute.
 /// </para>
 /// </remarks>
-/// <example>
-/// <code>
-/// [Trim, NotDefault]
-/// public partial class FirstName : RequiredString&lt;FirstName&gt; { }
-///
-/// FirstName.TryCreate(" John ");  // Success: stored as "John"
-/// FirstName.TryCreate("   ");     // Failure: trim -&gt; "" -&gt; [NotDefault]
-/// </code>
-/// </example>
-/// <seealso cref="NotDefaultAttribute"/>
-/// <seealso cref="StringLengthAttribute"/>
+/// <seealso cref="NoTrimAttribute"/>
+/// <seealso cref="AllowEmptyAttribute"/>
+/// <seealso cref="AllowWhitespaceAttribute"/>
 [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
 public sealed class TrimAttribute : Attribute
 {
 }
+
