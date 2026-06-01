@@ -6,7 +6,6 @@ using System.Text.Json;
 using Trellis.Testing;
 using Xunit;
 
-[NotDefault]
 public partial class EmployeeId : RequiredGuid<EmployeeId>
 {
 }
@@ -180,7 +179,7 @@ public class RequiredGuidTests
     [Fact]
     public void Cannot_create_RequiredGuid_from_all_zero_string()
     {
-        // "00000000-..." parses successfully into Guid.Empty, then the [NotDefault] check fires
+        // "00000000-..." parses successfully into Guid.Empty, then the strict default check fires
         // with the per-type "cannot be Guid.Empty." message — distinct from the null case above.
         var myGuidResult = EmployeeId.TryCreate("00000000-0000-0000-0000-000000000000");
 

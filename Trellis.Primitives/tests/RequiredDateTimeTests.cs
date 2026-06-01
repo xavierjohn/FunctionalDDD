@@ -3,12 +3,10 @@
 using System.Text.Json;
 using Trellis.Testing;
 
-[NotDefault]
 public partial class OrderDate : RequiredDateTime<OrderDate>
 {
 }
 
-[NotDefault]
 internal partial class InternalDate : RequiredDateTime<InternalDate>
 {
 }

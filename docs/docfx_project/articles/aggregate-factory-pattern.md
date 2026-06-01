@@ -204,7 +204,7 @@ private static Result<Unit> Validate(ProductName name, Sku sku)
 ```
 
 > [!TIP]
-> Per-field invariants (length, range, non-empty) belong on the value-object primitive itself via `[StringLength]`, `[Range]`, etc. The aggregate `Validate` method is for *cross-field* rules that no single primitive can enforce.
+> Per-field invariants (length, range, non-empty/non-whitespace, non-zero, non-default IDs/dates) belong on the value-object primitive itself via strict `Required*` defaults plus `[StringLength]`, `[Range]`, etc. The aggregate `Validate` method is for *cross-field* rules that no single primitive can enforce.
 
 ## Composing primitives
 
@@ -212,12 +212,12 @@ Strong-typed inputs eliminate most aggregate-level validation. By the time `TryC
 
 ```csharp
 [StringLength(200)]
-public partial class ProductName : RequiredString<ProductName> { }   // empty/whitespace + length
+public partial class ProductName : RequiredString<ProductName> { }   // strict default: empty/whitespace rejection + trim; length
 
 [StringLength(64)]
-public partial class Sku : RequiredString<Sku> { }                   // empty/whitespace + length
+public partial class Sku : RequiredString<Sku> { }                   // strict default: empty/whitespace rejection + trim; length
 
-public partial class ProductId : RequiredGuid<ProductId> { }         // Guid.Empty rejection
+public partial class ProductId : RequiredGuid<ProductId> { }         // strict default: Guid.Empty rejection
 ```
 
 The source generator emits `TryCreate` / `Create` / `Parse` / `JsonConverter` for each primitive — full surface in the [`Required*` source-generated members table](../api_reference/trellis-api-core.md#source-generated-members). Callers convert raw input once at the boundary:

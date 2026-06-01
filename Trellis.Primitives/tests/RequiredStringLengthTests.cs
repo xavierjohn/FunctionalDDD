@@ -6,7 +6,7 @@ using Trellis.Testing;
 /// <summary>
 /// Test value object with max length only.
 /// </summary>
-[Trim, NotDefault, StringLength(10)]
+[StringLength(10)]
 public partial class ShortCode : RequiredString<ShortCode>
 {
 }
@@ -14,7 +14,7 @@ public partial class ShortCode : RequiredString<ShortCode>
 /// <summary>
 /// Test value object with both min and max length.
 /// </summary>
-[Trim, NotDefault, StringLength(50, MinimumLength = 3)]
+[StringLength(50, MinimumLength = 3)]
 public partial class UserName : RequiredString<UserName>
 {
 }
@@ -64,12 +64,12 @@ public class RequiredStringLengthTests
     }
 
     [Fact]
-    public void TryCreate_MaxLengthOnly_NullValue_ReturnsEmptyError()
+    public void TryCreate_MaxLengthOnly_NullValue_ReturnsNullError()
     {
         var result = ShortCode.TryCreate(null);
         result.IsFailure.Should().BeTrue();
         var validation = (Error.InvalidInput)result.UnwrapError();
-        validation.Fields[0].Detail.Should().Be("Short Code cannot be empty.");
+        validation.Fields[0].Detail.Should().Be("Short Code cannot be null.");
     }
 
     [Fact]
@@ -139,12 +139,12 @@ public class RequiredStringLengthTests
     }
 
     [Fact]
-    public void TryCreate_MinAndMaxLength_NullValue_ReturnsEmptyError()
+    public void TryCreate_MinAndMaxLength_NullValue_ReturnsNullError()
     {
         var result = UserName.TryCreate(null);
         result.IsFailure.Should().BeTrue();
         var validation = (Error.InvalidInput)result.UnwrapError();
-        validation.Fields[0].Detail.Should().Be("User Name cannot be empty.");
+        validation.Fields[0].Detail.Should().Be("User Name cannot be null.");
     }
 
     #endregion

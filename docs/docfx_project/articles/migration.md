@@ -14,9 +14,12 @@ A package- and namespace-rename combined with a tightened public surface. Per-pa
 > **Version-label key.** The previous public release line was published as `FunctionalDdd.*` packages (last GA: `2.1`). v3 ships as the renamed `Trellis.*` packages. Sections below sometimes use "v1" and "v2" as internal shorthand for transitional Trellis development surfaces during the rename; in terms of *public* releases, treat the v1→v2 transitions in this guide as the canonical FunctionalDdd 2.x → Trellis 3.0 upgrade path.
 
 > [!NOTE]
-> **Coming from a 3.0-alpha build?** See [`CHANGELOG.md` → 3.0.0](https://github.com/xavierjohn/Trellis/blob/main/CHANGELOG.md#300) for the four breaking changes between the late-alpha and 3.0 GA: `Actor.Id` typed as `ActorId`, `Result<T>` JSON throws `NotSupportedException`, `RequiredXxx<T>` POLA realignment (opt-in `[NotDefault]` / `[Trim]`), and `IActorProvider.GetCurrentActorAsync` returning `Task<Maybe<Actor>>`.
+> **Coming from a 3.0-alpha build?** See [`CHANGELOG.md` → 3.0.0](https://github.com/xavierjohn/Trellis/blob/main/CHANGELOG.md#300) for the breaking changes between the late-alpha and 3.0 GA. Required value objects are now strict by default: remove legacy `[NotDefault]` / `[Trim]`, replace deleted `[AllowDefault]` with `[AllowEmpty]`, `[AllowZero]`, or `[AllowMinValue]` as appropriate, and use `[AllowWhitespace]` / `[NoTrim]` only for string domains that need those leniencies.
 
 This page focuses on the public FunctionalDdd 2.x → Trellis 3.0 jump. For release-by-release migration details during the preview churn — including the final move to the current 12-case `Trellis.Core.Error` union — use [`CHANGELOG.md`](https://github.com/xavierjohn/Trellis/blob/main/CHANGELOG.md) as the canonical ledger.
+
+> [!IMPORTANT]
+> **Required defaults flip.** `RequiredString<TSelf>` now rejects `null`, empty, and whitespace-only values and trims by default; `RequiredGuid<TSelf>` rejects `Guid.Empty`; numeric Required bases reject zero; date Required bases reject `MinValue`. `[NotDefault]` and `[Trim]` are vestigial no-ops with informational diagnostics (`TRLS046`, `TRLS047`). To preserve intentionally lenient legacy behavior, add the per-base opt-out: `[AllowEmpty]`, `[AllowWhitespace]`, `[NoTrim]`, `[AllowZero]`, or `[AllowMinValue]`.
 
 ## Patterns Index
 

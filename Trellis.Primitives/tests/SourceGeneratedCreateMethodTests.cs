@@ -228,7 +228,7 @@ public class SourceGeneratedCreateMethodTests
 
         // Assert
         act.Should().Throw<InvalidOperationException>()
-            .WithMessage("Failed to create TrackingId:*Tracking Id cannot be empty*");
+            .WithMessage("Failed to create TrackingId:*Tracking Id cannot be null*");
     }
 
     [Fact]
@@ -256,7 +256,7 @@ public class SourceGeneratedCreateMethodTests
 
         // Assert
         act.Should().Throw<InvalidOperationException>()
-            .WithMessage("Failed to create TrackingId:*Tracking Id cannot be empty*");
+            .WithMessage("Failed to create TrackingId:*Tracking Id cannot be whitespace-only*");
     }
 
     [Fact]

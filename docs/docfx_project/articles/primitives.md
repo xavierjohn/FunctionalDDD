@@ -40,8 +40,8 @@ audience: [developer]
 |---|---|---|
 | Built-in scalar VOs | `Age`, `CountryCode`, `CurrencyCode`, `EmailAddress`, `Hostname`, `IpAddress`, `LanguageCode`, `MonetaryAmount`, `Percentage`, `PhoneNumber`, `Slug`, `Url` | `Trellis.Primitives` |
 | Built-in structured VO | `Money` (`amount` + `currency`) | `Trellis.Primitives` |
-| Custom-primitive bases | `RequiredString<TSelf>`, `RequiredGuid<TSelf>`, `RequiredInt<TSelf>`, `RequiredLong<TSelf>`, `RequiredDecimal<TSelf>`, `RequiredBool<TSelf>`, `RequiredDateTime<TSelf>`, `RequiredEnum<TSelf>` | `Trellis.Core` |
-| Validation attributes | `[Trellis.StringLength]`, `[Trellis.Range]`, `[Trellis.EnumValue]` | `Trellis.Core` |
+| Custom-primitive bases | `RequiredString<TSelf>`, `RequiredGuid<TSelf>`, `RequiredInt<TSelf>`, `RequiredLong<TSelf>`, `RequiredDecimal<TSelf>`, `RequiredBool<TSelf>`, `RequiredDateTime<TSelf>`, `RequiredDateTimeOffset<TSelf>`, `RequiredEnum<TSelf>` | `Trellis.Core` |
+| Validation and opt-out attributes | `[Trellis.StringLength]`, `[Trellis.Range]`, `[Trellis.EnumValue]`, `[Trellis.AllowEmpty]`, `[Trellis.AllowWhitespace]`, `[Trellis.NoTrim]`, `[Trellis.AllowZero]`, `[Trellis.AllowMinValue]` | `Trellis.Core` |
 | Pattern / cross-field hook | `static partial void ValidateAdditional(value, fieldName, ref string? errorMessage)` | generator-emitted |
 | Scalar JSON converters | `ParsableJsonConverter<T>` (scalars), `RequiredEnumJsonConverter<TRequiredEnum>` | `Trellis.Core` |
 | Composite JSON converter | `CompositeValueObjectJsonConverter<T>` | `Trellis.Primitives` |
@@ -73,6 +73,7 @@ public partial class CustomerId : RequiredGuid<CustomerId> { }
 [Trellis.StringLength(200, MinimumLength = 1)]
 public partial class DisplayName : RequiredString<DisplayName> { }
 
+[Trellis.AllowZero]
 [Trellis.Range(0, 150)]
 public partial class LoyaltyScore : RequiredInt<LoyaltyScore> { }
 
@@ -125,14 +126,15 @@ A custom primitive is a `partial class` that inherits the appropriate `Required*
 
 | Base class | Underlying type | Built-in validation | Notable extras |
 |---|---|---|---|
-| `RequiredString<TSelf>` | `string` | null / empty / whitespace rejected, value trimmed; `[StringLength]` enforced | `Length`, `StartsWith(string)`, `Contains(string)`, `EndsWith(string)` |
-| `RequiredGuid<TSelf>` | `Guid` | `Guid.Empty` rejected | `NewUniqueV4()`, `NewUniqueV7()` |
-| `RequiredInt<TSelf>` | `int` | `null` rejected for nullable inputs; `[Range(int, int)]` enforced | invariant + culture-aware string parsing |
-| `RequiredLong<TSelf>` | `long` | `null` rejected for nullable inputs; `[Range(long, long)]` enforced | invariant + culture-aware string parsing |
-| `RequiredDecimal<TSelf>` | `decimal` | `null` rejected for nullable inputs; `[Range(int, int)]` or `[Range(double, double)]` enforced | invariant + culture-aware string parsing |
+| `RequiredString<TSelf>` | `string` | `null`, `""`, and whitespace-only rejected; value trimmed; `[StringLength]` enforced | `Length`, `StartsWith(string)`, `Contains(string)`, `EndsWith(string)` |
+| `RequiredGuid<TSelf>` | `Guid` | `null` and `Guid.Empty` rejected | `NewUniqueV4()`, `NewUniqueV7()` |
+| `RequiredInt<TSelf>` | `int` | `null` and `0` rejected; `[Range(int, int)]` enforced | invariant + culture-aware string parsing |
+| `RequiredLong<TSelf>` | `long` | `null` and `0L` rejected; `[Range(long, long)]` enforced | invariant + culture-aware string parsing |
+| `RequiredDecimal<TSelf>` | `decimal` | `null` and `0m` rejected; `[Range(int, int)]` or `[Range(double, double)]` enforced | invariant + culture-aware string parsing |
 | `RequiredBool<TSelf>` | `bool` | `null` rejected for nullable inputs; `false` is valid | string parsing of `"true"`/`"false"` |
-| `RequiredDateTime<TSelf>` | `DateTime` | `DateTime.MinValue` rejected | invariant round-trip `"O"` formatting |
-| `RequiredEnum<TSelf>` | `string` | `TryFromName` lookup against `public static readonly TSelf` fields | `[EnumValue("...")]` on each field overrides the wire name |
+| `RequiredDateTime<TSelf>` | `DateTime` | `null` and `DateTime.MinValue` rejected | invariant round-trip `"O"` formatting |
+| `RequiredDateTimeOffset<TSelf>` | `DateTimeOffset` | `null` and `DateTimeOffset.MinValue` rejected | invariant round-trip `"O"` formatting |
+| `RequiredEnum<TSelf>` | `string` | `TryFromName` lookup against `public static readonly TSelf` fields; undeclared names rejected | `[EnumValue("...")]` on each field overrides the wire name |
 
 > [!NOTE]
 > The base contracts (`IScalarValue<TSelf, TPrimitive>`, `IFormattableScalarValue<TSelf, TPrimitive>`) and shared bases (`ValueObject`, `ScalarValueObject<TSelf, T>`) live in `Trellis.Core`. `ScalarValueObject<TSelf, T>` implements `IConvertible` and `IFormattable` so scalar primitives behave naturally in formatting and conversion scenarios.
@@ -154,6 +156,8 @@ public partial class IsPublished : RequiredBool<IsPublished> { }
 public partial class PublishedAt : RequiredDateTime<PublishedAt> { }
 public partial class ExternalSequence : RequiredLong<ExternalSequence> { }
 ```
+
+Strict defaults are opt-out, not opt-in. Remove legacy `[NotDefault]` and `[Trim]`; use `[AllowEmpty]`, `[AllowWhitespace]`, `[NoTrim]`, `[AllowZero]`, or `[AllowMinValue]` only for primitives whose domain genuinely accepts those sentinel values.
 
 ### Factory methods
 
@@ -219,8 +223,13 @@ Trellis primitives enforce their rules in the generated `TryCreate`. There are t
 
 | Attribute | Target | Constructors | Notes |
 |---|---|---|---|
-| `Trellis.StringLengthAttribute` | `partial class X : RequiredString<X>` | `StringLength(int maximumLength)`; set `MinimumLength = N` via property initializer | `maximumLength` must be `>= 1`. Enforced after the null/empty/whitespace check. |
+| `Trellis.StringLengthAttribute` | `partial class X : RequiredString<X>` | `StringLength(int maximumLength)`; set `MinimumLength = N` via property initializer | `maximumLength` must be `>= 1`. Enforced after the null/empty/whitespace check and default trim. |
 | `Trellis.RangeAttribute` | `partial class X : RequiredInt<X>` / `RequiredLong<X>` / `RequiredDecimal<X>` | `(int, int)`, `(long, long)`, `(double, double)` | The constructor selected determines which generator template fires. There is **no** `RangeAttribute(typeof(decimal), "0.01", "999999.99")` overload — use `(double, double)` for fractional ranges. |
+| `Trellis.AllowEmptyAttribute` | `partial class X : RequiredString<X>` / `RequiredGuid<X>` | none | Opts out of final-empty rejection for strings or `Guid.Empty` rejection for GUIDs. |
+| `Trellis.AllowWhitespaceAttribute` | `partial class X : RequiredString<X>` | none | Opts out of whitespace-only rejection. Combine with `[NoTrim]` to preserve whitespace instead of storing `""`. |
+| `Trellis.NoTrimAttribute` | `partial class X : RequiredString<X>` | none | Opts out of automatic trim. |
+| `Trellis.AllowZeroAttribute` | `partial class X : RequiredInt<X>` / `RequiredLong<X>` / `RequiredDecimal<X>` | none | Opts out of zero rejection. |
+| `Trellis.AllowMinValueAttribute` | `partial class X : RequiredDateTime<X>` / `RequiredDateTimeOffset<X>` | none | Opts out of `MinValue` rejection. |
 
 > [!WARNING]
 > The `System.ComponentModel.DataAnnotations` attributes of the same name **do not work**. `[DataAnnotations.StringLength]` on the class fails to compile (`CS0592`); on a property of a `Required*<TSelf>` it compiles but is **silently ignored** by the generator. The analyzer rule `TRLS017` flags the class-placement case. Always import from `namespace Trellis`.

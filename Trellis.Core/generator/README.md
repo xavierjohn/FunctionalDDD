@@ -24,12 +24,14 @@ using Trellis;
 [StringLength(100)]
 public partial class CustomerName : RequiredString<CustomerName> { }
 
-var name = CustomerName.Create("Ada");
+var name = CustomerName.Create(" Ada "); // stores "Ada" by default
 ```
 
 ## Key Features
 - Generates `Create`, `TryCreate`, parsing, and conversion boilerplate for custom primitives.
-- Reads Trellis validation attributes such as `[StringLength]` and `[Range]` at compile time.
+- Emits strict-by-default validation: strings reject null/empty/whitespace and trim, GUIDs reject `Guid.Empty`, numerics reject zero, and dates reject `MinValue`.
+- Reads Trellis validation and opt-out attributes such as `[StringLength]`, `[Range]`, `[AllowEmpty]`, `[AllowWhitespace]`, `[NoTrim]`, `[AllowZero]`, and `[AllowMinValue]` at compile time.
+- Treats legacy `[NotDefault]` and `[Trim]` as vestigial no-ops with informational diagnostics.
 - Keeps custom value objects terse without giving up strong typing.
 
 ## Documentation

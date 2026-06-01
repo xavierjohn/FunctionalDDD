@@ -10,9 +10,9 @@ using Xunit;
 
 // --- Inner scalar value objects: one lenient, one strict ---
 
+[AllowEmpty]
 public partial class FlowThroughLenientName : RequiredString<FlowThroughLenientName> { }
 
-[Trim, NotDefault]
 public partial class FlowThroughStrictName : RequiredString<FlowThroughStrictName> { }
 
 // --- Composite VO whose inner scalar is lenient ---
@@ -70,14 +70,14 @@ public sealed class FlowThroughStrictComposite : ValueObject
 /// <summary>
 /// Cross-cutting regression coverage: when a <see cref="CompositeValueObject{T}"/>-shaped
 /// type contains a <see cref="RequiredString{TSelf}"/> field, the composite's <c>TryCreate</c>
-/// delegates to the inner <c>TryCreate</c> — so the inner type's POLA-realigned validation
-/// flows through. Lenient inner types accept <c>""</c>; strict inner types (decorated with
-/// <c>[NotDefault]</c>) keep rejecting.
+/// delegates to the inner <c>TryCreate</c> — so the inner type's strict-by-default validation
+/// flows through. Inner types decorated with <c>[AllowEmpty]</c> accept <c>""</c>; undecorated
+/// strict inner types keep rejecting.
 /// </summary>
 /// <remarks>
 /// This is the composite-VO mirror of the EF rehydration test
 /// (<see cref="RequiredXxxRehydrationLenienceTests"/> in Trellis.EntityFrameworkCore.Tests):
-/// both prove that the realignment's "inner type decides" rule holds at every layer that
+/// both prove that the strict-by-default "inner type decides" rule holds at every layer that
 /// invokes <c>TryCreate</c> on the inner scalar.
 /// </remarks>
 public class CompositeRequiredStringFlowThroughTests
