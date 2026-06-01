@@ -159,4 +159,34 @@ public sealed class IdempotencyFingerprintTests
         var b = IdempotencyFingerprint.Compute(BuildContext(body: body, extraHeaders: new() { ["X-Tenant"] = "globex" }), body, options);
         a.Should().Be(b);
     }
+
+    [Fact]
+    public void Distinct_query_strings_that_aligned_under_unframed_separators_must_not_collide()
+    {
+        // Without per-field length-framing, the canonical query "?a=&a=b&c=" and "?a=&b=c&b="
+        // both serialize to the same byte sequence (a 0x1F 0x1F b 0x1F c 0x1F) because the
+        // separator-only form cannot tell whether the empty token belongs to key "a" or to
+        // the boundary between two keys. They MUST hash differently — otherwise an attacker
+        // (or a buggy client) could replay the wrong cached response for a retry whose query
+        // changed.
+        var body = new byte[] { 1 };
+        var a = IdempotencyFingerprint.Compute(BuildContext(queryString: "?a=&a=b&c=", body: body), body, new IdempotencyOptions());
+        var b = IdempotencyFingerprint.Compute(BuildContext(queryString: "?a=&b=c&b=", body: body), body, new IdempotencyOptions());
+        a.Should().NotBe(b);
+    }
+
+    [Fact]
+    public void Configured_header_missing_vs_empty_value_must_not_collide()
+    {
+        // Without an explicit presence marker, a configured header that is absent serializes
+        // to the same bytes as the same header present with a single empty value (both
+        // collapse to the header name + separator). Two retries that differ only in whether
+        // the header was sent or sent-with-empty-value would replay each other's response.
+        var body = new byte[] { 1 };
+        var options = new IdempotencyOptions();
+        options.AdditionalFingerprintHeaders.Add("X-Tenant");
+        var absent = IdempotencyFingerprint.Compute(BuildContext(body: body), body, options);
+        var empty = IdempotencyFingerprint.Compute(BuildContext(body: body, extraHeaders: new() { ["X-Tenant"] = "" }), body, options);
+        absent.Should().NotBe(empty);
+    }
 }
