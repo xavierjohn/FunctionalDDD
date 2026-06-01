@@ -807,5 +807,29 @@ public class ClaimsActorProviderTests
         entries.Where(e => e.EventId.Id is 2 or 3).Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task GetCurrentActorAsync_SinglePermissionResolvedToJsonValue_LogsJsonShapeError()
+    {
+        ClaimsActorProvider.ResetDiagnosticThrottlesForTests();
+        var entries = new List<(LogLevel Level, EventId EventId, string Message)>();
+        var logger = new FakeLogger(entries);
+
+        // The configured PermissionsClaim resolves to exactly ONE value, and that value is
+        // a JSON document. This is the post-fallback signal that the consumer probably
+        // wanted nested-JSON traversal — the diagnostic must fire even when the resolved
+        // permissions set is non-empty (count == 1).
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim("permissions", """{"roles":["orders:read"]}"""));
+
+        var provider = CreateProvider(user, logger: logger);
+
+        await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        entries.Should().Contain(e => e.EventId.Id == 3)
+            .Which.Level.Should().Be(LogLevel.Error,
+            "JSON-shape probe must fire when the single resolved permission value is JSON-shaped");
+    }
+
     #endregion
 }

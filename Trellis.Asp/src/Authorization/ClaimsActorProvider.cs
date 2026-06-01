@@ -445,19 +445,33 @@ public class ClaimsActorProvider : IActorProvider, IProvideActorVaryHeaders
                 identity.Claims.Select(c => c.Type).Distinct().Take(10).ToArray());
         }
 
-        // Diagnostic 2: the configured PermissionsClaim resolved to a single value that
-        // parses as a JSON object or array. That shape is what JwtSecurityTokenHandler does
-        // for nested claims (Auth0 `app_metadata`, Azure B2C `extension_*`, some Okta token
-        // shapes) and is the smoking gun that the consumer needs a nested-JSON-aware provider
-        // such as NestedJsonPathClaimsActorProvider.
+        // Diagnostic 2: the configured PermissionsClaim resolved to a single JSON-shaped value.
+        // That shape is what JwtSecurityTokenHandler does for nested claims (Auth0
+        // `app_metadata`, Azure B2C `extension_*`, some Okta token shapes). Probe TWO sources:
+        //   (a) the literal claim's raw value — catches the misconfigured-flat-provider case
+        //       even when the resolved permissions set is empty (count == 0)
+        //   (b) the resolved single permission value — catches the case where the consumer's
+        //       PermissionsClaim resolved cleanly to one entry whose value is a JSON document
+        //       (the override may have produced this via path traversal, or the flat resolver
+        //       did when only one matching claim was present)
         if (s_jsonShapedClaimErrorFired != 0)
             return;
 
-        var raw = identity.FindFirst(Options.PermissionsClaim)?.Value;
-        if (string.IsNullOrWhiteSpace(raw) || (raw[0] != '{' && raw[0] != '['))
+        string? jsonProbeSource = null;
+        if (permissions.Count == 1)
+        {
+            jsonProbeSource = permissions.First();
+        }
+        else if (permissions.Count == 0)
+        {
+            jsonProbeSource = identity.FindFirst(Options.PermissionsClaim)?.Value;
+        }
+        // permissions.Count > 1 → multiple real permissions; the diagnostic does not apply.
+
+        if (string.IsNullOrWhiteSpace(jsonProbeSource) || (jsonProbeSource[0] != '{' && jsonProbeSource[0] != '['))
             return;
 
-        if (!LooksLikeJsonObjectOrArray(raw))
+        if (!LooksLikeJsonObjectOrArray(jsonProbeSource))
             return;
 
         if (Interlocked.CompareExchange(ref s_jsonShapedClaimErrorFired, 1, 0) == 0)

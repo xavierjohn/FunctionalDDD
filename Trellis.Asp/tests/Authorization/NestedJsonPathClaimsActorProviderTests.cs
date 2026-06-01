@@ -216,6 +216,41 @@ public class NestedJsonPathClaimsActorProviderTests
     }
 
     [Fact]
+    public void Constructor_PermissionsPathSetWithoutContainerClaim_Throws()
+    {
+        // Misconfiguration guard: setting PermissionsPath without ContainerClaim would
+        // silently fall back to flat-claim resolution, ignoring the path the consumer
+        // expected to traverse. Throw at construction so the misconfiguration is caught at
+        // first request rather than silently silently 403-ing requests in production.
+        var act = () => CreateProvider(
+            AuthenticatedUser(new Claim("sub", "user-1")),
+            new NestedJsonPathClaimsActorOptions
+            {
+                ActorIdClaim = "sub",
+                ContainerClaim = "",  // intentionally empty
+                PermissionsPath = "roles",
+            });
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*ContainerClaim must be set*");
+    }
+
+    [Fact]
+    public void Constructor_ActorIdPathSetWithoutContainerClaim_Throws()
+    {
+        var act = () => CreateProvider(
+            AuthenticatedUser(new Claim("sub", "user-1")),
+            new NestedJsonPathClaimsActorOptions
+            {
+                ActorIdPath = "user_id",
+                ContainerClaim = "",  // intentionally empty
+            });
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*ContainerClaim must be set*");
+    }
+
+    [Fact]
     public async Task GetCurrentActorAsync_PermissionsPathResolvesToScalarNumber_EmitsEmptyPermissionsWarning()
     {
         ClaimsActorProvider.ResetDiagnosticThrottlesForTests();

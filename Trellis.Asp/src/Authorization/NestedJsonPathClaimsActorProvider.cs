@@ -130,6 +130,14 @@ public class NestedJsonPathClaimsActorProvider : ClaimsActorProvider
     /// <summary>
     /// Initializes a new <see cref="NestedJsonPathClaimsActorProvider"/>.
     /// </summary>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown when <see cref="NestedJsonPathClaimsActorOptions.ContainerClaim"/> is empty but
+    /// <see cref="NestedJsonPathClaimsActorOptions.ActorIdPath"/> or
+    /// <see cref="NestedJsonPathClaimsActorOptions.PermissionsPath"/> is set. Silently
+    /// ignoring the configured paths when the container claim is empty would reintroduce the
+    /// silent-403 footgun the provider exists to prevent — fail fast instead so the consumer
+    /// fixes the misconfiguration before the first request.
+    /// </exception>
     public NestedJsonPathClaimsActorProvider(
         IHttpContextAccessor httpContextAccessor,
         IOptions<NestedJsonPathClaimsActorOptions> options,
@@ -147,6 +155,16 @@ public class NestedJsonPathClaimsActorProvider : ClaimsActorProvider
     {
         Options = options.Value;
         _logger = logger;
+
+        if (string.IsNullOrEmpty(Options.ContainerClaim)
+            && (!string.IsNullOrEmpty(Options.ActorIdPath) || !string.IsNullOrEmpty(Options.PermissionsPath)))
+        {
+            throw new InvalidOperationException(
+                "NestedJsonPathClaimsActorOptions.ContainerClaim must be set when ActorIdPath or " +
+                "PermissionsPath is configured. Leaving the container claim empty would silently " +
+                "ignore the configured nested-JSON paths and fall back to flat-claim resolution, " +
+                "reintroducing the silent-403 footgun this provider exists to prevent.");
+        }
     }
 
     /// <inheritdoc />
@@ -154,10 +172,10 @@ public class NestedJsonPathClaimsActorProvider : ClaimsActorProvider
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        // If neither path is configured the consumer is using the provider with default
-        // flat-claim behavior; delegate to the base implementation verbatim.
-        if (string.IsNullOrEmpty(Options.ContainerClaim)
-            || (string.IsNullOrEmpty(Options.ActorIdPath) && string.IsNullOrEmpty(Options.PermissionsPath)))
+        // If no paths are configured at all, the consumer is using the provider as a drop-in
+        // replacement for the base; delegate verbatim. (The container-required-when-path-set
+        // misconfiguration is caught at construction time — see the constructor invariant.)
+        if (string.IsNullOrEmpty(Options.ActorIdPath) && string.IsNullOrEmpty(Options.PermissionsPath))
         {
             return base.GetCurrentActorAsync(cancellationToken);
         }
