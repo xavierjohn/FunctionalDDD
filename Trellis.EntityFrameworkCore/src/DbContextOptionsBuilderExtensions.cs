@@ -1,6 +1,7 @@
 ﻿namespace Trellis.EntityFrameworkCore;
 
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 
 /// <summary>
 /// Extension methods for <see cref="DbContextOptionsBuilder"/> that register Trellis EF Core interceptors.
@@ -16,9 +17,11 @@ public static class DbContextOptionsBuilderExtensions
     /// Adds Trellis EF Core interceptors to the <see cref="DbContextOptionsBuilder"/>.
     /// Registers the <see cref="MaybeQueryInterceptor"/>, <see cref="ScalarValueQueryInterceptor"/>,
     /// <see cref="AggregateETagInterceptor"/>, and <see cref="EntityTimestampInterceptor"/> as singletons,
-    /// enabling natural LINQ syntax with <see cref="Maybe{T}"/> properties, <c>.Value</c> access on
-    /// scalar value objects, automatic optimistic concurrency ETag generation on aggregate saves,
-    /// and automatic <see cref="IEntity.CreatedAt"/>/<see cref="IEntity.LastModified"/> timestamps.
+    /// plus the <see cref="MaybeEvaluatableExpressionFilterPlugin"/> required for correct
+    /// <c>c.Maybe == Maybe.From(value)</c> translation. Enables natural LINQ syntax with
+    /// <see cref="Maybe{T}"/> properties, <c>.Value</c> access on scalar value objects, automatic
+    /// optimistic concurrency ETag generation on aggregate saves, and automatic
+    /// <see cref="IEntity.CreatedAt"/>/<see cref="IEntity.LastModified"/> timestamps.
     /// </summary>
     /// <typeparam name="TContext">The DbContext type.</typeparam>
     /// <param name="optionsBuilder">The options builder.</param>
@@ -26,7 +29,12 @@ public static class DbContextOptionsBuilderExtensions
     /// <remarks>
     /// Uses a static singleton interceptor instance to avoid EF Core's
     /// <c>ManyServiceProvidersCreatedWarning</c> when multiple DbContext instances are created
-    /// (common in integration tests).
+    /// (common in integration tests). This is the canonical registration path for Trellis EF Core
+    /// integration — registering only the interceptor via
+    /// <c>optionsBuilder.AddInterceptors(new MaybeQueryInterceptor())</c> is insufficient for
+    /// <c>Maybe.From(value)</c> equality translation; the
+    /// <see cref="MaybeEvaluatableExpressionFilterPlugin"/> must also be installed in the per-context
+    /// internal service provider.
     /// </remarks>
     /// <example>
     /// <code>
@@ -40,6 +48,7 @@ public static class DbContextOptionsBuilderExtensions
     {
         ArgumentNullException.ThrowIfNull(optionsBuilder);
         optionsBuilder.AddInterceptors(s_maybeQueryInterceptor, s_scalarValueQueryInterceptor, s_aggregateETagInterceptor, s_entityTimestampInterceptor);
+        AddMaybeEvaluatableExpressionFilterExtension(optionsBuilder);
         return optionsBuilder;
     }
 
@@ -54,6 +63,7 @@ public static class DbContextOptionsBuilderExtensions
     {
         ArgumentNullException.ThrowIfNull(optionsBuilder);
         optionsBuilder.AddInterceptors(s_maybeQueryInterceptor, s_scalarValueQueryInterceptor, s_aggregateETagInterceptor, s_entityTimestampInterceptor);
+        AddMaybeEvaluatableExpressionFilterExtension(optionsBuilder);
         return optionsBuilder;
     }
 
@@ -73,6 +83,7 @@ public static class DbContextOptionsBuilderExtensions
     {
         ArgumentNullException.ThrowIfNull(optionsBuilder);
         optionsBuilder.AddInterceptors(s_maybeQueryInterceptor, s_scalarValueQueryInterceptor, s_aggregateETagInterceptor, new EntityTimestampInterceptor(timeProvider));
+        AddMaybeEvaluatableExpressionFilterExtension(optionsBuilder);
         return optionsBuilder;
     }
 
@@ -91,6 +102,17 @@ public static class DbContextOptionsBuilderExtensions
     {
         ArgumentNullException.ThrowIfNull(optionsBuilder);
         optionsBuilder.AddInterceptors(s_maybeQueryInterceptor, s_scalarValueQueryInterceptor, s_aggregateETagInterceptor, new EntityTimestampInterceptor(timeProvider));
+        AddMaybeEvaluatableExpressionFilterExtension(optionsBuilder);
         return optionsBuilder;
+    }
+
+    private static void AddMaybeEvaluatableExpressionFilterExtension(DbContextOptionsBuilder optionsBuilder)
+    {
+        var coreOptions = optionsBuilder.Options.FindExtension<MaybeEvaluatableExpressionFilterExtension>();
+        if (coreOptions is not null)
+            return;
+
+        ((IDbContextOptionsBuilderInfrastructure)optionsBuilder)
+            .AddOrUpdateExtension(new MaybeEvaluatableExpressionFilterExtension());
     }
 }

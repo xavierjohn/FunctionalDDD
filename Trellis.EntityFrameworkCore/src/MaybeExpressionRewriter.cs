@@ -26,17 +26,22 @@ using Microsoft.EntityFrameworkCore;
 /// <item><term><c>entity.Phone.GetValueOrDefault(d)</c></term><description><c>EF.Property&lt;T?&gt;(entity, "_phone") ?? d</c></description></item>
 /// </list>
 /// <para>
-/// <b>Limitation — comparing <c>Maybe&lt;T&gt;</c> to a captured Maybe value.</b> EF Core extracts
-/// closed-expression operands (including <c>Maybe&lt;T&gt;.None</c> and <c>Maybe.From(value)</c>)
-/// to <c>QueryParameterExpression</c>s during expression-tree funcletization, which runs
-/// **before** <c>IQueryExpressionInterceptor.QueryCompilationStarting</c>. By the time this
-/// rewriter sees the operand the syntactic distinction is lost. <see cref="VisitBinary"/>
-/// conservatively converts any unrecognized <see cref="Maybe{T}"/>-typed operand to a typed
-/// null constant so that <c>c.Phone == Maybe&lt;T&gt;.None</c> remains valid. As a consequence,
-/// <c>c.Phone == Maybe.From(value)</c> silently miss-queries to <c>_phone IS NULL</c>. Use
-/// <c>MaybeQueryableExtensions.WhereEquals(c => c.Phone, value)</c> for value comparisons.
-/// A future fix could intercept earlier via <c>IEvaluatableExpressionFilterPlugin</c> to
-/// prevent funcletization of <c>Maybe</c>-bearing nodes; this is tracked as a follow-up.
+/// <b>Maybe-equality translation.</b> The companion
+/// <see cref="MaybeEvaluatableExpressionFilterPlugin"/> (registered by
+/// <see cref="DbContextOptionsBuilderExtensions.AddTrellisInterceptors{TContext}(Microsoft.EntityFrameworkCore.DbContextOptionsBuilder{TContext})"/>)
+/// prevents EF Core funcletization for three literal operand shapes — <c>Maybe&lt;T&gt;.None</c>,
+/// <c>default(Maybe&lt;T&gt;)</c>, and <c>Maybe.From(value)</c> — so this rewriter can see them
+/// structurally and translate <c>c.Phone == Maybe.From(value)</c> to <c>_phone = @p</c> and
+/// <c>c.Phone == Maybe&lt;T&gt;.None</c> to <c>_phone IS NULL</c>.
+/// </para>
+/// <para>
+/// <b>Captured <see cref="Maybe{T}"/> variables.</b> A captured local of type <see cref="Maybe{T}"/>
+/// (for example <c>var m = Maybe.From(phone); db.Where(c =&gt; c.Phone == m);</c>) funcletizes to a
+/// <c>QueryParameterExpression</c> and the rewriter cannot tell <c>None</c> from <c>Some(value)</c>
+/// at translation time. Instead of silently producing wrong rows the rewriter throws
+/// <see cref="InvalidOperationException"/> naming the supported inline alternatives. Inline
+/// <c>Maybe.From(value)</c> / <c>Maybe&lt;T&gt;.None</c> instead, or use
+/// <c>MaybeQueryableExtensions.WhereEquals(...)</c>.
 /// </para>
 /// <para>
 /// <b>Limitation — bare <see cref="Maybe{T}"/> projection.</b> Rewriting bare <c>entity.Phone</c>
@@ -285,12 +290,23 @@ internal sealed class MaybeExpressionRewriter : ExpressionVisitor
         type.IsGenericType && type.GetGenericTypeDefinition() == s_maybeOpenGeneric;
 
     /// <summary>
-    /// Rewrites <c>Maybe&lt;T&gt;.None</c> or <c>default(Maybe&lt;T&gt;)</c> operands to a typed null
-    /// constant so that binary comparisons have compatible operand types.
+    /// Rewrites a <see cref="Maybe{T}"/>-typed operand of an equality comparison into a form EF
+    /// Core can translate. The companion <see cref="MaybeEvaluatableExpressionFilterPlugin"/>
+    /// keeps the three literal shapes (<c>Maybe&lt;T&gt;.None</c>, <c>default(Maybe&lt;T&gt;)</c>,
+    /// <c>Maybe.From(value)</c>) un-funcletized so this method can recognise them structurally.
     /// </summary>
+    /// <remarks>
+    /// <list type="bullet">
+    /// <item><description><c>Maybe&lt;T&gt;.None</c> / <c>default(Maybe&lt;T&gt;)</c> → typed null constant.</description></item>
+    /// <item><description><c>Maybe.From(arg)</c> / <c>Maybe&lt;T&gt;.From(arg)</c> → the inner <c>arg</c>, lifted to the storage type.</description></item>
+    /// <item><description>Any other <see cref="Maybe{T}"/>-typed operand (typically a captured local) → throws <see cref="InvalidOperationException"/>.</description></item>
+    /// </list>
+    /// The throw replaces the historical "convert to typed null" fallback that silently
+    /// miss-queried <c>c.Phone == capturedSomeValue</c> to <c>_phone IS NULL</c>.
+    /// </remarks>
     private static Expression RewriteMaybeDefaultToNull(Expression visited, Expression original)
     {
-        // If the visited expression was already rewritten to an EF.Property call, keep it.
+        // Already rewritten to EF.Property by an inner visit pass — leave alone.
         if (visited != original && visited.NodeType == ExpressionType.Call)
             return visited;
 
@@ -302,7 +318,54 @@ internal sealed class MaybeExpressionRewriter : ExpressionVisitor
             ? typeof(Nullable<>).MakeGenericType(innerType)
             : innerType;
 
-        return Expression.Constant(null, storeType);
+        switch (visited)
+        {
+            // Maybe<T>.None — static field access on the closed generic type.
+            case MemberExpression { Expression: null, Member.Name: "None" } memberExpr
+                when IsMaybeType(memberExpr.Type):
+                return Expression.Constant(null, storeType);
+
+            // default(Maybe<T>).
+            case DefaultExpression defaultExpr when IsMaybeType(defaultExpr.Type):
+                return Expression.Constant(null, storeType);
+
+            // Maybe.From(value) / Maybe<T>.From(value) — extract the inner value and lift to
+            // the storage type so the binary comparison translates to `_field = @p`.
+            case MethodCallExpression call when IsMaybeFromCall(call) && call.Arguments.Count == 1:
+                {
+                    var arg = call.Arguments[0];
+                    if (arg.Type == storeType)
+                        return arg;
+                    // For value-type inner: storage is Nullable<T>; lift the argument.
+                    // For reference-type inner: storage is T; cast if needed.
+                    return Expression.Convert(arg, storeType);
+                }
+
+            default:
+                throw new InvalidOperationException(
+                    $"Cannot translate a captured {original.Type.Name} value in a LINQ equality "
+                    + "comparison against a Maybe<T> property. Inline the literal form "
+                    + "(`Maybe.From(value)` or `Maybe<T>.None`) at the comparison site, or use "
+                    + "`MaybeQueryableExtensions.WhereEquals(propertySelector, value)`.");
+        }
+    }
+
+    private static bool IsMaybeFromCall(MethodCallExpression call)
+    {
+        if (call.Method.Name != "From" || !call.Method.IsStatic || !IsMaybeType(call.Type))
+            return false;
+
+        var declaring = call.Method.DeclaringType;
+        if (declaring is null)
+            return false;
+
+        if (declaring == typeof(Maybe))
+            return true;
+
+        if (declaring.IsGenericType && declaring.GetGenericTypeDefinition() == s_maybeOpenGeneric)
+            return true;
+
+        return false;
     }
 
     /// <summary>
