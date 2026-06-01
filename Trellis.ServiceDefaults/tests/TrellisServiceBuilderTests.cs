@@ -897,4 +897,50 @@ public class TrellisServiceBuilderTests
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("*mutually exclusive*");
     }
+
+    [Fact]
+    public void UseFluentValidationTyped_CalledTwiceForSamePair_RegistersValidatorOnce()
+    {
+        var services = new ServiceCollection();
+
+        services.AddTrellis(options => options
+            .UseFluentValidation<TypedSampleCommandValidator, TypedSampleCommand>()
+            .UseFluentValidation<TypedSampleCommandValidator, TypedSampleCommand>());
+
+        services.Count(d =>
+            d.ServiceType == typeof(global::FluentValidation.IValidator<TypedSampleCommand>) &&
+            d.ImplementationType == typeof(TypedSampleCommandValidator)).Should().Be(1,
+            "TryAddEnumerable must dedup repeated typed validator registrations");
+    }
+
+    [Fact]
+    public void UseResourceAuthorizationTyped_CalledTwiceForSameTriple_RegistersBehaviorOnce()
+    {
+        var services = new ServiceCollection();
+
+        services.AddTrellis(options => options
+            .UseResourceAuthorization<UpdateProtectedOrderCommand, ProtectedOrder, Result<string>>()
+            .UseResourceAuthorization<UpdateProtectedOrderCommand, ProtectedOrder, Result<string>>());
+
+        services.Count(d =>
+            d.ServiceType == typeof(IPipelineBehavior<UpdateProtectedOrderCommand, Result<string>>) &&
+            d.ImplementationType == typeof(ResourceAuthorizationBehavior<UpdateProtectedOrderCommand, ProtectedOrder, Result<string>>))
+            .Should().Be(1,
+            "the dedup guard must prevent duplicate closed-generic ResourceAuthorizationBehavior registration");
+    }
+
+    [Fact]
+    public void UseDomainEventsTyped_CalledTwiceForSamePair_RegistersHandlerOnce()
+    {
+        var services = new ServiceCollection();
+
+        services.AddTrellis(options => options
+            .UseDomainEvents<SampleEvent, SampleEventHandler>()
+            .UseDomainEvents<SampleEvent, SampleEventHandler>());
+
+        services.Count(d =>
+            d.ServiceType == typeof(IDomainEventHandler<SampleEvent>) &&
+            d.ImplementationType == typeof(SampleEventHandler)).Should().Be(1,
+            "AddDomainEventHandler already uses TryAddEnumerable so the typed builder overload is idempotent");
+    }
 }

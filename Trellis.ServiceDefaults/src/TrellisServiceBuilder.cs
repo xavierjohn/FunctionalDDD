@@ -8,6 +8,7 @@ using global::FluentValidation;
 using global::Mediator;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Trellis;
 using Trellis.Asp;
 using Trellis.Asp.Authorization;
@@ -199,8 +200,12 @@ public sealed class TrellisServiceBuilder
     {
         _useFluentValidation = true;
         _useMediator = true;
+        // Dedup via TryAddEnumerable so repeated calls (e.g. composed from multiple modules)
+        // do not register the same validator twice. FluentValidation resolves every
+        // IValidator<TMessage> registration during ValidationBehavior, so duplicates would
+        // execute the same rules N times per request.
         _typedFluentValidatorRegistrations.Add(static services =>
-            services.AddScoped<IValidator<TMessage>, TValidator>());
+            services.TryAddEnumerable(ServiceDescriptor.Scoped<IValidator<TMessage>, TValidator>()));
         return this;
     }
 
@@ -264,8 +269,28 @@ public sealed class TrellisServiceBuilder
     {
         _useResourceAuthorization = true;
         _useMediator = true;
+        // Guard against duplicate registration: the underlying
+        // AddResourceAuthorization<TMessage, TResource, TResponse>() does not dedup, so
+        // repeated calls (composed from multiple modules) would register the same closed-generic
+        // ResourceAuthorizationBehavior twice and run authorization + resource loading twice
+        // per request.
         _typedResourceAuthorizationRegistrations.Add(static services =>
-            services.AddResourceAuthorization<TMessage, TResource, TResponse>());
+        {
+            var alreadyRegistered = false;
+            for (var i = 0; i < services.Count; i++)
+            {
+                var d = services[i];
+                if (d.ServiceType == typeof(IPipelineBehavior<TMessage, TResponse>)
+                    && d.ImplementationType == typeof(ResourceAuthorizationBehavior<TMessage, TResource, TResponse>))
+                {
+                    alreadyRegistered = true;
+                    break;
+                }
+            }
+
+            if (!alreadyRegistered)
+                services.AddResourceAuthorization<TMessage, TResource, TResponse>();
+        });
         return this;
     }
 
