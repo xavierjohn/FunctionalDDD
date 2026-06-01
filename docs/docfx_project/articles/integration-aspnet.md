@@ -76,7 +76,7 @@ using Trellis;
 using Trellis.Asp;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddTrellisAsp();
+builder.Services.AddTrellisAspWithScalarValidation();
 
 var app = builder.Build();
 app.UseScalarValueValidation();
@@ -552,7 +552,7 @@ Full surface (options, store, scope resolver, attribute, parser, fingerprint hel
 |---|---|
 | MVC controllers | `services.AddControllers().AddScalarValueValidation();` + `app.UseScalarValueValidation();` |
 | Minimal API | `services.AddScalarValueValidationForMinimalApi();` + `app.UseScalarValueValidation();` + `.WithScalarValueValidation()` per endpoint |
-| Either | `services.AddTrellisAsp();` (registers `TrellisAspOptions` and chains `AddScalarValueValidation()` for **both** MVC and Minimal API JSON pipelines) |
+| Either | `services.AddTrellisAspWithScalarValidation();` (registers `TrellisAspOptions` AND chains `AddScalarValueValidation()` for **both** MVC and Minimal API JSON pipelines in one call), or call `AddTrellisAsp()` + `AddScalarValueValidation()` explicitly when the split matters (e.g. a host that only needs error mapping). |
 
 > [!IMPORTANT]
 > The `IServiceCollection`-receiver `AddScalarValueValidation()` only configures shared JSON support. For MVC apps you still need `AddControllers().AddScalarValueValidation()` so the `ScalarValueValidationFilter` and `ScalarValueModelBinderProvider` are registered.
@@ -681,7 +681,7 @@ When you genuinely need a custom payload shape (non-Problem-Details body, endpoi
 ## Practical guidance
 
 - **Convert at the API boundary only.** Keep `Result<T>` flowing through your application layer; convert to `IResult` / `ActionResult<T>` exactly once, at the endpoint.
-- **`AddTrellisAsp()` is the one-call setup.** It registers `TrellisAspOptions` and configures both the MVC and Minimal API JSON pipelines for scalar-value / `Maybe<T>` deserialization. You still need `UseScalarValueValidation()` middleware and (for Minimal APIs) `WithScalarValueValidation()` per endpoint.
+- **`AddTrellisAspWithScalarValidation()` is the one-call setup for controller hosts.** It registers `TrellisAspOptions` and configures both the MVC and Minimal API JSON pipelines for scalar-value / `Maybe<T>` deserialization. (`AddTrellisAsp()` alone registers only error mapping — the scalar pipeline mutates global `MvcOptions` / `JsonOptions` and is now an explicit opt-in.) You still need `UseScalarValueValidation()` middleware and (for Minimal APIs) `WithScalarValueValidation()` per endpoint.
 - **Document failure status codes.** Add `[ProducesResponseType<ProblemDetails>(...)]` for every spec-listed failure status (`422`, `409`, `403`, `404`, …). The `IEndpointMetadataProvider` on Trellis result types already declares the union of statuses the writer can emit (`200`, `201`, `304`, `400`, `404`, `412`, `500`); layer your spec-specific metadata on top.
 - **`Result<Unit>` for side-effect commands**. A successful `Result<Unit>` produces `204 No Content` with no body.
 - **Use typed ETag parsers.** `ETagHelper.ParseIfMatch` / `ParseIfNoneMatch` return `EntityTagValue[]?`, which feeds `OptionalETag` / `RequireETag` (Http.Abstractions) and `EnforceIfNoneMatchPrecondition` (Asp) directly.

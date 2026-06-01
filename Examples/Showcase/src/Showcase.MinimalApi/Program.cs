@@ -23,7 +23,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.RespectRequiredConstructorParameters = true;
     options.SerializerOptions.TypeInfoResolverChain.Insert(0, ShowcaseJsonSerializerContext.Default);
 });
-builder.Services.AddTrellisAsp();
+builder.Services.AddTrellisAspWithScalarValidation();
 builder.Services.AddTrellisRouteConstraint<AccountId>();
 // AccountType, AccountStatus, and TransactionType are RequiredEnum<TSelf> value objects;
 // each carries its own [JsonConverter(typeof(RequiredEnumJsonConverter<T>))] attribute

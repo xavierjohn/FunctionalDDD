@@ -669,3 +669,43 @@ As part of Phase 3 of the v2 redesign, the seven extension classes listed below 
 **Kept (not obsolete):** `OptionalETagAsync` / `RequireETagAsync`, `EntityTagValue`, `AggregateETagExtensions`, `RepresentationMetadata`, `WriteOutcome<T>`, `PagedResponse<T>` / `PageLink` (moved alongside `PagedResponseBuilder`). Note: as part of the v3 error union DDD realignment, `EntityTagValue`, `AggregateETagExtensions` (with `OptionalETagAsync` / `RequireETagAsync`), `RepresentationMetadata`, and `WriteOutcome<T>` moved from `Trellis.Core` to the new `Trellis.Http.Abstractions` package. Their CLR namespace stays `Trellis`, so no `using` change is required — only the package reference.
 
 See [`docs/docfx_project/articles/asp-tohttpresponse.md`](docs/docfx_project/articles/asp-tohttpresponse.md) for canonical examples of every pattern.
+
+---
+
+## Trellis.Asp v3 — `AddTrellisAsp()` no longer auto-registers scalar-value validation
+
+`AddTrellisAsp()` previously made one silent side-effect call to `AddScalarValueValidation()`, which mutates global `MvcOptions` and `JsonOptions` (model binders, JSON converters, `SuppressModelStateInvalidFilter` flip). The mutation was invisible from the `AddTrellisAsp` call site and surprised consumers who had already configured their own converters / naming policies.
+
+In v3, `AddTrellisAsp()` registers ONLY:
+- `TrellisAspOptions` (error-to-status-code mapping)
+- `ResourceCollectionNameRegistry`
+- The composition contract for layered `MapError<TError>` configuration
+
+Scalar-value validation is now an explicit opt-in. Three migration shapes:
+
+| Before (v2.x) | After (v3) | When to use |
+|---|---|---|
+| `services.AddTrellisAsp();` | `services.AddTrellisAspWithScalarValidation();` | **One-line behavior-preserving migration** for greenfield controller hosts that bind value-object DTOs. |
+| `services.AddTrellisAsp();` | `services.AddTrellisAsp();`<br>`services.AddScalarValueValidation();` | Same effect as the convenience helper, but makes the two registrations visible at the call site. |
+| `services.AddTrellisAsp();` (host doesn't bind VO DTOs) | `services.AddTrellisAsp();` (no scalar validation) | MVC sites that don't bind value-object DTOs from JSON/route/query. Drops the unused binder / converter mutation. |
+
+For the `TrellisServiceBuilder` composition root (`services.AddTrellis(o => ...)`), the same split applies via a new slot:
+
+```csharp
+// Before
+services.AddTrellis(options => options
+    .UseAsp()       // implicitly registered scalar-value validation
+    .UseMediator());
+
+// After — behavior-preserving migration
+services.AddTrellis(options => options
+    .UseAsp()
+    .UseScalarValueValidation()   // explicit opt-in
+    .UseMediator());
+```
+
+`UseScalarValueValidation()` is independent of `UseAsp()` and idempotent.
+
+**How to spot affected sites in your repo:** search for `AddTrellisAsp(` or `.UseAsp(` and audit each call. If the host binds endpoints that receive Trellis value objects from JSON / route / query (or the `Maybe<T>` of those), use the `AddTrellisAspWithScalarValidation()` / `.UseScalarValueValidation()` form. If the host only uses error-to-status mapping (e.g. raw `string` / `int` parameters), `AddTrellisAsp()` alone is sufficient.
+
+**Mechanical fix.** A grep-and-replace of the form `s/services\.AddTrellisAsp\(/services\.AddTrellisAspWithScalarValidation(/g` (and the same for `options.UseAsp()` → `options.UseAsp().UseScalarValueValidation()`) is a safe no-behavior-change migration; tighten individual call sites later.

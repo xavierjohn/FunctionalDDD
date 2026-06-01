@@ -349,7 +349,7 @@ For full signatures of every built-in (`Add`, `Multiply`, `Allocate`, `Sum`, `Fr
 
 ## ASP.NET integration
 
-Scalar primitives bind from route / query / body once you call `AddTrellisAsp()` or `AddScalarValueValidation()` from `Trellis.Asp`:
+Scalar primitives bind from route / query / body once you call `AddTrellisAspWithScalarValidation()` (or `AddScalarValueValidation()` directly) from `Trellis.Asp`:
 
 - Model binders read the raw value, call `TValue.TryCreate`, and add validation errors to `ModelState` on failure.
 - JSON converters write the underlying primitive on `Write`, read with `TryCreate` on `Read`, and route failures into the `Error.InvalidInput` aggregator.

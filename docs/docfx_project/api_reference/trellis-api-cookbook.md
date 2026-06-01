@@ -359,7 +359,7 @@ using Trellis;
 using Trellis.Asp;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddTrellisAsp();          // error → status mapping + scalar-value validation
+builder.Services.AddTrellisAspWithScalarValidation();  // error → status mapping + scalar-value validation
 builder.Services.AddOrdersFeature();       // from Recipe 2
 
 var app = builder.Build();
@@ -777,6 +777,7 @@ public static class CompositionRoot
 
         services.AddTrellis(options => options
             .UseAsp()
+            .UseScalarValueValidation()
             .UseMediator()
             .UseFluentValidation(typeof(PlaceOrderValidator).Assembly)
             .UseClaimsActorProvider()
@@ -794,7 +795,8 @@ public static class CompositionRoot
 
 | Module | What it applies | Notes |
 | ---- | ---- | ----------------- |
-| `UseAsp()` | `AddTrellisAsp()` | Error → status mapping plus scalar-value JSON/model-binding validation. |
+| `UseAsp()` | `AddTrellisAsp()` | Error → status mapping and `ResourceCollectionNameRegistry`. **Does NOT register scalar-value JSON / model-binding validation** — compose with `UseScalarValueValidation()` when binding value-object DTOs. |
+| `UseScalarValueValidation()` | `AddScalarValueValidation()` | Configures both MVC and Minimal API JSON pipelines (model binders + JSON converters + `SuppressModelStateInvalidFilter` toggle). Independent of `UseAsp()`. Minimal API hosts must still call `app.UseScalarValueValidation()` middleware and chain `.WithScalarValueValidation()` per endpoint. |
 | `UseMediator()` | `AddTrellisBehaviors()` | Registers the canonical Result-aware pipeline behaviors. |
 | `UseFluentValidation(...)` | `AddTrellisFluentValidation(...)` | Implies `UseMediator()`. Pass assemblies to scan, or omit assemblies when validators are registered explicitly. |
 | `UseClaimsActorProvider()` / `UseEntraActorProvider()` / `UseDevelopmentActorProvider()` | One ASP actor provider | The builder rejects multiple actor providers. |
@@ -1092,9 +1094,9 @@ The answer depends on whether the inner type is a **scalar** (single-primitive) 
 
 | Inner type | Pattern | Why |
 |---|---|---|
-| `Maybe<TScalar>` where `TScalar : IScalarValue<TScalar, TPrimitive>` (e.g., `Maybe<EmailAddress>`, `Maybe<PhoneNumber>`) | **Use `Maybe<T>` directly on the DTO.** | `AddTrellisAsp()` registers `MaybeScalarValueJsonConverterFactory` (JSON) and `MaybeModelBinder<T,P>` (route/query/header); MVC child-validation suppression for `None` scalar-maybe values is handled internally by the Trellis MVC integration. Call `AddTrellisAsp(...)` before MVC model binding is configured. `null`/missing → `None`; valid → `Maybe.From(validated)`; invalid → ProblemDetails with the same field path the domain emits. |
+| `Maybe<TScalar>` where `TScalar : IScalarValue<TScalar, TPrimitive>` (e.g., `Maybe<EmailAddress>`, `Maybe<PhoneNumber>`) | **Use `Maybe<T>` directly on the DTO.** | `AddScalarValueValidation()` (or the convenience `AddTrellisAspWithScalarValidation()`) registers `MaybeScalarValueJsonConverterFactory` (JSON) and `MaybeModelBinder<T,P>` (route/query/header); MVC child-validation suppression for `None` scalar-maybe values is handled internally by the Trellis MVC integration. Call it before MVC model binding is configured. `null`/missing → `None`; valid → `Maybe.From(validated)`; invalid → ProblemDetails with the same field path the domain emits. |
 | `Maybe<TComposite>` where `TComposite : ValueObject` with multiple fields (e.g., `Maybe<ShippingAddress>`) | **Use a nullable transport (`TComposite?`) and adapt at the controller seam.** | No `MaybeCompositeValueObjectJsonConverterFactory` ships today — System.Text.Json would default-construct the inner type, bypassing `TryCreate`. Wrap with `Maybe.From(...)` inside the controller. |
-| `Maybe<TPrimitive>` (e.g., `Maybe<int>`, `Maybe<long>`, `Maybe<string>`, `Maybe<Guid>`, `Maybe<DateTime>`) | **Use `Maybe<T>` directly on the DTO.** | `AddTrellisAsp()` registers `MaybePrimitiveJsonConverterFactory` (JSON) and `MaybePrimitiveModelBinder<T>` (route/query/header). Same closed-primitive allowed list as `CompositeValueObjectJsonConverter` (`string`, `decimal`, `int`, `long`, `short`, `byte`, `double`, `float`, `bool`, `Guid`, `DateTime`, `DateTimeOffset`). `null`/missing → `None`; valid primitive → `Maybe.From(value)`. If the primitive carries domain meaning, you may still prefer wrapping it in a scalar value object (e.g., `Age : RequiredInt<Age>`) for the wire-time validation `TryCreate` provides; both shapes are factory-handled. |
+| `Maybe<TPrimitive>` (e.g., `Maybe<int>`, `Maybe<long>`, `Maybe<string>`, `Maybe<Guid>`, `Maybe<DateTime>`) | **Use `Maybe<T>` directly on the DTO.** | `AddScalarValueValidation()` (or the convenience `AddTrellisAspWithScalarValidation()`) registers `MaybePrimitiveJsonConverterFactory` (JSON) and `MaybePrimitiveModelBinder<T>` (route/query/header). Same closed-primitive allowed list as `CompositeValueObjectJsonConverter` (`string`, `decimal`, `int`, `long`, `short`, `byte`, `double`, `float`, `bool`, `Guid`, `DateTime`, `DateTimeOffset`). `null`/missing → `None`; valid primitive → `Maybe.From(value)`. If the primitive carries domain meaning, you may still prefer wrapping it in a scalar value object (e.g., `Age : RequiredInt<Age>`) for the wire-time validation `TryCreate` provides; both shapes are factory-handled. |
 | `Maybe<TUnsupportedPrimitive>` (e.g., `Maybe<DateOnly>`, `Maybe<TimeOnly>`, `Maybe<uint>`) | **Use `TUnsupportedPrimitive?` on the DTO and `.AsMaybe()` at the seam.** | These types are outside both the composite-VO converter allowed list and the `Maybe<TPrimitive>` factory allowed list. The wire-shape DTO + adapter at the controller seam is the same pattern as `Maybe<TComposite>`. |
 
 > **The same DTO pattern applies inside a composite VO.** If a *composite value object's interior* contains `Maybe<TPrimitive>` / arrays / collections, `CompositeValueObjectJsonConverter` rejects them too (see Recipe 13 §"Supported property shapes inside a composite VO"). Keep the composite VO clean as a domain type and declare a wire-shape DTO with nullable transports, then lift on inbound (`.AsMaybe()` / `Maybe.From(...)`) and project on outbound (`.AsNullable()`).
@@ -1125,10 +1127,10 @@ public sealed class CustomersController(ISender sender) : ControllerBase
 }
 ```
 
-`AddTrellisAsp()` is the only wiring required:
+`AddTrellisAspWithScalarValidation()` is the only wiring required:
 
 ```csharp
-services.AddTrellisAsp();      // MaybeScalarValueJsonConverterFactory + MaybePrimitiveJsonConverterFactory + MaybeModelBinder + MaybePrimitiveModelBinder + ValidationVisitor patch
+services.AddTrellisAspWithScalarValidation();   // MaybeScalarValueJsonConverterFactory + MaybePrimitiveJsonConverterFactory + MaybeModelBinder + MaybePrimitiveModelBinder + ValidationVisitor patch
 services.AddControllers();
 ```
 
@@ -1172,13 +1174,14 @@ public sealed record CreateCustomerRequest(EmailAddress Email, Maybe<ShippingAdd
 // FIX — nullable transport + controller-seam adapter (Pattern B above).
 public sealed record CreateCustomerRequest(EmailAddress Email, ShippingAddress? ShippingAddress);
 
-// WRONG — bypassing AddTrellisAsp() (e.g., raw services.AddControllers().AddJsonOptions(...) in isolation)
+// WRONG — bypassing AddScalarValueValidation() (e.g., raw services.AddControllers().AddJsonOptions(...) in isolation)
 // drops the Maybe converters AND the SuppressChildValidationMetadataProvider, so MVC's ValidationVisitor
 // will throw InvalidOperationException("Maybe has no value.") the moment a None reaches model validation.
-services.AddControllers();   // missing AddTrellisAsp()
+services.AddControllers();   // missing scalar-value validation wiring
 
-// FIX — call AddTrellisAsp() before AddControllers(); it is idempotent and configures both pipelines.
-services.AddTrellisAsp();
+// FIX — call AddTrellisAspWithScalarValidation() (or AddScalarValueValidation() explicitly) before
+// AddControllers(); both call paths are idempotent and configure both pipelines.
+services.AddTrellisAspWithScalarValidation();
 services.AddControllers();
 ```
 

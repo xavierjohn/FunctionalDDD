@@ -22,6 +22,7 @@ public static class CompositionRoot
         //    lands innermost in the mediator pipeline.
         services.AddTrellis(options => options
             .UseAsp()
+            .UseScalarValueValidation()
             .UseMediator()
             .UseFluentValidation(typeof(PlaceOrderValidator).Assembly)
             .UseClaimsActorProvider()

@@ -44,6 +44,7 @@ public sealed class TrellisServiceBuilder
     private Action<IServiceCollection>? _workerActorWrap;
     private Action<IServiceCollection>? _unitOfWorkRegistration;
     private bool _useAsp;
+    private bool _useScalarValueValidation;
     private bool _useProblemDetails;
     private bool _useIdempotency;
     private Action<Trellis.Asp.Idempotency.IdempotencyOptions>? _configureIdempotency;
@@ -58,13 +59,24 @@ public sealed class TrellisServiceBuilder
         _services = services;
 
     /// <summary>
-    /// Registers Trellis ASP.NET Core integration.
+    /// Registers Trellis ASP.NET Core integration (error-to-status-code mapping and the
+    /// <see cref="ResourceCollectionNameRegistry"/>).
     /// </summary>
     /// <remarks>
+    /// <para>
     /// Calling this method more than once is allowed; the configure delegates are composed in
     /// call order rather than overwriting. Each delegate runs against the same
     /// <see cref="TrellisAspOptions"/> instance, so layered configuration (e.g. a library
     /// applies defaults; the host overrides specific properties) is supported.
+    /// </para>
+    /// <para>
+    /// <b>Does NOT register scalar-value validation.</b> Scalar-value validation mutates
+    /// global <c>MvcOptions</c> / <c>JsonOptions</c> (model binders, JSON converters). If
+    /// your endpoints bind request bodies / route / query containing Trellis value objects
+    /// (<see cref="IScalarValue{TSelf, TPrimitive}"/>, <see cref="Maybe{T}"/>), additionally
+    /// call <see cref="UseScalarValueValidation"/>. The two slots are independent so the
+    /// global-options mutation is opt-in instead of silent.
+    /// </para>
     /// </remarks>
     public TrellisServiceBuilder UseAsp(Action<TrellisAspOptions>? configure = null)
     {
@@ -72,6 +84,36 @@ public sealed class TrellisServiceBuilder
         if (configure is not null)
             _configureAsp = Combine(_configureAsp, configure);
 
+        return this;
+    }
+
+    /// <summary>
+    /// Registers Trellis scalar-value validation: configures both MVC and Minimal API JSON
+    /// pipelines (model binders, JSON converters, <c>SuppressModelStateInvalidFilter</c>
+    /// toggle) so <see cref="IScalarValue{TSelf, TPrimitive}"/> / <see cref="Maybe{T}"/>
+    /// validation surfaces as RFC 9457 ProblemDetails.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Mutates global <c>MvcOptions</c> and <c>JsonOptions</c>. Independent of
+    /// <see cref="UseAsp(Action{TrellisAspOptions}?)"/>: hosts that only need
+    /// error-to-status-code mapping (e.g. an MVC site that does not bind value-object DTOs)
+    /// can call <c>UseAsp()</c> without paying for the binder / converter mutation.
+    /// </para>
+    /// <para>
+    /// <strong>Minimal API endpoint filter and middleware are NOT registered by this slot.</strong>
+    /// Minimal API hosts must additionally call <c>app.UseScalarValueValidation()</c>
+    /// (middleware) and chain <c>.WithScalarValueValidation()</c> on each endpoint that
+    /// should surface validation as RFC 9457 ProblemDetails.
+    /// </para>
+    /// <para>
+    /// Idempotent: multiple calls register the underlying services exactly once. Equivalent
+    /// to calling <c>services.AddScalarValueValidation()</c> directly.
+    /// </para>
+    /// </remarks>
+    public TrellisServiceBuilder UseScalarValueValidation()
+    {
+        _useScalarValueValidation = true;
         return this;
     }
 
@@ -620,6 +662,9 @@ public sealed class TrellisServiceBuilder
             else
                 _services.AddTrellisAsp(_configureAsp);
         }
+
+        if (_useScalarValueValidation)
+            _services.AddScalarValueValidation();
 
         if (_useProblemDetails)
             _services.AddTrellisProblemDetails();

@@ -242,9 +242,9 @@ public class ServiceCollectionExtensionsTests
     public void AddScalarValueValidation_OnIServiceCollection_AlsoAddsMvcModelBindingAndFilters()
     {
         // The IServiceCollection overload must register MVC-side bindings/filters too,
-        // because AddTrellisAsp() calls it as the one-call setup for controller hosts.
-        // Without this, MVC's ValidationVisitor reflectively touches Maybe<T>.Value on a
-        // None instance and throws "Maybe has no value" → HTTP 500.
+        // because AddTrellisAspWithScalarValidation() calls it as the one-call setup for
+        // controller hosts. Without this, MVC's ValidationVisitor reflectively touches
+        // Maybe<T>.Value on a None instance and throws "Maybe has no value" → HTTP 500.
         // See AddTrellisAspMvcIntegrationTests for the end-to-end coverage.
         var services = new ServiceCollection();
         services.AddControllers();
@@ -271,10 +271,11 @@ public class ServiceCollectionExtensionsTests
     [Fact]
     public void AddScalarValueValidation_IsIdempotent_NoDuplicateFiltersOrProviders()
     {
-        // The template registers AddTrellisAsp() AND AddControllers().AddScalarValueValidation();
-        // both call paths must remain idempotent so MvcOptions doesn't accumulate duplicates.
+        // The template registers AddTrellisAspWithScalarValidation() AND
+        // AddControllers().AddScalarValueValidation(); both call paths must remain
+        // idempotent so MvcOptions doesn't accumulate duplicates.
         var services = new ServiceCollection();
-        services.AddTrellisAsp();
+        services.AddTrellisAspWithScalarValidation();
         services.AddControllers().AddScalarValueValidation();
 
         var sp = services.BuildServiceProvider();

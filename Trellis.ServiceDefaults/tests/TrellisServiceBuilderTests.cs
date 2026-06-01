@@ -131,13 +131,96 @@ public class TrellisServiceBuilderTests
     }
 
     [Fact]
-    public void UseAsp_RegistersTrellisAspOptionsAndScalarValidationInfrastructure()
+    public void UseAsp_RegistersTrellisAspOptions()
     {
         var services = new ServiceCollection();
 
         services.AddTrellis(options => options.UseAsp());
 
         services.Should().ContainSingle(d => d.ServiceType == typeof(TrellisAspOptions));
+    }
+
+    [Fact]
+    public void UseAsp_alone_DoesNotRegisterScalarValidation()
+    {
+        // The scalar-value validation slot is independent of UseAsp(). Hosts that only
+        // need error-to-status-code mapping (e.g. an MVC site that does not bind
+        // value-object DTOs from JSON/route/query) must NOT silently inherit the global
+        // MvcOptions / JsonOptions mutation that AddScalarValueValidation performs.
+        var services = new ServiceCollection();
+        services.AddControllers();
+        services.AddTrellis(options => options.UseAsp());
+
+        var sp = services.BuildServiceProvider();
+        var mvcOptions = sp.GetRequiredService<IOptions<Microsoft.AspNetCore.Mvc.MvcOptions>>().Value;
+
+        mvcOptions.ModelBinderProviders.OfType<Trellis.Asp.ModelBinding.ScalarValueModelBinderProvider>()
+            .Should().BeEmpty("UseAsp() alone must not register the scalar value model binder provider");
+
+        sp.GetRequiredService<IOptions<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>>().Value
+            .SuppressModelStateInvalidFilter.Should().BeFalse(
+                "UseAsp() alone must not flip the model-state-invalid filter suppression — scalar validation owns that toggle");
+    }
+
+    [Fact]
+    public void UseScalarValueValidation_RegistersScalarValidationInfrastructure()
+    {
+        // The new slot wires the binder/filter/JSON converter set that the old
+        // UseAsp() registered silently. Verifying via MVC pipeline outputs because
+        // AddScalarValueValidation registers via Configure<MvcOptions> rather than
+        // directly into the service collection.
+        var services = new ServiceCollection();
+        services.AddControllers();
+        services.AddTrellis(options => options.UseScalarValueValidation());
+
+        var sp = services.BuildServiceProvider();
+        var mvcOptions = sp.GetRequiredService<IOptions<Microsoft.AspNetCore.Mvc.MvcOptions>>().Value;
+
+        mvcOptions.ModelBinderProviders.OfType<Trellis.Asp.ModelBinding.ScalarValueModelBinderProvider>()
+            .Should().NotBeEmpty("UseScalarValueValidation() must register the scalar-value model binder provider");
+
+        sp.GetRequiredService<IOptions<Microsoft.AspNetCore.Mvc.ApiBehaviorOptions>>().Value
+            .SuppressModelStateInvalidFilter.Should().BeTrue(
+                "UseScalarValueValidation() must flip the model-state-invalid filter suppression");
+    }
+
+    [Fact]
+    public void UseScalarValueValidation_AppliesIdempotently()
+    {
+        // Multiple opt-ins (library + application both call the slot) must result in
+        // a single registration of the scalar validation infrastructure.
+        var services = new ServiceCollection();
+        services.AddControllers();
+        services.AddTrellis(options => options
+            .UseScalarValueValidation()
+            .UseScalarValueValidation());
+
+        var sp = services.BuildServiceProvider();
+        var mvcOptions = sp.GetRequiredService<IOptions<Microsoft.AspNetCore.Mvc.MvcOptions>>().Value;
+
+        mvcOptions.ModelBinderProviders.OfType<Trellis.Asp.ModelBinding.ScalarValueModelBinderProvider>()
+            .Should().ContainSingle("the scalar value model binder provider must only be registered once");
+    }
+
+    [Fact]
+    public void UseAsp_and_UseScalarValueValidation_compose()
+    {
+        // The two slots are independent but the canonical composition for a controller
+        // host that binds value-object DTOs is both opted in. Verify they coexist
+        // without conflicting.
+        var services = new ServiceCollection();
+        services.AddControllers();
+        services.AddTrellis(options => options
+            .UseAsp()
+            .UseScalarValueValidation());
+
+        services.Should().ContainSingle(d => d.ServiceType == typeof(TrellisAspOptions));
+
+        var sp = services.BuildServiceProvider();
+        var mvcOptions = sp.GetRequiredService<IOptions<Microsoft.AspNetCore.Mvc.MvcOptions>>().Value;
+
+        mvcOptions.ModelBinderProviders.OfType<Trellis.Asp.ModelBinding.ScalarValueModelBinderProvider>()
+            .Should().ContainSingle();
     }
 
     [Fact]

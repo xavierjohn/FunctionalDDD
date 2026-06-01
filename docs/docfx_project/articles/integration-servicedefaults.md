@@ -17,6 +17,7 @@ It is **not** a mandatory dependency. If you only need one integration package, 
 ```csharp
 builder.Services.AddTrellis(options => options
     .UseAsp()
+    .UseScalarValueValidation()
     .UseMediator()
     .UseFluentValidation(typeof(Program).Assembly)
     .UseClaimsActorProvider()
@@ -28,17 +29,20 @@ builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlServer(connectionString
 
 `AddTrellis` does NOT register your `DbContext`, your mediator handlers, or your route constraints — those are always application-owned. Validators, resource loaders, and domain event handlers are registered only when you opt into assembly scanning via the params-`Assembly[]` overloads (`UseFluentValidation(asm)`, `UseResourceAuthorization(asm)`, `UseDomainEvents(asm)`); the parameterless overloads register only the adapter / pipeline behavior and leave per-type registrations to you.
 
+`UseScalarValueValidation()` is separate from `UseAsp()` because scalar-value validation mutates global `MvcOptions` / `JsonOptions` (model binders, JSON converters, `SuppressModelStateInvalidFilter` flip). Hosts that only need error-to-status mapping (e.g. an MVC site that does not bind value-object DTOs) can call `UseAsp()` alone without paying for the binder / converter mutation.
+
 ## Canonical order
 
 `AddTrellis(o => ...)` records the requested modules during the configure callback, then applies them in this order:
 
 1. **ASP integration** (`UseAsp`) — `AddTrellisAsp(...)`.
-2. **Actor provider** (`UseClaimsActorProvider` / `UseEntraActorProvider` / `UseDevelopmentActorProvider`), the optional **caching wrap** (`UseCachingActorProvider<T>`), and the optional **worker wrap** (`UseWorkerActor(systemActor)`) — the worker wrap is applied after caching so HTTP requests still flow through the inner provider (and its cache) and background-worker scopes short-circuit to the supplied system actor.
-3. **Mediator behaviors** (`UseMediator`) — `AddTrellisBehaviors(...)`. Always present when any other Use that implies it is selected (FluentValidation, ResourceAuthorization, DomainEvents, EntityFrameworkUnitOfWork).
-4. **Resource authorization** scanning (`UseResourceAuthorization(asm)`) when assemblies are supplied.
-5. **FluentValidation** adapter and (optionally) scanning (`UseFluentValidation`).
-6. **Domain event dispatch** (`UseDomainEvents`) — `DomainEventDispatchBehavior<,>` + default `IDomainEventPublisher` + scanned handlers.
-7. **EF Core Unit of Work** (`UseEntityFrameworkUnitOfWork<TContext>`) — applied last so `TransactionalCommandBehavior<,>` is the innermost behavior.
+2. **Scalar-value validation** (`UseScalarValueValidation`) — `AddScalarValueValidation()`.
+3. **Actor provider** (`UseClaimsActorProvider` / `UseEntraActorProvider` / `UseDevelopmentActorProvider`), the optional **caching wrap** (`UseCachingActorProvider<T>`), and the optional **worker wrap** (`UseWorkerActor(systemActor)`) — the worker wrap is applied after caching so HTTP requests still flow through the inner provider (and its cache) and background-worker scopes short-circuit to the supplied system actor.
+4. **Mediator behaviors** (`UseMediator`) — `AddTrellisBehaviors(...)`. Always present when any other Use that implies it is selected (FluentValidation, ResourceAuthorization, DomainEvents, EntityFrameworkUnitOfWork).
+5. **Resource authorization** scanning (`UseResourceAuthorization(asm)`) when assemblies are supplied.
+6. **FluentValidation** adapter and (optionally) scanning (`UseFluentValidation`).
+7. **Domain event dispatch** (`UseDomainEvents`) — `DomainEventDispatchBehavior<,>` + default `IDomainEventPublisher` + scanned handlers.
+8. **EF Core Unit of Work** (`UseEntityFrameworkUnitOfWork<TContext>`) — applied last so `TransactionalCommandBehavior<,>` is the innermost behavior.
 
 This sequence preserves the central pipeline invariant: the transactional behavior is closest to the handler, so commit failures remain visible to outer logging/tracing/exception behaviors. Domain events fire after the transaction commits because dispatch is registered before the unit of work.
 

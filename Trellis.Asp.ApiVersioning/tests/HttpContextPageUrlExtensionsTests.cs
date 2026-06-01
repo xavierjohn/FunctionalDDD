@@ -752,7 +752,7 @@ public sealed class HttpContextPageUrlExtensionsTests
                 .UseTestServer()
                 .ConfigureServices(s =>
                 {
-                    s.AddTrellisAsp();
+                    s.AddTrellisAspWithScalarValidation();
                     s.AddControllers().AddApplicationPart(typeof(SingleVersionPagedController).Assembly);
                     s.AddApiVersioning(o =>
                     {
@@ -776,7 +776,7 @@ public sealed class HttpContextPageUrlExtensionsTests
                 .UseTestServer()
                 .ConfigureServices(s =>
                 {
-                    s.AddTrellisAsp();
+                    s.AddTrellisAspWithScalarValidation();
                     s.AddControllers().AddApplicationPart(typeof(MultiVersionPagedController).Assembly);
                     s.AddApiVersioning(o =>
                     {
@@ -803,7 +803,7 @@ public sealed class HttpContextPageUrlExtensionsTests
                 .UseTestServer()
                 .ConfigureServices(s =>
                 {
-                    s.AddTrellisAsp();
+                    s.AddTrellisAspWithScalarValidation();
                     s.AddControllers().AddApplicationPart(typeof(NeutralPagedController).Assembly);
                     s.AddApiVersioning().AddMvc();
                 })
@@ -822,7 +822,7 @@ public sealed class HttpContextPageUrlExtensionsTests
                 .UseTestServer()
                 .ConfigureServices(s =>
                 {
-                    s.AddTrellisAsp();
+                    s.AddTrellisAspWithScalarValidation();
                     s.AddControllers().AddApplicationPart(typeof(SegmentPagedController).Assembly);
                     s.AddApiVersioning(o => o.ApiVersionReader = new UrlSegmentApiVersionReader()).AddMvc();
                 })
@@ -841,7 +841,7 @@ public sealed class HttpContextPageUrlExtensionsTests
                 .UseTestServer()
                 .ConfigureServices(s =>
                 {
-                    s.AddTrellisAsp();
+                    s.AddTrellisAspWithScalarValidation();
                     s.AddControllers().AddApplicationPart(typeof(SingleVersionPagedController).Assembly);
                     s.AddApiVersioning(o =>
                     {
@@ -871,7 +871,7 @@ public sealed class HttpContextPageUrlExtensionsTests
                 .UseTestServer()
                 .ConfigureServices(s =>
                 {
-                    s.AddTrellisAsp();
+                    s.AddTrellisAspWithScalarValidation();
                     s.AddControllers()
                         .AddApplicationPart(typeof(SingleVersionPagedController).Assembly);
                     s.AddApiVersioning(o => o.ApiVersionReader = new QueryStringApiVersionReader("api-version")).AddMvc();
@@ -897,7 +897,7 @@ public sealed class HttpContextPageUrlExtensionsTests
                 .UseTestServer()
                 .ConfigureServices(s =>
                 {
-                    s.AddTrellisAsp();
+                    s.AddTrellisAspWithScalarValidation();
                     s.AddRouting();
                 })
                 .Configure(app =>
@@ -937,7 +937,7 @@ public sealed class HttpContextPageUrlExtensionsTests
                 .UseTestServer()
                 .ConfigureServices(s =>
                 {
-                    s.AddTrellisAsp();
+                    s.AddTrellisAspWithScalarValidation();
                     s.AddControllers()
                         .ConfigureApplicationPartManager(apm =>
                         {
