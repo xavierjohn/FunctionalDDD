@@ -9,6 +9,7 @@ using Trellis.Testing;
 /// <summary>
 /// Tests for <see cref="ClaimsActorProvider"/> — the generic OIDC/JWT claims-based actor provider.
 /// </summary>
+[Collection("ClaimsActorProviderDiagnostics")]
 public class ClaimsActorProviderTests
 {
     private static ClaimsActorProvider CreateProvider(
@@ -693,6 +694,141 @@ public class ClaimsActorProviderTests
         var actor = (await CreateProvider(user).GetCurrentActorAsync(TestContext.Current.CancellationToken)).Unwrap();
 
         actor.Attributes.Should().BeEmpty();
+    }
+
+    #endregion
+
+    #region Silent-403 diagnostics (warn-on-empty-permissions + JSON-shape probe)
+
+    [Fact]
+    public async Task GetCurrentActorAsync_EmptyPermissionsOnAuthenticatedIdentity_LogsWarningOnce()
+    {
+        ClaimsActorProvider.ResetDiagnosticThrottlesForTests();
+        var entries = new List<(LogLevel Level, EventId EventId, string Message)>();
+        var logger = new FakeLogger(entries);
+
+        // Identity carries a sub but no claim that matches the configured PermissionsClaim
+        // ("permissions" default). The empty-permissions warning should fire.
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim("app_metadata", "{\"roles\":[\"orders:read\"]}"));
+
+        var provider = CreateProvider(user, logger: logger);
+
+        var actor = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        actor.Unwrap().Permissions.Should().BeEmpty(
+            "the literal 'permissions' claim is not present on this identity");
+        entries.Should().ContainSingle(e => e.EventId.Id == 2)
+            .Which.Level.Should().Be(LogLevel.Warning);
+
+        // Calling a second time must NOT emit a second warning (throttled).
+        await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        entries.Count(e => e.EventId.Id == 2).Should().Be(1,
+            "the empty-permissions warning is throttled to once per application lifetime");
+    }
+
+    [Fact]
+    public async Task GetCurrentActorAsync_PermissionsClaimResolvesToJsonObject_LogsErrorOnce()
+    {
+        ClaimsActorProvider.ResetDiagnosticThrottlesForTests();
+        var entries = new List<(LogLevel Level, EventId EventId, string Message)>();
+        var logger = new FakeLogger(entries);
+
+        // Configure PermissionsClaim to a name whose VALUE is a JSON object — the
+        // smoking-gun shape that NestedJsonPathClaimsActorProvider was added to address.
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim("app_metadata", "{\"roles\":[\"orders:read\"]}"));
+
+        var provider = CreateProvider(
+            user,
+            options: new ClaimsActorOptions { PermissionsClaim = "app_metadata" },
+            logger: logger);
+
+        await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        entries.Should().Contain(e => e.EventId.Id == 3)
+            .Which.Level.Should().Be(LogLevel.Error);
+
+        // Second invocation: throttled.
+        await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        entries.Count(e => e.EventId.Id == 3).Should().Be(1,
+            "the JSON-shape probe is throttled to once per application lifetime");
+    }
+
+    [Fact]
+    public async Task GetCurrentActorAsync_ValidateClaimShapeOnFirstUse_False_SuppressesDiagnostics()
+    {
+        ClaimsActorProvider.ResetDiagnosticThrottlesForTests();
+        var entries = new List<(LogLevel Level, EventId EventId, string Message)>();
+        var logger = new FakeLogger(entries);
+
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim("app_metadata", "{\"roles\":[\"orders:read\"]}"));
+
+        var provider = CreateProvider(
+            user,
+            options: new ClaimsActorOptions
+            {
+                PermissionsClaim = "app_metadata",
+                ValidateClaimShapeOnFirstUse = false,
+            },
+            logger: logger);
+
+        await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        entries.Where(e => e.EventId.Id is 2 or 3).Should().BeEmpty(
+            "ValidateClaimShapeOnFirstUse=false must suppress both diagnostics");
+    }
+
+    [Fact]
+    public async Task GetCurrentActorAsync_PermissionsResolvedFlat_DoesNotEmitDiagnostics()
+    {
+        ClaimsActorProvider.ResetDiagnosticThrottlesForTests();
+        var entries = new List<(LogLevel Level, EventId EventId, string Message)>();
+        var logger = new FakeLogger(entries);
+
+        // Configured PermissionsClaim resolves cleanly to scalar string values — neither
+        // diagnostic should fire.
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim("permissions", "orders:read"),
+            new Claim("permissions", "orders:write"));
+
+        var provider = CreateProvider(user, logger: logger);
+
+        var actor = await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        actor.Unwrap().Permissions.Should().BeEquivalentTo(["orders:read", "orders:write"]);
+        entries.Where(e => e.EventId.Id is 2 or 3).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetCurrentActorAsync_SinglePermissionResolvedToJsonValue_LogsJsonShapeError()
+    {
+        ClaimsActorProvider.ResetDiagnosticThrottlesForTests();
+        var entries = new List<(LogLevel Level, EventId EventId, string Message)>();
+        var logger = new FakeLogger(entries);
+
+        // The configured PermissionsClaim resolves to exactly ONE value, and that value is
+        // a JSON document. This is the post-fallback signal that the consumer probably
+        // wanted nested-JSON traversal — the diagnostic must fire even when the resolved
+        // permissions set is non-empty (count == 1).
+        var user = AuthenticatedUser(
+            new Claim("sub", "user-1"),
+            new Claim("permissions", """{"roles":["orders:read"]}"""));
+
+        var provider = CreateProvider(user, logger: logger);
+
+        await provider.GetCurrentActorAsync(TestContext.Current.CancellationToken);
+
+        entries.Should().Contain(e => e.EventId.Id == 3)
+            .Which.Level.Should().Be(LogLevel.Error,
+            "JSON-shape probe must fire when the single resolved permission value is JSON-shaped");
     }
 
     #endregion

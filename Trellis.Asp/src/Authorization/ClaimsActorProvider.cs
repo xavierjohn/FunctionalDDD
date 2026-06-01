@@ -2,7 +2,10 @@
 
 using System.Collections.Frozen;
 using System.Collections.Generic;
+using System.Linq;
 using System.Security.Claims;
+using System.Text.Json;
+using System.Threading;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -119,6 +122,31 @@ public class ClaimsActorOptions
     /// </para>
     /// </remarks>
     public string PermissionsClaim { get; set; } = "permissions";
+
+    /// <summary>
+    /// When <see langword="true"/> (the default), <see cref="ClaimsActorProvider"/> emits
+    /// startup-diagnostics log entries the first time the configured
+    /// <see cref="PermissionsClaim"/> resolves to zero entries on an authenticated identity
+    /// that carries other claims, or to a single value that parses as a JSON object or array.
+    /// Both diagnostics are throttled to fire at most once per application lifetime — they
+    /// surface the silent-403 footgun without producing log spam.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// <b>Why it exists.</b> The most common silent-403 cause is a misconfigured
+    /// <see cref="PermissionsClaim"/> against a nested-JSON identity-provider claim shape
+    /// (Auth0 <c>app_metadata.roles</c>, Azure B2C <c>extension_*</c> custom attributes,
+    /// some Okta token shapes). The configured flat claim name finds nothing literal, the
+    /// known-name fallback table does not cover the consumer's IdP, and the provider returns
+    /// an empty permissions set — every <c>IAuthorize</c> command then short-circuits to
+    /// 403 with no signal pointing at the claim mapping.
+    /// </para>
+    /// <para>
+    /// Set to <see langword="false"/> only when the diagnostics duplicate an existing health-check
+    /// or claim-validation pipeline.
+    /// </para>
+    /// </remarks>
+    public bool ValidateClaimShapeOnFirstUse { get; set; } = true;
 }
 
 /// <summary>
@@ -276,6 +304,29 @@ public class ClaimsActorProvider : IActorProvider, IProvideActorVaryHeaders
                 g => g.Select(kvp => kvp.Key).ToFrozenSet(StringComparer.Ordinal),
                 StringComparer.Ordinal);
 
+    /// <summary>
+    /// Throttle flag for the empty-permissions diagnostic; flips from 0 to 1 the first time
+    /// the diagnostic fires for any instance. Static so the once-per-app-lifetime semantic
+    /// is preserved across the request-scoped provider lifetime.
+    /// </summary>
+    private static int s_emptyPermissionsWarningFired;
+
+    /// <summary>
+    /// Throttle flag for the JSON-shaped-claim diagnostic; flips from 0 to 1 the first time
+    /// the diagnostic fires for any instance.
+    /// </summary>
+    private static int s_jsonShapedClaimErrorFired;
+
+    /// <summary>
+    /// Test-only hook for resetting the static throttles. Internal so the test project can
+    /// exercise both diagnostic paths without relying on assembly-reload tricks.
+    /// </summary>
+    internal static void ResetDiagnosticThrottlesForTests()
+    {
+        s_emptyPermissionsWarningFired = 0;
+        s_jsonShapedClaimErrorFired = 0;
+    }
+
     private readonly ILogger<ClaimsActorProvider>? _logger;
 
     /// <summary>
@@ -353,8 +404,91 @@ public class ClaimsActorProvider : IActorProvider, IProvideActorVaryHeaders
             .Select(c => c.Value)
             .ToFrozenSet();
 
+        MaybeEmitClaimShapeDiagnostics(identity, permissions);
+
         var actor = Actor.Create(actorId, permissions);
         return Task.FromResult(Maybe.From(actor));
+    }
+
+    /// <summary>
+    /// Emits one-off startup diagnostics surfacing the two silent-403 footguns this provider
+    /// cannot otherwise reach: (1) the configured <see cref="ClaimsActorOptions.PermissionsClaim"/>
+    /// resolved to zero entries on an authenticated identity that carries other claims, and
+    /// (2) the configured claim resolved to a single value that parses as a JSON object or
+    /// array. Both fire at most once per application lifetime regardless of how many requests
+    /// trigger them.
+    /// </summary>
+    /// <remarks>
+    /// <c>protected</c> so derived providers (notably <see cref="NestedJsonPathClaimsActorProvider"/>)
+    /// can invoke the same diagnostic after their override resolves permissions through a
+    /// different path; without this hook the empty-permissions warning would not fire when the
+    /// derived provider's path-traversal produced an empty set. The <paramref name="overrideLogger"/>
+    /// parameter lets a derived provider pass its own logger when the base's logger slot was
+    /// left null (the typical case when the derived constructor wires its own typed logger).
+    /// </remarks>
+    protected void MaybeEmitClaimShapeDiagnostics(ClaimsIdentity identity, FrozenSet<string> permissions, ILogger? overrideLogger = null)
+    {
+        var logger = overrideLogger ?? _logger;
+        if (!Options.ValidateClaimShapeOnFirstUse || logger is null)
+            return;
+
+        // Diagnostic 1: empty permissions on an authenticated identity that has other claims.
+        // The Auth0 `app_metadata.roles` shape is the canonical example — the JWT contains
+        // claims, but none of them match the configured (flat) PermissionsClaim name.
+        if (permissions.Count == 0
+            && identity.Claims.Any()
+            && Interlocked.CompareExchange(ref s_emptyPermissionsWarningFired, 1, 0) == 0)
+        {
+            LogEmptyPermissionsOnAuthenticatedIdentity(
+                logger,
+                Options.PermissionsClaim,
+                identity.Claims.Select(c => c.Type).Distinct().Take(10).ToArray());
+        }
+
+        // Diagnostic 2: the configured PermissionsClaim resolved to a single JSON-shaped value.
+        // That shape is what JwtSecurityTokenHandler does for nested claims (Auth0
+        // `app_metadata`, Azure B2C `extension_*`, some Okta token shapes). Probe TWO sources:
+        //   (a) the literal claim's raw value — catches the misconfigured-flat-provider case
+        //       even when the resolved permissions set is empty (count == 0)
+        //   (b) the resolved single permission value — catches the case where the consumer's
+        //       PermissionsClaim resolved cleanly to one entry whose value is a JSON document
+        //       (the override may have produced this via path traversal, or the flat resolver
+        //       did when only one matching claim was present)
+        if (s_jsonShapedClaimErrorFired != 0)
+            return;
+
+        string? jsonProbeSource = null;
+        if (permissions.Count == 1)
+        {
+            jsonProbeSource = permissions.First();
+        }
+        else if (permissions.Count == 0)
+        {
+            jsonProbeSource = identity.FindFirst(Options.PermissionsClaim)?.Value;
+        }
+        // permissions.Count > 1 → multiple real permissions; the diagnostic does not apply.
+
+        if (string.IsNullOrWhiteSpace(jsonProbeSource) || (jsonProbeSource[0] != '{' && jsonProbeSource[0] != '['))
+            return;
+
+        if (!LooksLikeJsonObjectOrArray(jsonProbeSource))
+            return;
+
+        if (Interlocked.CompareExchange(ref s_jsonShapedClaimErrorFired, 1, 0) == 0)
+            LogJsonShapedClaim(logger, Options.PermissionsClaim);
+    }
+
+    private static bool LooksLikeJsonObjectOrArray(string value)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(value);
+            return doc.RootElement.ValueKind is JsonValueKind.Object or JsonValueKind.Array;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
     }
 
     /// <summary>
@@ -368,8 +502,10 @@ public class ClaimsActorProvider : IActorProvider, IProvideActorVaryHeaders
     /// Logs a debug-level entry once per counterpart that fired (literal not found, fallback
     /// did find claims) so the diagnostic remains useful when the consumer has configured a
     /// claim name that's subject to <c>JwtBearerOptions.MapInboundClaims</c> remapping.
+    /// <c>protected</c> so derived providers can use the same short↔long fallback when their
+    /// own resolution path misses and they need to consult the flat claim shape as a backup.
     /// </remarks>
-    private IEnumerable<Claim> ResolveAllClaimsWithFallback(ClaimsIdentity identity, string configuredClaim)
+    protected IEnumerable<Claim> ResolveAllClaimsWithFallback(ClaimsIdentity identity, string configuredClaim)
     {
         var literalFound = false;
         foreach (var c in identity.FindAll(configuredClaim))
@@ -423,8 +559,10 @@ public class ClaimsActorProvider : IActorProvider, IProvideActorVaryHeaders
     /// <c>Name</c> ← {<c>name</c>, <c>unique_name</c>}; <c>Role</c> ← {<c>role</c>,
     /// <c>roles</c>}) — picking only one short form would silently fail to resolve tokens
     /// that carry the alternate variant.
+    /// <c>protected</c> so derived providers can use the same short↔long fallback when their
+    /// own resolution path misses and they need to consult the flat claim shape as a backup.
     /// </remarks>
-    private string? ResolveClaimWithFallback(ClaimsIdentity identity, string configuredClaim)
+    protected string? ResolveClaimWithFallback(ClaimsIdentity identity, string configuredClaim)
     {
         var literal = identity.FindFirst(configuredClaim)?.Value;
         if (literal is not null)
@@ -481,4 +619,41 @@ public class ClaimsActorProvider : IActorProvider, IProvideActorVaryHeaders
         if (logger is not null)
             _logClaimNameFallback(logger, configured, resolved, null);
     }
+
+    private static readonly Action<ILogger, string, string[], Exception?> _logEmptyPermissionsOnAuthenticatedIdentity =
+        LoggerMessage.Define<string, string[]>(
+            LogLevel.Warning,
+            new EventId(2, nameof(ClaimsActorProvider)),
+            "ClaimsActorProvider resolved zero permissions on an authenticated identity. " +
+            "Configured PermissionsClaim '{ConfiguredClaim}' (and its known-name fallback) " +
+            "matched no claims on a token that does carry other claims ({PresentClaimTypes}); " +
+            "every IAuthorize command will short-circuit to HTTP 403 until the mapping is " +
+            "corrected. Common causes: (1) the identity provider emits permissions under a " +
+            "nested JSON claim shape (Auth0 'app_metadata.roles', Azure B2C 'extension_*'); " +
+            "configure NestedJsonPathClaimsActorProvider with the dotted path. (2) The " +
+            "PermissionsClaim name is wrong for this provider; inspect the JWT and align " +
+            "the option. This diagnostic fires at most once per application lifetime.");
+
+    private static void LogEmptyPermissionsOnAuthenticatedIdentity(
+        ILogger logger,
+        string configuredClaim,
+        string[] presentClaimTypes) =>
+        _logEmptyPermissionsOnAuthenticatedIdentity(logger, configuredClaim, presentClaimTypes, null);
+
+    private static readonly Action<ILogger, string, Exception?> _logJsonShapedClaim =
+        LoggerMessage.Define<string>(
+            LogLevel.Error,
+            new EventId(3, nameof(ClaimsActorProvider)),
+            "ClaimsActorProvider resolved configured PermissionsClaim '{ConfiguredClaim}' to a " +
+            "single value that parses as a JSON object or array. The default flat-claim mapping " +
+            "stores the raw JSON string as the permission value, which is almost never what the " +
+            "consumer intended. The shape is typical of nested-claim identity providers " +
+            "(Auth0 'app_metadata', Azure B2C 'extension_*', some Okta token shapes); switch to " +
+            "Trellis.Asp.Authorization.NestedJsonPathClaimsActorProvider and configure the dotted " +
+            "JSON path to the actual permissions array (for example 'app_metadata.roles'). " +
+            "This diagnostic fires at most once per application lifetime; set " +
+            "ClaimsActorOptions.ValidateClaimShapeOnFirstUse = false to suppress.");
+
+    private static void LogJsonShapedClaim(ILogger logger, string configuredClaim) =>
+        _logJsonShapedClaim(logger, configuredClaim, null);
 }

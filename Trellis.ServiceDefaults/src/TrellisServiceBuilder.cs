@@ -322,6 +322,28 @@ public sealed class TrellisServiceBuilder
     }
 
     /// <summary>
+    /// Registers <see cref="NestedJsonPathClaimsActorProvider"/> as the scoped
+    /// <see cref="IActorProvider"/> with nested-JSON claim shape support (Auth0
+    /// <c>app_metadata.roles</c>, Azure B2C <c>extension_*</c>, Okta nested claims).
+    /// </summary>
+    /// <param name="configure">
+    /// Delegate to customize <see cref="NestedJsonPathClaimsActorOptions"/>. Set
+    /// <c>ContainerClaim</c> to the top-level claim that carries the JSON document,
+    /// <c>ActorIdPath</c> / <c>PermissionsPath</c> to the dotted JSON paths inside it,
+    /// and the inherited flat <c>ActorIdClaim</c> / <c>PermissionsClaim</c> for the fallback
+    /// when the container claim is absent or malformed.
+    /// </param>
+    /// <remarks>
+    /// Mutually exclusive with the other actor-provider selectors.
+    /// </remarks>
+    public TrellisServiceBuilder UseNestedJsonPathClaimsActorProvider(Action<NestedJsonPathClaimsActorOptions> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+        SetActorProvider(ActorProviderKind.NestedJsonPathClaims, services => services.AddNestedJsonPathClaimsActorProvider(configure));
+        return this;
+    }
+
+    /// <summary>
     /// Registers EF Core Unit of Work and the transactional command behavior.
     /// Implies <see cref="UseMediator"/> and is always applied after all other behavior registrations.
     /// </summary>
@@ -694,5 +716,6 @@ public sealed class TrellisServiceBuilder
         Claims,
         Entra,
         Development,
+        NestedJsonPathClaims,
     }
 }

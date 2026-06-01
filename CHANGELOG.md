@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — Silent-403 diagnostics and `NestedJsonPathClaimsActorProvider`
+
+- **`Trellis.Asp`** — `ClaimsActorProvider` now emits two startup-diagnostics log entries (each throttled to fire at most once per application lifetime) that surface the silent-403 footgun caused by mis-configured nested-JSON identity-provider claims (Auth0 `app_metadata.roles`, Azure B2C `extension_*`, some Okta token shapes): **EventId 2** (Warning) fires when the configured `PermissionsClaim` resolves to zero entries on an authenticated identity that carries other claims; **EventId 3** (Error) fires when the configured claim resolves to a single value that parses as a JSON object or array. The diagnostics name the configured claim, list a sample of present claim types, and recommend `NestedJsonPathClaimsActorProvider`.
+- **`Trellis.Asp`** — new `ClaimsActorOptions.ValidateClaimShapeOnFirstUse` toggle (default `true`) suppresses both diagnostics when set to `false`. Use only when the diagnostics duplicate an existing health-check or claim-validation pipeline.
+- **`Trellis.Asp`** — new `NestedJsonPathClaimsActorProvider` and `NestedJsonPathClaimsActorOptions` for identity providers that ship roles/permissions under a nested JSON claim. Configure with a `ContainerClaim` naming the top-level claim that carries the JSON payload plus optional `ActorIdPath` / `PermissionsPath` dotted JSON paths. Terminal elements may be strings (single value), arrays of strings (multiple values), or objects whose property names are emitted as the values (Auth0 roles-as-object shape). Falls back to the inherited flat-claim resolution when the configured paths are empty, when the container claim is absent, or when its value fails to parse as JSON (with a one-off **EventId 4** warning). Register via the new `services.AddNestedJsonPathClaimsActorProvider(opts => ...)` extension. AOT-safe (uses `JsonDocument.Parse`).
+
 ### Added — `Trellis.ServiceDefaults` AOT compatibility
 
 - **`Trellis.ServiceDefaults`** — re-enabled `IsAotCompatible=true`, `IsTrimmable=true`, `EnableAotAnalyzer=true`, `EnableTrimAnalyzer=true`. The package is now AOT- and trim-compatible.

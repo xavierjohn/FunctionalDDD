@@ -27,7 +27,7 @@ audience: [developer]
 | Make `POST` / `PATCH` retry-safe with the IETF `Idempotency-Key` header | `AddTrellisIdempotency` + `AddInMemoryIdempotencyStore` + `UseTrellisIdempotency`; mark endpoints `[Idempotent]` | [Idempotency-Key middleware](#idempotency-key-middleware) |
 | Validate scalar value objects (route, query, JSON body) | `AddScalarValueValidation` + `UseScalarValueValidation` + `WithScalarValueValidation` | [Scalar value validation](#scalar-value-validation) |
 | Bind value objects in route segments | `AddTrellisRouteConstraint<T>("Name")` then `"/x/{id:Name}"` | [Route constraints](#route-constraints) |
-| Hydrate the current `Actor` from JWT claims | `AddClaimsActorProvider` / `AddEntraActorProvider` / `AddDevelopmentActorProvider` | [Actor providers](#actor-providers) |
+| Hydrate the current `Actor` from JWT claims | `AddClaimsActorProvider` / `AddEntraActorProvider` / `AddDevelopmentActorProvider` / `AddNestedJsonPathClaimsActorProvider` | [Actor providers](#actor-providers) |
 
 ## Use this guide when
 
@@ -50,7 +50,7 @@ audience: [developer]
 | `IfNoneMatchExtensions` | `EnforceIfNoneMatchPrecondition(EntityTagValue[]?)` — converts a successful result into `Error.TransportFault(new HttpError.PreconditionFailed(...))` when `If-None-Match: *` is sent and the resource exists. |
 | `PreferHeader` | `Parse(HttpRequest)` → `ReturnRepresentation`, `ReturnMinimal`, `RespondAsync`, `Wait`, `HandlingStrict`, `HandlingLenient`, `HasPreferences`. |
 | `PagedResponse<TResponse>` / `PageLink` | JSON envelope and `Link` header entries returned by the `Result<Page<T>>` overload. |
-| `Trellis.Asp.Authorization.*` | `AddClaimsActorProvider` / `AddEntraActorProvider` / `AddDevelopmentActorProvider` / `AddCachingActorProvider<T>`. |
+| `Trellis.Asp.Authorization.*` | `AddClaimsActorProvider` / `AddEntraActorProvider` / `AddDevelopmentActorProvider` / `AddNestedJsonPathClaimsActorProvider` / `AddCachingActorProvider<T>`. |
 | `Trellis.Asp.ModelBinding.*` | `ScalarValueModelBinder<,>` / `MaybeModelBinder<,>` / `ScalarValueModelBinderProvider`. |
 | `Trellis.Asp.Routing.*` | `TrellisValueObjectRouteConstraint<T>` + `AddTrellisRouteConstraint<T>` / `AddTrellisRouteConstraints`. |
 | `Trellis.Asp.Validation.*` | `ValidatingJsonConverter<,>`, `MaybeScalarValueJsonConverter<,>`, `ScalarValueValidationFilter` (MVC), `ScalarValueValidationEndpointFilter` (Minimal API), `ScalarValueValidationMiddleware`, `ValidationErrorsContext`. |
@@ -629,6 +629,26 @@ else
 ```
 
 `DevelopmentActorProvider` throws `InvalidOperationException` outside the Development environment regardless of header presence; in Development it reads the `X-Test-Actor` header (JSON: `{ "Id", "Permissions", "ForbiddenPermissions", "Attributes" }`, case-insensitive). See [`trellis-api-testing-aspnetcore.md`](../api_reference/trellis-api-testing-aspnetcore.md) for `WebApplicationFactory.CreateClientWithActor`.
+
+### Nested-JSON claim shapes (Auth0 `app_metadata.roles`, Azure B2C, Okta)
+
+`NestedJsonPathClaimsActorProvider` handles identity providers that ship permissions under a nested JSON claim. Configure with a `ContainerClaim` naming the top-level claim that carries the JSON payload, and dotted `ActorIdPath` / `PermissionsPath` segments inside it. Terminal path elements may be a string (one value), an array of strings (multiple values), or an object whose property names become the values (the Auth0 roles-as-object shape). When the path misses, the container claim is absent, or the JSON fails to parse, the provider falls back through the inherited flat-claim resolver (with the same short↔long claim-name aware fallback the base uses).
+
+```csharp
+// Auth0: { "sub": "auth0|abc", "app_metadata": { "roles": ["orders:read"] } }
+services.AddNestedJsonPathClaimsActorProvider(opts =>
+{
+    opts.ActorIdClaim = "sub";
+    opts.ContainerClaim = "app_metadata";
+    opts.PermissionsPath = "roles";
+});
+```
+
+Setting `ActorIdPath` or `PermissionsPath` without a `ContainerClaim` throws `InvalidOperationException` at provider construction so the misconfiguration is caught at the first request rather than silently falling back. See [`trellis-api-authorization.md`](../api_reference/trellis-api-authorization.md#common-identity-provider-claim-shapes) for a table of canonical configurations across providers.
+
+### Silent-403 diagnostics
+
+When `ClaimsActorProvider` (or the nested derivation) resolves zero permissions on an authenticated identity that carries other claims, it emits one warning per application lifetime (`EventId 2`). When the configured `PermissionsClaim` resolves to a single value that parses as a JSON object or array — the smoking gun for nested-claim shapes — it emits one error per application lifetime (`EventId 3`) recommending `NestedJsonPathClaimsActorProvider`. The diagnostics are throttled to once per application lifetime to avoid log spam; set `ClaimsActorOptions.ValidateClaimShapeOnFirstUse = false` to suppress both.
 
 ## Composition
 
