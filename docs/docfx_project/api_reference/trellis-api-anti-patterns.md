@@ -265,3 +265,47 @@ public sealed partial class Address : ValueObject
 ```
 
 > Severity: Error. When TRLS038 fires, the generator skips source generation for that type.
+
+## (No analyzer) — `Result.FailAfterCommit` composed with aggregating operators
+
+Not an analyzer-flagged rule (no diagnostic ID), but a recurring shape that the FailAfterCommit XML doc cautions against. `Result.FailAfterCommit<TValue>(error)` is a **leaf** worker-handler operation: it converts a single aggregate's transient external rejection into a persisted `permanently_failed` state and returns. Threading that result through `Combine` / `TraverseAll` / `SequenceAll` / `WhenAllAsync` OR-accumulates the `PersistOnFailure` flag onto the aggregated failure — `TransactionalCommandBehavior` then commits the staged permanent-failure mutation alongside whatever the other legs produced, which is almost never what the handler author intended.
+
+```csharp
+// WRONG — FailAfterCommit composed with Combine: the staged permanent-failure mutation
+// commits alongside the validation-failure leg, even though the validation failure was
+// the deciding factor.
+public async Task<Result<OrderOutcome>> Handle(ProcessOrderCommand cmd, CancellationToken ct)
+{
+    Result<Unit> stagePermanentFailure = await MarkOrderAsPermanentlyFailedAsync(cmd.OrderId, ct);
+    // ↑ returns Result.FailAfterCommit(new Error.Unavailable(...))
+
+    Result<int> independentRule = Result.Fail<int>(
+        Error.InvalidInput.ForRule("downstream_limit_exceeded", "Customer is over quota."));
+
+    return stagePermanentFailure
+        .Combine(independentRule)
+        .Map((_, _) => new OrderOutcome(/* ... */));
+    // ↑ aggregated Error contains BOTH inner errors AND carries PersistOnFailure = true,
+    //   so TransactionalCommandBehavior commits the permanently_failed mutation.
+}
+
+// FIX — Treat FailAfterCommit as a terminal step. Run the aggregating composition to its
+// own terminal outcome first, THEN decide whether to invoke FailAfterCommit (typically in
+// a separate command or at the end of the handler with no further composition).
+public async Task<Result<OrderOutcome>> Handle(ProcessOrderCommand cmd, CancellationToken ct)
+{
+    Result<int> independentRule = Result.Fail<int>(
+        Error.InvalidInput.ForRule("downstream_limit_exceeded", "Customer is over quota."));
+
+    if (independentRule.IsFailure)
+        return Result.Fail<OrderOutcome>(independentRule.Error!);
+
+    // Now decide whether the external state warrants a persisted permanent-failure record.
+    // No composition with other legs — FailAfterCommit is the leaf.
+    return (await MarkOrderAsPermanentlyFailedAsync(cmd.OrderId, ct))
+        .Map(_ => new OrderOutcome(/* ... */));
+}
+```
+
+> Severity: Documentation only — no analyzer fires. The intent of `FailAfterCommit` is durable persistence of a permanent-failure state on a single aggregate; aggregating it across legs reaches outside that intent and produces partial commits the consumer rarely wants.
+

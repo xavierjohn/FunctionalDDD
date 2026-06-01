@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Documentation — `FailAfterCommit` composition anti-pattern
+
+- **`Trellis.Core`** — `Result.FailAfterCommit<T>(error)` XML remarks now explicitly call out that the helper is a *leaf* worker-handler operation and must not be threaded through `Combine` / `TraverseAll` / `SequenceAll` / `WhenAllAsync`. The `PersistOnFailure` flag OR-accumulates onto aggregated failures, which silently commits the staged permanent-failure mutation alongside any other legs' outcomes — almost never what the handler author intended. The new guidance directs authors to restructure such handlers so the aggregating step runs to its terminal outcome first and `FailAfterCommit` is invoked as a terminal step (or in a follow-up command).
+- **`docs/docfx_project/api_reference/trellis-api-anti-patterns.md`** — new "Result.FailAfterCommit composed with aggregating operators" entry with a WRONG / FIX gallery example.
+- **`docs/docfx_project/api_reference/trellis-api-core.md`** — IPersistOnFailure section gains an "Anti-pattern" subsection pointing at the new anti-pattern entry, plus the existing pipeline-composition table.
+
 ### Added — Silent-403 diagnostics and `NestedJsonPathClaimsActorProvider`
 
 - **`Trellis.Asp`** — `ClaimsActorProvider` now emits two startup-diagnostics log entries (each throttled to fire at most once per application lifetime) that surface the silent-403 footgun caused by mis-configured nested-JSON identity-provider claims (Auth0 `app_metadata.roles`, Azure B2C `extension_*`, some Okta token shapes): **EventId 2** (Warning) fires when the configured `PermissionsClaim` resolves to zero entries on an authenticated identity that carries other claims; **EventId 3** (Error) fires when the configured claim resolves to a single value that parses as a JSON object or array. The diagnostics name the configured claim, list a sample of present claim types, and recommend `NestedJsonPathClaimsActorProvider`.
