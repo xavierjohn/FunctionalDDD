@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — `Trellis.ServiceDefaults` AOT compatibility
+
+- **`Trellis.ServiceDefaults`** — re-enabled `IsAotCompatible=true`, `IsTrimmable=true`, `EnableAotAnalyzer=true`, `EnableTrimAnalyzer=true`. The package is now AOT- and trim-compatible.
+- **`Trellis.ServiceDefaults`** — new AOT-safe per-type overloads on `TrellisServiceBuilder`: `UseFluentValidation()` (adapter only) + `UseFluentValidation<TValidator, TMessage>()` per validator; `UseResourceAuthorization()` (pipeline only) + `UseResourceAuthorization<TMessage, TResource, TResponse>()` per command; `UseDomainEvents()` (publisher + behavior only) + `UseDomainEvents<TEvent, THandler>()` per handler; `UseTrackedAggregateDomainEvents()` (publisher + behavior only) + `UseTrackedAggregateDomainEvents<TEvent, THandler>()` per handler. The four existing assembly-scanning overloads are now annotated with `[RequiresUnreferencedCode]` and `[RequiresDynamicCode]` so the AOT analyzer surfaces the choice between AOT-safe and scanning shapes at the consumer's call site.
+- **`Trellis.ServiceDefaults`** — `UseEntityFrameworkUnitOfWork<TContext>()` is now annotated `[RequiresUnreferencedCode]` / `[RequiresDynamicCode]` because the underlying `Trellis.EntityFrameworkCore` package is intentionally non-AOT (EF Core requires reflection over entity types). The AOT analyzer now surfaces this seam at the consumer's call site; AOT consumers should compose their data access layer outside the builder.
+- **README** — the unconditional "AOT-friendly" claim is softened to note that the composition-root convenience builder exposes both AOT-safe per-type overloads and assembly-scanning overloads with appropriate analyzer annotations.
+
 ### Added — `RequiredDateTimeOffset<TSelf>` and `Required*<T>` convenience attributes
 
 - **`Trellis.Core`** — new `RequiredDateTimeOffset<TSelf>` primitive base class mirroring `RequiredDateTime<TSelf>` for instants whose originating UTC offset is part of the domain contract. Lenient by default (rejects `null` only); opt into `DateTimeOffset.MinValue` rejection via `[NotDefault]`. Generator support: `RequiredPartialClassGenerator` now recognises `RequiredDateTimeOffset` as a valid base, emits the full `TryCreate(DateTimeOffset)` / `TryCreate(DateTimeOffset?, string?)` / `TryCreate(string?, string?)` / `IFormattableScalarValue` factory family, and round-trips the offset through `IParsable<T>` / `ParsableJsonConverter<T>` via ISO 8601 round-trip ("O") format.
