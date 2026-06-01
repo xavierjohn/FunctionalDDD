@@ -1683,7 +1683,8 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
 
     private static string GenerateDateTimeMethods(RequiredPartialClassInfo g)
     {
-        var notDefaultDetail = $@"""{g.ClassName.SplitPascalCase()} cannot be DateTime.MinValue.""";        var notDefaultCheck = g.HasNotDefault
+        var notDefaultDetail = $@"""{g.ClassName.SplitPascalCase()} cannot be DateTime.MinValue.""";
+        var notDefaultCheck = g.HasNotDefault
             ? $@"
             if (value == DateTime.MinValue)
                 return Result.Fail<{g.ClassName}>(new Error.InvalidInput(EquatableArray.Create(new FieldViolation(InputPointer.ForProperty(field), ""validation.error"") {{ Detail = {notDefaultDetail} }})));"

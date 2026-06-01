@@ -31,14 +31,16 @@ public partial class StrictOccurredAt : RequiredDateTimeOffset<StrictOccurredAt>
 /// Tests for the additive Required<T> primitives added in PR2a:
 /// the <c>RequiredDateTimeOffset&lt;T&gt;</c> base class and the
 /// <c>[Positive]</c> / <c>[NonNegative]</c> / <c>[Negative]</c> / <c>[NonPositive]</c>
-/// numeric convenience attributes (which translate to existing <c>[Range]</c> semantics).
+/// numeric convenience attributes (which translate to existing <c>[Range]</c> semantics on
+/// integer types and to a direct sign-check on <c>RequiredDecimal</c>). Test method names
+/// follow the codebase convention <c>[Method]_[Variant]_[Scenario]_[Expectation]</c>.
 /// </summary>
 public class RequiredDateTimeOffsetAndNumericConvenienceTests
 {
     // ---------- RequiredDateTimeOffset ----------
 
     [Fact]
-    public void EventOccurredAt_accepts_present_value()
+    public void TryCreate_LenientDateTimeOffset_AcceptsPresentValue()
     {
         var now = DateTimeOffset.UtcNow;
         var result = EventOccurredAt.TryCreate(now);
@@ -47,7 +49,7 @@ public class RequiredDateTimeOffsetAndNumericConvenienceTests
     }
 
     [Fact]
-    public void EventOccurredAt_accepts_MinValue_when_lenient()
+    public void TryCreate_LenientDateTimeOffset_AcceptsMinValue()
     {
         var result = EventOccurredAt.TryCreate(DateTimeOffset.MinValue);
         result.IsSuccess.Should().BeTrue();
@@ -55,14 +57,14 @@ public class RequiredDateTimeOffsetAndNumericConvenienceTests
     }
 
     [Fact]
-    public void EventOccurredAt_rejects_null()
+    public void TryCreate_LenientDateTimeOffset_RejectsNull()
     {
         var result = EventOccurredAt.TryCreate((DateTimeOffset?)null);
         result.IsFailure.Should().BeTrue();
     }
 
     [Fact]
-    public void EventOccurredAt_round_trips_through_string_parse_preserving_offset()
+    public void TryCreate_LenientDateTimeOffsetFromString_PreservesOffsetOnRoundTrip()
     {
         var fixedOffset = new DateTimeOffset(2026, 6, 1, 12, 30, 0, TimeSpan.FromHours(-5));
         var parsed = EventOccurredAt.TryCreate(fixedOffset.ToString("O", System.Globalization.CultureInfo.InvariantCulture));
@@ -72,7 +74,7 @@ public class RequiredDateTimeOffsetAndNumericConvenienceTests
     }
 
     [Fact]
-    public void StrictOccurredAt_rejects_MinValue()
+    public void TryCreate_StrictDateTimeOffsetWithNotDefault_RejectsMinValue()
     {
         var result = StrictOccurredAt.TryCreate(DateTimeOffset.MinValue);
         result.IsFailure.Should().BeTrue();
@@ -80,7 +82,7 @@ public class RequiredDateTimeOffsetAndNumericConvenienceTests
     }
 
     [Fact]
-    public void StrictOccurredAt_accepts_present_value()
+    public void TryCreate_StrictDateTimeOffsetWithNotDefault_AcceptsPresentValue()
     {
         var now = DateTimeOffset.UtcNow;
         var result = StrictOccurredAt.TryCreate(now);
@@ -90,7 +92,7 @@ public class RequiredDateTimeOffsetAndNumericConvenienceTests
     // ---------- [Positive] ----------
 
     [Fact]
-    public void PositiveInt_accepts_positives_rejects_zero_and_negatives()
+    public void TryCreate_PositiveInt_AcceptsPositivesRejectsZeroAndNegatives()
     {
         PositiveInt.TryCreate(1).IsSuccess.Should().BeTrue();
         PositiveInt.TryCreate(int.MaxValue).IsSuccess.Should().BeTrue();
@@ -99,7 +101,7 @@ public class RequiredDateTimeOffsetAndNumericConvenienceTests
     }
 
     [Fact]
-    public void PositiveLong_accepts_positives_rejects_zero_and_negatives()
+    public void TryCreate_PositiveLong_AcceptsPositivesRejectsZeroAndNegatives()
     {
         PositiveLong.TryCreate(1L).IsSuccess.Should().BeTrue();
         PositiveLong.TryCreate(0L).IsFailure.Should().BeTrue();
@@ -107,7 +109,7 @@ public class RequiredDateTimeOffsetAndNumericConvenienceTests
     }
 
     [Fact]
-    public void PositiveDecimal_accepts_positives_rejects_zero_and_negatives()
+    public void TryCreate_PositiveDecimal_AcceptsPositivesRejectsZeroAndNegatives()
     {
         PositiveDecimal.TryCreate(0.01m).IsSuccess.Should().BeTrue();
         PositiveDecimal.TryCreate(0m).IsFailure.Should().BeTrue();
@@ -117,7 +119,7 @@ public class RequiredDateTimeOffsetAndNumericConvenienceTests
     // ---------- [NonNegative] ----------
 
     [Fact]
-    public void NonNegativeInt_accepts_zero_and_positives_rejects_negatives()
+    public void TryCreate_NonNegativeInt_AcceptsZeroAndPositivesRejectsNegatives()
     {
         NonNegativeInt.TryCreate(0).IsSuccess.Should().BeTrue();
         NonNegativeInt.TryCreate(1).IsSuccess.Should().BeTrue();
@@ -125,14 +127,14 @@ public class RequiredDateTimeOffsetAndNumericConvenienceTests
     }
 
     [Fact]
-    public void NonNegativeLong_accepts_zero_and_positives_rejects_negatives()
+    public void TryCreate_NonNegativeLong_AcceptsZeroAndPositivesRejectsNegatives()
     {
         NonNegativeLong.TryCreate(0L).IsSuccess.Should().BeTrue();
         NonNegativeLong.TryCreate(-1L).IsFailure.Should().BeTrue();
     }
 
     [Fact]
-    public void NonNegativeDecimal_accepts_zero_and_positives_rejects_negatives()
+    public void TryCreate_NonNegativeDecimal_AcceptsZeroAndPositivesRejectsNegatives()
     {
         NonNegativeDecimal.TryCreate(0m).IsSuccess.Should().BeTrue();
         NonNegativeDecimal.TryCreate(0.01m).IsSuccess.Should().BeTrue();
@@ -142,7 +144,7 @@ public class RequiredDateTimeOffsetAndNumericConvenienceTests
     // ---------- [Negative] ----------
 
     [Fact]
-    public void NegativeInt_accepts_negatives_rejects_zero_and_positives()
+    public void TryCreate_NegativeInt_AcceptsNegativesRejectsZeroAndPositives()
     {
         NegativeInt.TryCreate(-1).IsSuccess.Should().BeTrue();
         NegativeInt.TryCreate(int.MinValue).IsSuccess.Should().BeTrue();
@@ -151,14 +153,14 @@ public class RequiredDateTimeOffsetAndNumericConvenienceTests
     }
 
     [Fact]
-    public void NegativeLong_accepts_negatives_rejects_zero_and_positives()
+    public void TryCreate_NegativeLong_AcceptsNegativesRejectsZeroAndPositives()
     {
         NegativeLong.TryCreate(-1L).IsSuccess.Should().BeTrue();
         NegativeLong.TryCreate(0L).IsFailure.Should().BeTrue();
     }
 
     [Fact]
-    public void NegativeDecimal_accepts_negatives_rejects_zero_and_positives()
+    public void TryCreate_NegativeDecimal_AcceptsNegativesRejectsZeroAndPositives()
     {
         NegativeDecimal.TryCreate(-0.01m).IsSuccess.Should().BeTrue();
         NegativeDecimal.TryCreate(0m).IsFailure.Should().BeTrue();
@@ -167,7 +169,7 @@ public class RequiredDateTimeOffsetAndNumericConvenienceTests
     // ---------- [NonPositive] ----------
 
     [Fact]
-    public void NonPositiveInt_accepts_zero_and_negatives_rejects_positives()
+    public void TryCreate_NonPositiveInt_AcceptsZeroAndNegativesRejectsPositives()
     {
         NonPositiveInt.TryCreate(0).IsSuccess.Should().BeTrue();
         NonPositiveInt.TryCreate(-1).IsSuccess.Should().BeTrue();
@@ -175,7 +177,7 @@ public class RequiredDateTimeOffsetAndNumericConvenienceTests
     }
 
     [Fact]
-    public void NonPositiveLong_accepts_zero_and_negatives_rejects_positives()
+    public void TryCreate_NonPositiveLong_AcceptsZeroAndNegativesRejectsPositives()
     {
         NonPositiveLong.TryCreate(0L).IsSuccess.Should().BeTrue();
         NonPositiveLong.TryCreate(-1L).IsSuccess.Should().BeTrue();
@@ -183,7 +185,7 @@ public class RequiredDateTimeOffsetAndNumericConvenienceTests
     }
 
     [Fact]
-    public void NonPositiveDecimal_accepts_zero_and_negatives_rejects_positives()
+    public void TryCreate_NonPositiveDecimal_AcceptsZeroAndNegativesRejectsPositives()
     {
         NonPositiveDecimal.TryCreate(0m).IsSuccess.Should().BeTrue();
         NonPositiveDecimal.TryCreate(-0.01m).IsSuccess.Should().BeTrue();

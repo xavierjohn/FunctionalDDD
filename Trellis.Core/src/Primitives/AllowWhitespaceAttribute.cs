@@ -11,11 +11,11 @@ using System;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Once the flip lands, the generator's default rejects whitespace-only input (after any
-/// <see cref="TrimAttribute"/> trim runs). Allowing whitespace-only input does not by itself
-/// allow empty input — combine with <see cref="AllowEmptyAttribute"/> when both should be
-/// accepted. Combining with <see cref="NoTrimAttribute"/> preserves whitespace verbatim instead
-/// of trimming first.
+/// Once the flip lands, the generator's default rejects whitespace-only input (after the
+/// default trim runs; opt out of the trim with <see cref="NoTrimAttribute"/> to keep raw
+/// whitespace). Allowing whitespace-only input does not by itself allow empty input — combine
+/// with <see cref="AllowEmptyAttribute"/> when both should be accepted. Combine with
+/// <see cref="NoTrimAttribute"/> to preserve whitespace verbatim instead of trimming first.
 /// </para>
 /// </remarks>
 /// <seealso cref="AllowEmptyAttribute"/>
