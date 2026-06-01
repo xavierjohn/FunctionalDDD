@@ -15,10 +15,10 @@ using System;
 /// <para>
 /// Conflicts with <see cref="PositiveAttribute"/> (which rejects values <c>&lt;= 0</c>) and
 /// <see cref="NegativeAttribute"/> (which rejects values <c>&gt;= 0</c>); pairing this attribute
-/// with either produces a generator diagnostic. Compatible with
-/// <see cref="NonNegativeAttribute"/> (already permits <c>0</c>) and
-/// <see cref="NonPositiveAttribute"/> (already permits <c>0</c>), in which case
-/// <c>[AllowZero]</c> is redundant — a generator diagnostic flags this.
+/// with either produces a generator diagnostic. Use with <see cref="NonNegativeAttribute"/> or
+/// <see cref="NonPositiveAttribute"/> when zero should be permitted within those ranges — the
+/// convenience attribute alone bounds the range but the strict-by-default zero rejection still
+/// fires; <c>[AllowZero]</c> is required to make zero a valid value.
 /// </para>
 /// <para>
 /// Only applies to numeric Required bases. Applying to <see cref="RequiredString{TSelf}"/>,

@@ -635,10 +635,23 @@ public partial class TrackingId : RequiredString, IParsable<TrackingId>, ITryCre
         if (requiredStringOrNothing is null)
             return Result.Fail<TrackingId>(Error.InvalidInput.ForField(field, "validation.error", "Tracking Id cannot be null."));
 
-        if (string.IsNullOrWhiteSpace(requiredStringOrNothing))
-            return Result.Fail<TrackingId>(Error.InvalidInput.ForField(field, "validation.error", "Tracking Id cannot be empty."));
+        // Raw whitespace-only check runs BEFORE trim so the dedicated error message survives.
+        if (requiredStringOrNothing.Length > 0)
+        {
+            var isWhitespaceOnly = true;
+            for (var i = 0; i < requiredStringOrNothing.Length; i++)
+            {
+                if (!char.IsWhiteSpace(requiredStringOrNothing[i])) { isWhitespaceOnly = false; break; }
+            }
+            if (isWhitespaceOnly)
+                return Result.Fail<TrackingId>(Error.InvalidInput.ForField(field, "validation.error", "Tracking Id cannot be whitespace-only."));
+        }
 
         var normalized = requiredStringOrNothing.Trim();
+
+        if (normalized.Length == 0)
+            return Result.Fail<TrackingId>(Error.InvalidInput.ForField(field, "validation.error", "Tracking Id cannot be empty."));
+
         return Result.Ok(new TrackingId(normalized));
     }
 }
@@ -660,13 +673,29 @@ public static Result<ProductName> TryCreate(string? value, string? fieldName = n
     var field = !string.IsNullOrEmpty(fieldName)
         ? (fieldName.Length == 1 ? fieldName.ToLowerInvariant() : char.ToLowerInvariant(fieldName[0]) + fieldName[1..])
         : "productName";
-    return value
-        .ToResult(Error.InvalidInput.ForField(field, "validation.error", "Product Name cannot be null."))
-        .Ensure(str => !string.IsNullOrWhiteSpace(str), Error.InvalidInput.ForField(field, "validation.error", "Product Name cannot be empty."))
-        .Map(str => str.Trim())
-        .Ensure(str => str.Length >= 3, Error.InvalidInput.ForField(field, "validation.error", "Product Name must be at least 3 characters."))
-        .Ensure(str => str.Length <= 50, Error.InvalidInput.ForField(field, "validation.error", "Product Name must be 50 characters or fewer."))
-        .Map(str => new ProductName(str));
+    if (value is null)
+        return Result.Fail<ProductName>(Error.InvalidInput.ForField(field, "validation.error", "Product Name cannot be null."));
+
+    // Raw whitespace check (before trim) — emits the dedicated whitespace-only error.
+    if (value.Length > 0)
+    {
+        var isWhitespaceOnly = true;
+        for (var i = 0; i < value.Length; i++)
+        {
+            if (!char.IsWhiteSpace(value[i])) { isWhitespaceOnly = false; break; }
+        }
+        if (isWhitespaceOnly)
+            return Result.Fail<ProductName>(Error.InvalidInput.ForField(field, "validation.error", "Product Name cannot be whitespace-only."));
+    }
+
+    var normalized = value.Trim();
+    if (normalized.Length == 0)
+        return Result.Fail<ProductName>(Error.InvalidInput.ForField(field, "validation.error", "Product Name cannot be empty."));
+    if (normalized.Length < 3)
+        return Result.Fail<ProductName>(Error.InvalidInput.ForField(field, "validation.error", "Product Name must be at least 3 characters."));
+    if (normalized.Length > 50)
+        return Result.Fail<ProductName>(Error.InvalidInput.ForField(field, "validation.error", "Product Name must be 50 characters or fewer."));
+    return Result.Ok(new ProductName(normalized));
 }
 ```
 
