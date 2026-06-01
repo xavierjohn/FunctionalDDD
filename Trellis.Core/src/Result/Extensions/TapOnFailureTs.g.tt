@@ -1,4 +1,4 @@
-<#@ template debug="false" hostspecific="false" language="C#" #>
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
 <#@ assembly name="System.Core" #>
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Text" #>
@@ -12,6 +12,8 @@
 // </auto-generated>
 
 namespace Trellis;
+using System.Runtime.CompilerServices;
+
 using System.Diagnostics;
 
 /// <summary>
@@ -188,6 +190,7 @@ public static partial class TapOnFailureExtensionsAsync
     /// <param name="result">The result containing a <#= i #>-element tuple.</param>
     /// <param name="func">The async side effect function to execute on failure.</param>
     /// <returns>A task that represents the asynchronous operation containing the original result unchanged.</returns>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<(<# WriteTs(i); #>)>> TapOnFailureAsync<<# WriteTs(i); #>>
                   (this Result<(<# WriteTs(i); #>)> result,
                   Func<Task> func)
@@ -211,6 +214,7 @@ public static partial class TapOnFailureExtensionsAsync
     /// <param name="result">The result containing a <#= i #>-element tuple.</param>
     /// <param name="func">The async side effect function to execute with the error on failure.</param>
     /// <returns>A task that represents the asynchronous operation containing the original result unchanged.</returns>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<(<# WriteTs(i); #>)>> TapOnFailureAsync<<# WriteTs(i); #>>
                   (this Result<(<# WriteTs(i); #>)> result,
                   Func<Error, Task> func)

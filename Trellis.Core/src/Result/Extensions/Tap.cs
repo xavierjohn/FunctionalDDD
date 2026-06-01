@@ -2,6 +2,7 @@
 
 using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 /// <summary>
 /// Provides extension methods for executing side effects on successful Results without changing the Result.
@@ -110,6 +111,12 @@ public static partial class TapExtensionsAsync
     /// <param name="result">The result to tap.</param>
     /// <param name="func">The async action to execute if the result is successful.</param>
     /// <returns>The original result unchanged.</returns>
+    /// <remarks>
+    /// <see cref="OverloadResolutionPriorityAttribute"/> resolves the historical CS0121 ambiguity
+    /// against the sibling <see cref="ValueTask"/>-delegate overload on the same sync
+    /// <see cref="Result{T}"/> receiver for inline async lambdas.
+    /// </remarks>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<TValue>> TapAsync<TValue>(this Result<TValue> result, Func<Task> func)
     {
         ArgumentNullException.ThrowIfNull(func);
@@ -167,6 +174,12 @@ public static partial class TapExtensionsAsync
     /// <param name="result">The result to tap.</param>
     /// <param name="func">The async action to execute with the value if the result is successful.</param>
     /// <returns>The original result unchanged.</returns>
+    /// <remarks>
+    /// <see cref="OverloadResolutionPriorityAttribute"/> resolves the historical CS0121 ambiguity
+    /// against the sibling <see cref="ValueTask"/>-delegate overload on the same sync
+    /// <see cref="Result{T}"/> receiver for inline async lambdas.
+    /// </remarks>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<TValue>> TapAsync<TValue>(this Result<TValue> result, Func<TValue, Task> func)
     {
         ArgumentNullException.ThrowIfNull(func);

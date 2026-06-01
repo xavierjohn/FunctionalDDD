@@ -1,6 +1,7 @@
 ﻿namespace Trellis;
 
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 /// <summary>
 /// Provides extension methods for binding (chaining) operations over Result values.
@@ -52,6 +53,15 @@ public static partial class BindExtensionsAsync
     /// <param name="result">The result to bind.</param>
     /// <param name="func">The async function to call if the result is successful.</param>
     /// <returns>A new result from the function if success; otherwise the original failure.</returns>
+    /// <remarks>
+    /// <see cref="OverloadResolutionPriorityAttribute"/> resolves the historical CS0121 ambiguity
+    /// against the sibling <see cref="ValueTask{T}"/>-delegate overload on the same sync
+    /// <see cref="Result{T}"/> receiver when callers pass an inline async lambda whose body
+    /// returns a synchronous <see cref="Result{T}"/>. Callers who specifically want
+    /// <see cref="ValueTask{T}"/> still get it via a strongly-typed delegate (the Task overload
+    /// is not applicable, so priority is not consulted).
+    /// </remarks>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<TResult>> BindAsync<TValue, TResult>(this Result<TValue> result, Func<TValue, Task<Result<TResult>>> func)
     {
         ArgumentNullException.ThrowIfNull(func);

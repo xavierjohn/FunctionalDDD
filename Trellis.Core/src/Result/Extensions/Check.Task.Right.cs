@@ -1,5 +1,7 @@
 ﻿namespace Trellis;
 
+using System.Runtime.CompilerServices;
+
 /// <summary>
 /// Async Check extensions where only the RIGHT (check function) is async (Task), input is sync.
 /// </summary>
@@ -15,6 +17,12 @@ public static partial class CheckExtensionsAsync
     /// <param name="result">The result to check.</param>
     /// <param name="func">The async validation function that returns a Result.</param>
     /// <returns>The original result if the check passes; otherwise the check's failure.</returns>
+    /// <remarks>
+    /// <see cref="OverloadResolutionPriorityAttribute"/> resolves the historical CS0121 ambiguity
+    /// against the sibling <see cref="ValueTask{T}"/>-delegate overload on the same sync
+    /// <see cref="Result{T}"/> receiver for inline async lambdas.
+    /// </remarks>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<T>> CheckAsync<T, TK>(this Result<T> result, Func<T, Task<Result<TK>>> func)
     {
         ArgumentNullException.ThrowIfNull(func);
@@ -47,6 +55,7 @@ public static partial class CheckExtensionsAsync
     /// <param name="result">The result to check.</param>
     /// <param name="func">The async validation function that returns a <see cref="Result{TValue}"/> with <see cref="Unit"/>.</param>
     /// <returns>The original result if the check passes; otherwise the check's failure.</returns>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<T>> CheckAsync<T>(this Result<T> result, Func<T, Task<Result<Unit>>> func)
     {
         ArgumentNullException.ThrowIfNull(func);

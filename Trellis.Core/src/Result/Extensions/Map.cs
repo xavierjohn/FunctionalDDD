@@ -1,6 +1,7 @@
 ﻿namespace Trellis;
 
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 /// <summary>
 /// Provides extension methods for mapping (transforming) values inside Result objects.
@@ -57,6 +58,13 @@ public static partial class MapExtensionsAsync
     /// <param name="result">The result to map.</param>
     /// <param name="func">The async function to transform the value if the result is successful.</param>
     /// <returns>A new success result with the transformed value if success; otherwise the original failure.</returns>
+    /// <remarks>
+    /// <see cref="OverloadResolutionPriorityAttribute"/> resolves the historical CS0121 ambiguity
+    /// against the sibling <see cref="ValueTask{T}"/>-delegate overload on the same sync
+    /// <see cref="Result{T}"/> receiver for inline async lambdas. Callers can still target
+    /// <see cref="ValueTask{T}"/> via a strongly-typed delegate.
+    /// </remarks>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<TOut>> MapAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, Task<TOut>> func)
     {
         ArgumentNullException.ThrowIfNull(func);

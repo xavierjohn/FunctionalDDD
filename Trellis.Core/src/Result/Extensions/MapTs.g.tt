@@ -13,6 +13,8 @@
 
 namespace Trellis;
 
+using System.Runtime.CompilerServices;
+
 /// <summary>
 /// Provides Map extension methods for Result types containing tuples (2-9 elements).
 /// These methods enable transforming tuple values from combined results without returning a Result.
@@ -112,6 +114,7 @@ public static partial class MapExtensionsAsync
     /// <summary>
     /// Maps the values of a <#= i #>-element tuple result using an async function.
     /// </summary>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<TResult>> MapAsync<<# WriteTs(i); #>, TResult>(
         this Result<(<# WriteTs(i); #>)> result,
         Func<<# WriteTs(i); #>, Task<TResult>> func)

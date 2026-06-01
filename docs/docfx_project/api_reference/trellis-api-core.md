@@ -85,7 +85,6 @@ public Task<Result<Unit>> Handle(CancelOrderCommand cmd, CancellationToken ct) =
 | --- | --- | --- |
 | `CS1929: 'Task<Result<T>>' does not contain a definition for 'Bind'` | `LoadAsync(...).Bind(x => ...)` | Use `BindAsync` (which extends `Task<Result<T>>`), or `await` first then `.Bind(...)` |
 | `CS0411: type arguments for 'Map<TOut>' cannot be inferred` | `someTaskResult.Map(...)` after a `CheckAsync` whose result type can't be inferred | `await` the precondition into a concrete `Result<T>` before projecting; or use `MapAsync<TOut>(...)` |
-| `CS0121: ambiguous between 'BindAsync<...>(Result<T>, Func<T, Task<Result<R>>>)' and 'BindAsync<...>(Result<T>, Func<T, ValueTask<Result<R>>>)'` | A sync `Result<T>` (not `Task<Result<T>>`) receiver with an inline `async` lambda whose return type can't be inferred between `Task` and `ValueTask` — both delegate-shape overloads exist on the sync receiver. | Either extract the lambda to a named method with an explicit `Task<Result<R>>` return type, or pin the delegate type at the call site: `Func<T, Task<Result<R>>> next = c => ...; result.BindAsync(next);`. See [`Bind family — Task vs ValueTask ambiguity`](#bind-family--bindextensions-bindextensionsasync-bindzipextensions-bindzipextensionsasync) |
 
 
 ## Common traps
@@ -909,12 +908,16 @@ Result<Order> Place(OrderId id) =>
         .Bind((customer, cart) => Charge(customer, cart));
 ```
 
-> **Trap — `BindAsync` Task vs ValueTask overload ambiguity (`CS0121`).** When the lambda passed to `BindAsync` is an inline expression whose return type can't be inferred between `Task<Result<R>>` and `ValueTask<Result<R>>`, the compiler reports both overloads as candidates. Two reliable fixes:
->
-> 1. **Named method with explicit return type** — extract the lambda body to a method declared as `private Task<Result<R>> NextStage(T value, CancellationToken ct) { ... }` and pass `NextStage` (the method group resolves unambiguously).
-> 2. **Typed local delegate** — `Func<T, Task<Result<R>>> next = c => ...; .BindAsync(next);` forces the `Task` overload.
->
-> Avoid storing the lambda inline as `var next = ...;` because the inferred type may still be ambiguous.
+> **Async-lambda overload resolution.** The sync-`Result<T>`-receiver `BindAsync` / `MapAsync` /
+> `TapAsync` / `CheckAsync` / `EnsureAsync` / `MatchAsync` Task-delegate overloads carry
+> `[OverloadResolutionPriority(1)]` so inline `async` lambdas whose return type would otherwise
+> be ambiguous between `Task<Result<R>>` and `ValueTask<Result<R>>` resolve to the Task overload.
+> Callers who specifically want the ValueTask overload still get it by passing a strongly-typed
+> `Func<T, ValueTask<Result<R>>>` delegate (the Task overload is not applicable, so priority is
+> not consulted). The LINQ `SelectMany` overloads in `Trellis.Core/src/Result/Extensions/Linq.*Right.cs`
+> are an exception: the priority attribute is applied for documentation but does not currently
+> disambiguate across the two distinct extension classes; LINQ query syntax over async Result
+> composition still benefits from a typed local delegate when the async return type is ambiguous.
 
 #### Map family — `MapExtensions`, `MapExtensionsAsync`, `MapIfExtensions`, `MapOnFailureExtensions`
 

@@ -13,6 +13,8 @@
 
 namespace Trellis;
 
+using System.Runtime.CompilerServices;
+
 using System.CodeDom.Compiler;
 
 /// <summary>
@@ -103,6 +105,7 @@ public static partial class BindZipExtensionsAsync
     /// <summary>
     /// Asynchronously binds an async function on a <#= i #>-tuple result and zips into a <#= outputSize #>-tuple.
     /// </summary>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<(<# WriteTs(outputSize); #>)>> BindZipAsync<<# WriteTs(outputSize); #>>(
         this Result<(<# WriteTs(i); #>)> result,
         Func<<# WriteTs(i); #>, Task<Result<T<#= outputSize #>>>> func)
