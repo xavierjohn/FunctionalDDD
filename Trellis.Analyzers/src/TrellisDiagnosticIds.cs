@@ -135,14 +135,9 @@ public static class TrellisDiagnosticIds
     /// <summary>TRLS039 — Scalar value object wraps a primitive that is not supported by the AOT-safe JSON converter generator.</summary>
     public const string UnsupportedScalarValuePrimitiveForAotJson = "TRLS039";
 
-    /// <summary>TRLS040 — <c>[NotDefault]</c> is not supported on <c>RequiredBool&lt;T&gt;</c> (a bool that rejects <c>false</c> would be degenerate).</summary>
-    public const string NotDefaultOnRequiredBool = "TRLS040";
-
-    /// <summary>TRLS041 — <c>[Trim]</c> is only valid on <c>RequiredString&lt;T&gt;</c>-derived types.</summary>
-    public const string TrimOnNonStringRequired = "TRLS041";
-
-    /// <summary>TRLS042 — <c>[NotDefault]</c> is not supported on <c>RequiredEnum&lt;T&gt;</c> (smart-enum has no CLR <c>default(T)</c>).</summary>
-    public const string NotDefaultOnRequiredEnum = "TRLS042";
+    // TRLS040, TRLS041, TRLS042 were retired in the v3 defaults flip: [NotDefault] and [Trim]
+    // are now vestigial no-ops universally, surfaced via TRLS046/TRLS047 informational diagnostics
+    // rather than per-base errors. The IDs are intentionally not reused.
 
     /// <summary>TRLS043 — Numeric convenience attribute (<c>[Positive]</c>, <c>[NonNegative]</c>, <c>[Negative]</c>, or <c>[NonPositive]</c>) applied to a non-numeric Required base.</summary>
     public const string NumericConvenienceOnNonNumeric = "TRLS043";

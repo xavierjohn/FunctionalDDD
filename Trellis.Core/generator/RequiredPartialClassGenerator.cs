@@ -141,9 +141,7 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
         public const string InvalidStringLengthRange = "TRLS032";
         public const string InvalidRangeMinExceedsMax = "TRLS033";
         public const string DecimalRangeExceedsDecimalRange = "TRLS034";
-        public const string NotDefaultOnRequiredBool = "TRLS040";
-        public const string TrimOnNonStringRequired = "TRLS041";
-        public const string NotDefaultOnRequiredEnum = "TRLS042";
+        // TRLS040 / TRLS041 / TRLS042 retired in the v3 defaults flip — see TRLS046 / TRLS047 below.
         public const string NumericConvenienceOnNonNumeric = "TRLS043";
         public const string NumericConvenienceConflict = "TRLS044";
         public const string NumericConvenienceWithExplicitRange = "TRLS045";
@@ -622,64 +620,18 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
                 g.ClassName));
         }
 
-        if (g.HasTrim && g.ClassBase == "RequiredString")
+        if (g.HasTrim)
         {
             context.ReportDiagnostic(Diagnostic.Create(
                 new DiagnosticDescriptor(
                     id: Ids.TrimIsVestigial,
-                    title: "[Trim] is vestigial on RequiredString",
-                    messageFormat: "Class '{0}' has [Trim]. Attribute is now vestigial under the v3 strict-by-default model. Trim now runs by default on RequiredString. Remove this attribute; use [NoTrim] to opt out of automatic trim.",
+                    title: "[Trim] is vestigial",
+                    messageFormat: "Class '{0}' has [Trim]. Attribute is now vestigial under the v3 strict-by-default model. On RequiredString trim now runs by default — remove this attribute and use [NoTrim] to opt out. On other Required bases [Trim] has never had meaning and is silently ignored.",
                     category: "Trellis",
                     DiagnosticSeverity.Info,
                     isEnabledByDefault: true),
                 location: null,
                 g.ClassName));
-        }
-
-        if (g.HasNotDefault && g.ClassBase == "RequiredBool")
-        {
-            context.ReportDiagnostic(Diagnostic.Create(
-                new DiagnosticDescriptor(
-                    id: Ids.NotDefaultOnRequiredBool,
-                    title: "[NotDefault] is not supported on RequiredBool",
-                    messageFormat: "Class '{0}' has [NotDefault] but inherits from RequiredBool. A bool that rejects false has only one constructible value, which is degenerate; express the constraint as a guard at the usage site instead.",
-                    category: "Trellis",
-                    DiagnosticSeverity.Error,
-                    isEnabledByDefault: true),
-                location: null,
-                g.ClassName));
-            ok = false;
-        }
-
-        if (g.HasNotDefault && g.ClassBase == "RequiredEnum")
-        {
-            context.ReportDiagnostic(Diagnostic.Create(
-                new DiagnosticDescriptor(
-                    id: Ids.NotDefaultOnRequiredEnum,
-                    title: "[NotDefault] is not supported on RequiredEnum",
-                    messageFormat: "Class '{0}' has [NotDefault] but inherits from RequiredEnum. RequiredEnum is a smart-enum over declared string values; there is no CLR default(T) to reject. To disallow a specific member, override ValidateAdditional.",
-                    category: "Trellis",
-                    DiagnosticSeverity.Error,
-                    isEnabledByDefault: true),
-                location: null,
-                g.ClassName));
-            ok = false;
-        }
-
-        if (g.HasTrim && g.ClassBase != "RequiredString")
-        {
-            context.ReportDiagnostic(Diagnostic.Create(
-                new DiagnosticDescriptor(
-                    id: Ids.TrimOnNonStringRequired,
-                    title: "[Trim] is only valid on RequiredString",
-                    messageFormat: "Class '{0}' has [Trim] but inherits from '{1}'. [Trim] is a string-only attribute; it has no meaning for non-string Required types.",
-                    category: "Trellis",
-                    DiagnosticSeverity.Error,
-                    isEnabledByDefault: true),
-                location: null,
-                g.ClassName,
-                g.ClassBase));
-            ok = false;
         }
 
         if (g.HasAllowZero && !isNumericBase)
@@ -698,13 +650,13 @@ public class RequiredPartialClassGenerator : IIncrementalGenerator
             ok = false;
         }
 
-        if (g.HasAllowEmpty && (isNumericBase || isDateBase))
+        if (g.HasAllowEmpty && g.ClassBase is not ("RequiredString" or "RequiredGuid"))
         {
             context.ReportDiagnostic(Diagnostic.Create(
                 new DiagnosticDescriptor(
                     id: Ids.AllowEmptyOnNumericOrDateRequired,
-                    title: "[AllowEmpty] is not valid on numeric or date Required bases",
-                    messageFormat: "Class '{0}' has [AllowEmpty] but inherits from '{1}'. [AllowEmpty] only applies to RequiredString and RequiredGuid; use [AllowZero] for numeric Required bases or [AllowMinValue] for date Required bases.",
+                    title: "[AllowEmpty] is only valid on RequiredString and RequiredGuid",
+                    messageFormat: "Class '{0}' has [AllowEmpty] but inherits from '{1}'. [AllowEmpty] only applies to RequiredString and RequiredGuid; use [AllowZero] for numeric Required bases or [AllowMinValue] for date Required bases. RequiredBool / RequiredEnum have no opt-out (RequiredBool is degenerate; RequiredEnum uses smart-enum lookup).",
                     category: "Trellis",
                     DiagnosticSeverity.Error,
                     isEnabledByDefault: true),
