@@ -42,7 +42,7 @@ See also: [trellis-api-cookbook.md](trellis-api-cookbook.md) — recipes using t
 | Compose a system actor for background workers | `AddTrellisWorkerActor` | [`Trellis.Asp.Authorization`](#namespace-trellisaspauthorization) |
 | Bind scalar value objects from routes/query/body | `AddTrellisAsp()` plus route constraints / validation middleware as needed | [`Trellis.Asp.ModelBinding`](#namespace-trellisaspmodelbinding), [`Trellis.Asp.Validation`](#namespace-trellisaspvalidation) |
 | Add Trellis ProblemDetails recipe (trace id from `Activity.Current`, friendly 500 detail, `allow` extension on 405) | `services.AddTrellisProblemDetails()` plus `app.UseTrellisProblemDetails()` (or `options.UseProblemDetails()` via [`Trellis.ServiceDefaults`](trellis-api-servicedefaults.md#trellisservicebuilder)) | [`ServiceCollectionExtensions`](#servicecollectionextensions), [`ApplicationBuilderExtensions`](#applicationbuilderextensions) |
-| Add the IETF `Idempotency-Key` middleware to opted-in `POST` / `PATCH` endpoints | `services.AddTrellisIdempotency(...)` (or `options.UseIdempotency(...)`), `services.AddInMemoryIdempotencyStore()`, `app.UseTrellisIdempotency()`, and mark each opted-in endpoint with `[Idempotent]` | [`Trellis.Asp.Idempotency`](#namespace-trellisaspidempotency), Cookbook [Recipe 28](trellis-api-cookbook.md#recipe-28--ietf-idempotency-key-middleware-on-post--patch-with-usetrellisidempotency) |
+| Add the IETF `Idempotency-Key` middleware to opted-in `POST` / `PATCH` endpoints | `services.AddTrellisIdempotency(...)` (or `options.UseIdempotency(...)`), `services.AddInMemoryIdempotencyStore()`, `app.UseTrellisIdempotency()`, and mark each opted-in endpoint with `[Idempotent]` | [`Trellis.Asp.Idempotency`](#namespace-trellisaspidempotency), Cookbook [Recipe 29](trellis-api-cookbook.md#recipe-29--ietf-idempotency-key-middleware-on-post--patch-with-usetrellisidempotency) |
 
 ## Endpoint checklist for generated APIs
 
@@ -422,7 +422,7 @@ The middleware pipeline surface for `Trellis.Asp` (in folder `Extensions/`).
 
 ### Namespace `Trellis.Asp.Idempotency`
 
-Opt-in IETF `Idempotency-Key` middleware for `POST` / `PATCH` retry safety. See cookbook [Recipe 28](trellis-api-cookbook.md#recipe-28--ietf-idempotency-key-middleware-on-post--patch-with-usetrellisidempotency).
+Opt-in IETF `Idempotency-Key` middleware for `POST` / `PATCH` retry safety. See cookbook [Recipe 29](trellis-api-cookbook.md#recipe-29--ietf-idempotency-key-middleware-on-post--patch-with-usetrellisidempotency).
 
 ### `IdempotentAttribute`
 

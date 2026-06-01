@@ -100,7 +100,7 @@ Use this table before writing code. If a task matches a row, read that recipe fi
 | Write handler/domain tests | [Recipe 10](#recipe-10--test-handler-test-using-trellistesting-shouldbe--unwraperror) |
 | Write integration tests for a `BackgroundService` worker | [Recipe 26](#recipe-26--test-a-backgroundservice-with-workerharnesstworker) |
 | Insert a row idempotently on a unique constraint (de-duplicated worker outbox, "save unless exists") | [Recipe 27](#recipe-27--idempotent-inserts-on-a-unique-constraint-with-tryinsertuniqueasync) |
-| Make POST / PATCH safe under client retries with an IETF `Idempotency-Key` header | [Recipe 28](#recipe-28--ietf-idempotency-key-middleware-on-post--patch-with-usetrellisidempotency) |
+| Make POST / PATCH safe under client retries with an IETF `Idempotency-Key` header | [Recipe 29](#recipe-29--ietf-idempotency-key-middleware-on-post--patch-with-usetrellisidempotency) |
 | Define domain events | [Recipe 17](#recipe-17--defining-custom-domain-events-occurredat-is-the-only-timestamp) |
 | Fix analyzer warnings | [Recipe 11](#recipe-11--anti-pattern--fix-gallery-the-analyzers-in-action) |
 | Wire the composition root | [Recipe 12](#recipe-12--di-wiring-playbook-addtrellis-composition-builder) |
