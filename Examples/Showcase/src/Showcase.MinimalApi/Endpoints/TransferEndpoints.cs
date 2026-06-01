@@ -2,6 +2,7 @@
 
 using Trellis;
 using Trellis.Asp;
+using Trellis.Asp.Idempotency;
 using Trellis.Showcase.Application.Models;
 using Trellis.Showcase.Application.Persistence;
 using Trellis.Showcase.Application.Workflows;
@@ -19,7 +20,8 @@ public static class TransferEndpoints
                 .BindAsync(pair => workflow.TransferAsync(pair.Item1, pair.Item2, request.Amount, request.Description, ct))
                 .MapAsync(pair => AccountResponse.From(pair.From))
                 .ToHttpResponseAsync())
-            .WithScalarValueValidation();
+            .WithScalarValueValidation()
+            .WithMetadata(new IdempotentAttribute());
 
         return routes;
     }

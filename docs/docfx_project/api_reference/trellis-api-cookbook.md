@@ -100,6 +100,7 @@ Use this table before writing code. If a task matches a row, read that recipe fi
 | Write handler/domain tests | [Recipe 10](#recipe-10--test-handler-test-using-trellistesting-shouldbe--unwraperror) |
 | Write integration tests for a `BackgroundService` worker | [Recipe 26](#recipe-26--test-a-backgroundservice-with-workerharnesstworker) |
 | Insert a row idempotently on a unique constraint (de-duplicated worker outbox, "save unless exists") | [Recipe 27](#recipe-27--idempotent-inserts-on-a-unique-constraint-with-tryinsertuniqueasync) |
+| Make POST / PATCH safe under client retries with an IETF `Idempotency-Key` header | [Recipe 29](#recipe-29--ietf-idempotency-key-middleware-on-post--patch-with-usetrellisidempotency) |
 | Define domain events | [Recipe 17](#recipe-17--defining-custom-domain-events-occurredat-is-the-only-timestamp) |
 | Fix analyzer warnings | [Recipe 11](#recipe-11--anti-pattern--fix-gallery-the-analyzers-in-action) |
 | Wire the composition root | [Recipe 12](#recipe-12--di-wiring-playbook-addtrellis-composition-builder) |
@@ -2423,6 +2424,55 @@ If the same error is raised on `GET /api/customers/abc-123`, the URL already ide
 **Defensive synthesis.** The writer never throws while building the synthesised URI. Malformed `ResourceRef` values (empty Type or Id), unsafe collection names, and a missing registry all silently fall back to the request URL — a domain 404/409 can never turn into a 500 because of synthesis. `Error.Aggregate` never promotes a child's `ResourceRef`; the envelope itself carries no resource identity.
 
 **Common-noun guidance.** The naive plural (`Type.ToLowerInvariant() + "s"`) produces poor output for words like `Status` → `statuss`, `Address` → `addresss`, `Person` → `persons`. Override these explicitly via `[ResourceCollectionName(...)]` on the aggregate (preferred) or via `services.AddResourceCollectionName<T>(name)`. The attribute constructor and the DI helper both validate the name as a single safe URL path segment so misconfiguration fails fast at host start.
+
+---
+
+## Recipe 29 — IETF `Idempotency-Key` middleware on POST / PATCH with `UseTrellisIdempotency`
+
+**Problem.** A client retries a `POST /payments` after a network hiccup. The original request already created the payment; the retry must return the same `201 Created` payload — not a second `201` (double-charge), and not a `400 Bad Request` because the second attempt now violates a uniqueness rule. The IETF [`draft-ietf-httpapi-idempotency-key-header`](https://datatracker.ietf.org/doc/draft-ietf-httpapi-idempotency-key-header/) names the header (`Idempotency-Key`) and the contract: the server stores the first response keyed by `(scope, key, request-fingerprint)`, replays it on retry, rejects fingerprint mismatches with `422 Unprocessable Entity`, and serialises concurrent in-flight retries with `409 Conflict` + `Retry-After`. Doing this by hand per endpoint scatters request buffering, response capture, scope/tenant isolation, and store-side CAS across the codebase.
+
+**Solution.** `Trellis.Asp.Idempotency.IdempotencyMiddleware` (opt-in via the `[Idempotent]` endpoint attribute) does the contract end-to-end. The middleware is a no-op on endpoints that do not carry the attribute and on methods outside the configured set (`POST` and `PATCH` by default).
+
+```csharp
+// Program.cs
+builder.Services.AddTrellis(t => t
+    .UseAsp()
+    .UseProblemDetails()
+    .UseIdempotency(opt =>
+    {
+        opt.Ttl = TimeSpan.FromHours(24);
+        opt.MaxRequestBodyBytes = 256 * 1024;
+    }));
+builder.Services.AddInMemoryIdempotencyStore(); // dev / single-instance; swap for an EF-backed store in production
+
+var app = builder.Build();
+app.UseTrellisIdempotency();
+app.MapControllers();
+```
+
+```csharp
+// PaymentsController.cs
+[ApiController]
+[Route("payments")]
+public sealed class PaymentsController : ControllerBase
+{
+    [HttpPost]
+    [Idempotent]
+    public Task<IActionResult> CreateAsync([FromBody] CreatePaymentRequest body, CancellationToken ct)
+        => /* handler returns 201 Created with the payment representation */;
+}
+```
+
+```csharp
+// Minimal API equivalent — attach the attribute as endpoint metadata.
+app.MapPost("/payments", CreatePaymentAsync).WithMetadata(new IdempotentAttribute());
+```
+
+**What it shows.** The middleware reads the configured header (default `Idempotency-Key`), parses it as the [RFC 8941](https://www.rfc-editor.org/rfc/rfc8941) `sf-string` subset, buffers the request body up to `MaxRequestBodyBytes`, computes a SHA-256 fingerprint over `(method, path, normalized headers, body)`, resolves a tenant/actor scope through `IIdempotencyScopeResolver` (default: per-actor via `IActorProvider`, falling back to anonymous when no actor is established), and calls `IIdempotencyStore.TryReserveAsync(scope, key, fingerprint, ct)`. The store either issues a `Reserved` outcome (carrying an opaque CAS reservation token), reports `AlreadyInFlight` (concurrent reservation still open — the middleware responds `409 Conflict` with `Retry-After`), `Replay` (a completed snapshot — the middleware writes the captured status code, headers, and body verbatim), or `BodyHashMismatch` (same key, different fingerprint — the middleware responds `422 Unprocessable Entity` so the client knows the key was reused with a mutated request). When the reservation is `Reserved`, the middleware decorates `IHttpResponseBodyFeature` with `CapturingResponseBodyFeature` (a tee — bytes still flow to the client while a bounded copy is captured) and registers an `OnStarting` callback that snapshots the final status code and response headers before the first byte flushes. On a successful flush within `MaxResponseBodyBytes`, the middleware calls `IIdempotencyStore.CompleteAsync(reservationId, snapshot, ct)` against a bounded 5-second cancellation token (NOT `HttpContext.RequestAborted`, so finalisation still runs if the client disconnected). On any failure path — exception, response-too-large, `SendFileAsync` (uncapturable), middleware abort, **5xx response status** (treated as transient per the IETF Idempotency-Key draft), or **response trailers** (cannot be replayed by the snapshot writer) — the middleware calls `AbandonAsync(reservationId, ct)` so the next retry can re-reserve. Reservation tokens are opaque `string` GUIDs the store uses for CAS so a stale completer cannot finalise a reservation the store already abandoned via the reservation-timeout sweeper.
+
+**Composition rules.** `services.AddTrellisIdempotency(...)` (or the builder slot `t.UseIdempotency(...)`) registers options + scope resolver + an internal marker; `services.AddInMemoryIdempotencyStore()` is a separate, explicit call so a dev-only in-memory store is never silently inherited into production. `app.UseTrellisIdempotency()` throws at startup if `AddTrellisIdempotency(...)` was not called. The `IIdempotencyStore` registration is also validated at startup when the container exposes `IServiceProviderIsService` (the default Microsoft.Extensions.DependencyInjection container does); on containers that do not expose it the missing-store failure surfaces as a per-request resolution error on the first opted-in request. The in-memory store is single-process only; multi-instance hosts need an EF-backed store (per-tenant table or shared with `Scope` as a discriminator column) that implements the same CAS contract. `MaxRequestBodyBytes` and `MaxResponseBodyBytes` are hard caps: exceeding the request cap returns `413 Payload Too Large` before any handler runs; exceeding the response cap aborts capture and records no snapshot (the next retry re-executes), so the cap should be set high enough to envelop the largest legitimate response from any opted-in endpoint. Endpoints that stream via `SendFileAsync` cannot be captured and are equivalent to exceeding the response cap — model those as non-idempotent or convert them to a buffered response.
+
+**Tests.** Use `Microsoft.AspNetCore.TestHost.TestServer` (the same harness pattern as Recipe 26) plus an `IIdempotencyStore` registered as a singleton (`InMemoryIdempotencyStore`) plus `TimeProvider` swapped for `Microsoft.Extensions.Time.Testing.FakeTimeProvider` (from the `Microsoft.Extensions.TimeProvider.Testing` NuGet package). Drive the same `(key, body)` twice — assert the second call returns the captured status code, headers, and body byte-for-byte. Drive `(key, mutated-body)` — assert `422` and the original snapshot is still replayable. Advance `FakeTimeProvider` past `ReservationTimeout` to exercise the sweep + re-reserve path. The NuGet package is `Microsoft.Extensions.TimeProvider.Testing` (the namespace containing `FakeTimeProvider` is `Microsoft.Extensions.Time.Testing`); the test project should reference the package the same way `Trellis.Testing.Worker`'s harness does.
 
 ---
 

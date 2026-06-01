@@ -29,6 +29,8 @@ builder.Services.AddTrellis(options => options
 
 `UseProblemDetails()` is independent of `UseAsp()` — it registers Trellis ProblemDetails customization (`traceId` on every error, 405 `Allow` header projected as `extensions.allow`, 500 detail rewrite) without pulling in Trellis MVC/result-mapping infrastructure. Composing it with a direct `services.AddTrellisProblemDetails()` call is idempotent — exactly one Trellis post-configure layer ends up registered.
 
+`UseIdempotency(opt => ...)` wires the opt-in IETF `Idempotency-Key` middleware (options + scope resolver + marker). Composition is explicit — the slot does not register a store, so callers add `services.AddInMemoryIdempotencyStore()` (dev / tests) or an EF-backed store (production) and mount the middleware with `app.UseTrellisIdempotency()`. Endpoints opt in with `[Idempotent]`.
+
 `UseWorkerActor(systemActor)` composes the previously selected actor provider with a worker/system fallback for background scopes that have no `HttpContext`. It applies after the actor-provider selection and caching wrap, so HTTP requests still resolve through the inner provider (and its cache) and `BackgroundService` ticks short-circuit to the supplied system actor.
 
 ## AOT compatibility

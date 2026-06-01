@@ -190,14 +190,63 @@ Content-Type: application/json
 # Transfers
 ###############################################################################
 
-### Transfer between accounts
+### Transfer between accounts — opt-in IETF Idempotency-Key middleware demo (200)
+### The single-transfer endpoint carries `[Idempotent]` / `.WithMetadata(new IdempotentAttribute())`.
+### `AddTrellisIdempotency()` + `AddInMemoryIdempotencyStore()` + `app.UseTrellisIdempotency()`
+### are wired in both Program.cs files. First call mutates state and the response
+### snapshot (status + headers + body) is captured against the (Idempotency-Key, scope)
+### tuple so that retries (next block) replay byte-for-byte.
 POST {{host}}/api/transfers/{{aliceChecking}}
 Content-Type: application/json
+Idempotency-Key: {{transferIdempotencyKey}}
 
 {
   "toAccountId": "{{aliceSavings}}",
   "amount": { "amount": 250.00, "currency": "USD" },
   "description": "Monthly savings"
+}
+
+### Transfer — idempotent replay (same key + same body returns the captured snapshot, no state change)
+### The response is byte-identical to the first call and carries `Idempotent-Replayed: true`
+### so the client can tell a replay apart from a fresh execution.
+# @expect status: 200
+# @expect header: Idempotent-Replayed
+POST {{host}}/api/transfers/{{aliceChecking}}
+Content-Type: application/json
+Idempotency-Key: {{transferIdempotencyKey}}
+
+{
+  "toAccountId": "{{aliceSavings}}",
+  "amount": { "amount": 250.00, "currency": "USD" },
+  "description": "Monthly savings"
+}
+
+### Transfer — fingerprint mismatch (same key + mutated body → 422, no state change)
+### Sending a different body under the same key is treated as accidental reuse rather
+### than a replay. The middleware refuses to silently overwrite the captured snapshot.
+# @expect status: 422
+POST {{host}}/api/transfers/{{aliceChecking}}
+Content-Type: application/json
+Idempotency-Key: {{transferIdempotencyKey}}
+
+{
+  "toAccountId": "{{aliceSavings}}",
+  "amount": { "amount": 999.00, "currency": "USD" },
+  "description": "Monthly savings"
+}
+
+### Transfer — missing key on opted-in endpoint (400 ProblemDetails)
+### `RequireKeyOnOptedInEndpoints` defaults to true, so an opted-in endpoint
+### without an `Idempotency-Key` header fails fast at the middleware boundary
+### rather than executing the transfer without a retry-safe contract.
+# @expect status: 400
+POST {{host}}/api/transfers/{{aliceChecking}}
+Content-Type: application/json
+
+{
+  "toAccountId": "{{aliceSavings}}",
+  "amount": { "amount": 10.00, "currency": "USD" },
+  "description": "Missing key demo"
 }
 
 ###############################################################################

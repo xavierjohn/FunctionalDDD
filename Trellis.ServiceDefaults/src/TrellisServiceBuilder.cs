@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Trellis.Asp;
 using Trellis.Asp.Authorization;
+using Trellis.Asp.Idempotency;
 using Trellis.Authorization;
 using Trellis.EntityFrameworkCore;
 using Trellis.FluentValidation;
@@ -36,6 +37,8 @@ public sealed class TrellisServiceBuilder
     private Action<IServiceCollection>? _unitOfWorkRegistration;
     private bool _useAsp;
     private bool _useProblemDetails;
+    private bool _useIdempotency;
+    private Action<Trellis.Asp.Idempotency.IdempotencyOptions>? _configureIdempotency;
     private bool _useMediator;
     private bool _useFluentValidation;
     private bool _useResourceAuthorization;
@@ -84,6 +87,34 @@ public sealed class TrellisServiceBuilder
     public TrellisServiceBuilder UseProblemDetails()
     {
         _useProblemDetails = true;
+        return this;
+    }
+
+    /// <summary>
+    /// Registers the Trellis Idempotency-Key middleware and its supporting services.
+    /// </summary>
+    /// <param name="configure">Optional callback to mutate <c>IdempotencyOptions</c>.</param>
+    /// <remarks>
+    /// <para>
+    /// Endpoints opt in to idempotency by carrying <c>IdempotentAttribute</c> metadata; the
+    /// middleware is a no-op on endpoints that do not opt in. Application code is still
+    /// responsible for mounting the middleware in the request pipeline via
+    /// <c>app.UseTrellisIdempotency()</c> and for registering a store (for example
+    /// <c>services.AddInMemoryIdempotencyStore()</c>).
+    /// </para>
+    /// <para>
+    /// Calling this method more than once is allowed; the configure delegates are composed in
+    /// call order rather than overwriting, so a library that applies defaults and a host that
+    /// tweaks individual properties can both call <c>UseIdempotency(...)</c> without either
+    /// erasing the other's configuration.
+    /// </para>
+    /// </remarks>
+    public TrellisServiceBuilder UseIdempotency(Action<Trellis.Asp.Idempotency.IdempotencyOptions>? configure = null)
+    {
+        _useIdempotency = true;
+        if (configure is not null)
+            _configureIdempotency = Combine(_configureIdempotency, configure);
+
         return this;
     }
 
@@ -331,6 +362,9 @@ public sealed class TrellisServiceBuilder
 
         if (_useProblemDetails)
             _services.AddTrellisProblemDetails();
+
+        if (_useIdempotency)
+            _services.AddTrellisIdempotency(_configureIdempotency);
 
         _actorProviderRegistration?.Invoke(_services);
         _cachingActorProviderWrap?.Invoke(_services);

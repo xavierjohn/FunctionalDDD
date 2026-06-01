@@ -3,6 +3,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Trellis;
 using Trellis.Asp;
+using Trellis.Asp.Idempotency;
 using Trellis.Showcase.Application.Models;
 using Trellis.Showcase.Application.Persistence;
 using Trellis.Showcase.Application.Workflows;
@@ -22,6 +23,7 @@ public class TransfersController : ControllerBase
     }
 
     [HttpPost("{fromId:AccountId}")]
+    [Idempotent]
     public Task<ActionResult<AccountResponse>> Transfer(AccountId fromId, [FromBody] TransferRequest request, CancellationToken cancellationToken) =>
         _repository.GetById(fromId)
             .Combine(_repository.GetById(request.ToAccountId))

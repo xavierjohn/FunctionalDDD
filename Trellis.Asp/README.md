@@ -26,6 +26,7 @@ app.MapGet("/widgets/{id}", (string id) =>
 - Support controller and minimal API styles, including AOT-friendly setups.
 - Emit [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) Problem Details with `instance` populated from the request path so clients can correlate failures with the originating request.
 - Ship the canonical ProblemDetails recipe via `AddTrellisProblemDetails()` + `UseTrellisProblemDetails()` (trace id from `Activity.Current`, friendly 500 detail, `allow` array on 405). Composes with any consumer `CustomizeProblemDetails` callback so the application keeps the last word on collisions.
+- Make `POST` / `PATCH` retry-safe with the opt-in IETF `Idempotency-Key` middleware (`AddTrellisIdempotency(...)` + `AddInMemoryIdempotencyStore()` + `UseTrellisIdempotency()`). Mark endpoints with `[Idempotent]`; the middleware buffers the request body, fingerprints `(method, path, headers, body)`, scopes by actor (default), and replays captured responses verbatim on retries.
 - Compose a worker/system actor outside HTTP via `services.AddTrellisWorkerActor(systemActor)`. Wraps the existing unkeyed `IActorProvider` so HTTP requests still resolve through it and background-worker scopes (no `HttpContext`) resolve to the supplied system actor. See the [worker actor composition](https://xavierjohn.github.io/Trellis/articles/integration-asp-authorization.html#worker-actor-composition) section for the descriptor-shape support matrix.
 
 ## Domain → HTTP boundary
