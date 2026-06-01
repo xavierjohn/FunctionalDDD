@@ -1,6 +1,7 @@
 ﻿namespace Trellis;
 
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 /// <summary>
 /// Async LINQ <c>SelectMany</c> overload where the source is a synchronous <see cref="Result{T}"/>
@@ -20,6 +21,7 @@ public static class ResultLinqExtensionsTaskRightAsync
     /// <param name="collectionSelector">An async function returning the intermediate result.</param>
     /// <param name="resultSelector">A synchronous function combining the source and intermediate values.</param>
     /// <returns>A task producing the combined result, or the first failure encountered.</returns>
+    [OverloadResolutionPriority(1)]
     public static Task<Result<TResult>> SelectMany<TSource, TCollection, TResult>(
         this Result<TSource> source,
         Func<TSource, Task<Result<TCollection>>> collectionSelector,

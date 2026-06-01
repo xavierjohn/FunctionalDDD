@@ -1,5 +1,7 @@
 ﻿namespace Trellis;
 
+using System.Runtime.CompilerServices;
+
 /// <summary>
 /// Async CheckIf extensions where only the RIGHT (check function) is async (Task), input is sync.
 /// </summary>
@@ -15,6 +17,12 @@ public static partial class CheckIfExtensionsAsync
     /// <param name="condition">The condition that must be true for the check to run.</param>
     /// <param name="func">The async validation function that returns a Result.</param>
     /// <returns>The original result if the condition is false or the check passes; otherwise the check's failure.</returns>
+    /// <remarks>
+    /// <see cref="OverloadResolutionPriorityAttribute"/> resolves the historical CS0121 ambiguity
+    /// against the sibling <see cref="ValueTask{T}"/>-delegate overload on the same sync
+    /// <see cref="Result{T}"/> receiver for inline async lambdas.
+    /// </remarks>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<T>> CheckIfAsync<T, TK>(this Result<T> result, bool condition, Func<T, Task<Result<TK>>> func)
     {
         ArgumentNullException.ThrowIfNull(func);
@@ -40,6 +48,7 @@ public static partial class CheckIfExtensionsAsync
     }
 
     /// <inheritdoc cref="CheckIfAsync{T,TK}(Result{T}, bool, Func{T, Task{Result{TK}}})"/>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<T>> CheckIfAsync<T>(this Result<T> result, bool condition, Func<T, Task<Result<Unit>>> func)
     {
         ArgumentNullException.ThrowIfNull(func);
@@ -74,6 +83,7 @@ public static partial class CheckIfExtensionsAsync
     /// <param name="predicate">The predicate to evaluate against the success value.</param>
     /// <param name="func">The async validation function that returns a Result.</param>
     /// <returns>The original result if the predicate returns false or the check passes; otherwise the check's failure.</returns>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<T>> CheckIfAsync<T, TK>(this Result<T> result, Func<T, bool> predicate, Func<T, Task<Result<TK>>> func)
     {
         ArgumentNullException.ThrowIfNull(predicate);
@@ -100,6 +110,7 @@ public static partial class CheckIfExtensionsAsync
     }
 
     /// <inheritdoc cref="CheckIfAsync{T,TK}(Result{T}, Func{T, bool}, Func{T, Task{Result{TK}}})"/>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<T>> CheckIfAsync<T>(this Result<T> result, Func<T, bool> predicate, Func<T, Task<Result<Unit>>> func)
     {
         ArgumentNullException.ThrowIfNull(predicate);

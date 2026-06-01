@@ -1,6 +1,7 @@
 ﻿namespace Trellis;
 
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 /// <summary>
@@ -135,6 +136,12 @@ public static class MatchExtensionsAsync
     /// <param name="onSuccess">Async function to execute on success.</param>
     /// <param name="onFailure">Async function to execute on failure.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the output from either the success or failure function.</returns>
+    /// <remarks>
+    /// <see cref="OverloadResolutionPriorityAttribute"/> resolves the historical CS0121 ambiguity
+    /// against the sibling <see cref="ValueTask{T}"/>-delegate overload on the same sync
+    /// <see cref="Result{T}"/> receiver for inline async lambdas.
+    /// </remarks>
+    [OverloadResolutionPriority(1)]
     public static async Task<TOut> MatchAsync<TIn, TOut>(this Result<TIn> result, Func<TIn, Task<TOut>> onSuccess, Func<Error, Task<TOut>> onFailure)
     {
         ArgumentNullException.ThrowIfNull(onSuccess);

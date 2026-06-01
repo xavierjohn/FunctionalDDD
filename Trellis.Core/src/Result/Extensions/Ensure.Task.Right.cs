@@ -1,5 +1,7 @@
 ﻿namespace Trellis;
 
+using System.Runtime.CompilerServices;
+
 /// <summary>
 /// Async Ensure extensions where only the RIGHT (predicates) are async (Task), input is sync.
 /// </summary>
@@ -13,6 +15,7 @@ public static partial class EnsureExtensionsAsync
     /// <param name="predicate">The async predicate to test.</param>
     /// <param name="error">The error to return if the predicate is false.</param>
     /// <returns>The original result if success and predicate is true; otherwise a failure.</returns>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<TValue>> EnsureAsync<TValue>(this Result<TValue> result, Func<Task<bool>> predicate, Error error)
     {
         ArgumentNullException.ThrowIfNull(predicate);
@@ -39,6 +42,7 @@ public static partial class EnsureExtensionsAsync
     /// <param name="predicate">The async predicate to test the value.</param>
     /// <param name="error">The error to return if the predicate is false.</param>
     /// <returns>The original result if success and predicate is true; otherwise a failure.</returns>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<TValue>> EnsureAsync<TValue>(this Result<TValue> result, Func<TValue, Task<bool>> predicate, Error error)
     {
         ArgumentNullException.ThrowIfNull(predicate);
@@ -65,6 +69,7 @@ public static partial class EnsureExtensionsAsync
     /// <param name="predicate">The async predicate to test the value.</param>
     /// <param name="errorPredicate">The function that generates an error from the value.</param>
     /// <returns>The original result if success and predicate is true; otherwise a failure.</returns>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<TValue>> EnsureAsync<TValue>(this Result<TValue> result, Func<TValue, Task<bool>> predicate, Func<TValue, Error> errorPredicate)
     {
         ArgumentNullException.ThrowIfNull(predicate);
@@ -92,6 +97,7 @@ public static partial class EnsureExtensionsAsync
     /// <param name="predicate">The async predicate to test the value.</param>
     /// <param name="errorPredicate">The async function that generates an error from the value.</param>
     /// <returns>The original result if success and predicate is true; otherwise a failure.</returns>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<TValue>> EnsureAsync<TValue>(this Result<TValue> result, Func<TValue, Task<bool>> predicate, Func<TValue, Task<Error>> errorPredicate)
     {
         ArgumentNullException.ThrowIfNull(predicate);
@@ -118,6 +124,7 @@ public static partial class EnsureExtensionsAsync
     /// <param name="result">The result to validate.</param>
     /// <param name="predicate">The async predicate function that returns a Result.</param>
     /// <returns>The original result if both succeed; otherwise a failure.</returns>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<TValue>> EnsureAsync<TValue>(this Result<TValue> result, Func<Task<Result<TValue>>> predicate)
     {
         ArgumentNullException.ThrowIfNull(predicate);
@@ -145,6 +152,7 @@ public static partial class EnsureExtensionsAsync
     /// <param name="result">The result to validate.</param>
     /// <param name="predicate">The async predicate function that receives the value and returns a Result.</param>
     /// <returns>The original result if both succeed; otherwise a failure.</returns>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<TValue>> EnsureAsync<TValue>(this Result<TValue> result, Func<TValue, Task<Result<TValue>>> predicate)
     {
         ArgumentNullException.ThrowIfNull(predicate);

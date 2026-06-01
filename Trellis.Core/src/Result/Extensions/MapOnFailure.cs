@@ -1,6 +1,7 @@
 ﻿namespace Trellis;
 
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 /// <summary>
@@ -92,7 +93,13 @@ public static class MapOnFailureExtensions
     /// <param name="result">The result whose error to potentially transform.</param>
     /// <param name="mapAsync">The async function to transform the error.</param>
     /// <returns>The original result if successful; otherwise a new failure with the transformed error.</returns>
+    /// <remarks>
+    /// <see cref="OverloadResolutionPriorityAttribute"/> resolves the historical CS0121 ambiguity
+    /// against the sibling <see cref="ValueTask{T}"/>-delegate overload on the same sync
+    /// <see cref="Result{T}"/> receiver for inline async lambdas.
+    /// </remarks>
     [RailwayTrack(TrackBehavior.Failure)]
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<T>> MapOnFailureAsync<T>(this Result<T> result, Func<Error, Task<Error>> mapAsync)
     {
         ArgumentNullException.ThrowIfNull(mapAsync);

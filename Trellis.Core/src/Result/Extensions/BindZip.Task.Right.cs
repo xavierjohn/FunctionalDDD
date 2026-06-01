@@ -1,5 +1,7 @@
 ﻿namespace Trellis;
 
+using System.Runtime.CompilerServices;
+
 /// <summary>
 /// Async BindZip extension where the input is synchronous and the function returns a Task.
 /// </summary>
@@ -13,6 +15,7 @@ public static partial class BindZipExtensionsAsync
     /// <param name="result">The result to bind and zip.</param>
     /// <param name="func">The async function to call if the result is successful.</param>
     /// <returns>A tuple result combining both values on success; otherwise the failure.</returns>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<(T1, T2)>> BindZipAsync<T1, T2>(
         this Result<T1> result,
         Func<T1, Task<Result<T2>>> func)

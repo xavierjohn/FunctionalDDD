@@ -12,6 +12,8 @@
 // </auto-generated>
 
 namespace Trellis;
+using System.Runtime.CompilerServices;
+
 using System.Diagnostics;
 
 /// <summary>
@@ -169,6 +171,7 @@ public static partial class TapExtensionsAsync
     /// <param name="result">The result containing a <#= i #>-element tuple.</param>
     /// <param name="func">The async side effect function to execute on the tuple elements if successful.</param>
     /// <returns>A task that represents the asynchronous operation containing the original result unchanged.</returns>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<(<# WriteTs(i); #>)>> TapAsync<<# WriteTs(i); #>>
                   (this Result<(<# WriteTs(i); #>)> result,
                   Func<<# WriteTs(i); #>, Task> func)

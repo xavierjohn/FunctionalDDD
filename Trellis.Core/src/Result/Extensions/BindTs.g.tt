@@ -13,6 +13,8 @@
 
 namespace Trellis;
 
+using System.Runtime.CompilerServices;
+
 /// <summary>
 /// Provides Bind extension methods for Result types containing tuples (2-9 elements).
 /// These methods enable chaining operations that return Result on tuple values from combined results.
@@ -111,6 +113,7 @@ public static partial class BindExtensionsAsync
     /// <param name="result">The result containing a <#= i #>-element tuple.</param>
     /// <param name="func">The async function to execute on the tuple elements.</param>
     /// <returns>A task that represents the asynchronous operation containing the new result.</returns>
+    [OverloadResolutionPriority(1)]
     public static async Task<Result<TResult>> BindAsync<<# WriteTs(i); #>, TResult>(
         this Result<(<# WriteTs(i); #>)> result,
         Func<<# WriteTs(i); #>, Task<Result<TResult>>> func)
