@@ -42,9 +42,9 @@ public sealed partial class IdempotencyMiddleware
 {
     private static readonly TimeSpan FinalizationTimeout = TimeSpan.FromSeconds(5);
 
-    private readonly RequestDelegate next;
-    private readonly IdempotencyOptions options;
-    private readonly ILogger<IdempotencyMiddleware> logger;
+    private readonly RequestDelegate _next;
+    private readonly IdempotencyOptions _options;
+    private readonly ILogger<IdempotencyMiddleware> _logger;
 
     /// <summary>Initializes a new instance of the <see cref="IdempotencyMiddleware"/> class.</summary>
     public IdempotencyMiddleware(
@@ -56,9 +56,9 @@ public sealed partial class IdempotencyMiddleware
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(logger);
 
-        this.next = next;
-        this.options = options.Value;
-        this.logger = logger;
+        _next = next;
+        _options = options.Value;
+        _logger = logger;
     }
 
     /// <summary>Processes a single HTTP request.</summary>
@@ -79,26 +79,26 @@ public sealed partial class IdempotencyMiddleware
         var idempotentMeta = endpoint?.Metadata.GetMetadata<IdempotentAttribute>();
         if (idempotentMeta is null)
         {
-            await this.next(context).ConfigureAwait(false);
+            await _next(context).ConfigureAwait(false);
             return;
         }
 
-        if (!this.options.Methods.Contains(context.Request.Method))
+        if (!_options.Methods.Contains(context.Request.Method))
         {
-            await this.next(context).ConfigureAwait(false);
+            await _next(context).ConfigureAwait(false);
             return;
         }
 
-        if (!context.Request.Headers.TryGetValue(this.options.HeaderName, out var rawValues) || rawValues.Count == 0)
+        if (!context.Request.Headers.TryGetValue(_options.HeaderName, out var rawValues) || rawValues.Count == 0)
         {
-            if (this.options.RequireKeyOnOptedInEndpoints)
+            if (_options.RequireKeyOnOptedInEndpoints)
             {
                 await WriteProblemAsync(context, 400, "idempotency.key_required",
-                    $"This endpoint requires the {this.options.HeaderName} header.").ConfigureAwait(false);
+                    $"This endpoint requires the {_options.HeaderName} header.").ConfigureAwait(false);
                 return;
             }
 
-            await this.next(context).ConfigureAwait(false);
+            await _next(context).ConfigureAwait(false);
             return;
         }
 
@@ -115,24 +115,24 @@ public sealed partial class IdempotencyMiddleware
             return;
         }
 
-        if (key.Length > this.options.MaxKeyLength)
+        if (key.Length > _options.MaxKeyLength)
         {
             await WriteProblemAsync(context, 400, "idempotency.key_too_long",
-                $"Idempotency-Key length {key.Length} exceeds maximum {this.options.MaxKeyLength}.").ConfigureAwait(false);
+                $"Idempotency-Key length {key.Length} exceeds maximum {_options.MaxKeyLength}.").ConfigureAwait(false);
             return;
         }
 
-        var bodyBuffer = await BufferRequestBodyAsync(context, this.options.MaxRequestBodyBytes).ConfigureAwait(false);
+        var bodyBuffer = await BufferRequestBodyAsync(context, _options.MaxRequestBodyBytes).ConfigureAwait(false);
         if (bodyBuffer is null)
         {
             await WriteProblemAsync(context, 413, "idempotency.request_body_too_large",
-                $"Request body exceeds idempotency size limit of {this.options.MaxRequestBodyBytes} bytes.").ConfigureAwait(false);
+                $"Request body exceeds idempotency size limit of {_options.MaxRequestBodyBytes} bytes.").ConfigureAwait(false);
             return;
         }
 
         context.Request.Body = new MemoryStream(bodyBuffer);
 
-        var fingerprint = IdempotencyFingerprint.Compute(context, bodyBuffer, this.options);
+        var fingerprint = IdempotencyFingerprint.Compute(context, bodyBuffer, _options);
 
         // Resolve store and scope resolver lazily, after pre-checks have decided that this
         // request needs idempotency. Eager InvokeAsync parameter injection would build them
@@ -147,7 +147,7 @@ public sealed partial class IdempotencyMiddleware
         switch (outcome)
         {
             case IdempotencyReservationOutcome.Reserved reserved:
-                await this.ExecuteAndCaptureAsync(context, store, scope, key, reserved.ReservationId, fingerprint).ConfigureAwait(false);
+                await ExecuteAndCaptureAsync(context, store, scope, key, reserved.ReservationId, fingerprint).ConfigureAwait(false);
                 return;
 
             case IdempotencyReservationOutcome.AlreadyInFlight inFlight:
@@ -155,13 +155,13 @@ public sealed partial class IdempotencyMiddleware
                 return;
 
             case IdempotencyReservationOutcome.Replay replay:
-                await this.WriteReplayAsync(context, replay.Snapshot).ConfigureAwait(false);
+                await WriteReplayAsync(context, replay.Snapshot).ConfigureAwait(false);
                 return;
 
             case IdempotencyReservationOutcome.BodyHashMismatch:
                 await WriteProblemAsync(
                     context,
-                    this.options.MismatchStatusCode,
+                    _options.MismatchStatusCode,
                     "idempotency.key_reused_with_different_body",
                     "An Idempotency-Key was reused with a different request body or headers.").ConfigureAwait(false);
                 return;
@@ -241,7 +241,7 @@ public sealed partial class IdempotencyMiddleware
             context.Response.Headers[header.Key] = header.Value;
         }
 
-        context.Response.Headers[this.options.ReplayHeaderName] = "true";
+        context.Response.Headers[_options.ReplayHeaderName] = "true";
     }
 
     private async Task WriteReplayAsync(HttpContext context, IdempotencyResponseSnapshot snapshot)
@@ -251,7 +251,7 @@ public sealed partial class IdempotencyMiddleware
             return;
         }
 
-        this.WriteReplayPreamble(context, snapshot);
+        WriteReplayPreamble(context, snapshot);
 
         if (snapshot.Body.Length > 0)
         {
@@ -296,26 +296,26 @@ public sealed partial class IdempotencyMiddleware
         var originalBodyFeature = context.Features.Get<IHttpResponseBodyFeature>();
         if (originalBodyFeature is null)
         {
-            LogCaptureSkippedNoFeature(this.logger, context.Request.Path);
+            LogCaptureSkippedNoFeature(_logger, context.Request.Path);
             try
             {
-                await this.next(context).ConfigureAwait(false);
+                await _next(context).ConfigureAwait(false);
             }
             catch
             {
-                await SafeAbandonAsync(store, this.logger, scope, key, reservationId).ConfigureAwait(false);
+                await SafeAbandonAsync(store, _logger, scope, key, reservationId).ConfigureAwait(false);
                 throw;
             }
 
-            await SafeAbandonAsync(store, this.logger, scope, key, reservationId).ConfigureAwait(false);
+            await SafeAbandonAsync(store, _logger, scope, key, reservationId).ConfigureAwait(false);
             return;
         }
 
-        using var capture = new CapturingResponseBodyFeature(originalBodyFeature, this.options.MaxResponseBodyBytes);
+        using var capture = new CapturingResponseBodyFeature(originalBodyFeature, _options.MaxResponseBodyBytes);
         context.Features.Set<IHttpResponseBodyFeature>(capture);
 
         var headerSnapshot = new HeaderSnapshot();
-        var includeSetCookie = this.options.IncludeSetCookieInSnapshot;
+        var includeSetCookie = _options.IncludeSetCookieInSnapshot;
         context.Response.OnStarting(state =>
         {
             var snap = (HeaderSnapshot)state;
@@ -335,12 +335,12 @@ public sealed partial class IdempotencyMiddleware
 
         try
         {
-            await this.next(context).ConfigureAwait(false);
+            await _next(context).ConfigureAwait(false);
         }
         catch
         {
             context.Features.Set<IHttpResponseBodyFeature>(originalBodyFeature);
-            await SafeAbandonAsync(store, this.logger, scope, key, reservationId).ConfigureAwait(false);
+            await SafeAbandonAsync(store, _logger, scope, key, reservationId).ConfigureAwait(false);
             throw;
         }
 
@@ -358,9 +358,9 @@ public sealed partial class IdempotencyMiddleware
             }
             catch (Exception ex)
             {
-                LogCaptureFlushFailed(this.logger, ex, key);
+                LogCaptureFlushFailed(_logger, ex, key);
                 context.Features.Set<IHttpResponseBodyFeature>(originalBodyFeature);
-                await SafeAbandonAsync(store, this.logger, scope, key, reservationId).ConfigureAwait(false);
+                await SafeAbandonAsync(store, _logger, scope, key, reservationId).ConfigureAwait(false);
                 return;
             }
         }
@@ -372,8 +372,8 @@ public sealed partial class IdempotencyMiddleware
         {
             // Capture aborted (response too large, SendFileAsync, or explicit abort) — abandon
             // the reservation so the next retry can re-execute.
-            LogCaptureAbandoned(this.logger, key);
-            await SafeAbandonAsync(store, this.logger, scope, key, reservationId).ConfigureAwait(false);
+            LogCaptureAbandoned(_logger, key);
+            await SafeAbandonAsync(store, _logger, scope, key, reservationId).ConfigureAwait(false);
             return;
         }
 
@@ -399,8 +399,8 @@ public sealed partial class IdempotencyMiddleware
             // Response trailers cannot be replayed by the snapshot writer (which only restores
             // status + headers + body), so any response that wrote trailers is treated as
             // non-cacheable and the reservation is released for retry.
-            LogTrailersAbandoned(this.logger, key);
-            await SafeAbandonAsync(store, this.logger, scope, key, reservationId).ConfigureAwait(false);
+            LogTrailersAbandoned(_logger, key);
+            await SafeAbandonAsync(store, _logger, scope, key, reservationId).ConfigureAwait(false);
             return;
         }
 
@@ -408,8 +408,8 @@ public sealed partial class IdempotencyMiddleware
         {
             // 5xx responses are treated as transient per the IIdempotencyStore.AbandonAsync
             // contract: caching them would deny the client a real retry that might succeed.
-            LogServerErrorAbandoned(this.logger, key, headerSnapshot.StatusCode);
-            await SafeAbandonAsync(store, this.logger, scope, key, reservationId).ConfigureAwait(false);
+            LogServerErrorAbandoned(_logger, key, headerSnapshot.StatusCode);
+            await SafeAbandonAsync(store, _logger, scope, key, reservationId).ConfigureAwait(false);
             return;
         }
 
@@ -426,11 +426,11 @@ public sealed partial class IdempotencyMiddleware
         }
         catch (OperationCanceledException)
         {
-            LogCompleteTimedOut(this.logger, key);
+            LogCompleteTimedOut(_logger, key);
         }
         catch (Exception ex)
         {
-            LogCompleteFailed(this.logger, ex, key);
+            LogCompleteFailed(_logger, ex, key);
         }
     }
 

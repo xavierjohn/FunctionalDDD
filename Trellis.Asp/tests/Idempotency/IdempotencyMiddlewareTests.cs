@@ -796,17 +796,17 @@ public sealed class IdempotencyMiddlewareTests
 
     private sealed class DelegatingIdempotencyStore : IIdempotencyStore
     {
-        private readonly IIdempotencyStore inner;
+        private readonly IIdempotencyStore _inner;
 
-        public DelegatingIdempotencyStore(IIdempotencyStore inner) => this.inner = inner;
+        public DelegatingIdempotencyStore(IIdempotencyStore inner) => _inner = inner;
 
         public ValueTask<IdempotencyReservationOutcome> TryReserveAsync(string scope, string key, string fingerprint, CancellationToken cancellationToken) =>
-            this.inner.TryReserveAsync(scope, key, fingerprint, cancellationToken);
+            _inner.TryReserveAsync(scope, key, fingerprint, cancellationToken);
 
         public ValueTask CompleteAsync(string scope, string key, string reservationId, IdempotencyResponseSnapshot snapshot, CancellationToken cancellationToken) =>
-            this.inner.CompleteAsync(scope, key, reservationId, snapshot, cancellationToken);
+            _inner.CompleteAsync(scope, key, reservationId, snapshot, cancellationToken);
 
         public ValueTask AbandonAsync(string scope, string key, string reservationId, CancellationToken cancellationToken) =>
-            this.inner.AbandonAsync(scope, key, reservationId, cancellationToken);
+            _inner.AbandonAsync(scope, key, reservationId, cancellationToken);
     }
 }

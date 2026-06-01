@@ -27,10 +27,10 @@ using Microsoft.AspNetCore.Http.Features;
 /// </remarks>
 public sealed class CapturingResponseBodyFeature : IHttpResponseBodyFeature, IDisposable
 {
-    private readonly IHttpResponseBodyFeature inner;
-    private readonly MemoryStream capture;
-    private readonly TeeStream teeStream;
-    private PipeWriter? cachedWriter;
+    private readonly IHttpResponseBodyFeature _inner;
+    private readonly MemoryStream _capture;
+    private readonly TeeStream _teeStream;
+    private PipeWriter? _cachedWriter;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="CapturingResponseBodyFeature"/> class.
@@ -45,16 +45,16 @@ public sealed class CapturingResponseBodyFeature : IHttpResponseBodyFeature, IDi
             throw new ArgumentOutOfRangeException(nameof(maxBytes), "maxBytes must be positive.");
         }
 
-        this.inner = inner;
-        this.capture = new MemoryStream();
-        this.teeStream = new TeeStream(inner.Stream, this.capture, maxBytes, this);
+        _inner = inner;
+        _capture = new MemoryStream();
+        _teeStream = new TeeStream(inner.Stream, _capture, maxBytes, this);
     }
 
     /// <inheritdoc/>
-    public Stream Stream => this.teeStream;
+    public Stream Stream => _teeStream;
 
     /// <inheritdoc/>
-    public PipeWriter Writer => this.cachedWriter ??= PipeWriter.Create(this.teeStream, new StreamPipeWriterOptions(leaveOpen: true));
+    public PipeWriter Writer => _cachedWriter ??= PipeWriter.Create(_teeStream, new StreamPipeWriterOptions(leaveOpen: true));
 
     /// <summary>
     /// Gets a value indicating whether the capture has been aborted (overflow, SendFile, or trailers).
@@ -71,31 +71,31 @@ public sealed class CapturingResponseBodyFeature : IHttpResponseBodyFeature, IDi
     /// </remarks>
     public async Task CompleteAsync()
     {
-        if (this.cachedWriter is not null)
+        if (_cachedWriter is not null)
         {
-            await this.cachedWriter.FlushAsync().ConfigureAwait(false);
+            await _cachedWriter.FlushAsync().ConfigureAwait(false);
         }
 
-        await this.inner.CompleteAsync().ConfigureAwait(false);
+        await _inner.CompleteAsync().ConfigureAwait(false);
     }
 
     /// <inheritdoc/>
-    public void DisableBuffering() => this.inner.DisableBuffering();
+    public void DisableBuffering() => _inner.DisableBuffering();
 
     /// <inheritdoc/>
     public Task SendFileAsync(string path, long offset, long? count, CancellationToken cancellationToken)
     {
-        this.CaptureAborted = true;
-        return this.inner.SendFileAsync(path, offset, count, cancellationToken);
+        CaptureAborted = true;
+        return _inner.SendFileAsync(path, offset, count, cancellationToken);
     }
 
     /// <inheritdoc/>
-    public Task StartAsync(CancellationToken cancellationToken = default) => this.inner.StartAsync(cancellationToken);
+    public Task StartAsync(CancellationToken cancellationToken = default) => _inner.StartAsync(cancellationToken);
 
     /// <summary>
     /// Returns the captured bytes if capture is intact, otherwise <see langword="null"/>.
     /// </summary>
-    public byte[]? GetCapturedBytes() => this.CaptureAborted ? null : this.capture.ToArray();
+    public byte[]? GetCapturedBytes() => CaptureAborted ? null : _capture.ToArray();
 
     /// <summary>
     /// Flushes the cached <see cref="PipeWriter"/> (if the handler ever requested it) so any
@@ -107,12 +107,12 @@ public sealed class CapturingResponseBodyFeature : IHttpResponseBodyFeature, IDi
     /// <param name="cancellationToken">A bounded token that aborts the flush if it stalls.</param>
     public async ValueTask FlushCachedWriterAsync(CancellationToken cancellationToken)
     {
-        if (this.cachedWriter is null)
+        if (_cachedWriter is null)
         {
             return;
         }
 
-        await this.cachedWriter.FlushAsync(cancellationToken).ConfigureAwait(false);
+        await _cachedWriter.FlushAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -120,28 +120,28 @@ public sealed class CapturingResponseBodyFeature : IHttpResponseBodyFeature, IDi
     /// detects that response trailers were written or that <c>HasStarted</c> was set before
     /// the wrapper was installed).
     /// </summary>
-    public void AbortCapture() => this.CaptureAborted = true;
+    public void AbortCapture() => CaptureAborted = true;
 
     /// <inheritdoc/>
     public void Dispose()
     {
-        this.cachedWriter?.Complete();
-        this.capture.Dispose();
+        _cachedWriter?.Complete();
+        _capture.Dispose();
     }
 
     private sealed class TeeStream : Stream
     {
-        private readonly Stream original;
-        private readonly MemoryStream capture;
-        private readonly long maxBytes;
-        private readonly CapturingResponseBodyFeature owner;
+        private readonly Stream _original;
+        private readonly MemoryStream _capture;
+        private readonly long _maxBytes;
+        private readonly CapturingResponseBodyFeature _owner;
 
         public TeeStream(Stream original, MemoryStream capture, long maxBytes, CapturingResponseBodyFeature owner)
         {
-            this.original = original;
-            this.capture = capture;
-            this.maxBytes = maxBytes;
-            this.owner = owner;
+            _original = original;
+            _capture = capture;
+            _maxBytes = maxBytes;
+            _owner = owner;
         }
 
         public override bool CanRead => false;
@@ -158,9 +158,9 @@ public sealed class CapturingResponseBodyFeature : IHttpResponseBodyFeature, IDi
             set => throw new NotSupportedException();
         }
 
-        public override void Flush() => this.original.Flush();
+        public override void Flush() => _original.Flush();
 
-        public override Task FlushAsync(CancellationToken cancellationToken) => this.original.FlushAsync(cancellationToken);
+        public override Task FlushAsync(CancellationToken cancellationToken) => _original.FlushAsync(cancellationToken);
 
         public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
 
@@ -170,42 +170,42 @@ public sealed class CapturingResponseBodyFeature : IHttpResponseBodyFeature, IDi
 
         public override void Write(byte[] buffer, int offset, int count)
         {
-            this.original.Write(buffer, offset, count);
-            this.TryCapture(buffer.AsSpan(offset, count));
+            _original.Write(buffer, offset, count);
+            TryCapture(buffer.AsSpan(offset, count));
         }
 
         public override async Task WriteAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
         {
-            await this.original.WriteAsync(buffer.AsMemory(offset, count), cancellationToken).ConfigureAwait(false);
-            this.TryCapture(buffer.AsSpan(offset, count));
+            await _original.WriteAsync(buffer.AsMemory(offset, count), cancellationToken).ConfigureAwait(false);
+            TryCapture(buffer.AsSpan(offset, count));
         }
 
         public override async ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
         {
-            await this.original.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
-            this.TryCapture(buffer.Span);
+            await _original.WriteAsync(buffer, cancellationToken).ConfigureAwait(false);
+            TryCapture(buffer.Span);
         }
 
         public override void Write(ReadOnlySpan<byte> buffer)
         {
-            this.original.Write(buffer);
-            this.TryCapture(buffer);
+            _original.Write(buffer);
+            TryCapture(buffer);
         }
 
         private void TryCapture(ReadOnlySpan<byte> buffer)
         {
-            if (this.owner.CaptureAborted)
+            if (_owner.CaptureAborted)
             {
                 return;
             }
 
-            if (this.capture.Length + buffer.Length > this.maxBytes)
+            if (_capture.Length + buffer.Length > _maxBytes)
             {
-                this.owner.AbortCapture();
+                _owner.AbortCapture();
                 return;
             }
 
-            this.capture.Write(buffer);
+            _capture.Write(buffer);
         }
     }
 }
