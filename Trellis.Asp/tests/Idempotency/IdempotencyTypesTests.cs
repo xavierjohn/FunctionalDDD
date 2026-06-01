@@ -59,7 +59,7 @@ public sealed class IdempotencyTypesTests
     }
 
     [Fact]
-    public void IdempotencyResponseSnapshot_record_equality_uses_field_values()
+    public void IdempotencyResponseSnapshot_record_equality_is_reference_based_for_collection_fields()
     {
         var headers = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
         {
@@ -69,8 +69,22 @@ public sealed class IdempotencyTypesTests
         var a = new IdempotencyResponseSnapshot(StatusCode: 201, Headers: headers, Body: body, Fingerprint: "abc");
         var b = new IdempotencyResponseSnapshot(StatusCode: 201, Headers: headers, Body: body, Fingerprint: "abc");
 
+        // Sharing the same Headers + Body references with equal scalar fields yields equal records
+        // (default record equality on a reference-type field is EqualityComparer<T>.Default.Equals,
+        //  which falls back to ReferenceEquals for IReadOnlyDictionary<,> and byte[]).
         a.Should().Be(b);
         a.GetHashCode().Should().Be(b.GetHashCode());
+
+        // Two snapshots with structurally-equal but DISTINCT header dictionaries / body arrays
+        // are NOT considered equal — consumers must not assume deep structural equality.
+        var distinctHeaders = new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Content-Type"] = ["application/json"]
+        };
+        var distinctBody = new byte[] { 1, 2, 3 };
+        var c = new IdempotencyResponseSnapshot(StatusCode: 201, Headers: distinctHeaders, Body: distinctBody, Fingerprint: "abc");
+
+        a.Should().NotBe(c);
     }
 
     [Fact]

@@ -18,6 +18,15 @@ using System.Collections.Generic;
 /// The request fingerprint that produced this snapshot. Stored alongside the response so a
 /// replay can reject a key reused with a different body.
 /// </param>
+/// <remarks>
+/// Record equality on this type is the C# record default: scalar fields (<see cref="StatusCode"/>,
+/// <see cref="Fingerprint"/>) compare by value, but <see cref="Headers"/> and <see cref="Body"/>
+/// compare by <em>reference</em> because <see cref="EqualityComparer{T}.Default"/> for
+/// <see cref="IReadOnlyDictionary{TKey, TValue}"/> and <see cref="byte"/>[] falls back to
+/// <see cref="object.ReferenceEquals(object, object)"/>. Snapshot equality is not used by the
+/// middleware or the in-memory store for lookups (those are keyed by <c>(scope, key)</c>);
+/// consumers that need to compare two snapshots structurally must do so explicitly.
+/// </remarks>
 public sealed record IdempotencyResponseSnapshot(
     int StatusCode,
     IReadOnlyDictionary<string, string[]> Headers,
