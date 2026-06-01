@@ -249,6 +249,144 @@ public class RequiredPartialClassGeneratorDiagnosticsTests
             .Should().BeEmpty("the generated source must not introduce a Trellis.Primitives reference");
     }
 
+    [Fact]
+    public void PositiveOnRequiredString_Reports_TRLS043()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        const string source = """
+            using Trellis;
+
+            namespace TestNamespace;
+
+            [Positive]
+            public partial class SkuCode : RequiredString<SkuCode>
+            {
+            }
+            """;
+
+        var diagnostics = RunGeneratorAndGetDiagnostics(source, cancellationToken);
+
+        diagnostics.Should().Contain(d => d.Id == "TRLS043");
+        var diagnostic = diagnostics.Single(d => d.Id == "TRLS043");
+        diagnostic.Severity.Should().Be(DiagnosticSeverity.Error);
+        diagnostic.GetMessage(CultureInfo.InvariantCulture).Should().Contain("SkuCode");
+        diagnostic.GetMessage(CultureInfo.InvariantCulture).Should().Contain("[Positive]");
+    }
+
+    [Fact]
+    public void NegativeOnRequiredGuid_Reports_TRLS043()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        const string source = """
+            using Trellis;
+
+            namespace TestNamespace;
+
+            [Negative]
+            public partial class OrderId : RequiredGuid<OrderId>
+            {
+            }
+            """;
+
+        var diagnostics = RunGeneratorAndGetDiagnostics(source, cancellationToken);
+
+        diagnostics.Should().Contain(d => d.Id == "TRLS043");
+    }
+
+    [Fact]
+    public void PositiveAndNonNegative_Reports_TRLS044_Conflict()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        const string source = """
+            using Trellis;
+
+            namespace TestNamespace;
+
+            [Positive, NonNegative]
+            public partial class Quantity : RequiredInt<Quantity>
+            {
+            }
+            """;
+
+        var diagnostics = RunGeneratorAndGetDiagnostics(source, cancellationToken);
+
+        diagnostics.Should().Contain(d => d.Id == "TRLS044");
+        var diagnostic = diagnostics.Single(d => d.Id == "TRLS044");
+        diagnostic.Severity.Should().Be(DiagnosticSeverity.Error);
+        diagnostic.GetMessage(CultureInfo.InvariantCulture).Should().Contain("Quantity");
+    }
+
+    [Fact]
+    public void PositiveAndExplicitRange_Reports_TRLS045_Conflict()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        const string source = """
+            using Trellis;
+
+            namespace TestNamespace;
+
+            [Positive, Range(0, 100)]
+            public partial class Quantity : RequiredInt<Quantity>
+            {
+            }
+            """;
+
+        var diagnostics = RunGeneratorAndGetDiagnostics(source, cancellationToken);
+
+        diagnostics.Should().Contain(d => d.Id == "TRLS045");
+        var diagnostic = diagnostics.Single(d => d.Id == "TRLS045");
+        diagnostic.Severity.Should().Be(DiagnosticSeverity.Error);
+        diagnostic.GetMessage(CultureInfo.InvariantCulture).Should().Contain("Quantity");
+        diagnostic.GetMessage(CultureInfo.InvariantCulture).Should().Contain("[Positive]");
+        diagnostic.GetMessage(CultureInfo.InvariantCulture).Should().Contain("[Range]");
+    }
+
+    [Fact]
+    public void NonNegativeAndExplicitDecimalRange_Reports_TRLS045_Conflict()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        const string source = """
+            using Trellis;
+
+            namespace TestNamespace;
+
+            [NonNegative, Range(0.0, 1000.0)]
+            public partial class Amount : RequiredDecimal<Amount>
+            {
+            }
+            """;
+
+        var diagnostics = RunGeneratorAndGetDiagnostics(source, cancellationToken);
+
+        diagnostics.Should().Contain(d => d.Id == "TRLS045");
+    }
+
+    [Fact]
+    public void RequiredDateTimeOffset_GeneratesWithoutDiagnostics()
+    {
+        var cancellationToken = TestContext.Current.CancellationToken;
+
+        const string source = """
+            using Trellis;
+
+            namespace TestNamespace;
+
+            public partial class SubmittedAt : RequiredDateTimeOffset<SubmittedAt>
+            {
+            }
+            """;
+
+        var diagnostics = RunGeneratorAndGetDiagnostics(source, cancellationToken);
+
+        diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error)
+            .Should().BeEmpty("RequiredDateTimeOffset is a recognised base in this release");
+    }
+
     private static MetadataReference[] GetMetadataReferences() =>
         AppDomain.CurrentDomain.GetAssemblies()
             .Where(static assembly => !assembly.IsDynamic && !string.IsNullOrWhiteSpace(assembly.Location))

@@ -143,4 +143,13 @@ public static class TrellisDiagnosticIds
 
     /// <summary>TRLS042 — <c>[NotDefault]</c> is not supported on <c>RequiredEnum&lt;T&gt;</c> (smart-enum has no CLR <c>default(T)</c>).</summary>
     public const string NotDefaultOnRequiredEnum = "TRLS042";
+
+    /// <summary>TRLS043 — Numeric convenience attribute (<c>[Positive]</c>, <c>[NonNegative]</c>, <c>[Negative]</c>, or <c>[NonPositive]</c>) applied to a non-numeric Required base.</summary>
+    public const string NumericConvenienceOnNonNumeric = "TRLS043";
+
+    /// <summary>TRLS044 — More than one mutually-exclusive numeric convenience attribute on the same class.</summary>
+    public const string NumericConvenienceConflict = "TRLS044";
+
+    /// <summary>TRLS045 — Numeric convenience attribute combined with an explicit <c>[Range]</c> on the same class; the combination would silently disable the convenience sign check.</summary>
+    public const string NumericConvenienceWithExplicitRange = "TRLS045";
 }
