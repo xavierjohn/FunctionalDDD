@@ -24,6 +24,7 @@ audience: [developer]
 | Honor `Prefer: return=minimal` / `return=representation` | `opts.HonorPrefer()` on a `WriteOutcome` response | [Prefer header](#prefer-header) |
 | Emit `201 Created` with a `Location` header | `opts.CreatedAtRoute(name, values)` (AOT-safe) / `Created(...)` / `CreatedAtAction(...)` | [Created responses](#created-responses) |
 | Return paginated JSON + RFC 8288 `Link` header | `Result<Page<T>>.ToHttpResponse(nextUrlBuilder, body)` | [Pagination](#pagination) |
+| Make `POST` / `PATCH` retry-safe with the IETF `Idempotency-Key` header | `AddTrellisIdempotency` + `AddInMemoryIdempotencyStore` + `UseTrellisIdempotency`; mark endpoints `[Idempotent]` | [Idempotency-Key middleware](#idempotency-key-middleware) |
 | Validate scalar value objects (route, query, JSON body) | `AddScalarValueValidation` + `UseScalarValueValidation` + `WithScalarValueValidation` | [Scalar value validation](#scalar-value-validation) |
 | Bind value objects in route segments | `AddTrellisRouteConstraint<T>("Name")` then `"/x/{id:Name}"` | [Route constraints](#route-constraints) |
 | Hydrate the current `Actor` from JWT claims | `AddClaimsActorProvider` / `AddEntraActorProvider` / `AddDevelopmentActorProvider` | [Actor providers](#actor-providers) |
@@ -495,6 +496,53 @@ public interface IProductReader
 ```
 
 Failure on the page result short-circuits through the standard error pipeline (Problem Details, default mapping).
+
+## Idempotency-Key middleware
+
+Opt-in middleware that makes `POST` / `PATCH` retry-safe by honouring the IETF `Idempotency-Key` request header (draft `draft-ietf-httpapi-idempotency-key-header`). On the first request the middleware reserves the key, lets the handler run, and captures the response. A retry under the same key with the same request fingerprint replays the captured response verbatim; a retry with a *different* request body under the same key returns `422 Unprocessable Entity` per Stripe / Adyen convention.
+
+```csharp
+using Trellis.Asp;
+using Trellis.Asp.Idempotency;
+
+var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddTrellis(t => t.UseAsp());
+builder.Services.AddTrellisIdempotency();        // options: AddTrellisIdempotency(o => { o.Ttl = TimeSpan.FromHours(1); })
+builder.Services.AddInMemoryIdempotencyStore();  // production hosts supply their own IIdempotencyStore
+
+var app = builder.Build();
+app.UseTrellisIdempotency();                     // before MapControllers / endpoint mapping
+
+app.MapPost("/orders", ([FromBody] CreateOrder cmd, IOrderService svc, CancellationToken ct) =>
+    svc.PlaceAsync(cmd, ct).ToHttpResponseAsync(opts => opts.CreatedAtRoute("Orders_Get", new { id = "{id}" })))
+   .WithMetadata(new IdempotentAttribute());
+```
+
+For MVC controllers add `[Idempotent]` to the action method instead of `.WithMetadata(...)`.
+
+**Wire contract**
+
+| Behaviour | Detail |
+|---|---|
+| Header name | `Idempotency-Key` (configurable via `IdempotencyOptions.HeaderName`). Accepts both bare `tchar` tokens and RFC 8941 quoted strings. |
+| Missing header on an opted-in endpoint | `400 idempotency.key_required` Problem Details. Set `RequireKeyOnOptedInEndpoints = false` to let missing-key requests pass through unchanged. |
+| First request | Reserves the key, runs the handler, captures the response (status + headers + body), and stores the snapshot under TTL (default 24 h). |
+| Retry with same key + same fingerprint | Replays the captured response and adds `Idempotent-Replayed: true` (header name configurable via `ReplayHeaderName`). |
+| Retry with same key + different fingerprint | `422 Unprocessable Entity` (status configurable via `MismatchStatusCode`); the fresh request is **not** executed. "Different fingerprint" covers any change to method, `PathBase + Path`, canonical query, `Content-Type`, `Content-Encoding`, configured additional headers, or body bytes. |
+| Retry while first is still in flight | `409 Conflict` with `Retry-After` once the reservation has been held longer than `ReservationTimeout` (default 30 s). |
+| Methods | `POST` and `PATCH` by default; `PUT` / `DELETE` are already idempotent per RFC 9110 and pass through. Override via `IdempotencyOptions.Methods`. |
+| Store key | `(scope, idempotency key)` — the scope partitions the keyspace so the same literal key under different actors / tenants never collides. |
+| Request fingerprint | `(method, PathBase + Path, canonical query, Content-Type, Content-Encoding, configured AdditionalFingerprintHeaders, body bytes)`. Multi-tenant hosts that mount the same routes under different `PathBase` values therefore never collide even when scope and key match. |
+| Scope | Resolved per-request by `IIdempotencyScopeResolver`. Default `DefaultIdempotencyScopeResolver` uses the current `Actor` id when an `IActorProvider` is registered, falling back to anonymous. Replace with a custom implementation for multi-tenant hosts. |
+| Response capture | `Set-Cookie`, `Date`, `Server`, and hop-by-hop headers (`Connection`, `Keep-Alive`, `Transfer-Encoding`, `Upgrade`, `Proxy-Authenticate`, `Proxy-Authorization`, `TE`, `Trailer`) are stripped from the snapshot. Cookies stay out by default so a replay does not re-issue rotated session tokens; opt back in via `IncludeSetCookieInSnapshot = true`. |
+| Failure paths | 5xx responses, response trailers, `SendFileAsync`, oversized request / response bodies (>1 MiB by default), and unhandled exceptions abandon the reservation so the next retry re-executes. |
+
+**`IIdempotencyStore`** is the persistence seam. `AddInMemoryIdempotencyStore()` is fine for single-instance dev hosts and tests; it sweeps completed-and-expired snapshots opportunistically so memory stays bounded by `Ttl`. Production hosts that retry across multiple replicas must supply their own implementation backed by shared storage (EF Core, Redis, Cosmos DB, …) honouring the same CAS contract.
+
+> [!IMPORTANT]
+> `UseTrellisIdempotency()` must run **after `UseRouting()` and before endpoint execution / model binding** so the middleware can see the endpoint's `[Idempotent]` metadata and buffer the request body before the handler consumes it. In a Minimal API host where `UseRouting` is not called explicitly, the runtime inserts routing implicitly; placing `UseTrellisIdempotency()` immediately before `MapControllers()` / `MapGet(...)` is equivalent.
+
+Full surface (options, store, scope resolver, attribute, parser, fingerprint helpers): [`trellis-api-asp.md`](../api_reference/trellis-api-asp.md#namespace-trellisaspidempotency).
 
 ## Scalar value validation
 

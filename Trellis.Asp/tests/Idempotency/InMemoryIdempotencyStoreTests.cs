@@ -266,4 +266,90 @@ public sealed class InMemoryIdempotencyStoreTests
         (reservedCount + inFlightCount).Should().Be(callers,
             "no caller may observe Replay/BodyHashMismatch because nothing has been completed yet");
     }
+
+    [Fact]
+    public async Task Expired_completed_entries_are_swept_when_unrelated_traffic_arrives()
+    {
+        var ttl = TimeSpan.FromMinutes(10);
+        var (store, time) = BuildStore(ttl: ttl);
+
+        // Reserve + complete two unrelated entries that will never be retried under the same key.
+        var r1 = await store.TryReserveAsync("anon", "key-1", "fp-1", CancellationToken.None);
+        await store.CompleteAsync(
+            "anon",
+            "key-1",
+            ((IdempotencyReservationOutcome.Reserved)r1).ReservationId,
+            SampleSnapshot,
+            CancellationToken.None);
+
+        var r2 = await store.TryReserveAsync("anon", "key-2", "fp-2", CancellationToken.None);
+        await store.CompleteAsync(
+            "anon",
+            "key-2",
+            ((IdempotencyReservationOutcome.Reserved)r2).ReservationId,
+            SampleSnapshot with { Fingerprint = "fp-2" },
+            CancellationToken.None);
+
+        store.Count.Should().Be(2);
+
+        // Advance well past Ttl so both stored entries are logically expired.
+        time.Advance(ttl + TimeSpan.FromMinutes(5));
+
+        // A request that arrives under a completely different key must opportunistically
+        // sweep the expired entries; without sweeping, a never-retried key leaks forever
+        // in long-running dev hosts.
+        await store.TryReserveAsync("anon", "key-3", "fp-3", CancellationToken.None);
+
+        store.Count.Should().Be(1,
+            "expired completed entries must be swept on subsequent traffic; only key-3 should remain");
+    }
+
+    [Fact]
+    public async Task Sweep_does_not_evict_unexpired_entries()
+    {
+        var ttl = TimeSpan.FromMinutes(10);
+        var (store, time) = BuildStore(ttl: ttl);
+
+        var r1 = await store.TryReserveAsync("anon", "key-1", "fp-1", CancellationToken.None);
+        await store.CompleteAsync(
+            "anon",
+            "key-1",
+            ((IdempotencyReservationOutcome.Reserved)r1).ReservationId,
+            SampleSnapshot,
+            CancellationToken.None);
+
+        // Advance only halfway through the Ttl — entry must remain available for replay.
+        time.Advance(ttl / 2);
+
+        await store.TryReserveAsync("anon", "key-other", "fp-other", CancellationToken.None);
+
+        store.Count.Should().Be(2,
+            "the unexpired key-1 entry must survive a sweep triggered by unrelated traffic");
+    }
+
+    [Fact]
+    public async Task Sweep_does_not_evict_in_flight_reservations()
+    {
+        var reservationTimeout = TimeSpan.FromSeconds(30);
+        var ttl = TimeSpan.FromMinutes(10);
+        var (store, time) = BuildStore(reservationTimeout: reservationTimeout, ttl: ttl);
+
+        // A slow handler holds its reservation longer than ReservationTimeout. Unrelated
+        // traffic must NOT sweep it: that would orphan the slow handler's snapshot and
+        // would also let an unrelated request silently invalidate the in-flight contract.
+        var slow = await store.TryReserveAsync("anon", "slow", "fp-slow", CancellationToken.None);
+        var slowReservation = ((IdempotencyReservationOutcome.Reserved)slow).ReservationId;
+
+        time.Advance(reservationTimeout + TimeSpan.FromMinutes(5));
+
+        await store.TryReserveAsync("anon", "unrelated", "fp-unrelated", CancellationToken.None);
+
+        store.Count.Should().Be(2,
+            "outstanding reservations must not be swept by unrelated traffic; takeover is reserved for same-key retries");
+
+        // Confirm CompleteAsync on the slow handler still succeeds (reservation entry was not removed).
+        await store.CompleteAsync("anon", "slow", slowReservation, SampleSnapshot, CancellationToken.None);
+        var replay = await store.TryReserveAsync("anon", "slow", "fp-slow", CancellationToken.None);
+        replay.Should().BeOfType<IdempotencyReservationOutcome.Replay>();
+    }
 }

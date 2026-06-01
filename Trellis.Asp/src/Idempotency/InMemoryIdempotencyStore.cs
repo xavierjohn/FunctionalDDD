@@ -23,6 +23,17 @@ using System.Threading.Tasks;
 /// Time is provided by <see cref="TimeProvider"/> so tests can advance the clock deterministically
 /// to exercise TTL and reservation-timeout transitions.
 /// </para>
+/// <para>
+/// To bound memory in long-running hosts, the store performs an opportunistic sweep at the
+/// start of every <see cref="TryReserveAsync"/> call: at most once per <c>Ttl/8</c>, one
+/// caller walks the dictionary and removes completed entries past
+/// <see cref="IdempotencyOptions.Ttl"/>. Never-retried keys are therefore evicted within
+/// ~ <c>Ttl + Ttl/8</c> of expiry as long as other traffic continues to arrive. A
+/// completely idle store retains expired entries indefinitely; restart the host or call
+/// <see cref="TryReserveAsync"/> to drain. Outstanding reservations are not swept so
+/// unrelated traffic cannot orphan a still-running slow handler; same-key retries continue
+/// to take over reservations past <see cref="IdempotencyOptions.ReservationTimeout"/>.
+/// </para>
 /// </remarks>
 public sealed class InMemoryIdempotencyStore : IIdempotencyStore
 {
@@ -44,6 +55,7 @@ public sealed class InMemoryIdempotencyStore : IIdempotencyStore
     private readonly ConcurrentDictionary<(string Scope, string Key), Entry> _store = new();
     private readonly IdempotencyOptions _options;
     private readonly TimeProvider _time;
+    private long _lastSweepTicks;
 
     /// <summary>
     /// Creates a new <see cref="InMemoryIdempotencyStore"/>.
@@ -55,7 +67,14 @@ public sealed class InMemoryIdempotencyStore : IIdempotencyStore
         ArgumentNullException.ThrowIfNull(options);
         _options = options;
         _time = timeProvider ?? TimeProvider.System;
+        _lastSweepTicks = _time.GetUtcNow().Ticks;
     }
+
+    /// <summary>
+    /// Number of entries currently held by the store (completed snapshots plus outstanding
+    /// reservations). Exposed for tests so the opportunistic sweep can be observed.
+    /// </summary>
+    internal int Count => _store.Count;
 
     /// <inheritdoc/>
     public ValueTask<IdempotencyReservationOutcome> TryReserveAsync(
@@ -67,6 +86,8 @@ public sealed class InMemoryIdempotencyStore : IIdempotencyStore
         ArgumentNullException.ThrowIfNull(scope);
         ArgumentNullException.ThrowIfNull(key);
         ArgumentNullException.ThrowIfNull(fingerprint);
+
+        MaybeSweepExpired();
 
         var compositeKey = (scope, key);
         while (true)
@@ -223,6 +244,50 @@ public sealed class InMemoryIdempotencyStore : IIdempotencyStore
             if (((ICollection<KeyValuePair<(string, string), Entry>>)_store).Remove(kvp))
                 return ValueTask.CompletedTask;
             // Another caller mutated the entry between TryGetValue and Remove; retry.
+        }
+    }
+
+    /// <summary>
+    /// Cadence at which the opportunistic sweep walks the store to evict expired entries.
+    /// Tied to <see cref="IdempotencyOptions.Ttl"/> (one eighth) so even an aggressively
+    /// short TTL still gets several sweep opportunities per TTL window; the worst-case
+    /// extra residency for a never-retried entry is therefore ~ <c>Ttl + Ttl/8</c>.
+    /// </summary>
+    private TimeSpan SweepInterval => TimeSpan.FromTicks(Math.Max(1L, _options.Ttl.Ticks / 8));
+
+    private void MaybeSweepExpired()
+    {
+        var nowTicks = _time.GetUtcNow().Ticks;
+        var lastTicks = Interlocked.Read(ref _lastSweepTicks);
+        if (nowTicks - lastTicks < SweepInterval.Ticks)
+            return;
+
+        // Claim the sweep slot atomically: at most one caller per cadence does the walk.
+        if (Interlocked.CompareExchange(ref _lastSweepTicks, nowTicks, lastTicks) != lastTicks)
+            return;
+
+        SweepExpired();
+    }
+
+    private void SweepExpired()
+    {
+        var now = _time.GetUtcNow();
+        var ttl = _options.Ttl;
+        var collection = (ICollection<KeyValuePair<(string, string), Entry>>)_store;
+        foreach (var kvp in _store)
+        {
+            var entry = kvp.Value;
+            // Only sweep completed snapshots. Outstanding reservations are deliberately left
+            // alone so unrelated traffic cannot orphan a slow handler whose run is still
+            // legitimate: same-key retries continue to take over stuck reservations past
+            // ReservationTimeout. The reservation population is bounded by concurrent
+            // in-flight idempotent requests and does not grow unboundedly.
+            if (entry.Snapshot is not null && (now - entry.CompletedAt) >= ttl)
+            {
+                // Snapshot-bound Remove: leaves the entry alone if another caller replaced it
+                // (for example a takeover or a retry that re-reserved the same key).
+                collection.Remove(kvp);
+            }
         }
     }
 }

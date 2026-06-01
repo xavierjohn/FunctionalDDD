@@ -446,12 +446,15 @@ public sealed class IdempotencyOptions
 | Member | Default | Description |
 | --- | --- | --- |
 | `HeaderName` | `"Idempotency-Key"` | HTTP header carrying the IETF [`sf-string`](https://www.rfc-editor.org/rfc/rfc8941) idempotency key. |
+| `ReplayHeaderName` | `"Idempotent-Replayed"` | Response header added to replayed responses so clients can detect that the body came from a cached snapshot rather than a fresh handler invocation. |
 | `Ttl` | `24 h` | Time a completed snapshot is retained before it is evicted and the key can be reused. |
 | `ReservationTimeout` | `30 s` | Time an in-flight reservation is held before the store may sweep it (so a crashed handler does not block retries forever). |
 | `MaxKeyLength` | `200` | Hard cap on parsed key length; longer keys produce `400 Bad Request`. |
 | `MaxRequestBodyBytes` | `1 MiB` | Hard cap on the buffered request body that contributes to the fingerprint; larger bodies produce `413 Payload Too Large`. |
 | `MaxResponseBodyBytes` | `1 MiB` | Hard cap on the captured response body; exceeding aborts capture and records no snapshot (the next retry re-executes). |
 | `MismatchStatusCode` | `422` | Status returned when the same key arrives with a different body fingerprint. |
+| `RequireKeyOnOptedInEndpoints` | `true` | When `true`, opted-in endpoints reject requests that omit the header with `400 idempotency.key_required`; when `false`, missing-key requests pass through with no idempotency processing. |
+| `IncludeSetCookieInSnapshot` | `false` | When `true`, `Set-Cookie` response headers are captured in snapshots; default excludes them so a replay does not re-issue session or authentication cookies that have since been rotated. |
 | `Methods` | `{ POST, PATCH }` | Methods the middleware acts on; other methods (`GET`, `PUT`, `DELETE`) pass through. |
 | `AdditionalFingerprintHeaders` | empty | Extra request headers included in the fingerprint (for example a tenant header) when their semantics affect the request identity. |
 
