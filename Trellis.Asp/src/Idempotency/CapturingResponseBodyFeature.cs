@@ -62,7 +62,22 @@ public sealed class CapturingResponseBodyFeature : IHttpResponseBodyFeature, IDi
     public bool CaptureAborted { get; private set; }
 
     /// <inheritdoc/>
-    public Task CompleteAsync() => this.inner.CompleteAsync();
+    /// <remarks>
+    /// Flushes the cached <see cref="PipeWriter"/> first (if it was ever requested) so any
+    /// bytes the handler wrote via <c>Response.BodyWriter.GetMemory()</c> /
+    /// <c>Advance()</c> without an explicit <c>FlushAsync</c> drain through the underlying
+    /// tee stream — landing in both the client response and the capture buffer — before
+    /// completion delegates to the inner feature.
+    /// </remarks>
+    public async Task CompleteAsync()
+    {
+        if (this.cachedWriter is not null)
+        {
+            await this.cachedWriter.FlushAsync().ConfigureAwait(false);
+        }
+
+        await this.inner.CompleteAsync().ConfigureAwait(false);
+    }
 
     /// <inheritdoc/>
     public void DisableBuffering() => this.inner.DisableBuffering();

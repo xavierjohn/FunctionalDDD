@@ -78,6 +78,22 @@ public sealed class IdempotencyFingerprintTests
     }
 
     [Fact]
+    public void PathBase_difference_changes_fingerprint()
+    {
+        // Two sub-apps mounted under different PathBase values can present the same
+        // Request.Path. The fingerprint must include PathBase so the replay identity
+        // matches the full request target and bodies cannot collide across branches.
+        var body = new byte[] { 1 };
+        var ctxA = BuildContext(path: "/orders", body: body);
+        ctxA.Request.PathBase = "/v1";
+        var ctxB = BuildContext(path: "/orders", body: body);
+        ctxB.Request.PathBase = "/v2";
+        var a = IdempotencyFingerprint.Compute(ctxA, body, new IdempotencyOptions());
+        var b = IdempotencyFingerprint.Compute(ctxB, body, new IdempotencyOptions());
+        a.Should().NotBe(b);
+    }
+
+    [Fact]
     public void Query_order_does_not_change_fingerprint()
     {
         var body = new byte[] { 1 };

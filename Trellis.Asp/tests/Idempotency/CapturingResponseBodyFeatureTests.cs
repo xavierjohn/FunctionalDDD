@@ -21,11 +21,17 @@ public sealed class CapturingResponseBodyFeatureTests
     {
         public MemoryStream Original { get; } = new();
         public int SendFileCalls { get; private set; }
+        public int CompleteCalls { get; private set; }
 
         public Stream Stream => Original;
         public System.IO.Pipelines.PipeWriter Writer => System.IO.Pipelines.PipeWriter.Create(Original);
 
-        public Task CompleteAsync() => Task.CompletedTask;
+        public Task CompleteAsync()
+        {
+            CompleteCalls++;
+            return Task.CompletedTask;
+        }
+
         public void DisableBuffering() { }
         public Task SendFileAsync(string path, long offset, long? count, CancellationToken cancellationToken)
         {
@@ -104,5 +110,41 @@ public sealed class CapturingResponseBodyFeatureTests
 
         feature.GetCapturedBytes().Should().Equal(new byte[] { 9, 9, 9 });
         inner.Original.ToArray().Should().Equal(new byte[] { 9, 9, 9 });
+    }
+
+    [Fact]
+    public async Task CompleteAsync_flushes_buffered_BodyWriter_bytes_before_completing_inner()
+    {
+        // A handler may write via Response.BodyWriter.GetMemory + Advance and then call
+        // Response.CompleteAsync() WITHOUT an explicit FlushAsync. The wrapper's
+        // CompleteAsync must drain the cached PipeWriter so the bytes reach both the
+        // underlying stream and the capture buffer before completion delegates downstream.
+        var inner = new StubBodyFeature();
+        var feature = new CapturingResponseBodyFeature(inner, maxBytes: 1024);
+
+        var span = feature.Writer.GetMemory(8);
+        new byte[] { 7, 7, 7 }.CopyTo(span.Span);
+        feature.Writer.Advance(3);
+
+        await feature.CompleteAsync();
+
+        feature.GetCapturedBytes().Should().Equal(new byte[] { 7, 7, 7 });
+        inner.Original.ToArray().Should().Equal(new byte[] { 7, 7, 7 });
+        inner.CompleteCalls.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task CompleteAsync_without_BodyWriter_use_just_delegates_to_inner()
+    {
+        // If the handler never asked for Response.BodyWriter, there is no cached
+        // PipeWriter to flush. CompleteAsync must still delegate to the inner feature
+        // exactly once without throwing.
+        var inner = new StubBodyFeature();
+        var feature = new CapturingResponseBodyFeature(inner, maxBytes: 1024);
+
+        await feature.CompleteAsync();
+
+        inner.CompleteCalls.Should().Be(1);
+        feature.GetCapturedBytes().Should().BeEmpty();
     }
 }

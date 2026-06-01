@@ -34,7 +34,9 @@ public static class IdempotencyFingerprint
 
         AppendString(sha, context.Request.Method ?? string.Empty);
         sha.AppendData([RecordSeparator]);
-        AppendString(sha, context.Request.Path.HasValue ? context.Request.Path.Value! : string.Empty);
+        var pathBase = context.Request.PathBase.HasValue ? context.Request.PathBase.Value! : string.Empty;
+        var path = context.Request.Path.HasValue ? context.Request.Path.Value! : string.Empty;
+        AppendString(sha, pathBase + path);
         sha.AppendData([RecordSeparator]);
         AppendCanonicalQuery(sha, context.Request.Query);
         sha.AppendData([RecordSeparator]);
