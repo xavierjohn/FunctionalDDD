@@ -290,10 +290,17 @@ public static class ServiceCollectionExtensions
     /// MVC binding/validation pipeline (<see cref="ScalarValueModelBinderProvider"/>,
     /// <see cref="MaybeSuppressChildValidationMetadataProvider"/>,
     /// <see cref="ScalarValueValidationFilter"/>, and <c>SuppressModelStateInvalidFilter</c>),
-    /// so MVC controller hosts that call only <c>AddTrellisAsp()</c> (which invokes this method)
-    /// still get the full scalar-value-object validation experience without having to chain
+    /// so MVC controller hosts that call only this method (or the convenience helper
+    /// <see cref="AddTrellisAspWithScalarValidation(IServiceCollection)"/>) still get the full
+    /// scalar-value-object validation experience without having to chain
     /// <c>AddControllers().AddScalarValueValidation()</c>. The MVC registrations are no-ops
     /// when controllers are not added, and are idempotent so combining both calls is safe.
+    /// </para>
+    /// <para>
+    /// <strong>Minimal API endpoint filter and middleware are NOT registered by this method.</strong>
+    /// Minimal API hosts must additionally call <c>app.UseScalarValueValidation()</c> (middleware)
+    /// and chain <c>.WithScalarValueValidation()</c> on each endpoint that should surface
+    /// validation as RFC 9457 ProblemDetails.
     /// </para>
     /// </remarks>
     /// <example>
@@ -479,10 +486,23 @@ public static class ServiceCollectionExtensions
     /// zero-configuration overload. Call the overload accepting <see cref="Action{TrellisAspOptions}"/>
     /// to customize specific mappings.
     /// </para>
+    /// <para>
+    /// <b>Does NOT register scalar-value validation.</b> If your endpoints accept request bodies
+    /// containing Trellis value objects (<see cref="IScalarValue{TSelf, TPrimitive}"/>,
+    /// <see cref="Maybe{T}"/>) bound from JSON / route / query, you must additionally call
+    /// <see cref="AddScalarValueValidation(IServiceCollection)"/> — or use the convenience
+    /// helper <see cref="AddTrellisAspWithScalarValidation(IServiceCollection)"/> which composes
+    /// both registrations. The split exists so the global <c>MvcOptions</c> / <c>JsonOptions</c>
+    /// mutation that scalar validation performs is opt-in instead of silent.
+    /// </para>
     /// </remarks>
     /// <example>
     /// <code>
+    /// // Error mapping only (no scalar-value JSON / model-binding wiring):
     /// builder.Services.AddTrellisAsp();
+    ///
+    /// // Greenfield default — error mapping + scalar-value validation:
+    /// builder.Services.AddTrellisAspWithScalarValidation();
     /// </code>
     /// </example>
     public static IServiceCollection AddTrellisAsp(this IServiceCollection services)
@@ -514,6 +534,12 @@ public static class ServiceCollectionExtensions
     /// <paramref name="configure"/> action; raw <c>services.AddSingleton(new TrellisAspOptions())</c>
     /// is unsupported and will be silently overwritten the next time <c>AddTrellisAsp</c> runs.
     /// </para>
+    /// <para>
+    /// <b>Does NOT register scalar-value validation.</b> See the parameterless overload's
+    /// remarks for the rationale; use
+    /// <see cref="AddTrellisAspWithScalarValidation(IServiceCollection, Action{TrellisAspOptions})"/>
+    /// when you also want VO model binding / JSON converter wiring.
+    /// </para>
     /// </remarks>
     /// <example>
     /// <code>
@@ -544,8 +570,47 @@ public static class ServiceCollectionExtensions
 
         services.TryAddSingleton<ResourceCollectionNameRegistry>();
 
-        // auto-register VO binding / JSON converter infrastructure.
-        // Idempotent: configures both MVC and Minimal API JSON pipelines for ScalarValue/Maybe support.
+        // Scalar-value validation is NOT auto-registered. The previous behavior silently
+        // mutated MvcOptions and JsonOptions, which surprised consumers who had already
+        // configured their own converters / naming policies. Call AddScalarValueValidation()
+        // explicitly, or use AddTrellisAspWithScalarValidation() for the all-in-one default.
+        return services;
+    }
+
+    /// <summary>
+    /// Convenience helper that composes <see cref="AddTrellisAsp(IServiceCollection)"/> with
+    /// <see cref="AddScalarValueValidation(IServiceCollection)"/>. Use this on greenfield
+    /// projects that want the full Trellis ASP.NET Core surface (error mapping + scalar-value
+    /// model binding + JSON converters) in a single call.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <returns>The service collection for chaining.</returns>
+    /// <remarks>
+    /// Equivalent to calling <see cref="AddTrellisAsp(IServiceCollection)"/> followed by
+    /// <see cref="AddScalarValueValidation(IServiceCollection)"/>. Scalar-value validation
+    /// mutates global <c>MvcOptions</c> and <c>JsonOptions</c>; System.Text.Json resolves
+    /// converters in registration order with first-match-wins semantics, so if your host
+    /// must override Trellis's `MaybeScalarValueJsonConverterFactory` / `MaybePrimitiveJsonConverterFactory`
+    /// / `ValidatingJsonConverterFactory` for some types, register your custom converters
+    /// (or your <c>TypeInfoResolver</c>) <em>before</em> calling this helper — or drop down
+    /// to <see cref="AddTrellisAsp(IServiceCollection)"/> + explicit
+    /// <see cref="AddScalarValueValidation(IServiceCollection)"/> so the ordering is visible
+    /// at the call site. Naming-policy / general <c>JsonSerializerOptions</c> tweaks that
+    /// do not collide with Trellis converters can register before or after.
+    /// </remarks>
+    public static IServiceCollection AddTrellisAspWithScalarValidation(this IServiceCollection services)
+        => services.AddTrellisAspWithScalarValidation(_ => { });
+
+    /// <summary>
+    /// Convenience helper that composes <see cref="AddTrellisAsp(IServiceCollection, Action{TrellisAspOptions})"/>
+    /// with <see cref="AddScalarValueValidation(IServiceCollection)"/>.
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configure">An action to configure error-to-HTTP-status-code mappings.</param>
+    /// <returns>The service collection for chaining.</returns>
+    public static IServiceCollection AddTrellisAspWithScalarValidation(this IServiceCollection services, Action<TrellisAspOptions> configure)
+    {
+        services.AddTrellisAsp(configure);
         services.AddScalarValueValidation();
         return services;
     }

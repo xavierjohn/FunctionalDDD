@@ -35,7 +35,7 @@ public sealed class BinderValidationStatusCodeTests
                 .ConfigureServices(s =>
                 {
                     s.AddProblemDetails();
-                    s.AddTrellisAsp();
+                    s.AddTrellisAspWithScalarValidation();
                     s.AddControllers().AddApplicationPart(typeof(StatusCodeController).Assembly);
                 })
                 .Configure(app =>

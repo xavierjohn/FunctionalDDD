@@ -34,7 +34,7 @@ public sealed class WithVersionedRouteTests
                 .UseTestServer()
                 .ConfigureServices(s =>
                 {
-                    s.AddTrellisAsp();
+                    s.AddTrellisAspWithScalarValidation();
                     s.AddControllers().AddApplicationPart(typeof(SingleVersionController).Assembly);
                     s.AddApiVersioning(o =>
                     {
@@ -61,7 +61,7 @@ public sealed class WithVersionedRouteTests
                 .UseTestServer()
                 .ConfigureServices(s =>
                 {
-                    s.AddTrellisAsp();
+                    s.AddTrellisAspWithScalarValidation();
                     s.AddControllers().AddApplicationPart(typeof(MultiVersionController).Assembly);
                     s.AddApiVersioning(o =>
                     {
@@ -88,7 +88,7 @@ public sealed class WithVersionedRouteTests
                 .UseTestServer()
                 .ConfigureServices(s =>
                 {
-                    s.AddTrellisAsp();
+                    s.AddTrellisAspWithScalarValidation();
                     s.AddControllers().AddApplicationPart(typeof(SegmentVersionController).Assembly);
                     s.AddApiVersioning(o => o.ApiVersionReader = new UrlSegmentApiVersionReader()).AddMvc();
                 })
@@ -112,7 +112,7 @@ public sealed class WithVersionedRouteTests
                 .UseTestServer()
                 .ConfigureServices(s =>
                 {
-                    s.AddTrellisAsp();
+                    s.AddTrellisAspWithScalarValidation();
                     s.AddControllers()
                         .ConfigureApplicationPartManager(apm =>
                         {

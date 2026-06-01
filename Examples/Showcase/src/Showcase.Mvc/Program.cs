@@ -12,7 +12,7 @@ using Trellis.Showcase.Domain.ValueObjects;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddTrellisAsp();
+builder.Services.AddTrellisAspWithScalarValidation();
 
 builder.Services
     .AddControllers()

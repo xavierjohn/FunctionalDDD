@@ -25,6 +25,7 @@ See also: [trellis-api-cookbook.md](trellis-api-cookbook.md#recipe-12--di-wiring
 | Goal | Canonical API / pattern | See |
 |---|---|---|
 | Enable ASP Result-to-HTTP mapping | `services.AddTrellis(o => o.UseAsp())` | [`TrellisServiceBuilder`](#trellisservicebuilder), [ASP](trellis-api-asp.md) |
+| Enable scalar-value JSON / model-binding validation | `services.AddTrellis(o => o.UseScalarValueValidation())` (compose with `.UseAsp()` for the controller-host default) | [`TrellisServiceBuilder`](#trellisservicebuilder), [ASP](trellis-api-asp.md#namespace-trellisaspvalidation) |
 | Enable Trellis ProblemDetails customization | `.UseProblemDetails()` | [`TrellisServiceBuilder`](#trellisservicebuilder), [ASP `AddTrellisProblemDetails`](trellis-api-asp.md#servicecollectionextensions) |
 | Enable the IETF `Idempotency-Key` middleware for opted-in `POST` / `PATCH` endpoints | `.UseIdempotency(opt => ...)` plus `services.AddInMemoryIdempotencyStore()` (or an EF-backed store) and `app.UseTrellisIdempotency()` | [`TrellisServiceBuilder`](#trellisservicebuilder), [ASP `Trellis.Asp.Idempotency`](trellis-api-asp.md#namespace-trellisaspidempotency), Cookbook [Recipe 29](trellis-api-cookbook.md#recipe-29--ietf-idempotency-key-middleware-on-post--patch-with-usetrellisidempotency) |
 | Add standard mediator behaviors | `.UseMediator()` | [`TrellisServiceBuilder`](#trellisservicebuilder), [Mediator](trellis-api-mediator.md) |
@@ -77,7 +78,8 @@ public sealed class TrellisServiceBuilder
 
 | Signature | Returns | Description |
 | --- | --- | --- |
-| `public TrellisServiceBuilder UseAsp(Action<TrellisAspOptions>? configure = null)` | `TrellisServiceBuilder` | Registers `Trellis.Asp` integration via `AddTrellisAsp(...)`. Repeated calls compose the configure delegates rather than overwriting. |
+| `public TrellisServiceBuilder UseAsp(Action<TrellisAspOptions>? configure = null)` | `TrellisServiceBuilder` | Registers `Trellis.Asp` integration via `AddTrellisAsp(...)` (error-to-status mapping + `ResourceCollectionNameRegistry`). **Does NOT register scalar-value validation** — compose with `UseScalarValueValidation()` when the host binds value-object DTOs from JSON / route / query. Repeated calls compose the configure delegates rather than overwriting. |
+| `public TrellisServiceBuilder UseScalarValueValidation()` | `TrellisServiceBuilder` | Registers scalar-value validation via `AddScalarValueValidation()`: configures both MVC and Minimal API JSON pipelines (model binders, JSON converters, `SuppressModelStateInvalidFilter` toggle) so `IScalarValue<TSelf, TPrimitive>` / `Maybe<T>` validation surfaces as RFC 9457 ProblemDetails. Mutates global `MvcOptions` / `JsonOptions`. Independent of `UseAsp()`. **Does NOT register the Minimal API endpoint filter or middleware** — Minimal API hosts must additionally call `app.UseScalarValueValidation()` (middleware) and chain `.WithScalarValueValidation()` per endpoint. Idempotent. |
 | `public TrellisServiceBuilder UseProblemDetails()` | `TrellisServiceBuilder` | Registers Trellis ProblemDetails customization (`traceId` on every error, `405` `Allow` header projected as `extensions.allow`, `500` detail rewrite) via `AddTrellisProblemDetails()`. Independent of `UseAsp()` — does not pull in Trellis MVC/result-mapping infrastructure. Idempotent across direct + builder composition: a consumer that calls both `services.AddTrellisProblemDetails()` directly and `options.UseProblemDetails()` ends up with exactly one Trellis post-configure layer. |
 | `public TrellisServiceBuilder UseIdempotency(Action<IdempotencyOptions>? configure = null)` | `TrellisServiceBuilder` | Registers `AddTrellisIdempotency(configure)`: `IdempotencyOptions`, the default `IIdempotencyScopeResolver` (per-actor, falling back to anonymous), and an internal marker used by `app.UseTrellisIdempotency()` for startup validation. **Does not register a store** — composition is explicit; pair with `services.AddInMemoryIdempotencyStore()` (dev / tests) or an EF-backed store (production). Mount the middleware with `app.UseTrellisIdempotency()` in the request pipeline. Independent of `UseAsp()`. Repeated calls compose the configure delegates rather than overwriting, mirroring `UseAsp` / `UseMediator`. |
 | `public TrellisServiceBuilder UseMediator(Action<TrellisMediatorTelemetryOptions>? configureTelemetry = null)` | `TrellisServiceBuilder` | Registers Trellis Mediator behaviors via `AddTrellisBehaviors(...)`. Repeated calls compose the configure delegates rather than overwriting. |
@@ -129,12 +131,15 @@ Explicit `services.AddResourceAuthorization<TMessage, TResource, TResponse>()` c
 ## Examples
 
 ```csharp
+// Error-to-status mapping only (no scalar-value JSON / model-binding wiring).
 services.AddTrellis(options => options.UseAsp());
 ```
 
 ```csharp
+// Controller-host default: error mapping + scalar-value validation.
 services.AddTrellis(options => options
     .UseAsp()
+    .UseScalarValueValidation()
     .UseMediator()
     .UseFluentValidation(typeof(Program).Assembly));
 ```
@@ -156,6 +161,7 @@ services.AddTrellis(options => options
 ```csharp
 services.AddTrellis(options => options
     .UseAsp()
+    .UseScalarValueValidation()
     .UseMediator()
     .UseClaimsActorProvider()
     .UseResourceAuthorization(typeof(Program).Assembly)

@@ -7,7 +7,7 @@ using Trellis.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddTrellisAsp();
+builder.Services.AddTrellisAspWithScalarValidation();
 
 // SQLite in-memory: keep a single open connection so the database survives across requests.
 var connection = new SqliteConnection("DataSource=:memory:");

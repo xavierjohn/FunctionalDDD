@@ -41,7 +41,7 @@ public sealed record RegisterUserRequest(string FirstName, string LastName, stri
 public sealed record RegisterUserResponse(string FirstName, string LastName, string Email);
 
 var builder = WebApplication.CreateBuilder(args);
-builder.Services.AddTrellisAsp();
+builder.Services.AddTrellisAspWithScalarValidation();
 
 var app = builder.Build();
 

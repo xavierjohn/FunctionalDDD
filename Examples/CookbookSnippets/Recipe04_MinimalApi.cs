@@ -18,7 +18,7 @@ public static class MinimalApiSample
     public static void Configure(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        builder.Services.AddTrellisAsp();
+        builder.Services.AddTrellisAspWithScalarValidation();
         builder.Services.AddOrdersFeature();
 
         var app = builder.Build();

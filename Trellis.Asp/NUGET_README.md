@@ -14,11 +14,14 @@ dotnet add package Trellis.Asp
 using Trellis;
 using Trellis.Asp;
 
-builder.Services.AddTrellisAsp();
+// Greenfield default — error mapping + scalar-value JSON / model-binding validation:
+builder.Services.AddTrellisAspWithScalarValidation();
 
 app.MapGet("/widgets/{id}", (string id) =>
     Result.Ok(id).ToHttpResponse());
 ```
+
+> `AddTrellisAsp()` registers error-to-status mapping only. `AddTrellisAspWithScalarValidation()` (or `AddTrellisAsp()` + `AddScalarValueValidation()`) additionally configures global `MvcOptions` / `JsonOptions` for value-object binding and JSON serialization. The split exists so the global-options mutation is opt-in instead of silent.
 
 ## Key Features
 - Convert `Result<T>` and `Error` values into consistent HTTP responses.

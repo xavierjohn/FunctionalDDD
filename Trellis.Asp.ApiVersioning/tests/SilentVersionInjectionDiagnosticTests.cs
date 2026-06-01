@@ -224,7 +224,7 @@ public sealed class SilentVersionInjectionDiagnosticTests
                 })
                 .ConfigureServices(s =>
                 {
-                    s.AddTrellisAsp();
+                    s.AddTrellisAspWithScalarValidation();
                     s.AddControllers().ConfigureApplicationPartManager(apm =>
                     {
                         apm.FeatureProviders.Clear();
@@ -264,9 +264,9 @@ public sealed class SilentVersionInjectionDiagnosticTests
                 .ConfigureServices(s =>
                 {
                     if (configureAsp is null)
-                        s.AddTrellisAsp();
+                        s.AddTrellisAspWithScalarValidation();
                     else
-                        s.AddTrellisAsp(configureAsp);
+                        s.AddTrellisAspWithScalarValidation(configureAsp);
 
                     s.AddControllers().ConfigureApplicationPartManager(apm =>
                     {

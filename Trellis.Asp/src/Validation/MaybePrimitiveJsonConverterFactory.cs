@@ -30,7 +30,8 @@ using Trellis;
 /// value (formatting errors throw the standard <see cref="JsonException"/> with a field path).
 /// </para>
 /// <para>
-/// Auto-registered by <c>AddTrellisAsp(...)</c> alongside the existing scalar factory.
+/// Registered by <c>AddScalarValueValidation()</c> (or by the convenience helper
+/// <c>AddTrellisAspWithScalarValidation()</c>) alongside the existing scalar factory.
 /// </para>
 /// </remarks>
 public sealed class MaybePrimitiveJsonConverterFactory : JsonConverterFactory

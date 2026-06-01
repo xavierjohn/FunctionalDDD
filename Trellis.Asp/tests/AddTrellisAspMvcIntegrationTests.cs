@@ -22,16 +22,16 @@ using Trellis.Asp.Validation;
 using Trellis.Primitives;
 
 /// <summary>
-/// Integration tests that verify <see cref="ServiceCollectionExtensions.AddTrellisAsp(IServiceCollection)"/>
+/// Integration tests that verify <see cref="ServiceCollectionExtensions.AddTrellisAspWithScalarValidation(IServiceCollection)"/>
 /// fully wires the MVC pipeline for scalar value object validation and <see cref="Maybe{T}"/> properties.
 ///
-/// Recipe 14 (cookbook) and the public docs claim that <c>AddTrellisAsp()</c> alone is the only
-/// wiring required for controllers to accept <c>Maybe&lt;TScalar&gt;</c> request properties.
-/// Prior to the fix in this commit, only the JSON converter was registered — the MVC-side
-/// <see cref="MaybeSuppressChildValidationMetadataProvider"/>, model binder provider, and validation
-/// filter were not — so <c>ValidationVisitor</c> would reflectively access <c>Maybe&lt;T&gt;.Value</c>
-/// on a <c>None</c> instance and throw <see cref="System.InvalidOperationException"/> ("Maybe has no value")
-/// before the action ran, surfacing as HTTP 500.
+/// Recipe 14 (cookbook) and the public docs claim that <c>AddTrellisAspWithScalarValidation()</c> alone is the only
+/// wiring required for controllers to accept <c>Maybe&lt;TScalar&gt;</c> request properties. Without
+/// the <see cref="MaybeSuppressChildValidationMetadataProvider"/>, model binder provider, and validation
+/// filter that <c>AddScalarValueValidation()</c> contributes, <c>ValidationVisitor</c> would
+/// reflectively access <c>Maybe&lt;T&gt;.Value</c> on a <c>None</c> instance and throw
+/// <see cref="System.InvalidOperationException"/> ("Maybe has no value") before the action ran,
+/// surfacing as HTTP 500.
 /// </summary>
 public sealed class AddTrellisAspMvcIntegrationTests
 {
@@ -43,7 +43,7 @@ public sealed class AddTrellisAspMvcIntegrationTests
                 .ConfigureServices(s =>
                 {
                     s.AddProblemDetails();
-                    s.AddTrellisAsp();
+                    s.AddTrellisAspWithScalarValidation();
                     s.AddControllers().AddApplicationPart(typeof(MaybeDtoController).Assembly);
                 })
                 .Configure(app =>
@@ -55,7 +55,7 @@ public sealed class AddTrellisAspMvcIntegrationTests
     }
 
     [Fact]
-    public async Task AddTrellisAsp_with_controllers_accepts_DTO_with_omitted_Maybe_scalar_property()
+    public async Task AddTrellisAspWithScalarValidation_with_controllers_accepts_DTO_with_omitted_Maybe_scalar_property()
     {
         using var host = CreateHost();
         using var client = host.GetTestClient();
@@ -67,7 +67,7 @@ public sealed class AddTrellisAspMvcIntegrationTests
         var resp = await client.PostAsync("/maybe-dto", content, TestContext.Current.CancellationToken);
 
         resp.StatusCode.Should().Be(HttpStatusCode.OK,
-            "AddTrellisAsp() must register MaybeSuppressChildValidationMetadataProvider so MVC's " +
+            "AddTrellisAspWithScalarValidation() must register MaybeSuppressChildValidationMetadataProvider so MVC's " +
             "ValidationVisitor does not reflectively access Maybe<T>.Value on a None instance");
         var body = await resp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         body.Should().Contain("\"hasPhone\":false");
@@ -75,7 +75,7 @@ public sealed class AddTrellisAspMvcIntegrationTests
     }
 
     [Fact]
-    public async Task AddTrellisAsp_with_controllers_accepts_DTO_with_explicit_null_Maybe_scalar_property()
+    public async Task AddTrellisAspWithScalarValidation_with_controllers_accepts_DTO_with_explicit_null_Maybe_scalar_property()
     {
         using var host = CreateHost();
         using var client = host.GetTestClient();
@@ -91,7 +91,7 @@ public sealed class AddTrellisAspMvcIntegrationTests
     }
 
     [Fact]
-    public async Task AddTrellisAsp_with_controllers_accepts_DTO_with_present_Maybe_scalar_property()
+    public async Task AddTrellisAspWithScalarValidation_with_controllers_accepts_DTO_with_present_Maybe_scalar_property()
     {
         using var host = CreateHost();
         using var client = host.GetTestClient();
@@ -110,10 +110,10 @@ public sealed class AddTrellisAspMvcIntegrationTests
     #region Unit-level registration assertions
 
     [Fact]
-    public void AddTrellisAsp_registers_MaybeSuppressChildValidationMetadataProvider()
+    public void AddTrellisAspWithScalarValidation_registers_MaybeSuppressChildValidationMetadataProvider()
     {
         var services = new ServiceCollection();
-        services.AddTrellisAsp();
+        services.AddTrellisAspWithScalarValidation();
         services.AddControllers();
 
         var sp = services.BuildServiceProvider();
@@ -122,14 +122,14 @@ public sealed class AddTrellisAspMvcIntegrationTests
         mvcOptions.ModelMetadataDetailsProviders
             .Any(p => p is MaybeSuppressChildValidationMetadataProvider)
             .Should().BeTrue(
-                "Recipe 14 documents AddTrellisAsp() as the one-call setup for Maybe<TScalar> on DTOs");
+                "Recipe 14 documents AddTrellisAspWithScalarValidation() as the one-call setup for Maybe<TScalar> on DTOs");
     }
 
     [Fact]
-    public void AddTrellisAsp_registers_ScalarValueModelBinderProvider_at_front()
+    public void AddTrellisAspWithScalarValidation_registers_ScalarValueModelBinderProvider_at_front()
     {
         var services = new ServiceCollection();
-        services.AddTrellisAsp();
+        services.AddTrellisAspWithScalarValidation();
         services.AddControllers();
 
         var sp = services.BuildServiceProvider();
@@ -141,10 +141,10 @@ public sealed class AddTrellisAspMvcIntegrationTests
     }
 
     [Fact]
-    public void AddTrellisAsp_registers_ScalarValueValidationFilter()
+    public void AddTrellisAspWithScalarValidation_registers_ScalarValueValidationFilter()
     {
         var services = new ServiceCollection();
-        services.AddTrellisAsp();
+        services.AddTrellisAspWithScalarValidation();
         services.AddControllers();
 
         var sp = services.BuildServiceProvider();
@@ -156,10 +156,10 @@ public sealed class AddTrellisAspMvcIntegrationTests
     }
 
     [Fact]
-    public void AddTrellisAsp_suppresses_ModelStateInvalidFilter()
+    public void AddTrellisAspWithScalarValidation_suppresses_ModelStateInvalidFilter()
     {
         var services = new ServiceCollection();
-        services.AddTrellisAsp();
+        services.AddTrellisAspWithScalarValidation();
         services.AddControllers();
 
         var sp = services.BuildServiceProvider();
@@ -168,7 +168,36 @@ public sealed class AddTrellisAspMvcIntegrationTests
     }
 
     [Fact]
-    public async Task AddTrellisAsp_with_controllers_composite_VO_failure_omits_phantom_parameter_entry()
+    public void AddTrellisAsp_alone_does_NOT_register_scalar_validation_infrastructure()
+    {
+        // Verifies the explicit-opt-in contract: AddTrellisAsp() registers error mapping
+        // and the resource collection name registry but does NOT mutate MvcOptions /
+        // JsonOptions. Hosts that only need error mapping must NOT silently inherit the
+        // global model-binder / converter / filter wiring.
+        var services = new ServiceCollection();
+        services.AddTrellisAsp();
+        services.AddControllers();
+
+        var sp = services.BuildServiceProvider();
+        var mvcOptions = sp.GetRequiredService<IOptions<MvcOptions>>().Value;
+
+        mvcOptions.ModelBinderProviders.OfType<ScalarValueModelBinderProvider>()
+            .Should().BeEmpty("AddTrellisAsp() must not register the scalar value model binder provider on its own");
+
+        mvcOptions.ModelMetadataDetailsProviders.OfType<MaybeSuppressChildValidationMetadataProvider>()
+            .Should().BeEmpty("AddTrellisAsp() must not register the Maybe metadata provider on its own");
+
+        mvcOptions.Filters
+            .Any(f => f is TypeFilterAttribute tfa && tfa.ImplementationType == typeof(ScalarValueValidationFilter))
+            .Should().BeFalse("AddTrellisAsp() must not register the scalar value validation filter on its own");
+
+        sp.GetRequiredService<IOptions<ApiBehaviorOptions>>().Value
+            .SuppressModelStateInvalidFilter.Should().BeFalse(
+                "AddTrellisAsp() must not flip the model-state-invalid filter suppression — scalar validation owns that toggle");
+    }
+
+    [Fact]
+    public async Task AddTrellisAspWithScalarValidation_with_controllers_composite_VO_failure_omits_phantom_parameter_entry()
     {
         // When a composite value object inside a [FromBody] request fails multi-field validation,
         // the wire response must contain ONLY the per-field errors emitted by the converter.
@@ -213,7 +242,7 @@ public sealed class AddTrellisAspMvcIntegrationTests
     }
 
     [Fact]
-    public async Task AddTrellisAsp_with_controllers_unstructured_composite_VO_failure_surfaces_curated_message()
+    public async Task AddTrellisAspWithScalarValidation_with_controllers_unstructured_composite_VO_failure_surfaces_curated_message()
     {
         // The composite-VO converter throws unstructured TrellisJsonValidationException
         // (no UnprocessableContent) for shape/format mismatches — e.g. when the JSON
@@ -248,7 +277,7 @@ public sealed class AddTrellisAspMvcIntegrationTests
     }
 
     [Fact]
-    public async Task AddTrellisAsp_with_controllers_preserves_unrelated_required_errors_alongside_composite_VO_failure()
+    public async Task AddTrellisAspWithScalarValidation_with_controllers_preserves_unrelated_required_errors_alongside_composite_VO_failure()
     {
         // The phantom-entry filter must NOT drop legitimate "is required" errors from
         // unrelated ModelState entries — e.g. a missing required query parameter. Only

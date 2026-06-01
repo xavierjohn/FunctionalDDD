@@ -82,7 +82,7 @@ dotnet add package Trellis.Asp
 Register defaults in `Program.cs`:
 
 ```csharp
-builder.Services.AddTrellisAsp();
+builder.Services.AddTrellisAspWithScalarValidation();
 ```
 
 ## Quick start
