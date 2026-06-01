@@ -23,7 +23,7 @@ using Microsoft.EntityFrameworkCore.Query;
 /// <b>What it blocks.</b> Only the three literal operand shapes the rewriter knows how to
 /// translate:
 /// <list type="bullet">
-/// <item><description><c>Maybe&lt;T&gt;.None</c> — static field access on the closed generic type.</description></item>
+/// <item><description><c>Maybe&lt;T&gt;.None</c> — static property access on the closed generic type (declared <c>public static Maybe&lt;T&gt; None =&gt; default;</c>).</description></item>
 /// <item><description><c>default(Maybe&lt;T&gt;)</c> — <see cref="DefaultExpression"/> of type <c>Maybe&lt;T&gt;</c>.</description></item>
 /// <item><description><c>Maybe.From(value)</c> / <c>Maybe&lt;T&gt;.From(value)</c> — static factory call returning <c>Maybe&lt;T&gt;</c>.</description></item>
 /// </list>
@@ -47,7 +47,7 @@ internal sealed class MaybeEvaluatableExpressionFilterPlugin : IEvaluatableExpre
     public bool IsEvaluatableExpression(Expression expression) =>
         expression switch
         {
-            // Maybe<T>.None — static field access (Expression == null for static members).
+            // Maybe<T>.None — static property access (Expression == null for static members).
             MemberExpression { Expression: null, Member.Name: "None" } m when IsMaybeType(m.Type) => false,
 
             // default(Maybe<T>)

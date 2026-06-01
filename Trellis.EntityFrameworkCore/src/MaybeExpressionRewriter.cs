@@ -320,7 +320,8 @@ internal sealed class MaybeExpressionRewriter : ExpressionVisitor
 
         switch (visited)
         {
-            // Maybe<T>.None — static field access on the closed generic type.
+            // Maybe<T>.None — static property access on the closed generic type
+            // (Maybe<T>.None is declared `public static Maybe<T> None => default;`).
             case MemberExpression { Expression: null, Member.Name: "None" } memberExpr
                 when IsMaybeType(memberExpr.Type):
                 return Expression.Constant(null, storeType);
@@ -343,7 +344,7 @@ internal sealed class MaybeExpressionRewriter : ExpressionVisitor
 
             default:
                 throw new InvalidOperationException(
-                    $"Cannot translate a captured {original.Type.Name} value in a LINQ equality "
+                    "Cannot translate a captured Maybe<T> value in a LINQ equality "
                     + "comparison against a Maybe<T> property. Inline the literal form "
                     + "(`Maybe.From(value)` or `Maybe<T>.None`) at the comparison site, or use "
                     + "`MaybeQueryableExtensions.WhereEquals(propertySelector, value)`.");
