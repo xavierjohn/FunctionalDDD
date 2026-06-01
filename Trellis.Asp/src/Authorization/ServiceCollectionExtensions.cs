@@ -66,6 +66,49 @@ public static class ServiceCollectionExtensions
     }
 
     /// <summary>
+    /// Registers <see cref="NestedJsonPathClaimsActorProvider"/> as the scoped
+    /// <see cref="IActorProvider"/> with nested-JSON claim shape support (Auth0
+    /// <c>app_metadata.roles</c>, Azure B2C <c>extension_*</c>, Okta nested claims).
+    /// </summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="configure">
+    /// Delegate to customize <see cref="NestedJsonPathClaimsActorOptions"/>. Set
+    /// <c>ContainerClaim</c> to the top-level claim that carries the JSON document,
+    /// <c>ActorIdPath</c> / <c>PermissionsPath</c> to the dotted JSON paths inside it, and
+    /// optionally the inherited flat <c>ActorIdClaim</c> / <c>PermissionsClaim</c> for the
+    /// fallback when the container claim is absent or malformed.
+    /// </param>
+    /// <returns>The service collection for chaining.</returns>
+    /// <remarks>
+    /// <b>Replaces</b> any prior <see cref="IActorProvider"/> registration — actor-provider
+    /// helpers do not stack. Pick one provider per environment (or wrap with
+    /// <see cref="AddCachingActorProvider{T}"/>); the last <c>AddXxxActorProvider</c> call wins.
+    /// </remarks>
+    /// <example>
+    /// <code>
+    /// // Auth0 — permissions under app_metadata.roles as a JSON array of strings.
+    /// builder.Services.AddNestedJsonPathClaimsActorProvider(opts =>
+    /// {
+    ///     opts.ActorIdClaim = "sub";
+    ///     opts.ContainerClaim = "app_metadata";
+    ///     opts.PermissionsPath = "roles";
+    /// });
+    /// </code>
+    /// </example>
+    public static IServiceCollection AddNestedJsonPathClaimsActorProvider(
+        this IServiceCollection services,
+        Action<NestedJsonPathClaimsActorOptions> configure)
+    {
+        ArgumentNullException.ThrowIfNull(configure);
+
+        services.AddHttpContextAccessor();
+        services.Configure(configure);
+        services.Replace(ServiceDescriptor.Scoped<IActorProvider, NestedJsonPathClaimsActorProvider>());
+
+        return services;
+    }
+
+    /// <summary>
     /// Registers <see cref="EntraActorProvider"/> as the scoped <see cref="IActorProvider"/>
     /// and configures <see cref="EntraActorOptions"/> with default Entra v2.0 claim mappings.
     /// </summary>

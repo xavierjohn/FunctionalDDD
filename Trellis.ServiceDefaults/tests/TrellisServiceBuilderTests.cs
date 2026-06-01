@@ -179,6 +179,45 @@ public class TrellisServiceBuilderTests
     }
 
     [Fact]
+    public void UseNestedJsonPathClaimsActorProvider_RegistersNestedProviderInActorProviderSlot()
+    {
+        var services = new ServiceCollection();
+
+        services.AddTrellis(options => options
+            .UseNestedJsonPathClaimsActorProvider(opts =>
+            {
+                opts.ActorIdClaim = "sub";
+                opts.ContainerClaim = "app_metadata";
+                opts.PermissionsPath = "roles";
+            }));
+
+        services.Count(d =>
+            d.ServiceType == typeof(IActorProvider) &&
+            d.ImplementationType != null &&
+            d.ImplementationType.Name == "NestedJsonPathClaimsActorProvider").Should().Be(1);
+        services.Count(d =>
+            d.ServiceType == typeof(IActorProvider) &&
+            d.ImplementationType != null &&
+            d.ImplementationType.Name == "ClaimsActorProvider").Should().Be(0,
+            "the nested-JSON registration must replace the base ClaimsActorProvider slot, not stack");
+    }
+
+    [Fact]
+    public void UseNestedJsonPathClaimsActorProvider_AfterUseClaimsActorProvider_Throws()
+    {
+        // Mutual-exclusivity with the other actor-provider selectors mirrors the existing
+        // ClaimsActorProvider / EntraActorProvider / DevelopmentActorProvider rules.
+        var services = new ServiceCollection();
+
+        var act = () => services.AddTrellis(options => options
+            .UseClaimsActorProvider()
+            .UseNestedJsonPathClaimsActorProvider(opts => opts.ContainerClaim = "app_metadata"));
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*actor provider*already configured*");
+    }
+
+    [Fact]
     public void UseProblemDetails_RegistersTrellisProblemDetailsCustomization()
     {
         // Run the registered CustomizeProblemDetails delegate and assert it carries the

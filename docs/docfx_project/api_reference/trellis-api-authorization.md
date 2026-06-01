@@ -43,6 +43,21 @@ See also: [trellis-api-cookbook.md](trellis-api-cookbook.md) — recipes using t
 - Do not mutate `RequiredPermissions`; expose the complete permission list as an immutable/read-only collection.
 - The DI registration extension `AddResourceAuthorization(...)` lives in `Trellis.Mediator` (`namespace Trellis.Mediator`), not in `Trellis.Authorization`. Wiring an `IAuthorizeResource<TResource>` therefore typically requires both `using Trellis.Authorization;` (for the interfaces) and `using Trellis.Mediator;` (for the DI extension). The compile error if the second is missing is `CS1061: 'IServiceCollection' does not contain a definition for 'AddResourceAuthorization' and no accessible extension method 'AddResourceAuthorization' accepting a first argument of type 'IServiceCollection' could be found` — see [trellis-api-mediator.md](trellis-api-mediator.md#servicecollectionextensions).
 
+## Common identity-provider claim shapes
+
+The default `ClaimsActorProvider` (in `Trellis.Asp.Authorization`) maps a flat claim name to `Actor.Id` and a flat claim name to `Actor.Permissions`. Identity providers that ship claims under a nested JSON object require either the `NestedJsonPathClaimsActorProvider` derivation or a custom override of `ClaimsActorProvider.GetCurrentActorAsync`. The table below covers the configurations that most consumers reach for; inspect your token to confirm the exact shape.
+
+| Provider | Token shape | Recommended configuration |
+|---|---|---|
+| **Auth0** (default JWT) | `{ "sub": "auth0\|abc", "permissions": ["orders:read"] }` | `AddClaimsActorProvider(opts => { opts.ActorIdClaim = "sub"; opts.PermissionsClaim = "permissions"; })` |
+| **Auth0** (`app_metadata.roles`) | `{ "sub": "auth0\|abc", "app_metadata": { "roles": ["orders:read"] } }` | `AddNestedJsonPathClaimsActorProvider(opts => { opts.ActorIdClaim = "sub"; opts.ContainerClaim = "app_metadata"; opts.PermissionsPath = "roles"; })` |
+| **Azure B2C** custom attribute | `{ "sub": "...", "extension_RolesJson": "{\"roles\":[\"orders:read\"]}" }` | `AddNestedJsonPathClaimsActorProvider(opts => { opts.ActorIdClaim = "sub"; opts.ContainerClaim = "extension_RolesJson"; opts.PermissionsPath = "roles"; })` |
+| **Entra ID v2 (interactive user)** | uses `oid` + multiple `roles` claims | `AddEntraActorProvider(opts => { ... })` — purpose-built for Entra; see the type reference |
+| **Keycloak** (`realm_access.roles`) | `{ "sub": "...", "realm_access": { "roles": ["orders:read"] } }` | `AddNestedJsonPathClaimsActorProvider(opts => { opts.ActorIdClaim = "sub"; opts.ContainerClaim = "realm_access"; opts.PermissionsPath = "roles"; })` |
+| **Okta** (nested custom claim) | `{ "sub": "...", "custom_claims": { "permissions": ["orders:read"] } }` | `AddNestedJsonPathClaimsActorProvider(opts => { opts.ActorIdClaim = "sub"; opts.ContainerClaim = "custom_claims"; opts.PermissionsPath = "permissions"; })` |
+
+**Silent-403 diagnostics.** When `ClaimsActorProvider` resolves zero permissions on an authenticated identity that does carry other claims, it emits one warning per application lifetime (`EventId 2`). When the configured `PermissionsClaim` resolves to a single value that parses as a JSON object or array, it emits one error per application lifetime (`EventId 3`) recommending `NestedJsonPathClaimsActorProvider`. Set `ClaimsActorOptions.ValidateClaimShapeOnFirstUse = false` to suppress both.
+
 ## Types
 
 ### Namespace `Trellis.Authorization`
