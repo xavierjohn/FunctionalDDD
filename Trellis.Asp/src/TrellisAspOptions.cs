@@ -99,6 +99,28 @@ public sealed class TrellisAspOptions
     /// </example>
     public bool FailFastOnSilentVersionInjection { get; set; }
 
+    /// <summary>
+    /// When <c>true</c> (default), <see cref="ResponseFailureWriter"/> synthesises
+    /// <c>ProblemDetails.Instance</c> from the error's <see cref="ResourceRef"/> when the
+    /// request URL does not already identify the failing resource (for example, a
+    /// <c>POST /orders</c> whose body references a missing customer becomes
+    /// <c>Instance = "/customers/abc-123"</c> instead of <c>"/orders"</c>). The original
+    /// request URL is preserved under <c>ProblemDetails.Extensions["request"]</c>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Default-on because the synthesised URI is strictly more informative than the
+    /// request URL when synthesis applies; when it does not (no <see cref="ResourceRef"/>,
+    /// no id, or the id already appears in the URL) the original request URL is left in
+    /// place and no extension is added.
+    /// </para>
+    /// <para>
+    /// Set to <c>false</c> only when strict backward compatibility with the previous
+    /// behaviour (always emit <c>Instance = path+query</c>) is required.
+    /// </para>
+    /// </remarks>
+    public bool SynthesizeProblemDetailsInstanceFromResourceRef { get; set; } = true;
+
     private static readonly Dictionary<Type, int> s_httpTransportMappings = new()
     {
         [typeof(HttpError.MethodNotAllowed)] = StatusCodes.Status405MethodNotAllowed,
