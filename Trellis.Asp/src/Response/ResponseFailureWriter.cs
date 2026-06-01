@@ -137,16 +137,19 @@ internal static class ResponseFailureWriter
         if (UrlContainsId(requestPath, @ref.Id!))
             return (requestPath, null);
 
-        var registry = httpContext.RequestServices?.GetService<ResourceCollectionNameRegistry>()
-            ?? s_defaultRegistry;
-
+        ResourceCollectionNameRegistry registry;
         string collection;
         try
         {
+            registry = httpContext.RequestServices?.GetService<ResourceCollectionNameRegistry>()
+                ?? s_defaultRegistry;
             collection = registry.Resolve(@ref.Type);
         }
         catch
         {
+            // Best-effort: a DI activation failure (e.g., the registry ctor throws on
+            // misconfigured overrides) or a resolver fault must never turn a legitimate
+            // 404/409 into a 500. Fall back to the request URL.
             return (requestPath, null);
         }
 

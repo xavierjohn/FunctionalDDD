@@ -1,4 +1,4 @@
-namespace Trellis.Asp.Tests;
+﻿namespace Trellis.Asp.Tests;
 
 using System;
 using System.IO;
@@ -303,6 +303,28 @@ public sealed class ResponseFailureWriterResourceRefInstanceTests
         using var body = await ReadBody(ctx);
         body.RootElement.GetProperty("instance").GetString().Should().Be("/customers/abc-123");
         body.RootElement.GetProperty("request").GetString().Should().Be("/api/orders?abc-123");
+    }
+
+    [Fact]
+    public async Task Registry_activation_failure_falls_back_to_request_url_not_500()
+    {
+        // The ResourceCollectionNameRegistry ctor validates supplied overrides and throws
+        // on misconfiguration (e.g., duplicate type with different collection names). DI
+        // surfaces that as an activation exception when the singleton is first resolved.
+        // Synthesis must remain best-effort and fall back to the request URL — never turn
+        // a legitimate 404 into a 500.
+        var ctx = NewContext(
+            path: "/api/orders",
+            configureServices: s => s.AddSingleton<ResourceCollectionNameRegistry>(_ =>
+                throw new InvalidOperationException("Simulated registry activation failure.")));
+        var r = Result.Fail<T>(new Error.NotFound(ResourceRef.For("Customer", "abc-123")));
+
+        await r.ToHttpResponse(t => t).ExecuteAsync(ctx);
+
+        ctx.Response.StatusCode.Should().Be(404);
+        using var body = await ReadBody(ctx);
+        body.RootElement.GetProperty("instance").GetString().Should().Be("/api/orders");
+        body.RootElement.TryGetProperty("request", out _).Should().BeFalse();
     }
 
     [Fact]
