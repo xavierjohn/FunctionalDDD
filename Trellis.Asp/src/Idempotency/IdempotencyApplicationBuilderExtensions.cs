@@ -11,10 +11,11 @@ using Microsoft.Extensions.DependencyInjection;
 public static class IdempotencyApplicationBuilderExtensions
 {
     /// <summary>
-    /// Mounts the <see cref="IdempotencyMiddleware"/> in the pipeline. Throws if the application
-    /// has not registered an <see cref="IIdempotencyStore"/> (call
-    /// <see cref="IdempotencyServiceCollectionExtensions.AddInMemoryIdempotencyStore"/> or
-    /// supply your own implementation).
+    /// Mounts the <see cref="IdempotencyMiddleware"/> in the pipeline. Always throws at startup
+    /// if <see cref="IdempotencyServiceCollectionExtensions.AddTrellisIdempotency(IServiceCollection, Action{IdempotencyOptions}?)"/>
+    /// was not called. The <see cref="IIdempotencyStore"/> registration is also validated at
+    /// startup when the container exposes <see cref="IServiceProviderIsService"/> (see the
+    /// remarks for the conditional-validation rationale).
     /// </summary>
     /// <param name="app">The application builder.</param>
     /// <returns>The application builder for chaining.</returns>

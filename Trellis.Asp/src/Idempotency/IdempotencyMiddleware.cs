@@ -173,7 +173,6 @@ public sealed partial class IdempotencyMiddleware
 
     private static async Task<byte[]?> BufferRequestBodyAsync(HttpContext context, long maxBytes)
     {
-        context.Request.EnableBuffering();
         using var buffer = new MemoryStream();
         var chunk = new byte[8192];
         long total = 0;
