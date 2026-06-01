@@ -617,6 +617,81 @@ public sealed class IdempotencyMiddlewareTests
             "responses written via Response.BodyWriter.GetMemory + Advance without explicit FlushAsync must still be captured into the snapshot for replay");
     }
 
+    [Fact]
+    public async Task Concurrent_same_key_in_flight_returns_409_with_Retry_After()
+    {
+        var handlerEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        using var host = await BuildHost(configureEndpoints: endpoints =>
+            endpoints.MapPost("/slow", async ctx =>
+            {
+                // Signal AFTER reservation succeeds (handler only runs when TryReserveAsync
+                // returned Reserved) so the second request below can race the first
+                // deterministically rather than via Task.Delay.
+                handlerEntered.TrySetResult();
+                await gate.Task.WaitAsync(ctx.RequestAborted);
+                ctx.Response.StatusCode = 201;
+                ctx.Response.ContentType = "application/json";
+                await ctx.Response.WriteAsync("{\"created\":true}", ctx.RequestAborted);
+            }).WithMetadata(new IdempotentAttribute()));
+        var client = host.GetTestClient();
+        var key = Guid.NewGuid().ToString();
+        Task<HttpResponseMessage>? firstTask = null;
+
+        try
+        {
+            var first = JsonBody("{}");
+            first.Headers.Add(KeyHeader, key);
+            firstTask = client.PostAsync("/slow", first, TestContext.Current.CancellationToken);
+
+            // Wait until the first handler is in the gate; this proves TryReserveAsync
+            // returned Reserved before the second request fires.
+            await handlerEntered.Task.WaitAsync(TestContext.Current.CancellationToken);
+
+            var second = JsonBody("{}");
+            second.Headers.Add(KeyHeader, key);
+            var secondResp = await client.PostAsync("/slow", second, TestContext.Current.CancellationToken);
+
+            secondResp.StatusCode.Should().Be(HttpStatusCode.Conflict);
+            secondResp.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
+
+            secondResp.Headers.Contains("Retry-After").Should().BeTrue(
+                "the in-flight outcome must surface Retry-After so clients can back off rather than hot-loop");
+            var retryAfterRaw = secondResp.Headers.GetValues("Retry-After").Single();
+            var retryAfter = int.Parse(retryAfterRaw, System.Globalization.CultureInfo.InvariantCulture);
+            retryAfter.Should().BeInRange(1, 30,
+                "Retry-After must be at least one second (per the floor in WriteInFlightAsync) and at most the default ReservationTimeout");
+
+            var body = await secondResp.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            using var problem = System.Text.Json.JsonDocument.Parse(body);
+            problem.RootElement.GetProperty("status").GetInt32().Should().Be(409);
+            problem.RootElement.GetProperty("code").GetString().Should().Be(
+                "idempotency.in_flight",
+                "the in-flight Problem Details document must carry idempotency.in_flight in the code field (the type field stays about:blank) so clients can branch on it");
+
+            gate.SetResult();
+            var firstResp = await firstTask;
+            firstResp.StatusCode.Should().Be(HttpStatusCode.Created);
+        }
+        finally
+        {
+            // Unblock the slow handler so the host can shut down cleanly even when an
+            // assertion above fails before the explicit SetResult.
+            gate.TrySetResult();
+            if (firstTask is not null)
+            {
+                try
+                {
+                    using var firstResult = await firstTask;
+                }
+                catch
+                {
+                    // Cleanup of the first request must never mask the original assertion failure.
+                }
+            }
+        }
+    }
+
     private sealed class DelegatingIdempotencyStore : IIdempotencyStore
     {
         private readonly IIdempotencyStore inner;

@@ -451,7 +451,7 @@ public sealed partial class IdempotencyMiddleware
     [LoggerMessage(EventId = 1, Level = LogLevel.Warning, Message = "Idempotency capture skipped: no IHttpResponseBodyFeature on request {Path}")]
     static partial void LogCaptureSkippedNoFeature(ILogger logger, string path);
 
-    [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "Idempotency snapshot not persisted (capture aborted or response never started) for key {Key}")]
+    [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "Idempotency snapshot not persisted (response capture aborted: response body too large, SendFileAsync used, or explicit abort) for key {Key}")]
     static partial void LogCaptureAbandoned(ILogger logger, string key);
 
     [LoggerMessage(EventId = 3, Level = LogLevel.Warning, Message = "Idempotency store CompleteAsync timed out for key {Key}")]
