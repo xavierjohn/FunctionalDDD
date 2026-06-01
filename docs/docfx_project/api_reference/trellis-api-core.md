@@ -914,10 +914,10 @@ Result<Order> Place(OrderId id) =>
 > be ambiguous between `Task<Result<R>>` and `ValueTask<Result<R>>` resolve to the Task overload.
 > Callers who specifically want the ValueTask overload still get it by passing a strongly-typed
 > `Func<T, ValueTask<Result<R>>>` delegate (the Task overload is not applicable, so priority is
-> not consulted). The LINQ `SelectMany` overloads in `Trellis.Linq.*Right.cs` are an exception:
-> the priority attribute is applied for documentation but does not currently disambiguate
-> across the two distinct extension classes; LINQ query syntax over async Result composition
-> still benefits from a typed local delegate when the async return type is ambiguous.
+> not consulted). The LINQ `SelectMany` overloads in `Trellis.Core/src/Result/Extensions/Linq.*Right.cs`
+> are an exception: the priority attribute is applied for documentation but does not currently
+> disambiguate across the two distinct extension classes; LINQ query syntax over async Result
+> composition still benefits from a typed local delegate when the async return type is ambiguous.
 
 #### Map family — `MapExtensions`, `MapExtensionsAsync`, `MapIfExtensions`, `MapOnFailureExtensions`
 

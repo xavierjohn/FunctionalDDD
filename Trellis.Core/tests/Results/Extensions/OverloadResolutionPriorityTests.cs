@@ -244,7 +244,7 @@ public class OverloadResolutionPriorityTests : TestBase
         {
             foreach (var method in type.GetMethods(BindingFlags.Static | BindingFlags.Public))
             {
-                if (!IsCandidateSyncReceiverTaskOverload(method, assembly))
+                if (!IsCandidateSyncReceiverTaskOverload(method))
                     continue;
 
                 var attr = method.GetCustomAttribute<OverloadResolutionPriorityAttribute>();
@@ -260,7 +260,7 @@ public class OverloadResolutionPriorityTests : TestBase
             "ambiguous return types resolve to the Task overload");
     }
 
-    private static bool IsCandidateSyncReceiverTaskOverload(MethodInfo method, Assembly trellisAssembly)
+    private static bool IsCandidateSyncReceiverTaskOverload(MethodInfo method)
     {
         var parameters = method.GetParameters();
         if (parameters.Length == 0)
@@ -305,22 +305,25 @@ public class OverloadResolutionPriorityTests : TestBase
         return p0 is not null && IsClosedOrGenericResult(p0.ParameterType);
     }
 
-    private static bool DelegateReturns(Type delegateType, Type asyncOpenGeneric, Type asyncNonGeneric)
+    private static bool DelegateReturns(Type type, Type asyncOpenGeneric, Type asyncNonGeneric)
     {
-        if (!typeof(Delegate).IsAssignableFrom(delegateType) && !delegateType.IsGenericType)
+        // The parameter must be a delegate type. Generic non-delegates (e.g. `bool`, `int?`,
+        // `Result<T>`) must not be incorrectly classified as delegates returning Task — the
+        // earlier version of this guard had a logic bug that let non-delegate generics through
+        // and then inferred a bogus "return type" from their last generic argument.
+        if (!typeof(Delegate).IsAssignableFrom(type))
             return false;
 
-        if (!delegateType.IsGenericType)
+        var invokeMethod = type.GetMethod("Invoke");
+        if (invokeMethod is null)
             return false;
 
-        var invokeReturnType = delegateType.GetGenericArguments().LastOrDefault();
-        if (invokeReturnType is null)
-            return false;
+        var returnType = invokeMethod.ReturnType;
 
-        if (invokeReturnType == asyncNonGeneric)
+        if (returnType == asyncNonGeneric)
             return true;
 
-        if (invokeReturnType.IsGenericType && invokeReturnType.GetGenericTypeDefinition() == asyncOpenGeneric)
+        if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == asyncOpenGeneric)
             return true;
 
         return false;
