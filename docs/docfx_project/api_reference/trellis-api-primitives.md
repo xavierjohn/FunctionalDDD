@@ -377,7 +377,7 @@ public partial class PhoneNumber : ScalarValueObject<PhoneNumber, string>, IScal
 | `public static Result<PhoneNumber> TryCreate(string? value, string? fieldName = null)` | `Result<PhoneNumber>` | Removes spaces, dashes, and parentheses, then validates E.164. |
 | `public static PhoneNumber Parse(string? s, IFormatProvider? provider)` | `PhoneNumber` | Throws `FormatException` on failure. |
 | `public static bool TryParse([NotNullWhen(true)] string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out PhoneNumber result)` | `bool` | Safe parse helper. |
-| `public string GetCountryCode()` | `string` | Extracts the E.164 country calling code via longest-prefix lookup. Throws `InvalidOperationException` when the prefix does not match any assigned ITU-T calling code (`TryCreate` validates only E.164 *shape*, not assigned-code membership). |
+| `public Maybe<string> GetCountryCode()` | `Maybe<string>` | Extracts the E.164 country calling code via longest-prefix lookup. Returns `Maybe.From(code)` when the prefix matches an assigned ITU-T calling code; returns `Maybe<string>.None` when the prefix is unrecognized (`TryCreate` validates only E.164 *shape*, not assigned-code membership). |
 
 ### `Slug`
 
@@ -441,7 +441,7 @@ The base classes (`ValueObject`, `ScalarValueObject<TSelf, T>`, `RequiredString<
 | `MonetaryAmount` | `Trellis.Primitives` | Scalar | JSON number or numeric string input; JSON number output | Non-negative single-currency amount with 2-decimal rounding. |
 | `Money` | `Trellis.Primitives` | Structured | JSON object `{ "amount": number, "currency": string }` | Multi-currency value object; not scalar. Decimal places per ISO 4217 minor units (0 for JPY/KRW/BIF/CLP/DJF/GNF/ISK/KMF/PYG/RWF/UGX/UYI/VND/VUV/XAF/XOF/XPF; 3 for BHD/IQD/JOD/KWD/LYD/OMR/TND; 4 for CLF/UYW; 2 otherwise). |
 | `Percentage` | `Trellis.Primitives` | Scalar | JSON number or numeric string input; JSON number output | `decimal` in `0..100`; `ToString()` adds `%`. |
-| `PhoneNumber` | `Trellis.Primitives` | Scalar | JSON string | Normalized E.164 string. `GetCountryCode()` throws when the prefix is not an assigned ITU-T calling code. |
+| `PhoneNumber` | `Trellis.Primitives` | Scalar | JSON string | Normalized E.164 string. `GetCountryCode()` returns `Maybe<string>.None` when the prefix is not an assigned ITU-T calling code. |
 | `Slug` | `Trellis.Primitives` | Scalar | JSON string | Lowercase letters, digits, single hyphens. |
 | `Url` | `Trellis.Primitives` | Scalar | JSON string | Absolute HTTP/HTTPS URI. |
 

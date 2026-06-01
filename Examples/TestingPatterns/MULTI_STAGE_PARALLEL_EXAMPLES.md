@@ -1,4 +1,4 @@
-# Multi-Stage ParallelAsync Examples - Real World Usage
+﻿# Multi-Stage ParallelAsync Examples - Real World Usage
 
 This document demonstrates **advanced ParallelAsync patterns** showing how to chain multiple stages of parallel execution, where later stages depend on results from earlier stages.
 
@@ -268,9 +268,9 @@ Stage1.WhenAllAsync()
 ```csharp
 // Extract to helper methods
 var stage1 = await ExecuteStage1();
-if (stage1.IsFailure) return stage1.Error;
+if (!stage1.TryGetValue(out var stage1Value, out var stage1Error)) return stage1Error;
 
-var stage2 = await ExecuteStage2(stage1.Value);
+var stage2 = await ExecuteStage2(stage1Value);
 // ...
 ```
 
@@ -330,11 +330,13 @@ _logger.LogInformation("Stage 2: {Ms}ms", sw.ElapsedMilliseconds);
 ```csharp
 // ❌ Bad
 var r1 = await stage1.WhenAllAsync();
-var r2 = await stage2(r1.Value).WhenAllAsync();
+if (!r1.TryGetValue(out var r1Value, out var r1Error)) return Result.Fail<Stage2Result>(r1Error);
+var r2 = await stage2(r1Value).WhenAllAsync();
 
 // ✅ Good
 var coreData = await FetchCoreDataInParallel().WhenAllAsync();
-var validationResults = await ValidateInParallel(coreData.Value).WhenAllAsync();
+if (!coreData.TryGetValue(out var coreDataValue, out var coreDataError)) return Result.Fail<ValidationResults>(coreDataError);
+var validationResults = await ValidateInParallel(coreDataValue).WhenAllAsync();
 ```
 
 ## Summary

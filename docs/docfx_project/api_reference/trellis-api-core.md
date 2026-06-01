@@ -119,7 +119,7 @@ Migration notes for users moving from the previous `Trellis.Core` API surface.
 | Exception → result helpers | `Result.FromException(ex)` / `Result.FromException<T>(ex)` | *(removed)* | Use `Result.Fail(new Error.Unexpected("unhandled_exception", faultId) { Detail = ex.Message, Cause = ... })` or rely on `Result.Try` / `Result.TryAsync` for inline exception capture. |
 | Implicit operators on `Result<T>` | `Result<T> r = value;` and `Result<T> r = error;` | *(removed)* | Use the explicit factory: `Result.Ok(value)` / `Result.Fail<T>(error)`. The compiler flags every site with CS0029. |
 | Non-generic `Result` for void flows | `Result` was a separate `readonly struct` for success/failure with no payload, distinct from `Result<T>`. | The non-generic `Result` instance type was removed. `Result` is now a `public static partial class` factory only; for no-payload success/failure use `Result<Unit>` (returned by parameterless `Result.Ok()` / `Result.Fail(error)` / `Result.Ensure(...)` / `Result.Try(...)` factories). The `Trellis.Unit` type is a public `readonly record struct` with a single value (`Unit.Default`). | Replace `Result` parameter/return types with `Result<Unit>`; replace `Task<Result>` with `Task<Result<Unit>>`; in lambdas after `.Bind(...)` / `BindAsync(...)` accept the `Unit` argument explicitly (`_ =>` or `(Unit _) =>`). |
-| `Error` as open class hierarchy | `Error` was a `class` with 18 hand-written subclasses (`ValidationError`, `NotFoundError`, …) and static factory helpers (`Error.Validation(...)`, `Error.NotFound(...)`, …). | `Error` is an `abstract record` with **12 nested `sealed record` cases** (`Error.NotFound`, `Error.InvalidInput`, …). Closed via `private` constructor; no static factories. | Replace `Error.X("msg")` factories with `new Error.X(payload) { Detail = "msg" }`. Replace concrete subclass type names (`ValidationError`, `NotFoundError`) with `Error.InvalidInput`, `Error.NotFound`. See "Error Cases (closed ADT)" below. | <!-- v1-stale-ok: migration-comparison row intentionally cites removed v1 factories -->
+| `Error` as open class hierarchy | `Error` was a `class` with 18 hand-written subclasses (`ValidationError`, `NotFoundError`, …) and static factory helpers (`Error.Validation(...)`, `Error.NotFound(...)`, …). | `Error` is an `abstract record` with **12 nested `sealed record` cases** (`Error.NotFound`, `Error.InvalidInput`, …). Closed via `private` constructor; no static factories. | Replace not-found factories with `new Error.NotFound(ResourceRef.For<TResource>(id)) { Detail = "..." }`. Replace validation factories with `Error.InvalidInput.ForField(field, code, detail)` or `Error.InvalidInput.ForRule(code, detail)`. Replace concrete subclass type names (`ValidationError`, `NotFoundError`) with `Error.InvalidInput`, `Error.NotFound`. See "Error Cases (closed ADT)" below. | <!-- v1-stale-ok: migration-comparison row intentionally cites removed v1 factories -->
 | `MatchErrorExtensions` | `result.MatchError(onValidation: ..., onNotFound: ..., onUnexpected: ...)` | *(removed)* | Use a `switch` expression on the closed ADT: `result.Match(_ => ..., e => e switch { Error.NotFound nf => ..., Error.InvalidInput uc => ..., _ => ... })`. C# verifies exhaustiveness against the closed catalog. |
 | `FlattenValidationErrorsExtensions` | `result.FlattenValidationErrors()` | *(removed)* | `Combine` over multiple `Result<T>` automatically merges `Error.InvalidInput.Fields` and `.Rules`. |
 | `Error.Instance` field | `error.Instance` (string-shaped HTTP vocabulary) | *(removed)* | The ASP wire layer populates `ProblemDetails.Instance` from the server-relative request path+query (RFC 9457 §3.1). Typed payloads expose `ResourceRef` directly via fields like `Error.NotFound.Resource` for callers that need to assert on the resource identity. |
@@ -1407,9 +1407,9 @@ public async Task<Result<Page<OrderListItem>>> Handle(ListOrdersQuery query, Can
                 Error.InvalidInput.ForField("cursor", "cursor.malformed", "Cursor must not be empty."));
 
         var decoded = CursorCodec.TryDecode<Guid>(new Cursor(cursorToken), fieldName: "cursor");
-        if (decoded.IsFailure)
-            return Result.Fail<Page<OrderListItem>>(decoded.Error!);
-        decoded.TryGetValue(out var id);
+        if (!decoded.TryGetValue(out var id, out var cursorError))
+            return Result.Fail<Page<OrderListItem>>(cursorError);
+
         afterId = id;
     }
 
@@ -2391,20 +2391,7 @@ Notes:
 using System;
 using Trellis;
 
-public sealed class OrderId : ScalarValueObject<OrderId, Guid>, IScalarValue<OrderId, Guid>
-{
-    private OrderId(Guid value) : base(value) { }
-
-    public static Result<OrderId> TryCreate(Guid value, string? fieldName = null) =>
-        value == Guid.Empty
-            ? Result.Fail<OrderId>(Error.InvalidInput.ForField(fieldName ?? "orderId", "required", "Order ID is required."))
-            : Result.Ok(new OrderId(value));
-
-    public static Result<OrderId> TryCreate(string? value, string? fieldName = null) =>
-        Guid.TryParse(value, out var guid)
-            ? TryCreate(guid, fieldName)
-            : Result.Fail<OrderId>(Error.InvalidInput.ForField(fieldName ?? "orderId", "must_be_guid", "Order ID must be a GUID."));
-}
+public sealed partial class OrderId : RequiredGuid<OrderId>;
 
 public sealed record OrderPlaced(OrderId OrderId, DateTimeOffset OccurredAt) : IDomainEvent;
 
@@ -2416,7 +2403,7 @@ public sealed class Order : Aggregate<OrderId>
 
     public static Result<Order> Create(string description)
     {
-        var order = new Order(OrderId.Create(Guid.NewGuid()), description);
+        var order = new Order(OrderId.NewUniqueV7(), description);
         order.DomainEvents.Add(new OrderPlaced(order.Id, DateTimeOffset.UtcNow));
         return Result.Ok(order);
     }

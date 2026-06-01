@@ -36,12 +36,8 @@
 /// </remarks>
 /// <example>
 /// <code>
-/// // Define a strongly-typed ID
-/// public class CustomerId : ScalarValueObject&lt;Guid&gt;
-/// {
-///     private CustomerId(Guid value) : base(value) { }
-///     public static CustomerId NewUnique() => new(Guid.NewGuid());
-/// }
+/// // Define a strongly-typed ID using the modern Required* pattern
+/// public sealed partial class CustomerId : RequiredGuid&lt;CustomerId&gt;;
 /// 
 /// // Define an entity
 /// public class Customer : Entity&lt;CustomerId&gt;
@@ -62,7 +58,7 @@
 ///     public static Result&lt;Customer&gt; TryCreate(string name, EmailAddress email) =>
 ///         name.ToResult()
 ///             .Ensure(n => !string.IsNullOrWhiteSpace(n), Error.InvalidInput.ForField("name", "invalid", "Name required"))
-///             .Map(n => new Customer(CustomerId.NewUnique(), n, email));
+///             .Map(n => new Customer(CustomerId.NewUniqueV7(), n, email));
 ///     
 ///     public Result&lt;Customer&gt; UpdateEmail(EmailAddress newEmail) =>
 ///         newEmail.ToResult()
@@ -71,8 +67,10 @@
 /// }
 /// 
 /// // Usage - identity-based equality
-/// var customer1 = Customer.Create("John", email);
-/// var customer2 = Customer.Create("John", email);
+/// var customer1 = Customer.TryCreate("John", email)
+///     .Match(c => c, e => throw new System.InvalidOperationException(e.GetDisplayMessage()));
+/// var customer2 = Customer.TryCreate("John", email)
+///     .Match(c => c, e => throw new System.InvalidOperationException(e.GetDisplayMessage()));
 /// 
 /// // Different instances with same data but different IDs
 /// customer1 != customer2; // true - different identities

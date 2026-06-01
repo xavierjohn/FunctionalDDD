@@ -223,8 +223,8 @@ public static class ServiceCollectionExtensions
 
     /// <summary>
     /// Registers the <see cref="ResourceAuthorizationBehavior{TMessage, TResource, TResponse}"/>
-    /// for a specific command/resource pair. Call once per command that implements
-    /// <see cref="IAuthorizeResource{TResource}"/>.
+    /// for a specific command/resource pair. Duplicate registrations of the same closed
+    /// behavior are ignored.
     /// </summary>
     /// <typeparam name="TMessage">
     /// The command or query type that implements <see cref="IAuthorizeResource{TResource}"/>.
@@ -248,6 +248,11 @@ public static class ServiceCollectionExtensions
     /// Prefer <see cref="AddResourceAuthorization(IServiceCollection, Assembly[])"/> for automatic
     /// discovery. Use this explicit overload for AOT/trimming scenarios where assembly scanning
     /// is not available.
+    /// </para>
+    /// <para>
+    /// Repeated explicit or scanned registration of the same closed
+    /// <c>IPipelineBehavior&lt;TMessage, TResponse&gt;</c> implementation is idempotent.
+    /// Distinct closed generic behaviors, including different response types, remain distinct.
     /// </para>
     /// <para>
     /// Also register the corresponding <see cref="IResourceLoader{TMessage, TResource}"/> as scoped,
@@ -315,6 +320,10 @@ public static class ServiceCollectionExtensions
     /// <c>IRequest&lt;TResponse&gt;</c>. It then registers the closed-generic
     /// <c>ResourceAuthorizationBehavior&lt;TMessage, TResource, TResponse&gt;</c>
     /// as <c>IPipelineBehavior&lt;TMessage, TResponse&gt;</c>.
+    /// </para>
+    /// <para>
+    /// Closed resource-authorization behavior registrations are idempotent across repeated
+    /// scans and explicit-plus-scanned overlap when both service type and implementation type match.
     /// </para>
     /// <para>
     /// This method also scans for <see cref="IResourceLoader{TMessage, TResource}"/>
@@ -740,6 +749,15 @@ public static class ServiceCollectionExtensions
         IServiceCollection services,
         ServiceDescriptor descriptor)
     {
+        for (int i = 0; i < services.Count; i++)
+        {
+            var existing = services[i];
+            if (existing.ServiceType == descriptor.ServiceType
+                && existing.ImplementationType == descriptor.ImplementationType
+                && existing.ImplementationType is not null)
+                return;
+        }
+
         var validationIndex = FindValidationBehaviorIndex(services);
         if (validationIndex >= 0)
         {

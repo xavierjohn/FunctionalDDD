@@ -49,7 +49,9 @@ static class Example
 ```
 
 ## Code fix available
-Yes — renames the sync API to the matching async API, such as `MapAsync`, `BindAsync`, `TapAsync`, `EnsureAsync`, or `TapOnFailureAsync`.
+Yes, when the enclosing scope can safely become async. The fix renames the sync API to the matching async API, awaits the rewritten call, and adds `async` to Task/ValueTask-returning methods when it can do so without changing surrounding expressions or other returns.
+
+No fix is offered for chained calls, nested wrapper expressions, non-async lambdas, used `var` locals, synchronous `void` methods, synchronous value-returning methods, direct returns from already-async scopes, methods/local functions with `ref`/`out`/`in` parameters, or Task/ValueTask-returning scopes with other task-returning `return` statements because those require manual return-type, delegate-shape, parameter-shape, or pipeline-flow changes first.
 
 ## Configuration
 Use standard Roslyn configuration if you need to suppress this rule in a specific scope.

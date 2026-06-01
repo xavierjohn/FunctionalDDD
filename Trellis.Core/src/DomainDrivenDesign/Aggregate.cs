@@ -61,7 +61,9 @@ using System.Text.Json.Serialization;
 ///     {
 ///         CustomerId = customerId;
 ///         Status = OrderStatus.Draft;
-///         Total = Money.Zero;
+///         Total = Money.Zero("USD").Match(
+///             m => m,
+///             err => throw new System.InvalidOperationException(err.GetDisplayMessage()));
 ///     }
 ///     
 ///     public static Result<Order> Create(CustomerId customerId) =>
@@ -121,43 +123,14 @@ using System.Text.Json.Serialization;
 /// ]]></code>
 /// </example>
 /// <example>
-/// Repository pattern with aggregate persistence and event publishing:
-/// <code><![CDATA[
-/// public class OrderRepository
-/// {
-///     private readonly IDbContext _dbContext;
-///     private readonly IEventBus _eventBus;
-///     
-///     public async Task<Result> SaveAsync(Order order, CancellationToken ct)
-///     {
-///         // 1. Save aggregate to database
-///         _dbContext.Orders.Update(order);
-///         await _dbContext.SaveChangesAsync(ct);
-///         
-///         // 2. Publish uncommitted events
-///         var events = order.UncommittedEvents();
-///         foreach (var domainEvent in events)
-///         {
-///             await _eventBus.PublishAsync(domainEvent, ct);
-///         }
-///         
-///         // 3. Mark changes as committed
-///         order.AcceptChanges();
-///         
-///         return Result.Ok();
-///     }
-/// }
-/// 
-/// // Usage in an application service
-/// public async Task<Result> SubmitOrderAsync(OrderId orderId, CancellationToken ct)
-/// {
-///     var order = await _orderRepository.GetAsync(orderId, ct);
-///     
-///     return await order
-///         .Bind(o => o.Submit())
-///         .BindAsync(o => _orderRepository.SaveAsync(o, ct));
-/// }
-/// ]]></code>
+/// NOTE: Repositories should stage aggregate changes only. Do not publish
+/// <see cref="IDomainEvent"/> instances manually from repository <c>SaveAsync</c>
+/// methods or call <c>AcceptChanges()</c> there. Use the Trellis Mediator
+/// unit-of-work pipeline plus tracked aggregate domain-event dispatch so events
+/// are dispatched after a successful transaction commit (<c>AddTrellisUnitOfWork&lt;TContext&gt;()</c>
+/// with <c>AddTrackedAggregateDomainEventDispatch()</c>, or the matching
+/// ServiceDefaults <c>UseEntityFrameworkUnitOfWork&lt;TContext&gt;()</c> and
+/// <c>UseTrackedAggregateDomainEvents()</c> slots).
 /// </example>
 public abstract class Aggregate<TId> : Entity<TId>, IAggregate
     where TId : notnull
