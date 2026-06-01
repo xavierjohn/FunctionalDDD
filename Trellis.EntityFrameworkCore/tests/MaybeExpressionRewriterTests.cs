@@ -22,7 +22,10 @@ public class MaybeExpressionRewriterTests : IDisposable
 
         var options = new DbContextOptionsBuilder<InterceptorTestDbContext>()
             .UseSqlite(_connection).IgnoreManyServiceProvidersCreatedWarning()
-            .AddInterceptors(new MaybeQueryInterceptor())
+            // Use AddTrellisInterceptors so MaybeEvaluatableExpressionFilterPlugin is wired
+            // into the per-context internal service provider; this is the supported
+            // registration path for Maybe equality translation.
+            .AddTrellisInterceptors()
             // Each test in this class constructs a fresh DbContext (xUnit per-test
             // instantiation), so the test class can produce more than 20 internal EF service
             // providers in one assembly run. Silence the warning — it is purely a test-host
@@ -331,43 +334,106 @@ public class MaybeExpressionRewriterTests : IDisposable
     }
 
     [Fact]
-    public async Task EqualsMaybeFromValue_DocumentedLimitation_NaturalFormMissQueriesUseWhereEqualsInstead()
+    public async Task EqualsMaybeFromValue_NaturalForm_ReturnsMatchingRow()
     {
-        // N-EF-1 (GPT-5.5 meta-review): the natural form `c.Phone == Maybe.From(value)` is
-        // intentionally NOT supported by `MaybeExpressionRewriter`. EF Core's parameter
-        // extraction lifts the closed-expression operand (`Maybe.From(value)` and
-        // `Maybe<T>.None` alike) to a `QueryParameterExpression` *before* the rewriter runs
-        // in `IQueryExpressionInterceptor.QueryCompilationStarting`, erasing the syntactic
-        // difference. The rewriter therefore conservatively converts any unrecognized
-        // `Maybe<T>`-typed operand to typed null so that None comparisons remain valid; this
-        // means the natural form translates to `_phone IS NULL` and silently miss-queries.
-        // This test pins **both** the miss-query behavior (so we'd notice if the rewriter ever
-        // gains a pre-funcletization hook via `IEvaluatableExpressionFilterPlugin` or similar)
-        // and the documented migration path (`MaybeQueryableExtensions.WhereEquals`).
+        // Regression: the natural form `c.Phone == Maybe.From(value)` previously translated
+        // to `_phone IS NULL` because EF Core's parameter extraction lifted the closed-expression
+        // operand to a `QueryParameterExpression` BEFORE `MaybeQueryInterceptor.QueryCompilationStarting`
+        // ran, erasing the syntactic difference between `None` and `Some(value)`. The fix is a
+        // `MaybeEvaluatableExpressionFilterPlugin` registered in EF Core's internal services that
+        // marks any `Maybe<T>`-typed node as non-evaluatable, preserving the syntactic distinction
+        // for the rewriter to translate correctly.
         var ct = TestContext.Current.CancellationToken;
         var target = "+1-555-0500";
         var withTarget = CreateCustomer("Eve", target);
         var withOther = CreateCustomer("Frank", "+1-555-0501");
-        _context.Customers.AddRange(withTarget, withOther);
+        var withoutPhone = CreateCustomer("Grace");
+        _context.Customers.AddRange(withTarget, withOther, withoutPhone);
         await _context.SaveChangesAsync(ct);
         _context.ChangeTracker.Clear();
 
         var phone = PhoneNumber.Create(target);
 
-        // Natural form: silently miss-queries because the parameter is treated as None.
-        // Both customers have non-null phones, so `_phone IS NULL` matches zero rows.
-        var naturalResults = await _context.Customers
+        var results = await _context.Customers
             .Where(c => c.Phone == Maybe.From(phone))
             .ToListAsync(ct);
-        naturalResults.Should().BeEmpty(
-            "the natural `==` form translates `Maybe.From(value)` to typed null after EF parameter extraction; this is the documented limitation N-EF-1");
 
-        // Documented migration path: `WhereEquals` correctly returns the target row.
-        var whereEqualsResults = await _context.Customers
-            .WhereEquals(c => c.Phone, phone)
-            .ToListAsync(ct);
-        whereEqualsResults.Should().ContainSingle()
+        results.Should().ContainSingle()
             .Which.Id.Should().Be(withTarget.Id);
+    }
+
+    [Fact]
+    public async Task NotEqualsMaybeFromValue_NaturalForm_ExcludesMatchingRowsAndIncludesNoneRowsPerCSharpSemantics()
+    {
+        // Symmetric to EqualsMaybeFromValue_NaturalForm_ReturnsMatchingRow: `!= Maybe.From(value)`
+        // must match C# semantics (`Maybe<T>.None != Maybe.From(x)` is `true`). EF Core's
+        // default "use relational nulls" → false behavior wraps the SQL `<>` in an `OR IS NULL`
+        // so NULL rows are included in the result, matching the in-memory Maybe semantic.
+        var ct = TestContext.Current.CancellationToken;
+        var target = "+1-555-0500";
+        var withTarget = CreateCustomer("Eve", target);
+        var withOther = CreateCustomer("Frank", "+1-555-0501");
+        var withoutPhone = CreateCustomer("Grace");
+        _context.Customers.AddRange(withTarget, withOther, withoutPhone);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        var phone = PhoneNumber.Create(target);
+
+        var results = await _context.Customers
+            .Where(c => c.Phone != Maybe.From(phone))
+            .ToListAsync(ct);
+
+        results.Should().HaveCount(2);
+        results.Select(r => r.Id).Should().BeEquivalentTo([withOther.Id, withoutPhone.Id]);
+    }
+
+    [Fact]
+    public async Task EqualsMaybeFromValue_ConverseDirection_ReturnsMatchingRow()
+    {
+        // `Maybe.From(value) == c.Phone` — same semantics with operands swapped. VisitBinary
+        // must rewrite both sides symmetrically.
+        var ct = TestContext.Current.CancellationToken;
+        var target = "+1-555-0600";
+        var withTarget = CreateCustomer("Hank", target);
+        var withOther = CreateCustomer("Ivy", "+1-555-0601");
+        var withoutPhone = CreateCustomer("Jack");
+        _context.Customers.AddRange(withTarget, withOther, withoutPhone);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        var phone = PhoneNumber.Create(target);
+
+        var results = await _context.Customers
+            .Where(c => Maybe.From(phone) == c.Phone)
+            .ToListAsync(ct);
+
+        results.Should().ContainSingle()
+            .Which.Id.Should().Be(withTarget.Id);
+    }
+
+    [Fact]
+    public async Task EqualsCapturedMaybeVariable_Throws_WithActionableMessage()
+    {
+        // Captured locals of type Maybe<T> funcletize to QueryParameterExpressions and the
+        // rewriter cannot tell None from Some at translation time. Throw with a clear message
+        // naming the supported alternatives instead of silently miss-querying.
+        var ct = TestContext.Current.CancellationToken;
+        var withPhone = CreateCustomer("Kim", "+1-555-0700");
+        var withoutPhone = CreateCustomer("Leo");
+        _context.Customers.AddRange(withPhone, withoutPhone);
+        await _context.SaveChangesAsync(ct);
+        _context.ChangeTracker.Clear();
+
+        var captured = Maybe.From(PhoneNumber.Create("+1-555-0700"));
+
+        var act = async () => await _context.Customers
+            .Where(c => c.Phone == captured)
+            .ToListAsync(ct);
+
+        var ex = await act.Should().ThrowAsync<InvalidOperationException>();
+        ex.Which.Message.Should().Contain("Maybe.From(value)")
+            .And.Contain("WhereEquals");
     }
 
     #endregion

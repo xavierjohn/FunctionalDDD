@@ -14,7 +14,13 @@ using Microsoft.EntityFrameworkCore.Diagnostics;
 /// like <c>WhereHasValue</c> or <c>WhereLessThan</c>.
 /// </para>
 /// <para>
-/// Register by calling <c>optionsBuilder.AddInterceptors(new MaybeQueryInterceptor())</c>.
+/// Register by calling <c>optionsBuilder.AddTrellisInterceptors()</c> — that helper
+/// installs both this interceptor and the companion
+/// <see cref="MaybeEvaluatableExpressionFilterPlugin"/> required for correct
+/// <c>c.Maybe == Maybe.From(value)</c> translation. Registering only the interceptor via
+/// <c>optionsBuilder.AddInterceptors(new MaybeQueryInterceptor())</c> is sufficient for the
+/// rewrite patterns listed above, but leaves natural-form equality against
+/// <c>Maybe.From(value)</c> silently translating to <c>_field IS NULL</c>.
 /// </para>
 /// </remarks>
 /// <example>
