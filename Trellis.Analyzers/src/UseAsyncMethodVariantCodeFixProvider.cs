@@ -97,7 +97,19 @@ public sealed class UseAsyncMethodVariantCodeFixProvider : CodeFixProvider
             .WithTriviaFrom(currentIdentifier);
 
         var renamedInvocation = invocationToAwait.ReplaceNode(currentIdentifier, newIdentifier);
-        ExpressionSyntax replacementExpression = invocationToAwait.Parent is AwaitExpressionSyntax
+
+        // The invocation may already be awaited directly (`await invocation`) OR through one
+        // or more parenthesized wrappers (`await (invocation)`, `await ((invocation))`).
+        // Walking through both shapes prevents producing `await (await ...)` — see CS-error
+        // path where double-await on the same Task is a compile error.
+        var alreadyAwaited = false;
+        SyntaxNode cursor = invocationToAwait;
+        while (cursor.Parent is ParenthesizedExpressionSyntax parens && parens.Expression == cursor)
+            cursor = parens;
+        if (cursor.Parent is AwaitExpressionSyntax)
+            alreadyAwaited = true;
+
+        ExpressionSyntax replacementExpression = alreadyAwaited
             ? renamedInvocation
             : SyntaxFactory.AwaitExpression(renamedInvocation.WithoutLeadingTrivia())
                 .WithLeadingTrivia(invocationToAwait.GetLeadingTrivia());
