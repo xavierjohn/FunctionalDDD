@@ -70,24 +70,27 @@ using System.Text.Json.Serialization;
 ///         customerId.ToResult(Error.InvalidInput.ForField("customerId", "invalid", "Customer ID required"))
 ///             .Map(id => new Order(OrderId.NewUniqueV7(), id));
 ///     
-///     // All modifications go through methods that enforce invariants
-///     public Result<Order> AddLine(ProductId productId, int quantity, Money unitPrice) =>
+///     // All modifications go through methods that enforce invariants.
+///     // Money.Multiply / Money.Add return Result&lt;Money&gt; (multiplication and addition can
+///     // fail on currency mismatch or overflow); compose with Bind so AddLine surfaces those
+///     // as a typed failure rather than silently dropping them.
+///     public Result&lt;Order&gt; AddLine(ProductId productId, int quantity, Money unitPrice) =>
 ///         this.ToResult()
 ///             .Ensure(_ => Status == OrderStatus.Draft,
 ///                    Error.InvalidInput.ForRule("invalid", "Cannot modify submitted order"))
 ///             .Ensure(_ => quantity > 0,
 ///                    Error.InvalidInput.ForField("quantity", "invalid", "Quantity must be positive"))
-///             .Ensure(_ => _lines.Count < 100,
+///             .Ensure(_ => _lines.Count &lt; 100,
 ///                    Error.InvalidInput.ForRule("invalid", "Order cannot have more than 100 lines"))
-///             .Tap(_ =>
-///             {
-///                 var line = new OrderLine(productId, quantity, unitPrice);
-///                 _lines.Add(line);
-///                 Total = Total.Add(unitPrice.Multiply(quantity));
-///                 
-///                 // Raise domain event
-///                 DomainEvents.Add(new OrderLineAddedEvent(Id, productId, quantity));
-///             });
+///             .Bind(order => unitPrice.Multiply(quantity)
+///                 .Bind(lineTotal => Total.Add(lineTotal))
+///                 .Tap(newTotal =>
+///                 {
+///                     _lines.Add(new OrderLine(productId, quantity, unitPrice));
+///                     Total = newTotal;
+///                     DomainEvents.Add(new OrderLineAddedEvent(Id, productId, quantity));
+///                 })
+///                 .Map(_ => order));
 ///     
 ///     public Result<Order> Submit() =>
 ///         this.ToResult()

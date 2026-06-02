@@ -129,6 +129,34 @@ public sealed class UseAsyncMethodVariantCodeFixProvider : CodeFixProvider
 
     private static bool CanAwaitInvocationInPlace(InvocationExpressionSyntax invocation)
     {
+        // Walk up to the nearest enclosing function (method, lambda, local function, anonymous
+        // method). If any intervening node is a context where `await` is illegal (lock body,
+        // unsafe block, catch/finally filter, query expression, etc.), refuse the fix.
+        // CS1996 (await in lock), CS1995 (await in unsafe), CS1980 (catch/filter) are the
+        // common offenders.
+        for (var ancestor = invocation.Parent; ancestor is not null; ancestor = ancestor.Parent)
+        {
+            switch (ancestor)
+            {
+                case LockStatementSyntax:
+                case UnsafeStatementSyntax:
+                case CatchFilterClauseSyntax:
+                case QueryExpressionSyntax:
+                    return false;
+                case MethodDeclarationSyntax:
+                case LocalFunctionStatementSyntax:
+                case ParenthesizedLambdaExpressionSyntax:
+                case SimpleLambdaExpressionSyntax:
+                case AnonymousMethodExpressionSyntax:
+                case ConstructorDeclarationSyntax:
+                case OperatorDeclarationSyntax:
+                case ConversionOperatorDeclarationSyntax:
+                case AccessorDeclarationSyntax:
+                    goto syntacticContextCheck;
+            }
+        }
+
+    syntacticContextCheck:
         SyntaxNode current = invocation;
         while (true)
         {
