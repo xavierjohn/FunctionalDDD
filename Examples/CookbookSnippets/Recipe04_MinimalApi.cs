@@ -42,7 +42,7 @@ internal static class Recipe4ResponseBuilderSurface
 {
     public static void ToHttpResponseReturnsIResult()
     {
-        Result<Order> result = default;
+        Result<Order> result = Result.Fail<Order>(new Error.NotFound(ResourceRef.For<Order>("placeholder")));
         Microsoft.AspNetCore.Http.IResult response = result.ToHttpResponse();
 
         _ = response;

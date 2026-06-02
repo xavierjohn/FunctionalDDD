@@ -21,16 +21,19 @@
 /// </para>
 /// </remarks>
 /// <example>
-/// Implementing in a custom value object:
+/// Modern canonical pattern using the source generator:
 /// <code><![CDATA[
-/// public class EmailAddress : ScalarValueObject<EmailAddress, string>, IScalarValueObject<EmailAddress, string>
-/// {
-///     private EmailAddress(string value) : base(value) { }
+/// // Modern canonical pattern — generator emits IScalarValue<EmailAddress, string>
+/// // implementation, TryCreate factory, JSON converter, IParsable, and equality.
+/// public sealed partial class EmailAddress : RequiredString<EmailAddress>;
 ///
-///     public static Result<EmailAddress> TryCreate(string value, string? fieldName = null) =>
-///         value.ToResult(Error.InvalidInput.ForField(fieldName ?? "email", "invalid", "Email is required"))
-///             .Ensure(e => e.Contains("@"), Error.InvalidInput.ForField(fieldName ?? "email", "invalid", "Invalid email"))
-///             .Map(e => new EmailAddress(e));
+/// // Custom validation via the partial method hook:
+/// public partial class EmailAddress
+/// {
+///     static partial void ValidateAdditional(string value, string fieldName, ref string? errorMessage)
+///     {
+///         if (!value.Contains('@')) errorMessage = "Email must contain '@'.";
+///     }
 /// }
 /// ]]></code>
 /// </example>
@@ -82,7 +85,7 @@ public interface IScalarValue<TSelf, TPrimitive>
     /// <para>
     /// Use this method when you know the value is valid (e.g., in tests, with constants,
     /// or when building from other validated values). This provides cleaner code
-    /// than calling <c>Create(...)</c> through a manual <c>TryCreate(...).Value</c> pattern.
+    /// than manually unwrapping a <c>TryCreate(...)</c> result at each call site.
     /// </para>
     /// <para>
     /// ⚠️ Don't use this method with user input or uncertain data - use <see cref="TryCreate(TPrimitive, string?)"/>

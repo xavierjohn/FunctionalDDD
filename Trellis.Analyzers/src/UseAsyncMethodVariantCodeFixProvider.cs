@@ -43,19 +43,27 @@ public sealed class UseAsyncMethodVariantCodeFixProvider : CodeFixProvider
         var diagnostic = context.Diagnostics.First();
         var diagnosticSpan = diagnostic.Location.SourceSpan;
 
-        // Find the method name identifier
         var node = root.FindNode(diagnosticSpan);
-        var identifierName = node as IdentifierNameSyntax;
-        if (identifierName == null)
+        if (node is not IdentifierNameSyntax identifierName)
             return;
 
         var methodName = identifierName.Identifier.Text;
         if (!SyncToAsyncMethods.TryGetValue(methodName, out var asyncVariant))
             return;
 
+        var invocationToAwait = FindInvocationToAwait(identifierName);
+        if (invocationToAwait is null ||
+            HasNonAsyncAnonymousFunctionArgument(invocationToAwait) ||
+            !CanAwaitInvocationInPlace(invocationToAwait))
+            return;
+
+        var enclosingFunction = FindEnclosingFunction(identifierName);
+        if (enclosingFunction is null || !CanApplyFix(enclosingFunction, invocationToAwait))
+            return;
+
         context.RegisterCodeFix(
             CodeAction.Create(
-                title: $"Replace '{methodName}' with '{asyncVariant}'",
+                title: $"Replace '{methodName}' with '{asyncVariant}' and await the result",
                 createChangedDocument: c => ReplaceWithAsyncVariantAsync(context.Document, identifierName, asyncVariant, c),
                 equivalenceKey: Title),
             diagnostic);
@@ -71,10 +79,241 @@ public sealed class UseAsyncMethodVariantCodeFixProvider : CodeFixProvider
         if (root == null)
             return document;
 
-        var newIdentifier = SyntaxFactory.IdentifierName(asyncVariant)
-            .WithTriviaFrom(identifierName);
+        var currentNode = root.FindNode(identifierName.Span);
+        if (currentNode is not IdentifierNameSyntax currentIdentifier)
+            return document;
 
-        var newRoot = root.ReplaceNode(identifierName, newIdentifier);
+        var invocationToAwait = FindInvocationToAwait(currentIdentifier);
+        if (invocationToAwait is null ||
+            HasNonAsyncAnonymousFunctionArgument(invocationToAwait) ||
+            !CanAwaitInvocationInPlace(invocationToAwait))
+            return document;
+
+        var enclosingFunction = FindEnclosingFunction(currentIdentifier);
+        if (enclosingFunction is null || !CanApplyFix(enclosingFunction, invocationToAwait))
+            return document;
+
+        var newIdentifier = SyntaxFactory.IdentifierName(asyncVariant)
+            .WithTriviaFrom(currentIdentifier);
+
+        var renamedInvocation = invocationToAwait.ReplaceNode(currentIdentifier, newIdentifier);
+
+        // The invocation may already be awaited directly (`await invocation`) OR through one
+        // or more parenthesized wrappers (`await (invocation)`, `await ((invocation))`).
+        // Walking through both shapes prevents producing `await (await ...)` — see CS-error
+        // path where double-await on the same Task is a compile error.
+        var alreadyAwaited = false;
+        SyntaxNode cursor = invocationToAwait;
+        while (cursor.Parent is ParenthesizedExpressionSyntax parens && parens.Expression == cursor)
+            cursor = parens;
+        if (cursor.Parent is AwaitExpressionSyntax)
+            alreadyAwaited = true;
+
+        ExpressionSyntax replacementExpression = alreadyAwaited
+            ? renamedInvocation
+            : SyntaxFactory.AwaitExpression(renamedInvocation.WithoutLeadingTrivia())
+                .WithLeadingTrivia(invocationToAwait.GetLeadingTrivia());
+
+        var updatedFunction = enclosingFunction.ReplaceNode(invocationToAwait, replacementExpression);
+        updatedFunction = AddAsyncModifierIfNeeded(updatedFunction);
+
+        var newRoot = root.ReplaceNode(enclosingFunction, updatedFunction);
         return document.WithSyntaxRoot(newRoot);
+    }
+
+    private static InvocationExpressionSyntax? FindInvocationToAwait(IdentifierNameSyntax identifierName)
+    {
+        var invocation = identifierName.FirstAncestorOrSelf<InvocationExpressionSyntax>();
+        if (invocation is null)
+            return null;
+
+        return invocation.Parent is MemberAccessExpressionSyntax memberAccess && memberAccess.Expression == invocation
+            ? null
+            : invocation;
+    }
+
+    private static bool HasNonAsyncAnonymousFunctionArgument(InvocationExpressionSyntax invocation) =>
+        invocation.ArgumentList.Arguments.Any(argument =>
+            (argument.Expression is LambdaExpressionSyntax { Modifiers: var lambdaModifiers } &&
+             !lambdaModifiers.Any(SyntaxKind.AsyncKeyword)) ||
+            (argument.Expression is AnonymousMethodExpressionSyntax { Modifiers: var anonymousModifiers } &&
+             !anonymousModifiers.Any(SyntaxKind.AsyncKeyword)));
+
+    private static bool CanAwaitInvocationInPlace(InvocationExpressionSyntax invocation)
+    {
+        // Walk up to the nearest enclosing function (method, lambda, local function, anonymous
+        // method). If any intervening node is a context where `await` is illegal (lock body,
+        // unsafe block, catch/finally filter, query expression, etc.), refuse the fix.
+        // CS1996 (await in lock), CS1995 (await in unsafe), CS1980 (catch/filter) are the
+        // common offenders.
+        for (var ancestor = invocation.Parent; ancestor is not null; ancestor = ancestor.Parent)
+        {
+            switch (ancestor)
+            {
+                case LockStatementSyntax:
+                case UnsafeStatementSyntax:
+                case CatchFilterClauseSyntax:
+                case QueryExpressionSyntax:
+                    return false;
+                case MethodDeclarationSyntax:
+                case LocalFunctionStatementSyntax:
+                case ParenthesizedLambdaExpressionSyntax:
+                case SimpleLambdaExpressionSyntax:
+                case AnonymousMethodExpressionSyntax:
+                case ConstructorDeclarationSyntax:
+                case OperatorDeclarationSyntax:
+                case ConversionOperatorDeclarationSyntax:
+                case AccessorDeclarationSyntax:
+                    goto syntacticContextCheck;
+            }
+        }
+
+    syntacticContextCheck:
+        SyntaxNode current = invocation;
+        while (true)
+        {
+            if (current.Parent is ParenthesizedExpressionSyntax parenthesized && parenthesized.Expression == current)
+            {
+                current = parenthesized;
+                continue;
+            }
+
+            if (current.Parent is AwaitExpressionSyntax awaitExpression && awaitExpression.Expression == current)
+            {
+                current = awaitExpression;
+                continue;
+            }
+
+            break;
+        }
+
+        return current.Parent switch
+        {
+            EqualsValueClauseSyntax equalsValue when equalsValue.Value == current => IsSafeVarDeclaration(equalsValue),
+            ReturnStatementSyntax returnStatement when returnStatement.Expression == current => true,
+            ArrowExpressionClauseSyntax arrowExpression when arrowExpression.Expression == current => true,
+            ExpressionStatementSyntax expressionStatement when expressionStatement.Expression == current => true,
+            _ => false
+        };
+    }
+
+    private static bool IsSafeVarDeclaration(EqualsValueClauseSyntax equalsValue) =>
+        equalsValue.Parent is VariableDeclaratorSyntax variable &&
+        variable.Parent is VariableDeclarationSyntax declaration &&
+        declaration.Type.IsVar &&
+        !IsVariableReferencedAfterDeclaration(variable);
+
+    private static bool IsVariableReferencedAfterDeclaration(VariableDeclaratorSyntax variable)
+    {
+        var enclosingFunction = FindEnclosingFunction(variable);
+        if (enclosingFunction is null)
+            return true;
+
+        var variableName = variable.Identifier.ValueText;
+        return enclosingFunction.DescendantNodes()
+            .OfType<IdentifierNameSyntax>()
+            .Any(identifier => identifier.SpanStart > variable.Span.End &&
+                               identifier.Identifier.ValueText == variableName);
+    }
+
+    private static SyntaxNode? FindEnclosingFunction(SyntaxNode node) =>
+        node.Ancestors().FirstOrDefault(a =>
+            a is MethodDeclarationSyntax or
+                LocalFunctionStatementSyntax or
+                LambdaExpressionSyntax or
+                AnonymousMethodExpressionSyntax);
+
+    private static bool CanApplyFix(SyntaxNode enclosingFunction, InvocationExpressionSyntax invocationToAwait) =>
+        enclosingFunction switch
+        {
+            MethodDeclarationSyntax method => method.Modifiers.Any(SyntaxKind.AsyncKeyword)
+                ? !IsDirectReturnLikeContext(invocationToAwait)
+                : IsTaskLikeReturnType(method.ReturnType) &&
+                  !HasByRefParameter(method.ParameterList) &&
+                  !HasUnsafeReturnExpression(method, invocationToAwait),
+            LocalFunctionStatementSyntax localFunction => localFunction.Modifiers.Any(SyntaxKind.AsyncKeyword)
+                ? !IsDirectReturnLikeContext(invocationToAwait)
+                : IsTaskLikeReturnType(localFunction.ReturnType) &&
+                  !HasByRefParameter(localFunction.ParameterList) &&
+                  !HasUnsafeReturnExpression(localFunction, invocationToAwait),
+            LambdaExpressionSyntax lambda => lambda.Modifiers.Any(SyntaxKind.AsyncKeyword) &&
+                                             !IsDirectReturnLikeContext(invocationToAwait),
+            AnonymousMethodExpressionSyntax anonymousMethod => anonymousMethod.Modifiers.Any(SyntaxKind.AsyncKeyword) &&
+                                                               !IsDirectReturnLikeContext(invocationToAwait),
+            _ => false
+        };
+
+    private static bool IsDirectReturnLikeContext(InvocationExpressionSyntax invocation)
+    {
+        SyntaxNode current = invocation;
+        while (current.Parent is ParenthesizedExpressionSyntax parenthesized && parenthesized.Expression == current)
+        {
+            current = parenthesized;
+        }
+
+        return current.Parent switch
+        {
+            ReturnStatementSyntax returnStatement when returnStatement.Expression == current => true,
+            ArrowExpressionClauseSyntax arrowExpression when arrowExpression.Expression == current => true,
+            _ => false
+        };
+    }
+
+    private static bool IsTaskLikeReturnType(TypeSyntax returnType)
+    {
+        var returnTypeName = returnType switch
+        {
+            IdentifierNameSyntax identifier => identifier.Identifier.Text,
+            GenericNameSyntax generic => generic.Identifier.Text,
+            QualifiedNameSyntax qualified => qualified.Right.Identifier.Text,
+            AliasQualifiedNameSyntax aliasQualified => aliasQualified.Name.Identifier.Text,
+            _ => null
+        };
+
+        return returnTypeName is "Task" or "ValueTask";
+    }
+
+    private static bool HasByRefParameter(ParameterListSyntax parameterList) =>
+        parameterList.Parameters.Any(parameter =>
+            parameter.Modifiers.Any(SyntaxKind.RefKeyword) ||
+            parameter.Modifiers.Any(SyntaxKind.OutKeyword) ||
+            parameter.Modifiers.Any(SyntaxKind.InKeyword));
+
+    private static bool HasUnsafeReturnExpression(SyntaxNode enclosingFunction, InvocationExpressionSyntax invocationToAwait)
+    {
+        return enclosingFunction.DescendantNodes(ShouldDescendInto)
+            .OfType<ReturnStatementSyntax>()
+            .Any(returnStatement =>
+                returnStatement.Expression != null && !IsDirectReturnExpression(returnStatement.Expression, invocationToAwait));
+
+        static bool IsDirectReturnExpression(ExpressionSyntax expression, InvocationExpressionSyntax invocation)
+        {
+            while (expression is ParenthesizedExpressionSyntax parenthesized)
+            {
+                expression = parenthesized.Expression;
+            }
+
+            return expression.Span == invocation.Span;
+        }
+
+        bool ShouldDescendInto(SyntaxNode node) =>
+            node == enclosingFunction ||
+            node is not MethodDeclarationSyntax and
+                not LocalFunctionStatementSyntax and
+                not LambdaExpressionSyntax and
+                not AnonymousMethodExpressionSyntax;
+    }
+
+    private static SyntaxNode AddAsyncModifierIfNeeded(SyntaxNode enclosingFunction)
+    {
+        var asyncToken = SyntaxFactory.Token(SyntaxKind.AsyncKeyword)
+            .WithTrailingTrivia(SyntaxFactory.Space);
+
+        return enclosingFunction switch
+        {
+            MethodDeclarationSyntax method when !method.Modifiers.Any(SyntaxKind.AsyncKeyword) => method.AddModifiers(asyncToken),
+            LocalFunctionStatementSyntax localFunction when !localFunction.Modifiers.Any(SyntaxKind.AsyncKeyword) => localFunction.AddModifiers(asyncToken),
+            _ => enclosingFunction
+        };
     }
 }

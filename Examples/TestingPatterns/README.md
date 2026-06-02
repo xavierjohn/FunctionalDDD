@@ -1,4 +1,4 @@
-# TestingPatterns
+﻿# TestingPatterns
 
 xUnit test patterns commonly used with Trellis. This is **not** a sample of a
 runtime application — it is a sample of *how to test* code that uses Trellis.
@@ -27,9 +27,10 @@ dotnet test Examples/TestingPatterns/TestingPatterns.Tests.csproj
 
 ## Why this lives in `Examples/`
 
-The patterns here are the ones the framework expects consumers to use. They
-double as compile-checked documentation: if a Trellis API changes, these
-tests break and the docs get fixed at the same time.
+The patterns here are the ones the framework expects consumers to use. The
+`.cs` examples double as compile-checked documentation: if a Trellis API
+changes, these tests break and the docs get fixed at the same time. Markdown
+notes should mirror those compiled examples.
 
 ## Related Docs
 

@@ -46,7 +46,7 @@
 /// Cricket fan-out (actor owns home OR away team):
 /// <code>
 /// public sealed record UploadScorecardCommand(MatchId MatchId)
-///     : ICommand&lt;Result&gt;,
+///     : ICommand&lt;Result&lt;Unit&gt;&gt;,
 ///       IIdentifyResource&lt;Match, MatchId&gt;,
 ///       IAuthorizeResourceVia&lt;Team&gt;
 /// {

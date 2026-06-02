@@ -36,23 +36,23 @@
 /// <example>
 /// Simple scalar value object for a strongly-typed ID:
 /// <code><![CDATA[
-/// public class CustomerId : ScalarValueObject<CustomerId, Guid>
+/// public class CustomerId : ScalarValueObject<CustomerId, Guid>, IScalarValue<CustomerId, Guid>
 /// {
 ///     private CustomerId(Guid value) : base(value) { }
 ///     
 ///     public static CustomerId NewUnique() => new(Guid.NewGuid());
 ///     
-///     public static Result<CustomerId> TryCreate(Guid value) =>
+///     public static Result<CustomerId> TryCreate(Guid value, string? fieldName = null) =>
 ///         value.ToResult()
-///             .Ensure(v => v != Guid.Empty, Error.InvalidInput.ForField("customerId", "invalid", "Customer ID cannot be empty"))
+///             .Ensure(v => v != Guid.Empty, Error.InvalidInput.ForField(fieldName ?? "customerId", "invalid", "Customer ID cannot be empty"))
 ///             .Map(v => new CustomerId(v));
 ///     
-///     public static Result<CustomerId> TryCreate(string? stringOrNull) =>
-///         stringOrNull.ToResult(Error.InvalidInput.ForField("customerId", "invalid", "Customer ID cannot be empty"))
+///     public static Result<CustomerId> TryCreate(string? stringOrNull, string? fieldName = null) =>
+///         stringOrNull.ToResult(Error.InvalidInput.ForField(fieldName ?? "customerId", "invalid", "Customer ID cannot be empty"))
 ///             .Bind(s => Guid.TryParse(s, out var guid)
 ///                 ? Result.Ok(guid)
-///                 : Error.InvalidInput.ForField("customerId", "invalid", "Invalid GUID format"))
-///             .Bind(TryCreate);
+///                 : Result.Fail<Guid>(Error.InvalidInput.ForField(fieldName ?? "customerId", "invalid", "Invalid GUID format")))
+///             .Bind(guid => TryCreate(guid, fieldName));
 /// }
 /// 
 /// // Usage
@@ -63,17 +63,22 @@
 /// <example>
 /// Scalar value object with custom equality and validation:
 /// <code><![CDATA[
-/// public class Temperature : ScalarValueObject<Temperature, decimal>
+/// public class Temperature : ScalarValueObject<Temperature, decimal>, IScalarValue<Temperature, decimal>
 /// {
 ///     private Temperature(decimal value) : base(value) { }
 ///     
-///     public static Result<Temperature> TryCreate(decimal value) =>
+///     public static Result<Temperature> TryCreate(decimal value, string? fieldName = null) =>
 ///         value.ToResult()
 ///             .Ensure(v => v >= -273.15m, 
-///                    Error.InvalidInput.ForField("temperature", "invalid", "Temperature cannot be below absolute zero"))
+///                    Error.InvalidInput.ForField(fieldName ?? "temperature", "invalid", "Temperature cannot be below absolute zero"))
 ///             .Ensure(v => v <= 1_000_000m,
-///                    Error.InvalidInput.ForField("temperature", "invalid", "Temperature exceeds physical limits"))
+///                    Error.InvalidInput.ForField(fieldName ?? "temperature", "invalid", "Temperature exceeds physical limits"))
 ///             .Map(v => new Temperature(v));
+///
+///     public static Result<Temperature> TryCreate(string? value, string? fieldName = null) =>
+///         decimal.TryParse(value, out var parsed)
+///             ? TryCreate(parsed, fieldName)
+///             : Result.Fail<Temperature>(Error.InvalidInput.ForField(fieldName ?? "temperature", "invalid", "Temperature must be a decimal"));
 ///     
 ///     // Custom equality - round to 2 decimal places
 ///     protected override IEnumerable<IComparable?> GetEqualityComponents()
@@ -91,8 +96,10 @@
 /// }
 /// 
 /// // Usage
-/// var temp1 = Temperature.TryCreate(98.6m);
-/// var temp2 = Temperature.TryCreate(98.60m);
+/// var temp1 = Temperature.TryCreate(98.6m)
+///     .Match(t => t, e => throw new System.InvalidOperationException(e.GetDisplayMessage()));
+/// var temp2 = Temperature.TryCreate(98.60m)
+///     .Match(t => t, e => throw new System.InvalidOperationException(e.GetDisplayMessage()));
 /// temp1 == temp2; // true - rounded to same value
 /// 
 /// decimal celsius = temp1.Value; // Access underlying value
@@ -101,18 +108,18 @@
 /// <example>
 /// Scalar value object for email addresses:
 /// <code><![CDATA[
-/// public class EmailAddress : ScalarValueObject<EmailAddress, string>
+/// public class EmailAddress : ScalarValueObject<EmailAddress, string>, IScalarValue<EmailAddress, string>
 /// {
 ///     private EmailAddress(string value) : base(value) { }
 ///     
-///     public static Result<EmailAddress> TryCreate(string email) =>
-///         email.ToResult(Error.InvalidInput.ForField("email", "invalid", "Email is required"))
+///     public static Result<EmailAddress> TryCreate(string? email, string? fieldName = null) =>
+///         email.ToResult(Error.InvalidInput.ForField(fieldName ?? "email", "invalid", "Email is required"))
 ///             .Ensure(e => !string.IsNullOrWhiteSpace(e),
-///                    Error.InvalidInput.ForField("email", "invalid", "Email cannot be empty"))
-///             .Ensure(e => e.Contains("@"),
-///                    Error.InvalidInput.ForField("email", "invalid", "Email must contain @"))
+///                    Error.InvalidInput.ForField(fieldName ?? "email", "invalid", "Email cannot be empty"))
+///             .Ensure(e => e.Contains('@'),
+///                    Error.InvalidInput.ForField(fieldName ?? "email", "invalid", "Email must contain @"))
 ///             .Ensure(e => e.Length <= 254,
-///                    Error.InvalidInput.ForField("email", "invalid", "Email too long"))
+///                    Error.InvalidInput.ForField(fieldName ?? "email", "invalid", "Email too long"))
 ///             .Map(e => new EmailAddress(e.Trim().ToLowerInvariant()));
 ///     
 ///     public string Domain => Value.Split('@')[1];
@@ -206,7 +213,7 @@ where T : IComparable
     /// <para>
     /// Use this method when you know the value is valid (e.g., in tests, with constants,
     /// or when building from other validated value objects). This provides cleaner code
-    /// than calling <c>TryCreate().Value</c>.
+    /// than manually unwrapping a <c>TryCreate(...)</c> result.
     /// </para>
     /// <para>
     /// ⚠️ Don't use this method with user input or uncertain data - use <c>TryCreate</c>

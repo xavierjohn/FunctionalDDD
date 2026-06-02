@@ -116,12 +116,13 @@ public static class DiagnosticDescriptors
     public static readonly DiagnosticDescriptor UseAsyncMethodVariant = new(
         id: TrellisDiagnosticIds.UseAsyncMethodVariant,
         title: "Use async method variant for async lambda",
-        messageFormat: "Use '{0}' instead of '{1}' when the lambda is async",
+        messageFormat: "Use '{0}' instead of '{1}' for async work. Convert the enclosing method or lambda to an awaitable async flow manually if no code fix is offered.",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
-        description: "When using an async lambda with Map, Bind, Tap, or Ensure, use the async variant (MapAsync, BindAsync, etc.) " +
-                     "to properly handle the async operation. Using sync methods with async lambdas causes the Task to not be awaited.",
+        description: "When using async work with Map, Bind, Tap, or Ensure, use the async variant (MapAsync, BindAsync, etc.) " +
+                     "and await the returned async pipeline. The code fix is only offered for simple, locally safe await insertions; " +
+                     "convert synchronous void, value-returning, chained, nested, or delegate-changing scopes manually before applying it.",
         helpLinkUri: HelpLinkBase + "TRLS009");
 
     /// <summary>

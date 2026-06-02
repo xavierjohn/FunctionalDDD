@@ -61,31 +61,36 @@ using System.Text.Json.Serialization;
 ///     {
 ///         CustomerId = customerId;
 ///         Status = OrderStatus.Draft;
-///         Total = Money.Zero;
+///         Total = Money.Zero("USD").Match(
+///             m => m,
+///             err => throw new System.InvalidOperationException(err.GetDisplayMessage()));
 ///     }
 ///     
 ///     public static Result<Order> Create(CustomerId customerId) =>
 ///         customerId.ToResult(Error.InvalidInput.ForField("customerId", "invalid", "Customer ID required"))
 ///             .Map(id => new Order(OrderId.NewUniqueV7(), id));
 ///     
-///     // All modifications go through methods that enforce invariants
-///     public Result<Order> AddLine(ProductId productId, int quantity, Money unitPrice) =>
+///     // All modifications go through methods that enforce invariants.
+///     // Money.Multiply / Money.Add return Result&lt;Money&gt; (multiplication and addition can
+///     // fail on currency mismatch or overflow); compose with Bind so AddLine surfaces those
+///     // as a typed failure rather than silently dropping them.
+///     public Result&lt;Order&gt; AddLine(ProductId productId, int quantity, Money unitPrice) =>
 ///         this.ToResult()
 ///             .Ensure(_ => Status == OrderStatus.Draft,
 ///                    Error.InvalidInput.ForRule("invalid", "Cannot modify submitted order"))
 ///             .Ensure(_ => quantity > 0,
 ///                    Error.InvalidInput.ForField("quantity", "invalid", "Quantity must be positive"))
-///             .Ensure(_ => _lines.Count < 100,
+///             .Ensure(_ => _lines.Count &lt; 100,
 ///                    Error.InvalidInput.ForRule("invalid", "Order cannot have more than 100 lines"))
-///             .Tap(_ =>
-///             {
-///                 var line = new OrderLine(productId, quantity, unitPrice);
-///                 _lines.Add(line);
-///                 Total = Total.Add(unitPrice.Multiply(quantity));
-///                 
-///                 // Raise domain event
-///                 DomainEvents.Add(new OrderLineAddedEvent(Id, productId, quantity));
-///             });
+///             .Bind(order => unitPrice.Multiply(quantity)
+///                 .Bind(lineTotal => Total.Add(lineTotal))
+///                 .Tap(newTotal =>
+///                 {
+///                     _lines.Add(new OrderLine(productId, quantity, unitPrice));
+///                     Total = newTotal;
+///                     DomainEvents.Add(new OrderLineAddedEvent(Id, productId, quantity));
+///                 })
+///                 .Map(_ => order));
 ///     
 ///     public Result<Order> Submit() =>
 ///         this.ToResult()
@@ -121,43 +126,14 @@ using System.Text.Json.Serialization;
 /// ]]></code>
 /// </example>
 /// <example>
-/// Repository pattern with aggregate persistence and event publishing:
-/// <code><![CDATA[
-/// public class OrderRepository
-/// {
-///     private readonly IDbContext _dbContext;
-///     private readonly IEventBus _eventBus;
-///     
-///     public async Task<Result> SaveAsync(Order order, CancellationToken ct)
-///     {
-///         // 1. Save aggregate to database
-///         _dbContext.Orders.Update(order);
-///         await _dbContext.SaveChangesAsync(ct);
-///         
-///         // 2. Publish uncommitted events
-///         var events = order.UncommittedEvents();
-///         foreach (var domainEvent in events)
-///         {
-///             await _eventBus.PublishAsync(domainEvent, ct);
-///         }
-///         
-///         // 3. Mark changes as committed
-///         order.AcceptChanges();
-///         
-///         return Result.Ok();
-///     }
-/// }
-/// 
-/// // Usage in an application service
-/// public async Task<Result> SubmitOrderAsync(OrderId orderId, CancellationToken ct)
-/// {
-///     var order = await _orderRepository.GetAsync(orderId, ct);
-///     
-///     return await order
-///         .Bind(o => o.Submit())
-///         .BindAsync(o => _orderRepository.SaveAsync(o, ct));
-/// }
-/// ]]></code>
+/// NOTE: Repositories should stage aggregate changes only. Do not publish
+/// <see cref="IDomainEvent"/> instances manually from repository <c>SaveAsync</c>
+/// methods or call <c>AcceptChanges()</c> there. Use the Trellis Mediator
+/// unit-of-work pipeline plus tracked aggregate domain-event dispatch so events
+/// are dispatched after a successful transaction commit (<c>AddTrellisUnitOfWork&lt;TContext&gt;()</c>
+/// with <c>AddTrackedAggregateDomainEventDispatch()</c>, or the matching
+/// ServiceDefaults <c>UseEntityFrameworkUnitOfWork&lt;TContext&gt;()</c> and
+/// <c>UseTrackedAggregateDomainEvents()</c> slots).
 /// </example>
 public abstract class Aggregate<TId> : Entity<TId>, IAggregate
     where TId : notnull

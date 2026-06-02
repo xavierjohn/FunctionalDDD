@@ -135,37 +135,34 @@ public partial class PhoneNumber : ScalarValueObject<PhoneNumber, string>, IScal
         StringExtensions.TryParseScalarValue(s, out result);
 
     /// <summary>
-    /// Gets the country calling code portion of the phone number.
+    /// Gets the country calling code portion of the phone number, if the prefix matches a known
+    /// ITU-T E.164 country calling code.
     /// </summary>
-    /// <returns>The country calling code (digits after <c>+</c> and before the subscriber number).</returns>
-    /// <exception cref="InvalidOperationException">
-    /// Thrown when the phone number's prefix does not match any assigned ITU-T E.164 country
+    /// <returns>
+    /// <see cref="Maybe.From{T}(T)"/> wrapping the country calling code (digits after <c>+</c>
+    /// and before the subscriber number) when the prefix is recognized;
+    /// <see cref="Maybe{T}.None"/> when the prefix does not match any assigned ITU-T country
     /// calling code. <see cref="TryCreate"/> validates only E.164 shape, not assigned-code
-    /// membership, so a phone number that passes <c>TryCreate</c> can still have a prefix that
-    /// is not a real calling code (e.g. unassigned ranges, or a code added after this library
-    /// shipped).
-    /// </exception>
-    public string GetCountryCode()
+    /// membership, so a phone number that passes <c>TryCreate</c> can legitimately resolve to
+    /// <see cref="Maybe{T}.None"/> here (unassigned ranges, codes added after this library
+    /// shipped, or malformed input that happens to satisfy E.164 length/character rules).
+    /// </returns>
+    public Maybe<string> GetCountryCode()
     {
         // E.164 country codes are 1-3 digits and require longest-prefix matching
         // against the assigned calling-code set.
         var digits = Value[1..]; // Skip the '+'
 
         if (digits.StartsWith('1') || digits.StartsWith('7'))
-            return digits[..1];
+            return Maybe.From(digits[..1]);
 
         if (digits.Length >= 3 && s_threeDigitCountryCodes.Contains(digits[..3]))
-            return digits[..3];
+            return Maybe.From(digits[..3]);
 
         if (digits.Length >= 2 && s_twoDigitCountryCodes.Contains(digits[..2]))
-            return digits[..2];
+            return Maybe.From(digits[..2]);
 
-        throw new InvalidOperationException(
-            "Phone number passed E.164 format validation but does not start with a recognized " +
-            "country calling code. This may indicate stale lookup tables in Trellis.Primitives or a " +
-            "malformed input that happens to satisfy the E.164 length/character rules. " +
-            "(The phone number value is intentionally not included in this message because " +
-            "phone numbers are PII and exception messages are commonly logged.)");
+        return Maybe<string>.None;
     }
 
     /// <summary>

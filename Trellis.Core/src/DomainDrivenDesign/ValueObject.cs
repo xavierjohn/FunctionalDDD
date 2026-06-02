@@ -88,11 +88,13 @@
 /// }
 /// 
 /// // Usage
-/// var address1 = Address.TryCreate("123 Main St", "Springfield", "IL", "62701");
-/// var address2 = Address.TryCreate("123 Main St", "Springfield", "IL", "62701");
+/// var address1 = Address.TryCreate("123 Main St", "Springfield", "IL", "62701")
+///     .Match(a => a, e => throw new System.InvalidOperationException(e.GetDisplayMessage()));
+/// var address2 = Address.TryCreate("123 Main St", "Springfield", "IL", "62701")
+///     .Match(a => a, e => throw new System.InvalidOperationException(e.GetDisplayMessage()));
 /// 
 /// // Structural equality
-/// address1.Value == address2.Value; // true - same attributes
+/// address1 == address2; // true - same attributes
 /// </code>
 /// </example>
 /// <example>
@@ -125,8 +127,8 @@
 ///     // Domain operations return new instances (immutability)
 ///     public Result&lt;Money&gt; Add(Money other) =>
 ///         Currency != other.Currency
-///             ? Error.InvalidInput.ForRule("currency_mismatch", $"Cannot add {other.Currency} to {Currency}")
-///             : new Money(Amount + other.Amount, Currency).ToResult();
+///             ? Result.Fail&lt;Money&gt;(Error.InvalidInput.ForRule("currency_mismatch", $"Cannot add {other.Currency} to {Currency}"))
+///             : Result.Ok(new Money(Amount + other.Amount, Currency));
 ///     
 ///     public Money Multiply(decimal factor) =>
 ///         new Money(Amount * factor, Currency);
